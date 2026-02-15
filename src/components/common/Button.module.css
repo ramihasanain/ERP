@@ -1,0 +1,127 @@
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-family: var(--font-sans);
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Sizes */
+.sm {
+    height: 2rem;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+}
+
+.md {
+    height: 2.5rem;
+    padding: 0 1rem;
+    font-size: 0.95rem;
+}
+
+.lg {
+    height: 3rem;
+    padding: 0 1.5rem;
+    font-size: 1rem;
+}
+
+.iconOnly {
+    padding: 0;
+    width: 2.5rem;
+    /* Match md height */
+}
+
+.sm.iconOnly {
+    width: 2rem;
+}
+
+.lg.iconOnly {
+    width: 3rem;
+}
+
+/* Variants */
+.primary {
+    background-color: var(--color-primary-600);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.primary:hover {
+    background-color: var(--color-primary-700);
+    box-shadow: var(--shadow-md);
+}
+
+.secondary {
+    background-color: var(--color-slate-100);
+    color: var(--color-slate-900);
+    border-color: var(--color-slate-200);
+}
+
+.secondary:hover {
+    background-color: var(--color-slate-200);
+}
+
+[data-theme="dark"] .secondary {
+    background-color: var(--color-slate-800);
+    color: var(--color-slate-100);
+    border-color: var(--color-slate-700);
+}
+
+[data-theme="dark"] .secondary:hover {
+    background-color: var(--color-slate-700);
+}
+
+.outline {
+    background-color: transparent;
+    color: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+}
+
+.outline:hover {
+    background-color: var(--color-primary-50);
+}
+
+[data-theme="dark"] .outline:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.ghost {
+    background-color: transparent;
+    color: var(--color-slate-600);
+}
+
+.ghost:hover {
+    background-color: var(--color-slate-100);
+    color: var(--color-slate-900);
+}
+
+[data-theme="dark"] .ghost {
+    color: var(--color-slate-400);
+}
+
+[data-theme="dark"] .ghost:hover {
+    background-color: var(--color-slate-800);
+    color: var(--color-slate-200);
+}
+
+.danger {
+    background-color: var(--color-error);
+    color: white;
+}
+
+.danger:hover {
+    background-color: #dc2626;
+    /* darker red */
+}
