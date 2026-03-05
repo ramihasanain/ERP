@@ -8,7 +8,7 @@ import { Save, Plus, Trash2, ArrowLeft } from 'lucide-react';
 
 const CreateInvoice = () => {
     const navigate = useNavigate();
-    const { costCenters, customers, taxRules, calculateTax } = useAccounting();
+    const { costCenters, customers, taxRules, calculateTax, productsAndServices } = useAccounting();
 
     // Invoice State
     const [clientId, setClientId] = useState('');
@@ -127,10 +127,9 @@ const CreateInvoice = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
-                                <th style={{ padding: '0.5rem', width: '25%' }}>Item Description</th>
-                                <th style={{ padding: '0.5rem', width: '15%' }}>Cost Center</th>
-                                <th style={{ padding: '0.5rem', width: '8%', textAlign: 'center' }}>Qty</th>
-                                <th style={{ padding: '0.5rem', width: '12%', textAlign: 'right' }}>Price</th>
+                                <th style={{ padding: '0.5rem', width: '30%' }}>Item Description</th>
+                                <th style={{ padding: '0.5rem', width: '10%', textAlign: 'center' }}>Qty</th>
+                                <th style={{ padding: '0.5rem', width: '15%', textAlign: 'right' }}>Price</th>
                                 <th style={{ padding: '0.5rem', width: '20%' }}>Tax Rule</th>
                                 <th style={{ padding: '0.5rem', width: '15%', textAlign: 'right' }}>Total</th>
                                 <th style={{ padding: '0.5rem', width: '5%' }}></th>
@@ -140,22 +139,37 @@ const CreateInvoice = () => {
                             {items.map((item) => (
                                 <tr key={item.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                                     <td style={{ padding: '0.5rem' }}>
-                                        <Input
-                                            value={item.item}
-                                            onChange={(e) => updateItem(item.id, 'item', e.target.value)}
-                                            placeholder="Service or product"
-                                        />
-                                    </td>
-                                    <td style={{ padding: '0.5rem' }}>
                                         <select
+                                            value={item.item}
+                                            onChange={(e) => {
+                                                const selectedProduct = productsAndServices.find(p => p.name === e.target.value);
+                                                if (selectedProduct) {
+                                                    updateItem(item.id, 'item', selectedProduct.name);
+                                                    updateItem(item.id, 'price', selectedProduct.price);
+                                                    if (selectedProduct.taxRuleId) {
+                                                        updateItem(item.id, 'taxRuleId', selectedProduct.taxRuleId);
+                                                    }
+                                                } else {
+                                                    updateItem(item.id, 'item', e.target.value);
+                                                }
+                                            }}
                                             style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
-                                            value={item.costCenter}
-                                            onChange={(e) => updateItem(item.id, 'costCenter', e.target.value)}
                                         >
-                                            <option value="">None</option>
-                                            {costCenters.map(cc => (
-                                                <option key={cc.id} value={cc.id}>{cc.name}</option>
-                                            ))}
+                                            <option value="">Select item...</option>
+                                            {productsAndServices.filter(p => p.type === 'Service').length > 0 && (
+                                                <optgroup label="Services">
+                                                    {productsAndServices.filter(p => p.type === 'Service').map(p => (
+                                                        <option key={p.id} value={p.name}>{p.name} ({p.price.toFixed(2)} JOD / {p.unit})</option>
+                                                    ))}
+                                                </optgroup>
+                                            )}
+                                            {productsAndServices.filter(p => p.type === 'Product').length > 0 && (
+                                                <optgroup label="Products">
+                                                    {productsAndServices.filter(p => p.type === 'Product').map(p => (
+                                                        <option key={p.id} value={p.name}>{p.name} ({p.price.toFixed(2)} JOD / {p.unit})</option>
+                                                    ))}
+                                                </optgroup>
+                                            )}
                                         </select>
                                     </td>
                                     <td style={{ padding: '0.5rem' }}>

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import { Save, Globe, Lock, Bell } from 'lucide-react';
+import { Save, Globe, Lock, Bell, Shield } from 'lucide-react';
 import TaxSettings from './settings/TaxSettings';
 
 const Settings = () => {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('general');
 
     const tabs = [
@@ -13,6 +15,7 @@ const Settings = () => {
         { id: 'security', label: 'Security', icon: <Lock size={18} /> },
         { id: 'tax', label: 'Tax Management', icon: <Globe size={18} /> }, // New
         { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
+        { id: 'permissions', label: 'Permissions & Roles', icon: <Shield size={18} /> },
     ];
 
     return (
@@ -104,6 +107,15 @@ const Settings = () => {
                         <Card className="padding-lg">
                             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Notification Preferences</h3>
                             <p style={{ color: 'var(--color-text-secondary)' }}>Manage your email alerts.</p>
+                        </Card>
+                    )}
+
+                    {activeTab === 'permissions' && (
+                        <Card className="padding-lg" style={{ textAlign: 'center' }}>
+                            <Shield size={48} style={{ color: 'var(--color-primary-600)', marginBottom: '1rem' }} />
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Permissions & Roles Management</h3>
+                            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem' }}>Create roles, define granular permissions (View/Edit/Delete), and assign them to employees.</p>
+                            <Button icon={<Shield size={16} />} onClick={() => navigate('/admin/permissions')}>Open Permissions Manager</Button>
                         </Card>
                     )}
                 </div>
