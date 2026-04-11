@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '@/components/Shared/Card';
-import Button from '@/components/Shared/Button';
-import { Users, UserPlus, FileText, DollarSign, Briefcase, Clock, Calendar, CreditCard } from 'lucide-react';
+import Card from '../../../components/common/Card';
+import Button from '../../../components/common/Button';
+import { Users, UserPlus, FileText, DollarSign, Briefcase, Clock, Calendar, CreditCard, FolderOpen, FileSignature } from 'lucide-react';
 
 const HRDashboard = () => {
     const navigate = useNavigate();
@@ -66,6 +66,30 @@ const HRDashboard = () => {
                     </div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Requests & Approvals</h3>
                     <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Approve leaves & docs.</p>
+                </Card>
+
+                <Card
+                    className="padding-md hoverable"
+                    style={{ width: '240px', cursor: 'pointer' }}
+                    onClick={() => navigate('/admin/hr/projects')}
+                >
+                    <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
+                        <FolderOpen size={24} />
+                    </div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Projects</h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Manage projects & teams.</p>
+                </Card>
+
+                <Card
+                    className="padding-md hoverable"
+                    style={{ width: '240px', cursor: 'pointer' }}
+                    onClick={() => navigate('/admin/hr/contract-templates')}
+                >
+                    <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
+                        <FileSignature size={24} />
+                    </div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Contract Templates</h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Edit & manage contract formats.</p>
                 </Card>
             </div>
         </div>

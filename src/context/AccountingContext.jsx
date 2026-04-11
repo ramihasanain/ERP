@@ -691,6 +691,28 @@ export const AccountingProvider = ({ children }) => {
     const recordInvoicePayment = (invoiceId, paymentData) => {
         // ... (existing invoice logic)
     };
+    // ── Products & Services ──
+    const [productsAndServices, setProductsAndServices] = useState([
+        { id: 'PS-001', name: 'Web Development', type: 'Service', price: 500, unit: 'Hour', taxRuleId: '', description: 'Full-stack web development services', revenueAccount: '4110' },
+        { id: 'PS-002', name: 'UI/UX Design', type: 'Service', price: 350, unit: 'Hour', taxRuleId: '', description: 'User interface and experience design', revenueAccount: '4110' },
+        { id: 'PS-003', name: 'Cloud Hosting', type: 'Service', price: 99, unit: 'Month', taxRuleId: '', description: 'Monthly cloud server hosting', revenueAccount: '4120' },
+        { id: 'PS-004', name: 'Software License', type: 'Product', price: 1200, unit: 'Unit', taxRuleId: '', description: 'Annual software license', revenueAccount: '4110' },
+        { id: 'PS-005', name: 'Technical Consultation', type: 'Service', price: 200, unit: 'Hour', taxRuleId: '', description: 'Expert technical consulting', revenueAccount: '4120' },
+    ]);
+
+    const addProductOrService = (item) => {
+        const newItem = { ...item, id: `PS-${Date.now()}` };
+        setProductsAndServices(prev => [...prev, newItem]);
+        return newItem;
+    };
+
+    const updateProductOrService = (id, updates) => {
+        setProductsAndServices(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    };
+
+    const deleteProductOrService = (id) => {
+        setProductsAndServices(prev => prev.filter(p => p.id !== id));
+    };
 
     const [vendorPayments, setVendorPayments] = useState([]);
 
@@ -780,6 +802,10 @@ export const AccountingProvider = ({ children }) => {
             calculateTax, // New
             addTaxRule, // New
             updateTaxRule, // New
+            productsAndServices,
+            addProductOrService,
+            updateProductOrService,
+            deleteProductOrService,
             drawerState,
             openDrawer,
             closeDrawer,

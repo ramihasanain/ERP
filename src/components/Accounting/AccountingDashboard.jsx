@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '@/components/Shared/Card';
-import Button from '@/components/Shared/Button';
-import { FileText, List, Plus, Landmark, Monitor, Percent, Users, ArrowUpRight, DollarSign, ShoppingCart, Package, Target, CheckCircle } from 'lucide-react';
+import Card from '../../../components/common/Card';
+import Button from '../../../components/common/Button';
+import { FileText, List, Plus, Landmark, Monitor, Percent, Users, ArrowUpRight, DollarSign, ShoppingCart, Package, Target, CheckCircle, Upload, Shield } from 'lucide-react';
 
 const AccountingDashboard = () => {
     const navigate = useNavigate();
@@ -66,6 +66,18 @@ const AccountingDashboard = () => {
                     </div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Sales Invoices</h3>
                     <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Manage billing & revenue.</p>
+                </Card>
+
+                <Card
+                    className="padding-md hoverable"
+                    style={{ width: '240px', cursor: 'pointer' }}
+                    onClick={() => navigate('products-services')}
+                >
+                    <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
+                        <Package size={24} />
+                    </div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Products & Services</h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Manage your catalog.</p>
                 </Card>
 
                 <Card
@@ -165,6 +177,34 @@ const AccountingDashboard = () => {
                     }}>
                         Approvals Needed
                     </div>
+                </Card>
+
+                <Card
+                    className="padding-md hoverable"
+                    style={{ width: '240px', cursor: 'pointer' }}
+                    onClick={() => navigate('bank-import')}
+                >
+                    <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
+                        <Upload size={24} />
+                    </div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Bank Import</h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Import bank statements.</p>
+                </Card>
+
+                <Card
+                    className="padding-md hoverable"
+                    style={{
+                        width: '240px', cursor: 'pointer',
+                        border: '2px solid #7c3aed20',
+                        background: 'linear-gradient(to bottom right, white, #f5f3ff)'
+                    }}
+                    onClick={() => navigate('audit')}
+                >
+                    <div style={{ marginBottom: '1rem', color: '#7c3aed' }}>
+                        <Shield size={24} />
+                    </div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Audit Management</h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>External audit & seal.</p>
                 </Card>
             </div>
 

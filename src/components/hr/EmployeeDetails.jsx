@@ -12,7 +12,7 @@ import TerminationModal from './TerminationModal';
 const EmployeeDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { employees, jobPositions, departments, updateEmployee, addEmployee } = useHR();
+    const { employees, jobPositions, departments, updateEmployee, addEmployee, contractTemplates, generateContract } = useHR();
     const { salaryStructures, salaryComponents, taxSchemes, socialSecuritySchemes, taxSlabs } = usePayroll();
     const isNew = !id;
 
@@ -46,6 +46,8 @@ const EmployeeDetails = () => {
     const [isRenewalModalOpen, setIsRenewalModalOpen] = useState(false);
     const [isTerminationModalOpen, setIsTerminationModalOpen] = useState(false);
     const [selectedHistory, setSelectedHistory] = useState(null);
+    const [selectedTemplateId, setSelectedTemplateId] = useState('');
+    const [generatedContract, setGeneratedContract] = useState(null);
     const [increaseForm, setIncreaseForm] = useState({ date: new Date().toISOString().split('T')[0], amount: '', reason: '' });
     const [reviewForm, setReviewForm] = useState({
         startDate: '', endDate: '',
@@ -281,19 +283,62 @@ const EmployeeDetails = () => {
                                 />
 
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Contract Document</label>
-                                    <div style={{ border: '2px dashed var(--color-border)', borderRadius: 'var(--radius-md)', padding: '2rem', textAlign: 'center', cursor: 'pointer', background: 'var(--color-slate-50)' }}>
-                                        <Upload size={24} style={{ color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }} />
-                                        <p style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)', fontWeight: 500 }}>Click to upload contract</p>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>PDF, DOCX up to 10MB</p>
-                                    </div>
-                                    {/* Mock list of uploaded files */}
-                                    {formData.contract?.file && (
-                                        <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--color-primary-50)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-                                            <FileText size={16} />
-                                            <span>{formData.contract.file}</span>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary-700)' }}>Generate Contract from Template</label>
+                                    <div style={{ border: '2px solid var(--color-primary-200)', borderRadius: 'var(--radius-md)', padding: '1.25rem', background: 'linear-gradient(to bottom right, white, var(--color-primary-50))' }}>
+                                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', fontWeight: 500 }}>Template</label>
+                                                <select
+                                                    style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+                                                    value={selectedTemplateId}
+                                                    onChange={e => setSelectedTemplateId(e.target.value)}
+                                                >
+                                                    <option value="">Select template...</option>
+                                                    {contractTemplates.map(t => (
+                                                        <option key={t.id} value={t.id}>{t.name} ({t.type}){t.isDefault ? ' ⭐' : ''}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                disabled={!selectedTemplateId || !id}
+                                                onClick={() => {
+                                                    const content = generateContract(selectedTemplateId, id);
+                                                    if (content) {
+                                                        setGeneratedContract(content);
+                                                        // Save template ID to employee contract
+                                                        setFormData(prev => ({ ...prev, contract: { ...prev.contract, templateId: selectedTemplateId, generatedContract: content } }));
+                                                    }
+                                                }}
+                                            >
+                                                Generate
+                                            </Button>
                                         </div>
-                                    )}
+
+                                        {generatedContract && (
+                                            <div style={{ marginTop: '1rem' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-success)' }}>✓ Contract Generated</span>
+                                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                        <button onClick={() => navigator.clipboard.writeText(generatedContract)} style={{ fontSize: '0.75rem', padding: '4px 8px', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'white', cursor: 'pointer' }}>Copy</button>
+                                                        <button onClick={() => {
+                                                            const pw = window.open('', '_blank');
+                                                            pw.document.write(`<html><head><title>Contract</title><style>body{font-family:'Times New Roman',serif;padding:60px;line-height:1.8;font-size:14px;white-space:pre-wrap;}</style></head><body>${generatedContract}</body></html>`);
+                                                            pw.document.close();
+                                                            pw.print();
+                                                        }} style={{ fontSize: '0.75rem', padding: '4px 8px', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'white', cursor: 'pointer' }}>Print</button>
+                                                    </div>
+                                                </div>
+                                                <div style={{
+                                                    maxHeight: '200px', overflow: 'auto', padding: '0.75rem',
+                                                    background: 'white', border: '1px solid var(--color-border)', borderRadius: '6px',
+                                                    fontSize: '0.75rem', fontFamily: 'monospace', lineHeight: 1.5, whiteSpace: 'pre-wrap'
+                                                }}>
+                                                    {generatedContract}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </Card>
