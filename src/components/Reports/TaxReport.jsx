@@ -132,9 +132,9 @@ const TaxReport = () => {
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Tax Collected (Output)</p>
                         <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-error)' }}>{activeJurisdiction?.currency} {reportData.totalTaxCollected.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
                     </div>
-                    <div style={{ padding: '1.5rem', background: 'var(--color-primary-50)', border: '1px solid var(--color-primary-100)', borderRadius: '12px' }}>
-                        <p style={{ color: 'var(--color-primary-700)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Net Tax Payable</p>
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary-700)' }}>{activeJurisdiction?.currency} {reportData.netPayable.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
+                    <div style={{ padding: '1.5rem', background: 'color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card))', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                        <p style={{ color: 'var(--color-primary-600)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Net Tax Payable</p>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary-600)' }}>{activeJurisdiction?.currency} {reportData.netPayable.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
                     </div>
                 </div>
 
@@ -142,12 +142,12 @@ const TaxReport = () => {
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Tax Breakdown by Rule</h3>
                 <div style={{ overflowX: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                        <thead style={{ background: 'var(--color-slate-50)' }}>
+                        <thead style={{ background: 'var(--color-bg-table-header)' }}>
                             <tr>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600 }}>Rule Name</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>Net Sales</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>Tax Rate</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>Tax Amount</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Rule Name</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Net Sales</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Tax Rate</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Tax Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -162,7 +162,7 @@ const TaxReport = () => {
                                     <td style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>{row.taxCollected.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                 </tr>
                             ))}
-                            <tr style={{ borderTop: '2px solid var(--color-border)', background: 'var(--color-slate-50)', fontWeight: 700 }}>
+                            <tr style={{ borderTop: '2px solid var(--color-border)', background: 'var(--color-bg-table-header)', fontWeight: 700 }}>
                                 <td style={{ padding: '0.75rem 1rem' }}>Total</td>
                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>{reportData.totalNetSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>-</td>

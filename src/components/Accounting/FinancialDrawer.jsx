@@ -120,7 +120,7 @@ const FinancialDrawer = () => {
         }} onClick={closeDrawer}>
             <div
                 style={{
-                    width: '100%', maxWidth: '520px', background: 'white',
+                    width: '100%', maxWidth: '520px', background: 'var(--color-bg-surface)',
                     height: '100%', display: 'flex', flexDirection: 'column',
                     boxShadow: '-10px 0 40px rgba(0,0,0,0.1)',
                     animation: 'slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
@@ -128,14 +128,14 @@ const FinancialDrawer = () => {
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div style={{ padding: '2rem 1.5rem', borderBottom: '1px solid var(--color-slate-100)', position: 'relative' }}>
+                <div style={{ padding: '2rem 1.5rem', borderBottom: '1px solid var(--color-border)', position: 'relative' }}>
                     <button
                         onClick={closeDrawer}
                         style={{
                             position: 'absolute', top: '1.5rem', right: '1.5rem',
-                            background: 'var(--color-slate-50)', border: 'none',
+                            background: 'var(--color-bg-subtle)', border: 'none',
                             borderRadius: '50%', width: '32px', height: '32px',
-                            cursor: 'pointer', color: 'var(--color-slate-500)',
+                            cursor: 'pointer', color: 'var(--color-text-muted)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}
                     >
@@ -160,7 +160,7 @@ const FinancialDrawer = () => {
                             <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary-600)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                                 {entityType} {t.historyLogs}
                             </p>
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-slate-900)' }}>{entityData?.name || 'Unknown Entity'}</h3>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-main)' }}>{entityData?.name || 'Unknown Entity'}</h3>
                         </div>
                     </div>
 
@@ -173,14 +173,14 @@ const FinancialDrawer = () => {
                 </div>
 
                 {/* Content Area */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: 'var(--color-slate-50)' }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: 'var(--color-bg-secondary)' }}>
                     {activeTab === 'overview' && <OverviewTab t={t} entityType={entityType} data={entityData} history={transactionHistory} getAccountBalance={getAccountBalance} />}
                     {activeTab === 'transactions' && <TransactionsTab language={language} t={t} history={transactionHistory} entityName={entityData?.name} entityType={entityType} entityId={entityId} entityData={entityData} accounts={accounts} getAllChildAccountIds={getAllChildAccountIds} />}
                     {activeTab === 'related' && <RelatedTab t={t} entityType={entityType} data={entityData} />}
                 </div>
 
                 {/* Footer / Actions */}
-                <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid var(--color-slate-100)', display: 'flex', gap: '1rem', background: 'white' }}>
+                <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid var(--color-border)', display: 'flex', gap: '1rem', background: 'var(--color-bg-surface)' }}>
                     <Button variant="outline" fullWidth onClick={closeDrawer} size="lg">{t.done}</Button>
                     {entityType === 'Journal' && (
                         <Button variant="primary" fullWidth onClick={() => window.location.href = `/admin/accounting/journal/${entityId}`} size="lg">
@@ -199,7 +199,7 @@ const TabButton = ({ active, children, onClick }) => (
         style={{
             background: 'none', border: 'none', padding: '0.5rem 0',
             fontSize: '0.875rem', fontWeight: 800,
-            color: active ? 'var(--color-primary-600)' : 'var(--color-slate-400)',
+            color: active ? 'var(--color-primary-600)' : 'var(--color-text-muted)',
             borderBottom: active ? '3px solid var(--color-primary-600)' : '3px solid transparent',
             cursor: 'pointer', transition: 'all 0.3s',
             letterSpacing: '0.01em'
@@ -210,9 +210,9 @@ const TabButton = ({ active, children, onClick }) => (
 );
 
 const AestheticBadge = ({ status, type }) => {
-    const emerald = { bg: '#ecfdf5', text: '#059669', border: '#10b981' };
-    const coral = { bg: '#fff1f2', text: '#e11d48', border: '#f43f5e' };
-    const slate = { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0' };
+    const emerald = { bg: 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))', text: 'var(--color-success)', border: 'var(--color-success)' };
+    const coral = { bg: 'color-mix(in srgb, var(--color-error) 18%, var(--color-bg-card))', text: 'var(--color-error)', border: 'var(--color-error)' };
+    const slate = { bg: 'var(--color-bg-subtle)', text: 'var(--color-text-secondary)', border: 'var(--color-border)' };
 
     const c = type === 'debit' ? emerald : (type === 'credit' ? coral : slate);
 
@@ -237,36 +237,36 @@ const OverviewTab = ({ t, entityType, data, history, getAccountBalance }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{
-                background: 'white', padding: '1.5rem', borderRadius: '20px',
-                border: '1px solid var(--color-slate-100)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
+                background: 'var(--color-bg-surface)', padding: '1.5rem', borderRadius: '20px',
+                border: '1px solid var(--color-border)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
             }}>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-slate-400)', fontWeight: 600, marginBottom: '0.5rem' }}>{t.currentBalance}</p>
-                <h2 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--color-slate-900)', letterSpacing: '-0.04em' }}>
-                    {balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span style={{ fontSize: '1rem', color: 'var(--color-slate-400)' }}>JOD</span>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.5rem' }}>{t.currentBalance}</p>
+                <h2 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--color-text-main)', letterSpacing: '-0.04em' }}>
+                    {balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)' }}>JOD</span>
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-success-500)' }}></div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', fontWeight: 500 }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-success)' }}></div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                         Real-time Ledger Sync Complete
                     </p>
                 </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <Card style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '16px', background: 'white', border: 'none' }}>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-slate-400)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{t.activityCount}</p>
+                <Card style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '16px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{t.activityCount}</p>
                     <p style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--color-primary-600)' }}>{history.length}</p>
                 </Card>
-                <Card style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '16px', background: 'white', border: 'none' }}>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-slate-400)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{t.lastTransaction}</p>
-                    <p style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--color-slate-900)' }}>{lastTransaction}</p>
+                <Card style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '16px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{t.lastTransaction}</p>
+                    <p style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--color-text-main)' }}>{lastTransaction}</p>
                 </Card>
             </div>
 
             {data?.description && (
-                <div style={{ background: 'white', padding: '1.25rem', borderRadius: '16px' }}>
-                    <h4 style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--color-slate-700)' }}>{t.description}</h4>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--color-slate-500)', lineHeight: 1.6 }}>
+                <div style={{ background: 'var(--color-bg-surface)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>{t.description}</h4>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
                         {data.description}
                     </p>
                 </div>
@@ -305,7 +305,7 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
 
     if (history.length === 0) {
         return (
-            <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--color-slate-400)' }}>
+            <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--color-text-muted)' }}>
                 <Activity size={48} style={{ opacity: 0.1, marginBottom: '1.5rem' }} />
                 <p style={{ fontWeight: 600 }}>{t.noTransactions}</p>
             </div>
@@ -318,7 +318,7 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-slate-800)' }}>{t.historyLogs}</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-main)' }}>{t.historyLogs}</span>
                     {isGroup && <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-primary-600)' }}>{t.aggregationMode}</span>}
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -349,16 +349,17 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
 
                 return (
                     <div key={entry.id} style={{
-                        padding: '1.25rem', background: 'white',
-                        border: '1px solid var(--color-slate-100)',
-                        borderLeft: `5px solid ${isDebit ? emerald : (isCredit ? coral : 'var(--color-slate-300)')}`,
+                        padding: '1.25rem', background: 'var(--color-bg-surface)',
+                        border: '1px solid var(--color-border)',
+                        borderLeft: `5px solid ${isDebit ? emerald : (isCredit ? coral : 'var(--color-border)')}`,
                         borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '0.75rem',
                         cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        boxShadow: isExpanded ? '0 10px 25px -5px rgba(0,0,0,0.05)' : 'none'
-                    }} onClick={() => setExpandedEntry(isExpanded ? null : entry.id)} className="hover:shadow-md hover:-translate-y-0.5">
+                        boxShadow: isExpanded ? '0 10px 25px -5px rgba(0,0,0,0.12)' : 'none'
+                    }} onClick={() => setExpandedEntry(isExpanded ? null : entry.id)}
+                    >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-primary-600)', background: 'var(--color-primary-50)', padding: '2px 6px', borderRadius: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-primary-600)', background: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))', padding: '2px 6px', borderRadius: '4px' }}>
                                     {entry.id}
                                 </span>
                                 <AestheticBadge
@@ -366,14 +367,14 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
                                     type={isDebit ? 'debit' : (isCredit ? 'credit' : 'manual')}
                                 />
                             </div>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-slate-400)' }}>{entry.date}</span>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{entry.date}</span>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <p style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-slate-900)', flex: 1, letterSpacing: '-0.01em' }}>{entry.description}</p>
+                            <p style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text-main)', flex: 1, letterSpacing: '-0.01em' }}>{entry.description}</p>
                             <span style={{
                                 fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.02em',
-                                color: isDebit ? emerald : (isCredit ? coral : 'var(--color-slate-900)')
+                                color: isDebit ? emerald : (isCredit ? coral : 'var(--color-text-main)')
                             }}>
                                 {isDebit ? '+' : (isCredit ? '-' : '')}{amount.toLocaleString()} <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>JOD</span>
                             </span>
@@ -382,11 +383,11 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
                         {/* Detailed Entry List (Journal Style) */}
                         {isExpanded && (
                             <div style={{
-                                marginTop: '0.5rem', padding: '1rem', background: 'var(--color-slate-50)',
-                                borderRadius: '12px', border: '1px solid var(--color-slate-100)'
+                                marginTop: '0.5rem', padding: '1rem', background: 'var(--color-bg-secondary)',
+                                borderRadius: '12px', border: '1px solid var(--color-border)'
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                    <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-slate-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.details}</p>
+                                    <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.details}</p>
                                     <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-primary-600)' }}>{entry.sourceType || 'Ledger Entry'}</p>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -401,10 +402,10 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
                                                 display: 'grid', gridTemplateColumns: '1fr 80px 80px',
                                                 fontSize: '0.75rem', padding: '0.4rem 0.5rem',
                                                 borderRadius: '6px',
-                                                background: isHighlight ? 'white' : 'transparent',
-                                                border: isHighlight ? '1px solid var(--color-primary-100)' : 'none',
+                                                background: isHighlight ? 'var(--color-bg-surface)' : 'transparent',
+                                                border: isHighlight ? '1px solid color-mix(in srgb, var(--color-primary-600) 35%, var(--color-border))' : 'none',
                                                 fontWeight: isHighlight ? 800 : 500,
-                                                color: isHighlight ? 'var(--color-primary-700)' : 'var(--color-slate-600)',
+                                                color: isHighlight ? 'var(--color-primary-500)' : 'var(--color-text-secondary)',
                                                 boxShadow: isHighlight ? '0 1px 3px rgba(0,0,0,0.05)' : 'none'
                                             }}>
                                                 <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{accountName}</div>
@@ -423,21 +424,21 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--color-slate-400)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     {entry.isAutomatic ? <Monitor size={12} /> : <User size={12} />}
                                     {entry.isAutomatic ? t.automatic : t.manual}
                                 </span>
                                 {isGroup && matchingLines.length > 0 && !isExpanded && (
                                     <div style={{ display: 'flex', gap: '4px' }}>
                                         {Array.from(new Set(matchingLines.map(l => l.account))).map(accId => (
-                                            <span key={accId} style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--color-slate-400)', background: 'var(--color-slate-100)', padding: '1px 5px', borderRadius: '3px' }}>
+                                            <span key={accId} style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--color-text-muted)', background: 'var(--color-bg-subtle)', padding: '1px 5px', borderRadius: '3px' }}>
                                                 #{accId}
                                             </span>
                                         ))}
                                     </div>
                                 )}
                             </div>
-                            {isExpanded ? <ChevronUp size={16} color="var(--color-slate-400)" /> : <ChevronDown size={16} color="var(--color-slate-400)" />}
+                            {isExpanded ? <ChevronUp size={16} color="var(--color-text-muted)" /> : <ChevronDown size={16} color="var(--color-text-muted)" />}
                         </div>
                     </div>
                 );
@@ -449,9 +450,9 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
 const RelatedTab = ({ t, entityType, data }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-slate-800)', letterSpacing: '-0.01em' }}>{t.connectedModules}</h4>
+            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-main)', letterSpacing: '-0.01em' }}>{t.connectedModules}</h4>
 
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-slate-500)', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
                 This entity is structurally linked to the following accounting dimensions:
             </p>
 
@@ -487,12 +488,12 @@ const RelatedTab = ({ t, entityType, data }) => {
 
 const RelatedItem = ({ label, value }) => (
     <div style={{
-        padding: '1rem', background: 'white', border: '1px solid var(--color-slate-100)',
+        padding: '1rem', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)',
         borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
+        boxShadow: '0 2px 5px rgba(0,0,0,0.04)'
     }}>
-        <span style={{ fontSize: '0.85rem', color: 'var(--color-slate-400)', fontWeight: 600 }}>{label}</span>
-        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--color-slate-800)' }}>{value}</span>
+        <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>{label}</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--color-text-main)' }}>{value}</span>
     </div>
 );
 

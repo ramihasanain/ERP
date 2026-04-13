@@ -30,6 +30,39 @@ button {
     font-family: inherit;
 }
 
+/* Native fields outside the Input component */
+select,
+textarea {
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--color-text-main);
+    background-color: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+}
+
+select option,
+select optgroup {
+    background-color: var(--color-bg-card);
+    color: var(--color-text-main);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--color-text-muted);
+    opacity: 1;
+}
+
+[data-theme='dark'] input::placeholder,
+[data-theme='dark'] textarea::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.9;
+}
+
+/* Table rows that should highlight on hover (replaces nonexistent Tailwind classes) */
+.erp-table-row-hover:hover {
+    background: color-mix(in srgb, var(--color-text-main) 5%, var(--color-bg-surface));
+}
+
 /* Utility Classes */
 .container {
     width: 100%;

@@ -50,7 +50,7 @@ const InvoicePreview = () => {
 
             <Card className="padding-none" style={{ overflow: 'hidden' }}>
                 {/* Status Banner */}
-                <div style={{ background: 'var(--color-slate-50)', padding: '1rem 2rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ background: 'var(--color-bg-subtle)', padding: '1rem 2rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Status:</span>
                         <span style={{
@@ -112,7 +112,7 @@ const InvoicePreview = () => {
                     </div>
 
                     {/* Bill To */}
-                    <div style={{ marginBottom: '3rem', padding: '1.5rem', background: 'var(--color-slate-50)', borderRadius: 'var(--radius-lg)' }}>
+                    <div style={{ marginBottom: '3rem', padding: '1.5rem', background: 'var(--color-bg-subtle)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
                         <h3 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Bill To</h3>
                         <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: '0.25rem' }}>{invoice.client.name}</div>
                         <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }}>
@@ -125,7 +125,7 @@ const InvoicePreview = () => {
                     <div style={{ marginBottom: '2rem' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ borderBottom: '2px solid var(--color-slate-100)' }}>
+                                <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
                                     <th style={{ textAlign: 'left', padding: '1rem 0', color: 'var(--color-text-muted)', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Description</th>
                                     <th style={{ textAlign: 'center', padding: '1rem 0', color: 'var(--color-text-muted)', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', width: '100px' }}>Qty</th>
                                     <th style={{ textAlign: 'right', padding: '1rem 0', color: 'var(--color-text-muted)', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', width: '150px' }}>Price</th>

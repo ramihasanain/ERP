@@ -65,7 +65,7 @@ const EmployeeRequests = () => {
             </div>
 
             {/* Professional Filter Bar */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', background: 'white', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', background: 'var(--color-bg-surface)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ width: '320px' }}>
                         <Input
@@ -78,7 +78,7 @@ const EmployeeRequests = () => {
                     </div>
 
                     <select
-                        style={{ padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', fontSize: '0.875rem', minWidth: '160px' }}
+                        style={{ padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', fontSize: '0.875rem', minWidth: '160px', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value)}
                     >
@@ -120,8 +120,8 @@ const EmployeeRequests = () => {
                                     padding: '5px 12px',
                                     borderRadius: '6px',
                                     border: '1px solid ' + (filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-border)'),
-                                    background: filterStatus === status ? 'var(--color-primary-600)' : 'white',
-                                    color: filterStatus === status ? 'white' : 'var(--color-slate-600)',
+                                    background: filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-bg-surface)',
+                                    color: filterStatus === status ? 'white' : 'var(--color-text-secondary)',
                                     cursor: 'pointer',
                                     fontWeight: 500,
                                     fontSize: '0.8rem'
@@ -154,7 +154,7 @@ const EmployeeRequests = () => {
             <Card className="padding-none">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: 'var(--color-slate-50)', textAlign: 'left', color: 'var(--color-text-muted)' }}>
+                        <tr style={{ background: 'var(--color-bg-table-header)', textAlign: 'left', color: 'var(--color-text-secondary)' }}>
                             <th style={{ padding: '1rem 1.5rem' }}>Employee</th>
                             <th style={{ padding: '1rem 1rem' }}>Request Type</th>
                             <th style={{ padding: '1rem 1rem' }}>Details</th>
@@ -168,7 +168,7 @@ const EmployeeRequests = () => {
                             <tr key={req.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                                 <td style={{ padding: '1rem 1.5rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <div style={{ padding: '0.5rem', background: 'var(--color-slate-100)', borderRadius: '50%' }}>
+                                        <div style={{ padding: '0.5rem', background: 'var(--color-bg-subtle)', borderRadius: '50%' }}>
                                             <User size={16} />
                                         </div>
                                         <span style={{ fontWeight: 500 }}>{req.employee}</span>

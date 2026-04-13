@@ -15,12 +15,12 @@ const AuditManagement = () => {
     const [selectedPeriodId, setSelectedPeriodId] = useState('');
 
     const statusConfig = {
-        [AUDIT_STATUSES.OPEN]: { label: 'Open', color: 'var(--color-text-secondary)', bg: 'var(--color-slate-100)', icon: <Eye size={14} /> },
+        [AUDIT_STATUSES.OPEN]: { label: 'Open', color: 'var(--color-text-secondary)', bg: 'var(--color-bg-subtle)', icon: <Eye size={14} /> },
         [AUDIT_STATUSES.SUBMITTED]: { label: 'Submitted for Audit', color: 'var(--color-warning)', bg: 'var(--color-warning-dim)', icon: <Clock size={14} /> },
-        [AUDIT_STATUSES.IN_REVIEW]: { label: 'Under Review', color: 'var(--color-primary-600)', bg: 'var(--color-primary-50)', icon: <Eye size={14} /> },
+        [AUDIT_STATUSES.IN_REVIEW]: { label: 'Under Review', color: 'var(--color-primary-600)', bg: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))', icon: <Eye size={14} /> },
         [AUDIT_STATUSES.REVISION]: { label: 'Revision Needed', color: 'var(--color-error)', bg: 'var(--color-error-dim)', icon: <RotateCcw size={14} /> },
         [AUDIT_STATUSES.APPROVED]: { label: 'Approved', color: 'var(--color-success)', bg: 'var(--color-success-dim)', icon: <CheckCircle size={14} /> },
-        [AUDIT_STATUSES.SEALED]: { label: 'Sealed ✦', color: '#7c3aed', bg: '#f5f3ff', icon: <Lock size={14} /> },
+        [AUDIT_STATUSES.SEALED]: { label: 'Sealed ✦', color: 'var(--color-secondary-400)', bg: 'color-mix(in srgb, var(--color-secondary-600) 18%, var(--color-bg-card))', icon: <Lock size={14} /> },
     };
 
     const handleSubmit = () => {
@@ -91,7 +91,7 @@ Digital Seal: ${period.sealNumber}
             </div>
 
             {/* Submit for Audit */}
-            <Card className="padding-lg" style={{ border: '2px solid var(--color-primary-200)', background: 'linear-gradient(to bottom right, white, var(--color-primary-50))' }}>
+            <Card className="padding-lg" style={{ border: '2px solid var(--color-border)', background: 'linear-gradient(to bottom right, var(--color-bg-card), color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card)))' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                     <div style={{
                         width: '3rem', height: '3rem', borderRadius: '12px',
@@ -114,7 +114,7 @@ Digital Seal: ${period.sealNumber}
                         <select
                             value={selectedPeriodId}
                             onChange={e => setSelectedPeriodId(e.target.value)}
-                            style={{ width: '100%', padding: '0.625rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                            style={{ width: '100%', padding: '0.625rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                         >
                             <option value="">Select period...</option>
                             {openPeriods.map(p => (
@@ -128,7 +128,7 @@ Digital Seal: ${period.sealNumber}
                         <select
                             value={selectedFirmId}
                             onChange={e => setSelectedFirmId(e.target.value)}
-                            style={{ width: '100%', padding: '0.625rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                            style={{ width: '100%', padding: '0.625rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                         >
                             <option value="">Select auditing firm...</option>
                             {auditFirms.map(f => (
@@ -160,7 +160,7 @@ Digital Seal: ${period.sealNumber}
                     {auditFirms.map(firm => (
                         <div key={firm.id} style={{
                             padding: '1rem', borderRadius: '10px', border: '1px solid var(--color-border)',
-                            background: 'white'
+                            background: 'var(--color-bg-surface)'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -204,7 +204,7 @@ Digital Seal: ${period.sealNumber}
                                 <div key={period.id} style={{
                                     padding: '1rem', borderRadius: '10px', border: '1px solid var(--color-border)',
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                    background: 'var(--color-slate-50)'
+                                    background: 'var(--color-bg-subtle)'
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                         <Lock size={18} style={{ color: 'var(--color-warning)' }} />
@@ -241,8 +241,8 @@ Digital Seal: ${period.sealNumber}
                             return (
                                 <div key={period.id} style={{
                                     padding: '1rem', borderRadius: '10px',
-                                    border: period.status === AUDIT_STATUSES.SEALED ? '2px solid #7c3aed' : '1px solid var(--color-border)',
-                                    background: period.status === AUDIT_STATUSES.SEALED ? '#f5f3ff' : 'white',
+                                    border: period.status === AUDIT_STATUSES.SEALED ? '2px solid var(--color-secondary-600)' : '1px solid var(--color-border)',
+                                    background: period.status === AUDIT_STATUSES.SEALED ? 'color-mix(in srgb, var(--color-secondary-600) 16%, var(--color-bg-card))' : 'var(--color-bg-surface)',
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

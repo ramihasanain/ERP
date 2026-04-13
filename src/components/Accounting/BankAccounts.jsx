@@ -53,7 +53,7 @@ const BankAccounts = () => {
                             <button
                                 onClick={() => openEditModal(account)}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '4px', color: 'var(--color-slate-400)' }}
-                                className="hover:bg-slate-100"
+                                className="erp-table-row-hover"
                                 title="Edit Account"
                             >
                                 <Edit3 size={16} />
@@ -62,7 +62,7 @@ const BankAccounts = () => {
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', marginTop: '0.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <div style={{ padding: '0.5rem', background: 'var(--color-slate-100)', borderRadius: '0.5rem' }}>
+                                <div style={{ padding: '0.5rem', background: 'var(--color-bg-subtle)', borderRadius: '0.5rem' }}>
                                     <Landmark size={24} color={account.type === 'Bank' ? 'var(--color-primary-600)' : 'var(--color-slate-600)'} />
                                 </div>
                                 <div>
@@ -80,7 +80,7 @@ const BankAccounts = () => {
                         </p>
                         <Button
                             variant="outline"
-                            size="small"
+                            size="sm"
                             icon={<Eye size={16} />}
                             onClick={() => openDrawer('Bank', account.id)}
                             style={{ width: '100%', justifyContent: 'center' }}
@@ -115,7 +115,7 @@ const BankAccounts = () => {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <div style={{ flex: 1 }}>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>From Account</label>
-                                    <select style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid var(--color-border)' }}>
+                                    <select style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}>
                                         <option>Arab Bank - Corporate</option>
                                         <option>Main Cash Box</option>
                                     </select>
@@ -125,7 +125,7 @@ const BankAccounts = () => {
                                 </div>
                                 <div style={{ flex: 1 }}>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>To Account</label>
-                                    <select style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid var(--color-border)' }}>
+                                    <select style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}>
                                         <option>Main Cash Box</option>
                                         <option>Arab Bank - Corporate</option>
                                     </select>
@@ -181,7 +181,7 @@ const EditBankModal = ({ account, onClose, onSave }) => {
                         <select
                             value={formData.type}
                             onChange={e => setFormData({ ...formData, type: e.target.value })}
-                            style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                            style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                         >
                             <option value="Bank">Bank Account</option>
                             <option value="Cash">Cash Account</option>
@@ -208,7 +208,7 @@ const EditBankModal = ({ account, onClose, onSave }) => {
                             <select
                                 value={formData.currency}
                                 onChange={e => setFormData({ ...formData, currency: e.target.value })}
-                                style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                                style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                             >
                                 <option value="JOD">JOD</option>
                                 <option value="USD">USD</option>

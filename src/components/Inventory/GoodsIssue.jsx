@@ -123,7 +123,7 @@ const GoodsIssue = () => {
             <Card className="padding-md">
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem' }}>
                     <thead>
-                        <tr style={{ background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-border)' }}>
+                        <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)' }}>
                             <th style={thStyle}>Item</th>
                             <th style={thStyle}>Stock On Hand</th>
                             <th style={thStyle}>Quantity</th>
@@ -196,7 +196,7 @@ const GoodsIssue = () => {
 };
 
 const labelStyle = { display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-text-primary)' };
-const inputStyle = { padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.9rem' };
+const inputStyle = { padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' };
 const thStyle = { textAlign: 'left', padding: '1rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: 600 };
 const tdStyle = { padding: '1rem', verticalAlign: 'middle' };
 

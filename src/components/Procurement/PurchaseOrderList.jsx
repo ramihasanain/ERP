@@ -26,7 +26,7 @@ const PurchaseOrderList = () => {
             case 'Approved': return 'var(--color-success)';
             case 'Rejected': return 'var(--color-danger)';
             case 'Closed': return 'var(--color-primary-700)';
-            default: return 'var(--color-text-primary)';
+            default: return 'var(--color-text-main)';
         }
     };
 
@@ -50,23 +50,26 @@ const PurchaseOrderList = () => {
                         placeholder="Search POs or Vendors..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.5rem', border: '1px solid var(--color-border)', borderRadius: '6px' }}
+                        style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.5rem', border: '1px solid var(--color-border)', borderRadius: '6px', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                     />
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', overflowX: 'auto', maxWidth: '100%', background: 'var(--color-bg-toggle-track)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                     {['All', 'Draft', 'Pending Approval', 'Approved', 'Rejected'].map(status => (
                         <button
                             key={status}
+                            type="button"
                             onClick={() => setFilterStatus(status)}
                             style={{
-                                padding: '0.5rem 1rem',
-                                borderRadius: '20px',
-                                border: filterStatus === status ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
-                                background: filterStatus === status ? 'var(--color-primary-50)' : 'white',
-                                color: filterStatus === status ? 'var(--color-primary-700)' : 'var(--color-text-secondary)',
+                                padding: '6px 12px',
+                                border: 'none',
+                                borderRadius: '6px',
+                                whiteSpace: 'nowrap',
+                                background: filterStatus === status ? 'var(--color-bg-surface)' : 'transparent',
+                                boxShadow: filterStatus === status ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
+                                color: filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
                                 cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: 500
+                                fontSize: '0.8rem',
+                                fontWeight: 500,
                             }}
                         >
                             {status}
@@ -78,7 +81,7 @@ const PurchaseOrderList = () => {
             <Card>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-slate-50)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-bg-table-header)' }}>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>PO ID</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Vendor</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Date</th>
@@ -90,7 +93,7 @@ const PurchaseOrderList = () => {
                     </thead>
                     <tbody>
                         {filteredPOs.map(po => (
-                            <tr key={po.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                            <tr key={po.id} style={{ borderBottom: '1px solid var(--color-border)' }} className="erp-table-row-hover">
                                 <td style={{ padding: '1rem', fontWeight: 500 }}>{po.id}</td>
                                 <td style={{ padding: '1rem' }}>{po.vendorName}</td>
                                 <td style={{ padding: '1rem' }}>{po.date}</td>

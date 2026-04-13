@@ -29,7 +29,7 @@ const GeneralLedger = () => {
 
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                     <thead>
-                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', color: 'var(--color-text-muted)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-bg-table-header)', color: 'var(--color-text-secondary)' }}>
                             <th style={{ padding: '0.75rem 0' }}>Date</th>
                             <th style={{ padding: '0.75rem 0' }}>Reference</th>
                             <th style={{ padding: '0.75rem 0' }}>Description</th>

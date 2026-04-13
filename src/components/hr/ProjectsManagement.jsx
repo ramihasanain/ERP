@@ -56,14 +56,14 @@ const ProjectsManagement = () => {
     const statusColors = {
         'Active': { bg: 'var(--color-success-dim)', color: 'var(--color-success)' },
         'On Hold': { bg: 'var(--color-warning-dim)', color: 'var(--color-warning)' },
-        'Completed': { bg: 'var(--color-primary-50)', color: 'var(--color-primary-600)' },
-        'Cancelled': { bg: '#fef2f2', color: 'var(--color-error)' }
+        'Completed': { bg: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))', color: 'var(--color-primary-500)' },
+        'Cancelled': { bg: 'color-mix(in srgb, var(--color-error) 16%, var(--color-bg-card))', color: 'var(--color-error)' }
     };
 
     const selectStyle = {
         width: '100%', padding: '0.6rem 0.75rem', borderRadius: '8px',
         border: '1px solid var(--color-border)', fontSize: '0.9rem',
-        background: 'white'
+        background: 'var(--color-bg-surface)', color: 'var(--color-text-main)',
     };
 
     return (
@@ -81,15 +81,15 @@ const ProjectsManagement = () => {
                 <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
                     <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-slate-400)' }} size={18} />
                     <input type="text" placeholder="Search projects..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                        style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '0.9rem' }} />
+                        style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }} />
                 </div>
-                <div style={{ display: 'flex', background: 'var(--color-slate-100)', padding: '4px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', background: 'var(--color-bg-toggle-track)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                     {['All', 'Active', 'On Hold', 'Completed'].map(s => (
                         <button key={s} onClick={() => setFilterStatus(s)} style={{
                             padding: '6px 14px', border: 'none', borderRadius: '6px',
-                            background: filterStatus === s ? 'white' : 'transparent',
-                            boxShadow: filterStatus === s ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                            color: filterStatus === s ? 'var(--color-primary-600)' : 'var(--color-slate-600)',
+                            background: filterStatus === s ? 'var(--color-bg-surface)' : 'transparent',
+                            boxShadow: filterStatus === s ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
+                            color: filterStatus === s ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
                             cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500
                         }}>{s}</button>
                     ))}
@@ -98,10 +98,10 @@ const ProjectsManagement = () => {
 
             {/* Add/Edit Form */}
             {showForm && (
-                <Card className="padding-lg" style={{ border: '2px solid var(--color-primary-200)', background: 'linear-gradient(to bottom right, white, var(--color-primary-50))' }}>
+                <Card className="padding-lg" style={{ border: '2px solid var(--color-border)', background: 'linear-gradient(to bottom right, var(--color-bg-card), color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card)))' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{editingProject ? 'Edit Project' : 'New Project'}</h3>
-                        <button onClick={resetForm} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-500)' }}><X size={20} /></button>
+                        <button onClick={resetForm} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}><X size={20} /></button>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                         <Input label="Project Name *" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. ERP Development" />
@@ -174,7 +174,7 @@ const ProjectsManagement = () => {
                 <Card key={project.id} className="padding-lg">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                            <div style={{ width: '3rem', height: '3rem', borderRadius: '12px', background: 'var(--color-primary-50)', color: 'var(--color-primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: '3rem', height: '3rem', borderRadius: '12px', background: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))', color: 'var(--color-primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <FolderOpen size={22} />
                             </div>
                             <div>
@@ -183,8 +183,8 @@ const ProjectsManagement = () => {
                                     <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{project.client || 'No Client'}</span>
                                     <span style={{
                                         padding: '2px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 600,
-                                        background: statusColors[project.status]?.bg || '#f1f5f9',
-                                        color: statusColors[project.status]?.color || '#64748b'
+                                        background: statusColors[project.status]?.bg || 'var(--color-bg-subtle)',
+                                        color: statusColors[project.status]?.color || 'var(--color-text-secondary)'
                                     }}>{project.status}</span>
                                     <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                                         {project.startDate} → {project.endDate || 'Ongoing'}
@@ -216,9 +216,9 @@ const ProjectsManagement = () => {
                                 <div key={ae.employeeId} style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                                     padding: '6px 12px', borderRadius: '20px',
-                                    background: 'var(--color-slate-100)', fontSize: '0.8rem'
+                                    background: 'var(--color-bg-subtle)', fontSize: '0.8rem', border: '1px solid var(--color-border)', color: 'var(--color-text-main)',
                                 }}>
-                                    <span style={{ fontWeight: 600 }}>{getEmpName(ae.employeeId)}</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{getEmpName(ae.employeeId)}</span>
                                     <span style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>({ae.role})</span>
                                     <button
                                         onClick={() => removeEmployeeFromProject(project.id, ae.employeeId)}

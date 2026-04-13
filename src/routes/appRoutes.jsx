@@ -16,11 +16,13 @@ import Invoices from '@/components/Accounting/Invoices';
 import CreateInvoice from '@/components/Accounting/CreateInvoice';
 import InvoicePreview from '@/components/Accounting/InvoicePreview';
 import VendorPaymentsList from '@/components/Accounting/VendorPaymentsList';
+import ProductsServices from '@/components/Accounting/ProductsServices';
 import BankAccounts from '@/components/Accounting/BankAccounts';
 import AddBankAccount from '@/components/Accounting/AddBankAccount';
 import FixedAssets from '@/components/Accounting/FixedAssets';
 import RegisterAsset from '@/components/Accounting/RegisterAsset';
 import CostCenters from '@/components/Accounting/CostCenters';
+import BankStatementImport from '@/components/Accounting/BankStatementImport';
 import Customers from '@/components/Accounting/Customers';
 import AddCustomer from '@/components/Accounting/AddCustomer';
 import HRDashboard from '@/components/hr/HRDashboard';
@@ -39,6 +41,8 @@ import PayslipPDF from '@/components/hr/payroll/PayslipPDF';
 import Attendance from '@/components/hr/Attendance';
 import LeaveRequests from '@/components/hr/LeaveRequests';
 import EmployeeRequests from '@/components/hr/EmployeeRequests';
+import ProjectsManagement from '@/components/hr/ProjectsManagement';
+import ContractTemplates from '@/components/hr/ContractTemplates';
 import InventoryDashboard from '@/components/Inventory/InventoryDashboard';
 import ItemsList from '@/components/Inventory/ItemsList';
 import AddItem from '@/components/Inventory/AddItem';
@@ -65,7 +69,14 @@ import EmployeeDashboard from '@/pages/employee/EmployeeDashboard';
 import MyRequests from '@/pages/employee/MyRequests';
 import Payslips from '@/pages/employee/Payslips';
 import PayslipPreview from '@/pages/employee/PayslipPreview';
+import MyContract from '@/pages/employee/MyContract';
 import Settings from '@/components/Settings/Settings';
+import PermissionsManagement from '@/components/PermissionsManagement';
+import AuditorLogin from '@/pages/auditor/AuditorLogin';
+import AuditorDashboard from '@/pages/auditor/AuditorDashboard';
+import AuditManagement from '@/components/Accounting/AuditManagement';
+import AuditorAdjustmentsPage from '@/components/AuditorAdjustmentsPage';
+import NotificationsPage from '@/components/NotificationsPage';
 
 export default function AppRoutes() {
   return (
@@ -75,6 +86,9 @@ export default function AppRoutes() {
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/onboarding" element={<OnboardingWizard />} />
+
+      <Route path="/auditor/login" element={<AuditorLogin />} />
+      <Route path="/auditor/dashboard" element={<AuditorDashboard />} />
 
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />
@@ -99,7 +113,12 @@ export default function AppRoutes() {
           <Route path="customers" element={<Customers />} />
           <Route path="customers/new" element={<AddCustomer />} />
           <Route path="vendor-payments" element={<VendorPaymentsList />} />
+          <Route path="products-services" element={<ProductsServices />} />
+          <Route path="bank-import" element={<BankStatementImport />} />
+          <Route path="audit" element={<AuditManagement />} />
         </Route>
+
+        <Route path="auditor-adjustments" element={<AuditorAdjustmentsPage />} />
 
         <Route path="hr">
           <Route index element={<HRDashboard />} />
@@ -119,6 +138,8 @@ export default function AppRoutes() {
           <Route path="attendance" element={<Attendance />} />
           <Route path="attendance/requests" element={<LeaveRequests />} />
           <Route path="requests" element={<EmployeeRequests />} />
+          <Route path="projects" element={<ProjectsManagement />} />
+          <Route path="contract-templates" element={<ContractTemplates />} />
         </Route>
 
         <Route path="inventory" element={<InventoryLayout />}>
@@ -148,7 +169,9 @@ export default function AppRoutes() {
           <Route path="cash-flow" element={<CashFlowStatement />} />
         </Route>
         <Route path="settings" element={<Settings />} />
+        <Route path="permissions" element={<PermissionsManagement />} />
         <Route path="categories" element={<CategoryManagement />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
 
       <Route path="/employee" element={<EmployeeLayout />}>
@@ -157,6 +180,7 @@ export default function AppRoutes() {
         <Route path="requests" element={<MyRequests />} />
         <Route path="payslips" element={<Payslips />} />
         <Route path="payslips/:id" element={<PayslipPreview />} />
+        <Route path="my-contract" element={<MyContract />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

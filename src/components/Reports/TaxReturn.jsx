@@ -54,7 +54,7 @@ const TaxReturn = () => {
                     </div>
 
                     {/* Net Payable */}
-                    <div style={{ marginTop: '1rem', padding: '1.5rem', background: 'var(--color-slate-50)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--color-border)' }}>
+                    <div style={{ marginTop: '1rem', padding: '1.5rem', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--color-border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                             <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>Net Tax Payable</span>
                             <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-error)' }}>$8,400.00</span>

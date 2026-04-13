@@ -151,7 +151,7 @@ const AddItem = () => {
     );
 };
 
-const labelStyle = { display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-text-primary)' };
-const inputStyle = { width: '100%', padding: '0.7rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.95rem' };
+const labelStyle = { display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-text-main)' };
+const inputStyle = { width: '100%', padding: '0.7rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.95rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' };
 
 export default AddItem;

@@ -39,7 +39,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
                     alignItems: 'center', justifyContent: 'space-between', background: 'var(--color-slate-50)',
                     borderTopLeftRadius: 'var(--radius-lg)', borderTopRightRadius: 'var(--radius-lg)'
                 }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{title}</h3>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 500, color: 'var(--color-text-main)' }}>{title}</h3>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
                         <X size={20} />
                     </button>

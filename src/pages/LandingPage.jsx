@@ -1,18 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
-import { useLanguage, languages } from '../context/LanguageContext';
-import { Moon, Sun } from 'lucide-react';
-import Button from '../components/Shared/Button';
+import clsx from 'clsx';
+import btn from '../components/Shared/Button.module.css';
+import LanguageMenu from '../components/Shared/LanguageMenu';
+import ThemeToggle from '../components/Shared/ThemeToggle';
 import HeroSection from './landing/HeroSection';
 import FeaturesSection from './landing/FeaturesSection';
 import PricingSection from './landing/PricingSection';
 import Footer from './landing/Footer';
 
 const LandingPage = () => {
-    const { theme, toggleTheme } = useTheme();
-    const { language, changeLanguage } = useLanguage();
-
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             {/* Navigation Bar */}
@@ -36,45 +33,28 @@ const LandingPage = () => {
                         <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em' }}>UnifiedCore</span>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                         <div style={{ display: 'none', md: 'flex', gap: '1.5rem' }}>
                             {/* Desktop Links could go here */}
                         </div>
 
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', paddingLeft: '1rem', borderLeft: '1px solid var(--color-border)' }}>
-                            <button
-                                onClick={toggleTheme}
-                                style={{ background: 'transparent', border: 'none', color: 'var(--color-text-secondary)', padding: '0.5rem' }}
-                            >
-                                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                            </button>
-
-                            <select
-                                value={language}
-                                onChange={(e) => changeLanguage(e.target.value)}
-                                style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: 'var(--color-text-main)',
-                                    fontWeight: 500,
-                                    cursor: 'pointer',
-                                    fontFamily: 'inherit'
-                                }}
-                            >
-                                <option value="en">EN</option>
-                                <option value="ar">AR</option>
-                                <option value="de">DE</option>
-                            </select>
+                            <ThemeToggle size="sm" />
+                            <LanguageMenu align="end" size="sm" />
                         </div>
 
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <Link to="/auth/signin">
-                                <Button variant="ghost" size="sm">Log In</Button>
-                            </Link>
-                            <Link to="/auth/signup">
-                                <Button size="sm">Get Started</Button>
-                            </Link>
-                        </div>
+                        <Link
+                            to="/auth/signin"
+                            className={clsx(btn.button, btn.surface, btn.toolbar)}
+                        >
+                            Log In
+                        </Link>
+                        <Link
+                            to="/auth/signup"
+                            className={clsx(btn.button, btn.primary, btn.toolbar)}
+                        >
+                            Get Started
+                        </Link>
                     </div>
                 </div>
             </nav>

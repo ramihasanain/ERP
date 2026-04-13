@@ -23,7 +23,7 @@ const InventoryLayout = () => {
             <div style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div>
-                        <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>Inventory Management</h1>
+                        <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Inventory Management</h1>
                         <p style={{ color: 'var(--color-text-secondary)' }}>Track stock, manage warehouses, and control procurement.</p>
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>

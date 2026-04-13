@@ -29,7 +29,7 @@ const InventoryDashboard = () => {
                     <KPICard title="Total Inventory Value" value={`${totalInventoryValue.toLocaleString()} JOD`} icon={<DollarSign size={24} />} color="primary" />
                 </div>
                 <div onClick={() => navigate('/admin/inventory/items')} style={{ cursor: 'pointer' }}>
-                    <KPICard title="Total Items" value={totalItems} icon={<Package size={24} />} color="indigo" />
+                    <KPICard title="Total Items" value={totalItems} icon={<Package size={24} />} color="primary" />
                 </div>
                 <div onClick={() => navigate('/admin/inventory/items?filter=low_stock')} style={{ cursor: 'pointer' }}>
                     <KPICard
@@ -58,8 +58,8 @@ const InventoryDashboard = () => {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                                 <div style={{
                                                     padding: '0.5rem', borderRadius: '50%',
-                                                    background: trans.type === 'IN' ? 'var(--color-success-50)' : 'var(--color-warning-50)',
-                                                    color: trans.type === 'IN' ? 'var(--color-success-600)' : 'var(--color-warning-600)'
+                                                    background: trans.type === 'IN' ? 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))' : 'color-mix(in srgb, var(--color-warning) 18%, var(--color-bg-card))',
+                                                    color: trans.type === 'IN' ? 'var(--color-success)' : 'var(--color-warning)'
                                                 }}>
                                                     {trans.type === 'IN' ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
                                                 </div>
@@ -89,14 +89,14 @@ const InventoryDashboard = () => {
                             <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>All stock levels healthy.</div>
                         ) : (
                             lowStockItems.map(item => (
-                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', background: 'var(--color-danger-50)', borderRadius: '4px' }}>
+                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', background: 'color-mix(in srgb, var(--color-error) 16%, var(--color-bg-card))', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-danger-900)' }}>{item.name}</span>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--color-danger-700)' }}>SKU: {item.sku}</span>
+                                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-error)' }}>{item.name}</span>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>SKU: {item.sku}</span>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <span style={{ display: 'block', fontWeight: 700, color: 'var(--color-danger-700)' }}>{getStockLevel(item.id)} {item.uom}</span>
-                                        <span style={{ fontSize: '0.7rem', color: 'var(--color-danger-600)' }}>Reorder: {item.reorderLevel}</span>
+                                        <span style={{ display: 'block', fontWeight: 700, color: 'var(--color-error)' }}>{getStockLevel(item.id)} {item.uom}</span>
+                                        <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Reorder: {item.reorderLevel}</span>
                                     </div>
                                 </div>
                             ))
@@ -108,18 +108,27 @@ const InventoryDashboard = () => {
     );
 };
 
-const KPICard = ({ title, value, icon, color }) => (
-    <Card className="padding-md" style={{ borderLeft: `4px solid var(--color-${color}-500)` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '0.75rem', background: `var(--color-${color}-50)`, borderRadius: '50%', color: `var(--color-${color}-600)` }}>
-                {icon}
+const KPICard = ({ title, value, icon, color }) => {
+    const c = color === 'indigo' ? 'primary' : color;
+    return (
+        <Card className="padding-md" style={{ borderLeft: `4px solid var(--color-${c}-500)` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{
+                    padding: '0.75rem',
+                    background: `color-mix(in srgb, var(--color-${c}-500) 14%, var(--color-bg-card))`,
+                    borderRadius: '50%',
+                    color: `var(--color-${c}-600)`,
+                }}
+                >
+                    {icon}
+                </div>
+                <div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>{title}</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.2 }}>{value}</div>
+                </div>
             </div>
-            <div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>{title}</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.2 }}>{value}</div>
-            </div>
-        </div>
-    </Card>
-);
+        </Card>
+    );
+};
 
 export default InventoryDashboard;

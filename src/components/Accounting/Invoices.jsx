@@ -29,12 +29,18 @@ const Invoices = () => {
 
     const getStatusStyle = (status) => {
         switch (status) {
-            case 'Paid': return { bg: 'var(--color-success-50)', color: 'var(--color-success-700)' };
-            case 'Partial': return { bg: 'var(--color-warning-50)', color: 'var(--color-warning-700)' };
-            case 'Posted': return { bg: 'var(--color-primary-50)', color: 'var(--color-primary-700)' };
-            case 'Draft': return { bg: 'var(--color-slate-100)', color: 'var(--color-slate-600)' };
-            case 'Overdue': return { bg: 'var(--color-danger-50)', color: 'var(--color-danger-700)' };
-            default: return { bg: 'var(--color-slate-100)', color: 'var(--color-slate-600)' };
+            case 'Paid':
+                return { bg: 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))', color: 'var(--color-success)' };
+            case 'Partial':
+                return { bg: 'color-mix(in srgb, var(--color-warning) 18%, var(--color-bg-card))', color: 'var(--color-warning)' };
+            case 'Posted':
+                return { bg: 'color-mix(in srgb, var(--color-primary-600) 16%, var(--color-bg-card))', color: 'var(--color-primary-500)' };
+            case 'Draft':
+                return { bg: 'color-mix(in srgb, var(--color-text-main) 6%, var(--color-bg-card))', color: 'var(--color-text-secondary)' };
+            case 'Overdue':
+                return { bg: 'color-mix(in srgb, var(--color-error) 18%, var(--color-bg-card))', color: 'var(--color-error)' };
+            default:
+                return { bg: 'color-mix(in srgb, var(--color-text-main) 6%, var(--color-bg-card))', color: 'var(--color-text-secondary)' };
         }
     };
 
@@ -84,7 +90,7 @@ const Invoices = () => {
                         </div>
 
                         <select
-                            style={{ padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', fontSize: '0.875rem', minWidth: '180px' }}
+                            style={{ padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', fontSize: '0.875rem', minWidth: '180px', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                             value={customerFilter}
                             onChange={e => setCustomerFilter(e.target.value)}
                         >
@@ -125,8 +131,8 @@ const Invoices = () => {
                                         padding: '5px 12px',
                                         borderRadius: '6px',
                                         border: '1px solid ' + (statusFilter === status ? 'var(--color-primary-600)' : 'var(--color-border)'),
-                                        background: statusFilter === status ? 'var(--color-primary-600)' : 'white',
-                                        color: statusFilter === status ? 'white' : 'var(--color-slate-600)',
+                                        background: statusFilter === status ? 'var(--color-primary-600)' : 'var(--color-bg-surface)',
+                                        color: statusFilter === status ? 'white' : 'var(--color-text-secondary)',
                                         cursor: 'pointer',
                                         fontWeight: 500,
                                         fontSize: '0.8rem'
@@ -158,7 +164,7 @@ const Invoices = () => {
 
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                     <thead>
-                        <tr style={{ background: 'var(--color-slate-50)', textAlign: isRtl ? 'right' : 'left', color: 'var(--color-text-muted)' }}>
+                        <tr style={{ background: 'var(--color-bg-table-header)', textAlign: isRtl ? 'right' : 'left', color: 'var(--color-text-secondary)' }}>
                             <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'رقم الفاتورة' : 'Invoice #'}</th>
                             <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'العميل' : 'Client'}</th>
                             <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'التاريخ' : 'Date'}</th>
@@ -172,7 +178,7 @@ const Invoices = () => {
                         {filteredInvoices.map(inv => {
                             const statusStyle = getStatusStyle(inv.status);
                             return (
-                                <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }} className="hover:bg-slate-50" onClick={() => navigate(inv.id)}>
+                                <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }} className="erp-table-row-hover" onClick={() => navigate(inv.id)}>
                                     <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{inv.id}</td>
                                     <td style={{ padding: '1rem 1rem' }}>{getCustomerName(inv.customerId)}</td>
                                     <td style={{ padding: '1rem 1rem' }}>{inv.date}</td>

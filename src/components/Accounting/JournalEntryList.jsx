@@ -20,21 +20,21 @@ const JournalEntryList = ({ limit }) => {
         <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                 <thead>
-                    <tr style={{ background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Date</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>ID</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Reference</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Source</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Description</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600, textAlign: 'right' }}>Amount</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Status</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Actions</th>
+                    <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Date</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>ID</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Reference</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Source</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Description</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600, textAlign: 'right' }}>Amount</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Status</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {displayEntries.length === 0 ? (
                         <tr>
-                            <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                            <td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                                 No journal entries found.
                             </td>
                         </tr>
@@ -48,7 +48,7 @@ const JournalEntryList = ({ limit }) => {
                                 <tr
                                     key={entry.id}
                                     style={{ borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }}
-                                    className="hover:bg-slate-50"
+                                    className="erp-table-row-hover"
                                     onClick={() => navigate(`/admin/accounting/journal/${entry.id}`)}
                                 >
                                     <td style={{ padding: '1rem 1rem' }}>{entry.date}</td>
@@ -58,8 +58,8 @@ const JournalEntryList = ({ limit }) => {
                                         {isAuto ? (
                                             <span style={{
                                                 display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
-                                                fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-primary-700)',
-                                                background: 'var(--color-primary-50)', padding: '0.25rem 0.5rem', borderRadius: '4px'
+                                                fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-primary-600)',
+                                                background: 'color-mix(in srgb, var(--color-primary-600) 16%, var(--color-bg-card))', padding: '0.25rem 0.5rem', borderRadius: '4px'
                                             }}>
                                                 <Monitor size={12} /> {entry.sourceType || 'System'}
                                             </span>
@@ -78,14 +78,17 @@ const JournalEntryList = ({ limit }) => {
                                         <span style={{
                                             padding: '0.25rem 0.75rem',
                                             borderRadius: '1rem',
-                                            background: entry.status === 'Posted' ? 'var(--color-success-100)' :
-                                                entry.status === 'Draft' ? 'var(--color-slate-100)' : 'var(--color-primary-100)',
-                                            color: entry.status === 'Posted' ? 'var(--color-success-700)' :
-                                                entry.status === 'Draft' ? 'var(--color-slate-600)' : 'var(--color-primary-700)',
+                                            background: entry.status === 'Posted'
+                                                ? 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))'
+                                                : entry.status === 'Draft'
+                                                    ? 'color-mix(in srgb, var(--color-text-main) 6%, var(--color-bg-card))'
+                                                    : 'color-mix(in srgb, var(--color-primary-600) 16%, var(--color-bg-card))',
+                                            color: entry.status === 'Posted' ? 'var(--color-success)' :
+                                                entry.status === 'Draft' ? 'var(--color-text-secondary)' : 'var(--color-primary-500)',
                                             fontSize: '0.75rem',
                                             fontWeight: 500,
-                                            border: `1px solid ${entry.status === 'Posted' ? 'var(--color-success-200)' :
-                                                entry.status === 'Draft' ? 'var(--color-slate-200)' : 'var(--color-primary-200)'}`
+                                            border: `1px solid ${entry.status === 'Posted' ? 'color-mix(in srgb, var(--color-success) 35%, var(--color-border))' :
+                                                entry.status === 'Draft' ? 'var(--color-border)' : 'color-mix(in srgb, var(--color-primary-600) 30%, var(--color-border))'}`
                                         }}>{entry.status}</span>
                                     </td>
                                     <td style={{ padding: '1rem 1rem' }}>

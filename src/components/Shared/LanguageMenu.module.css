@@ -1,0 +1,100 @@
+.wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.code {
+    min-width: 1.75rem;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.chevron {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    transition: transform 0.2s ease;
+}
+
+.chevronUp {
+    transform: rotate(180deg);
+}
+
+.menu {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    z-index: 120;
+    min-width: 11.5rem;
+    padding: 0.35rem;
+    margin: 0;
+    list-style: none;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    box-shadow:
+        0 4px 6px color-mix(in srgb, var(--color-text-main) 5%, transparent),
+        0 12px 28px color-mix(in srgb, var(--color-text-main) 10%, transparent);
+}
+
+.menuEnd {
+    right: 0;
+    left: auto;
+}
+
+.menuStart {
+    left: 0;
+    right: auto;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.55rem 0.65rem;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-main);
+    text-align: inherit;
+    background: transparent;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+
+.item:hover {
+    background: color-mix(in srgb, var(--color-text-main) 6%, var(--color-bg-surface));
+}
+
+.itemActive {
+    background: color-mix(in srgb, var(--color-primary-600) 10%, var(--color-bg-surface));
+    color: var(--color-primary-600);
+}
+
+.itemActive:hover {
+    background: color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-surface));
+}
+
+.itemLabel {
+    flex: 1;
+    min-width: 0;
+}
+
+.itemCode {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.itemActive .itemCode {
+    color: color-mix(in srgb, var(--color-primary-600) 75%, var(--color-text-muted));
+}
+
+.check {
+    flex-shrink: 0;
+    color: var(--color-primary-600);
+}

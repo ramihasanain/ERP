@@ -35,18 +35,18 @@ const Customers = () => {
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                     <thead>
-                        <tr style={{ background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                            <th style={{ padding: '0.75rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Customer Name</th>
-                            <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Contact Person</th>
-                            <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Email</th>
-                            <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Phone</th>
-                            <th style={{ padding: '0.75rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Balance</th>
-                            <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Actions</th>
+                        <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                            <th style={{ padding: '0.75rem 1.5rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Customer Name</th>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Contact Person</th>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Email</th>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Phone</th>
+                            <th style={{ padding: '0.75rem 1.5rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Balance</th>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {customers.map(cust => (
-                            <tr key={cust.id} style={{ borderBottom: '1px solid var(--color-border)' }} className="hover:bg-slate-50">
+                            <tr key={cust.id} style={{ borderBottom: '1px solid var(--color-border)' }} className="erp-table-row-hover">
                                 <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{cust.name}</td>
                                 <td style={{ padding: '1rem 1rem' }}>{cust.contact}</td>
                                 <td style={{ padding: '1rem 1rem' }}>{cust.email}</td>
@@ -55,7 +55,7 @@ const Customers = () => {
                                 <td style={{ padding: '1rem 1rem', display: 'flex', gap: '0.5rem' }}>
                                     <button
                                         onClick={() => openEditModal(cust)}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-500)' }}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}
                                         title="Edit Customer"
                                     >
                                         <Edit3 size={18} />

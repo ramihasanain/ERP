@@ -192,7 +192,7 @@ const Row = ({ label, amount, formatter, isNegative, highlight }) => (
 );
 
 const TotalRow = ({ label, amount, formatter }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, background: 'var(--color-slate-50)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, background: 'var(--color-bg-table-header)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
         <span>{label}</span>
         <span>{formatter(amount)}</span>
     </div>

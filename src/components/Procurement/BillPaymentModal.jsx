@@ -55,18 +55,18 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
                         {isRtl ? `تسجيل دفع المورد - ${bill.id}` : `Pay Vendor Bill - ${bill.id}`}
                     </h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-400)' }}>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
                         <X size={20} />
                     </button>
                 </div>
 
-                <div style={{ background: 'var(--color-slate-50)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ background: 'var(--color-bg-secondary)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', border: '1px solid var(--color-border)' }}>
                     <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', marginBottom: '4px' }}>{isRtl ? 'إجمالي الفاتورة' : 'Bill Total'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '4px' }}>{isRtl ? 'إجمالي الفاتورة' : 'Bill Total'}</div>
                         <div style={{ fontWeight: 700 }}>{bill.totalAmount.toLocaleString()} JOD</div>
                     </div>
                     <div style={{ textAlign: isRtl ? 'left' : 'right' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', marginBottom: '4px' }}>{isRtl ? 'المورد' : 'Vendor'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '4px' }}>{isRtl ? 'المورد' : 'Vendor'}</div>
                         <div style={{ fontWeight: 700, color: 'var(--color-primary-600)' }}>{bill.vendorName}</div>
                     </div>
                 </div>
@@ -88,7 +88,7 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-slate-700)' }}>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
                             {isRtl ? 'الدفع من (البنك/الصندوق)' : 'Pay From'}
                         </label>
                         <select
@@ -96,8 +96,8 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
                             onChange={e => setFormData({ ...formData, accountId: e.target.value })}
                             style={{
                                 height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px',
-                                border: '1px solid var(--color-slate-300)', background: 'white',
-                                fontSize: '0.9rem'
+                                border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)',
+                                fontSize: '0.9rem', color: 'var(--color-text-main)',
                             }}
                         >
                             {paymentAccounts.map(acc => (
@@ -108,7 +108,7 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-slate-700)' }}>
+                            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
                                 {isRtl ? 'طريقة الدفع' : 'Method'}
                             </label>
                             <select
@@ -116,7 +116,7 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
                                 onChange={e => setFormData({ ...formData, method: e.target.value })}
                                 style={{
                                     height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px',
-                                    border: '1px solid var(--color-slate-300)', background: 'white', fontSize: '0.9rem'
+                                    border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', fontSize: '0.9rem', color: 'var(--color-text-main)',
                                 }}
                             >
                                 <option value="Bank Transfer">Bank Transfer</option>

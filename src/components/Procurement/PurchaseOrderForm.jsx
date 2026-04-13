@@ -122,7 +122,7 @@ const PurchaseOrderForm = () => {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>{isEdit ? 'Edit Purchase Order' : 'New Purchase Order'}</h1>
-                <div style={{ padding: '0.5rem 1rem', background: 'var(--color-primary-50)', borderRadius: '4px', fontWeight: 600, color: 'var(--color-primary-700)' }}>
+                <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))', borderRadius: '4px', fontWeight: 600, color: 'var(--color-primary-600)', border: '1px solid var(--color-border)' }}>
                     Total: {totalValue.toLocaleString()} JOD
                 </div>
             </div>
@@ -156,7 +156,7 @@ const PurchaseOrderForm = () => {
             <Card className="padding-md">
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem' }}>
                     <thead>
-                        <tr style={{ background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-border)' }}>
+                        <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)' }}>
                             <th style={thStyle}>Item</th>
                             <th style={thStyle}>Quantity</th>
                             <th style={thStyle}>Unit Cost</th>
@@ -264,8 +264,8 @@ const PurchaseOrderForm = () => {
     );
 };
 
-const labelStyle = { display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-text-primary)' };
-const inputStyle = { padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.9rem' };
+const labelStyle = { display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-text-main)' };
+const inputStyle = { padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' };
 const thStyle = { textAlign: 'left', padding: '1rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: 600 };
 const tdStyle = { padding: '1rem', verticalAlign: 'middle' };
 

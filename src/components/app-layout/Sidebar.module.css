@@ -43,7 +43,7 @@
 
 .logoText {
     font-size: 1.25rem;
-    font-weight: 700;
+    font-weight: 500;
     color: var(--color-text-main);
     font-family: var(--font-heading);
 }
@@ -78,7 +78,7 @@
 .navItem.active {
     background: color-mix(in srgb, var(--color-primary-600) 20%, var(--color-bg-card));
     color: var(--color-primary-600);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .icon {

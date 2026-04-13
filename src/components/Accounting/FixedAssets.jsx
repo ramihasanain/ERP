@@ -238,7 +238,7 @@ const FixedAssets = () => {
                             <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                                 <div style={{
                                     padding: '0.75rem',
-                                    background: 'var(--color-primary-50)',
+                                    background: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))',
                                     borderRadius: '0.75rem',
                                     color: 'var(--color-primary-600)'
                                 }}>
@@ -251,7 +251,7 @@ const FixedAssets = () => {
                                         <div style={{
                                             display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
                                             fontSize: '0.75rem',
-                                            background: 'var(--color-slate-100)',
+                                            background: 'var(--color-bg-subtle)',
                                             padding: '0.125rem 0.5rem',
                                             borderRadius: '1rem',
                                             marginTop: '0.5rem',
@@ -293,7 +293,7 @@ const FixedAssets = () => {
                     background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     zIndex: 1000
                 }}>
-                    <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '500px', padding: '1.5rem', maxHeight: '90vh', overflowY: 'auto' }}>
+                    <div style={{ background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '500px', padding: '1.5rem', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--color-border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                             <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>{editingId ? 'Edit Asset Category' : 'Register New Asset'}</h3>
                             <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
@@ -358,7 +358,8 @@ const FixedAssets = () => {
                                         <select
                                             style={{
                                                 width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)',
-                                                border: '1px solid var(--color-border)', fontSize: '0.9rem'
+                                                border: '1px solid var(--color-border)', fontSize: '0.9rem',
+                                                background: 'var(--color-bg-surface)', color: 'var(--color-text-main)',
                                             }}
                                             value={assetForm.sourceAccountId}
                                             onChange={e => setAssetForm({ ...assetForm, sourceAccountId: e.target.value })}

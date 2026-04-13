@@ -51,24 +51,28 @@ const Vendors = () => {
 
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <Filter size={14} color="var(--color-text-muted)" />
-                        {['All', 'Active', 'Inactive'].map(s => (
-                            <button
-                                key={s}
-                                onClick={() => setStatusFilter(s)}
-                                style={{
-                                    padding: '5px 12px',
-                                    borderRadius: '6px',
-                                    border: '1px solid ' + (statusFilter === s ? 'var(--color-primary-600)' : 'var(--color-border)'),
-                                    background: statusFilter === s ? 'var(--color-primary-600)' : 'white',
-                                    color: statusFilter === s ? 'white' : 'var(--color-slate-600)',
-                                    cursor: 'pointer',
-                                    fontWeight: 500,
-                                    fontSize: '0.8rem'
-                                }}
-                            >
-                                {s}
-                            </button>
-                        ))}
+                        <div style={{ display: 'flex', background: 'var(--color-bg-toggle-track)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                            {['All', 'Active', 'Inactive'].map(s => (
+                                <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => setStatusFilter(s)}
+                                    style={{
+                                        padding: '6px 14px',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        background: statusFilter === s ? 'var(--color-bg-surface)' : 'transparent',
+                                        boxShadow: statusFilter === s ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
+                                        color: statusFilter === s ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
+                                        cursor: 'pointer',
+                                        fontWeight: 500,
+                                        fontSize: '0.8rem',
+                                    }}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {(searchTerm || statusFilter !== 'All') && (
@@ -82,7 +86,7 @@ const Vendors = () => {
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                     <thead>
-                        <tr style={{ background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                        <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
                             <th style={{ padding: '0.75rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Vendor Name</th>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Contact Person</th>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Email</th>
@@ -92,15 +96,15 @@ const Vendors = () => {
                     </thead>
                     <tbody>
                         {filteredVendors.map(v => (
-                            <tr key={v.id} style={{ borderBottom: '1px solid var(--color-border)' }} className="hover:bg-slate-50">
+                            <tr key={v.id} style={{ borderBottom: '1px solid var(--color-border)' }} className="erp-table-row-hover">
                                 <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{v.name}</td>
                                 <td style={{ padding: '1rem 1rem' }}>{v.contact}</td>
                                 <td style={{ padding: '1rem 1rem' }}>{v.email}</td>
                                 <td style={{ padding: '1rem 1rem' }}>{v.phone}</td>
                                 <td style={{ padding: '1rem 1.5rem' }}>
                                     <span style={{
-                                        color: v.status === 'Active' ? 'var(--color-success)' : 'var(--color-slate-600)',
-                                        background: v.status === 'Active' ? 'var(--color-success-dim)' : 'var(--color-slate-100)',
+                                        color: v.status === 'Active' ? 'var(--color-success)' : 'var(--color-text-secondary)',
+                                        background: v.status === 'Active' ? 'var(--color-success-dim)' : 'var(--color-bg-subtle)',
                                         padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600
                                     }}>
                                         {v.status}

@@ -22,12 +22,23 @@
     height: 2.5rem;
     padding: 0 0.75rem;
     font-family: inherit;
+    font-weight: 400;
     font-size: 0.95rem;
     color: var(--color-text-main);
     background-color: var(--color-bg-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     transition: all 0.2s ease;
+}
+
+.input::placeholder {
+    color: var(--color-text-muted);
+    opacity: 1;
+}
+
+[data-theme='dark'] .input::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.85;
 }
 
 .input:focus {

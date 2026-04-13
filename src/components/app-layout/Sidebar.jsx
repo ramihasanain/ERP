@@ -17,7 +17,7 @@ import { useAuth } from '@/context/AuthContext';
 const navItems = [
     { to: '/admin/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { to: '/admin/accounting', icon: <Layers size={20} />, label: 'Accounting' },
-    { to: '/admin/accounting/auditor-adjustments', icon: <Shield size={20} />, label: 'Auditor Changes' },
+    { to: '/admin/auditor-adjustments', icon: <Shield size={20} />, label: 'Auditor Changes' },
     { to: '/admin/hr', icon: <Users size={20} />, label: 'HR & Payroll' },
     { to: '/admin/inventory', icon: <Package size={20} />, label: 'Inventory' },
     { to: '/admin/reports', icon: <FileText size={20} />, label: 'Reports' },

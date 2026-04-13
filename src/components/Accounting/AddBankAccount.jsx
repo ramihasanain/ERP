@@ -49,7 +49,7 @@ const AddBankAccount = () => {
 
             <Card className="padding-lg">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div style={{ textAlign: 'center', padding: '2rem', background: 'var(--color-slate-50)', borderRadius: 'var(--radius-lg)' }}>
+                    <div style={{ textAlign: 'center', padding: '2rem', background: 'var(--color-bg-subtle)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
                         <Landmark size={48} color="var(--color-primary-600)" style={{ marginBottom: '1rem' }} />
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Bank Details</h3>
                         <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Enter the account information below.</p>

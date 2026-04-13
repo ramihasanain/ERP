@@ -51,7 +51,7 @@ const TransactionsList = () => {
                         style={{
                             width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.5rem',
                             borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
-                            fontSize: '0.9rem'
+                            fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)',
                         }}
                     />
                 </div>
@@ -60,7 +60,7 @@ const TransactionsList = () => {
             <Card className="padding-md">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-border)' }}>
+                        <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)' }}>
                             <th style={thStyle}>Date</th>
                             <th style={thStyle}>Reference</th>
                             <th style={thStyle}>Type</th>
@@ -78,21 +78,21 @@ const TransactionsList = () => {
                             </tr>
                         ) : (
                             filteredTransactions.map(trans => (
-                                <tr key={trans.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                <tr key={trans.id} style={{ borderBottom: '1px solid var(--color-border)' }} className="erp-table-row-hover">
                                     <td style={tdStyle}>{trans.date}</td>
                                     <td style={{ ...tdStyle, fontWeight: 600 }}>{trans.reference}</td>
                                     <td style={tdStyle}>
                                         <span style={{
                                             padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600,
-                                            background: trans.type === 'IN' ? 'var(--color-success-50)' : trans.type === 'OUT' ? 'var(--color-warning-50)' : 'var(--color-primary-50)',
-                                            color: trans.type === 'IN' ? 'var(--color-success-700)' : trans.type === 'OUT' ? 'var(--color-warning-700)' : 'var(--color-primary-700)'
+                                            background: trans.type === 'IN' ? 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))' : trans.type === 'OUT' ? 'color-mix(in srgb, var(--color-warning) 18%, var(--color-bg-card))' : 'color-mix(in srgb, var(--color-primary-600) 16%, var(--color-bg-card))',
+                                            color: trans.type === 'IN' ? 'var(--color-success)' : trans.type === 'OUT' ? 'var(--color-warning)' : 'var(--color-primary-600)'
                                         }}>
                                             {trans.type}
                                         </span>
                                     </td>
                                     <td style={tdStyle}>{getWarehouseName(trans.warehouseId)}</td>
                                     <td style={tdStyle}>
-                                        <span style={{ color: 'var(--color-success-600)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                        <span style={{ color: 'var(--color-success)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                             Posted
                                         </span>
                                     </td>

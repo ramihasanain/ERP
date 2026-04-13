@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useTheme } from '@/context/ThemeContext';
-import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationsContext';
-import { Moon, Sun, Bell, Search, Globe, LogOut } from 'lucide-react';
+import { Bell, Search, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Input from '../Shared/Input';
 import NotificationDropdown from '@/components/app-layout/NotificationDropdown';
+import LanguageMenu from '@/components/Shared/LanguageMenu';
+import ThemeToggle from '@/components/Shared/ThemeToggle';
 
 const headerBarStyle = {
     height: '4rem',
@@ -24,23 +24,6 @@ const headerBarStyle = {
 const searchColStyle = { width: '300px' };
 const inputStyle = { height: '2.25rem', fontSize: '0.9rem' };
 const rightActionsStyle = { display: 'flex', alignItems: 'center', gap: '1rem' };
-const langRowStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '0.5rem' };
-const languageSelectStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--color-text-main)',
-    fontWeight: 500,
-    cursor: 'pointer',
-    fontSize: '0.9rem',
-};
-const themeToggleBtnStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--color-text-secondary)',
-    cursor: 'pointer',
-    padding: '0.5rem',
-    borderRadius: '50%',
-};
 const notifWrapStyle = { position: 'relative' };
 const bellBadgeStyle = {
     position: 'absolute',
@@ -51,7 +34,7 @@ const bellBadgeStyle = {
     backgroundColor: 'var(--color-error)',
     borderRadius: '8px',
     fontSize: '0.6rem',
-    fontWeight: 700,
+    fontWeight: 500,
     color: 'white',
     display: 'flex',
     alignItems: 'center',
@@ -75,8 +58,6 @@ const signOutBtnStyle = {
 };
 
 const AppHeader = () => {
-    const { theme, toggleTheme } = useTheme();
-    const { language, changeLanguage } = useLanguage();
     const { user, logout } = useAuth();
     const { unreadCount } = useNotifications();
     const navigate = useNavigate();
@@ -107,7 +88,7 @@ const AppHeader = () => {
         alignItems: 'center',
         justifyContent: 'center',
         color: user?.role === 'admin' ? 'var(--color-primary-500)' : 'var(--color-success)',
-        fontWeight: 600,
+        fontWeight: 500,
         fontSize: '0.86rem',
     };
 
@@ -121,10 +102,6 @@ const AppHeader = () => {
         position: 'relative',
         transition: 'all 0.2s',
     };
-
-    const themeToggleIcon = theme === 'dark'
-        ? React.createElement(Sun, { size: 20 })
-        : React.createElement(Moon, { size: 20 });
 
     const bellUnreadBadge = unreadCount
         ? React.createElement('span', { style: bellBadgeStyle }, unreadCount)
@@ -141,22 +118,10 @@ const AppHeader = () => {
             </div>
 
             <div style={rightActionsStyle}>
-                <div style={langRowStyle}>
-                    {React.createElement(Globe, { size: 18, color: 'var(--color-text-muted)' })}
-                    <select
-                        value={language}
-                        onChange={(e) => changeLanguage(e.target.value)}
-                        style={languageSelectStyle}
-                    >
-                        <option value="en">English</option>
-                        <option value="ar">العربية</option>
-                        <option value="de">Deutsch</option>
-                    </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ThemeToggle size="md" />
+                    <LanguageMenu align="end" size="md" />
                 </div>
-
-                <button type="button" onClick={toggleTheme} style={themeToggleBtnStyle}>
-                    {themeToggleIcon}
-                </button>
 
                 <div ref={notifRef} style={notifWrapStyle}>
                     <button type="button" onClick={() => setShowNotifs(!showNotifs)} style={notifBellBtnStyle}>

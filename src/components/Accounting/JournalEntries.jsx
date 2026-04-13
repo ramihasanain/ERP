@@ -25,7 +25,7 @@ const PeriodStatusCard = () => {
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 {sortedPeriods.map(p => (
                     <div key={p.month} style={{
-                        background: 'white', padding: '0.75rem', borderRadius: 'var(--radius-md)',
+                        background: 'var(--color-bg-surface)', padding: '0.75rem', borderRadius: 'var(--radius-md)',
                         border: '1px solid var(--color-border)', flex: '1', minWidth: '200px',
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                     }}>

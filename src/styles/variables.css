@@ -56,6 +56,12 @@
     --color-border: var(--color-slate-200);
     --color-border-hover: var(--color-slate-300);
 
+    /* Nested panels, tables, segmented controls (theme-aware) */
+    --color-bg-secondary: #f1f5f9;
+    --color-bg-subtle: #f8fafc;
+    --color-bg-table-header: #f1f5f9;
+    --color-bg-toggle-track: #e2e8f0;
+
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -71,6 +77,8 @@
     --radius-lg: 0.5rem;
     --radius-xl: 0.75rem;
     --radius-2xl: 1rem;
+
+    color-scheme: light;
 }
 
 /* =========================================
@@ -82,6 +90,11 @@
     --color-bg-card: #1e293b;
     /* Slate 800 */
     --color-bg-surface: #1e293b;
+
+    --color-bg-secondary: #0f172a;
+    --color-bg-subtle: #334155;
+    --color-bg-table-header: #334155;
+    --color-bg-toggle-track: #1e293b;
 
     --color-text-main: #f8fafc;
     /* Slate 50 */
@@ -97,6 +110,8 @@
 
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+
+    color-scheme: dark;
 }
 
 /* =========================================

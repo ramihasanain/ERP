@@ -83,11 +83,16 @@ const PermissionsManagement = () => {
     const checkboxStyle = (checked) => ({
         width: '1.25rem', height: '1.25rem', borderRadius: '4px', cursor: 'pointer',
         border: checked ? 'none' : '2px solid var(--color-border)',
-        background: checked ? 'var(--color-primary-600)' : 'white',
+        background: checked ? 'var(--color-primary-600)' : 'var(--color-bg-surface)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
     });
 
     const permColor = { view: 'var(--color-primary-600)', edit: 'var(--color-warning)', delete: 'var(--color-error)' };
+    const permTintBg = {
+        view: 'color-mix(in srgb, var(--color-primary-600) 18%, var(--color-bg-card))',
+        edit: 'color-mix(in srgb, var(--color-warning) 18%, var(--color-bg-card))',
+        delete: 'color-mix(in srgb, var(--color-error) 18%, var(--color-bg-card))',
+    };
     const permIcon = { view: <Eye size={12} />, edit: <Pencil size={12} />, delete: <Trash size={12} /> };
 
     // ---- ROLE EDITOR ----
@@ -126,7 +131,7 @@ const PermissionsManagement = () => {
                     </div>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
-                            <tr style={{ background: 'var(--color-slate-50)', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                            <tr style={{ background: 'var(--color-bg-table-header)', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                                 <th style={{ padding: '10px 1.5rem', textAlign: 'left', width: '40%' }}>Module</th>
                                 <th style={{ padding: '10px 1rem', textAlign: 'center', width: '20%' }}>View</th>
                                 <th style={{ padding: '10px 1rem', textAlign: 'center', width: '20%' }}>Edit</th>
@@ -136,8 +141,8 @@ const PermissionsManagement = () => {
                         <tbody>
                             {Object.entries(groupedModules).map(([group, mods]) => (
                                 <React.Fragment key={group}>
-                                    <tr style={{ background: 'var(--color-primary-50)' }}>
-                                        <td style={{ padding: '8px 1.5rem', fontWeight: 700, fontSize: '0.85rem', color: 'var(--color-primary-700)' }}>
+                                    <tr style={{ background: 'color-mix(in srgb, var(--color-primary-600) 10%, var(--color-bg-subtle))' }}>
+                                        <td style={{ padding: '8px 1.5rem', fontWeight: 700, fontSize: '0.85rem', color: 'var(--color-primary-600)' }}>
                                             {group}
                                         </td>
                                         {['view', 'edit', 'delete'].map(p => {
@@ -218,14 +223,14 @@ const PermissionsManagement = () => {
                         return (
                             <Card key={role.id} className="padding-lg" style={{
                                 border: role.isSystem ? '2px solid var(--color-primary-300)' : undefined,
-                                background: role.isSystem ? 'linear-gradient(to bottom right, white, var(--color-primary-50))' : undefined
+                                background: role.isSystem ? 'linear-gradient(to bottom right, var(--color-bg-card), color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card)))' : undefined
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                                     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                         <div style={{
                                             width: '2.75rem', height: '2.75rem', borderRadius: '12px',
-                                            background: role.isSystem ? 'var(--color-primary-600)' : 'var(--color-slate-100)',
-                                            color: role.isSystem ? 'white' : 'var(--color-slate-600)',
+                                            background: role.isSystem ? 'var(--color-primary-600)' : 'var(--color-bg-subtle)',
+                                            color: role.isSystem ? 'var(--color-text-on-primary, #fff)' : 'var(--color-text-secondary)',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center'
                                         }}>
                                             <Shield size={20} />
@@ -236,7 +241,7 @@ const PermissionsManagement = () => {
                                         </div>
                                     </div>
                                     {role.isSystem && (
-                                        <span style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '8px', background: 'var(--color-primary-100)', color: 'var(--color-primary-700)', fontWeight: 600, height: 'fit-content' }}>SYSTEM</span>
+                                        <span style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '8px', background: 'color-mix(in srgb, var(--color-primary-600) 18%, var(--color-bg-card))', color: 'var(--color-primary-600)', fontWeight: 600, height: 'fit-content' }}>SYSTEM</span>
                                     )}
                                 </div>
 
@@ -246,7 +251,7 @@ const PermissionsManagement = () => {
                                         <span>Permissions</span>
                                         <span>{totalPerms}/{maxPerms}</span>
                                     </div>
-                                    <div style={{ height: '6px', borderRadius: '3px', background: 'var(--color-slate-100)', overflow: 'hidden' }}>
+                                    <div style={{ height: '6px', borderRadius: '3px', background: 'var(--color-bg-subtle)', overflow: 'hidden' }}>
                                         <div style={{ height: '100%', borderRadius: '3px', background: 'var(--color-primary-500)', width: `${(totalPerms / maxPerms) * 100}%`, transition: 'width 0.3s' }} />
                                     </div>
                                 </div>
@@ -258,7 +263,7 @@ const PermissionsManagement = () => {
                                         return (
                                             <span key={p} style={{
                                                 fontSize: '0.7rem', padding: '3px 8px', borderRadius: '6px',
-                                                background: count > 0 ? `${permColor[p]}15` : 'var(--color-slate-50)',
+                                                background: count > 0 ? permTintBg[p] : 'var(--color-bg-subtle)',
                                                 color: count > 0 ? permColor[p] : 'var(--color-text-muted)',
                                                 fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem'
                                             }}>
@@ -293,7 +298,7 @@ const PermissionsManagement = () => {
                 <Card className="padding-none">
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
-                            <tr style={{ background: 'var(--color-slate-50)', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                            <tr style={{ background: 'var(--color-bg-table-header)', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
                                 <th style={{ padding: '12px 1.5rem', textAlign: 'left' }}>Employee</th>
                                 <th style={{ padding: '12px 1rem', textAlign: 'left' }}>Department</th>
                                 <th style={{ padding: '12px 1rem', textAlign: 'left' }}>Current Role</th>
@@ -310,7 +315,7 @@ const PermissionsManagement = () => {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                                 <div style={{
                                                     width: '2rem', height: '2rem', borderRadius: '50%',
-                                                    background: 'var(--color-primary-100)', color: 'var(--color-primary-700)',
+                                                    background: 'color-mix(in srgb, var(--color-primary-600) 16%, var(--color-bg-card))', color: 'var(--color-primary-600)',
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                     fontWeight: 600, fontSize: '0.75rem'
                                                 }}>
@@ -338,8 +343,8 @@ const PermissionsManagement = () => {
                                                 style={{
                                                     padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--color-border)',
                                                     fontSize: '0.85rem', fontWeight: currentRoleId ? 600 : 400,
-                                                    color: currentRoleId ? 'var(--color-primary-700)' : 'var(--color-text-muted)',
-                                                    background: currentRoleId ? 'var(--color-primary-50)' : 'white',
+                                                    color: currentRoleId ? 'var(--color-primary-600)' : 'var(--color-text-muted)',
+                                                    background: currentRoleId ? 'color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card))' : 'var(--color-bg-surface)',
                                                     width: '200px'
                                                 }}
                                             >
@@ -353,8 +358,8 @@ const PermissionsManagement = () => {
                                             {currentRole && (
                                                 <span style={{
                                                     fontSize: '0.7rem', padding: '3px 10px', borderRadius: '10px',
-                                                    background: currentRole.isSystem ? 'var(--color-primary-100)' : 'var(--color-slate-100)',
-                                                    color: currentRole.isSystem ? 'var(--color-primary-700)' : 'var(--color-slate-600)',
+                                                    background: currentRole.isSystem ? 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))' : 'var(--color-bg-subtle)',
+                                                    color: currentRole.isSystem ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
                                                     fontWeight: 600
                                                 }}>
                                                     {Object.values(currentRole.permissions).filter(p => p.view).length} modules

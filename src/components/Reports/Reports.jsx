@@ -8,7 +8,7 @@ const ReportCard = ({ title, description, icon, links }) => {
     return (
         <Card className="padding-lg" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <div style={{ padding: '0.75rem', background: 'var(--color-primary-50)', borderRadius: '0.75rem', color: 'var(--color-primary-700)' }}>
+                <div style={{ padding: '0.75rem', background: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))', borderRadius: '0.75rem', color: 'var(--color-primary-600)' }}>
                     {icon}
                 </div>
                 <ArrowUpRight size={20} color="var(--color-text-muted)" />

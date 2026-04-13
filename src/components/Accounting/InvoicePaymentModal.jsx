@@ -66,13 +66,13 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                     </button>
                 </div>
 
-                <div style={{ background: 'var(--color-slate-50)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ background: 'var(--color-bg-subtle)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', border: '1px solid var(--color-border)' }}>
                     <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', marginBottom: '4px' }}>{isRtl ? 'إجمالي الفاتورة' : 'Invoice Total'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>{isRtl ? 'إجمالي الفاتورة' : 'Invoice Total'}</div>
                         <div style={{ fontWeight: 700 }}>{invoice.total.toLocaleString()} JOD</div>
                     </div>
                     <div style={{ textAlign: isRtl ? 'left' : 'right' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', marginBottom: '4px' }}>{isRtl ? 'الرصيد المتبقي' : 'Remaining Balance'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>{isRtl ? 'الرصيد المتبقي' : 'Remaining Balance'}</div>
                         <div style={{ fontWeight: 700, color: 'var(--color-primary-600)' }}>{remaining.toLocaleString()} JOD</div>
                     </div>
                 </div>
@@ -94,7 +94,7 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-slate-700)' }}>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
                             {isRtl ? 'حساب الإيداع (البنك/الصندوق)' : 'Deposit To'}
                         </label>
                         <select
@@ -102,8 +102,8 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                             onChange={e => setFormData({ ...formData, accountId: e.target.value })}
                             style={{
                                 height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px',
-                                border: '1px solid var(--color-slate-300)', background: 'white',
-                                fontSize: '0.9rem'
+                                border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)',
+                                fontSize: '0.9rem', color: 'var(--color-text-main)',
                             }}
                         >
                             {paymentAccounts.map(acc => (
@@ -114,7 +114,7 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-slate-700)' }}>
+                            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
                                 {isRtl ? 'طريقة الدفع' : 'Payment Method'}
                             </label>
                             <select
@@ -122,7 +122,7 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                                 onChange={e => setFormData({ ...formData, method: e.target.value })}
                                 style={{
                                     height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px',
-                                    border: '1px solid var(--color-slate-300)', background: 'white', fontSize: '0.9rem'
+                                    border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', fontSize: '0.9rem', color: 'var(--color-text-main)'
                                 }}
                             >
                                 <option value="Cash">{isRtl ? 'نقد (Cash)' : 'Cash'}</option>

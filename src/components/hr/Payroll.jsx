@@ -99,12 +99,12 @@ const Payroll = () => {
                     <Card className="padding-none">
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                             <thead>
-                                <tr style={{ background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                                    <th style={{ padding: '0.75rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Period Name</th>
-                                    <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Status</th>
-                                    <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Employees</th>
-                                    <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600, textAlign: 'right' }}>Total Net</th>
-                                    <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-muted)', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+                                <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                                    <th style={{ padding: '0.75rem 1.5rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Period Name</th>
+                                    <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Status</th>
+                                    <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Employees</th>
+                                    <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600, textAlign: 'right' }}>Total Net</th>
+                                    <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600, textAlign: 'right' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -117,8 +117,8 @@ const Payroll = () => {
                                                 borderRadius: '1rem',
                                                 fontSize: '0.75rem',
                                                 fontWeight: 600,
-                                                background: period.status === 'Locked' ? 'var(--color-success-50)' : 'var(--color-warning-50)',
-                                                color: period.status === 'Locked' ? 'var(--color-success-700)' : 'var(--color-warning-700)'
+                                                background: period.status === 'Locked' ? 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))' : 'color-mix(in srgb, var(--color-warning) 18%, var(--color-bg-card))',
+                                                color: period.status === 'Locked' ? 'var(--color-success)' : 'var(--color-warning)'
                                             }}>
                                                 {period.status}
                                             </span>

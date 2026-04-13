@@ -89,7 +89,7 @@ const ContractTemplates = () => {
 
     const selectStyle = {
         width: '100%', padding: '0.6rem 0.75rem', borderRadius: '8px',
-        border: '1px solid var(--color-border)', fontSize: '0.9rem', background: 'white'
+        border: '1px solid var(--color-border)', fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)',
     };
 
     // Preview Modal
@@ -109,7 +109,7 @@ const ContractTemplates = () => {
                         <Button icon={<Printer size={16} />} onClick={handlePrint}>Print</Button>
                     </div>
                 </div>
-                <Card className="padding-lg" style={{ background: 'white', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+                <Card className="padding-lg" style={{ background: 'var(--color-bg-surface)', maxWidth: '800px', margin: '0 auto', width: '100%', border: '1px solid var(--color-border)' }}>
                     <pre style={{
                         fontFamily: "'Times New Roman', serif", fontSize: '0.95rem',
                         lineHeight: 1.8, whiteSpace: 'pre-wrap', wordWrap: 'break-word',
@@ -174,7 +174,7 @@ const ContractTemplates = () => {
                                     borderRadius: '8px', border: '1px solid var(--color-border)',
                                     fontSize: '0.9rem', fontFamily: "'Courier New', monospace",
                                     lineHeight: 1.6, resize: 'vertical',
-                                    background: '#fafafa', color: 'var(--color-text-main)'
+                                    background: 'var(--color-bg-secondary)', color: 'var(--color-text-main)'
                                 }}
                             />
                         </Card>
@@ -195,11 +195,11 @@ const ContractTemplates = () => {
                                         fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between',
                                         alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-main)'
                                     }}
-                                    onMouseOver={e => e.currentTarget.style.background = 'var(--color-primary-50)'}
-                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                    onMouseOver={e => { e.currentTarget.style.background = 'var(--color-bg-subtle)'; }}
+                                    onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
                                 >
                                     <span>{v.label}</span>
-                                    <code style={{ fontSize: '0.7rem', color: 'var(--color-primary-600)', background: 'var(--color-slate-100)', padding: '2px 6px', borderRadius: '4px' }}>
+                                    <code style={{ fontSize: '0.7rem', color: 'var(--color-primary-600)', background: 'var(--color-bg-subtle)', padding: '2px 6px', borderRadius: '4px' }}>
                                         {`{{${v.key}}}`}
                                     </code>
                                 </button>
@@ -240,13 +240,13 @@ const ContractTemplates = () => {
                 {contractTemplates.map(template => (
                     <Card key={template.id} className="padding-lg" style={{
                         border: template.isDefault ? '2px solid var(--color-primary-300)' : undefined,
-                        background: template.isDefault ? 'linear-gradient(to bottom right, white, var(--color-primary-50))' : undefined
+                        background: template.isDefault ? 'linear-gradient(to bottom right, var(--color-bg-card), color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card)))' : undefined
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                 <div style={{
                                     width: '3rem', height: '3rem', borderRadius: '12px',
-                                    background: 'var(--color-primary-50)', color: 'var(--color-primary-600)',
+                                    background: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))', color: 'var(--color-primary-600)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                                 }}>
                                     <FileText size={22} />
@@ -258,7 +258,7 @@ const ContractTemplates = () => {
                                     </div>
                                     <span style={{
                                         fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px',
-                                        background: 'var(--color-slate-100)', color: 'var(--color-slate-600)', fontWeight: 500
+                                        background: 'var(--color-bg-subtle)', color: 'var(--color-text-secondary)', fontWeight: 500
                                     }}>{template.type}</span>
                                 </div>
                             </div>
@@ -269,15 +269,15 @@ const ContractTemplates = () => {
                         </div>
 
                         <div style={{
-                            padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)',
+                            padding: '0.75rem', borderRadius: '8px', background: 'var(--color-bg-secondary)',
                             fontSize: '0.75rem', fontFamily: 'monospace', maxHeight: '100px', overflow: 'hidden',
                             color: 'var(--color-text-secondary)', lineHeight: 1.5, marginBottom: '1rem',
-                            position: 'relative'
+                            position: 'relative', border: '1px solid var(--color-border)',
                         }}>
                             {template.content.substring(0, 200)}...
                             <div style={{
                                 position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px',
-                                background: 'linear-gradient(transparent, var(--color-slate-50))'
+                                background: 'linear-gradient(transparent, var(--color-bg-secondary))'
                             }} />
                         </div>
 

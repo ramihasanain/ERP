@@ -51,7 +51,7 @@ const ProductsServices = () => {
     const selectStyle = {
         width: '100%', padding: '0.6rem 0.75rem', borderRadius: '8px',
         border: '1px solid var(--color-border)', fontSize: '0.9rem',
-        background: 'white', color: 'var(--color-text-main)'
+        background: 'var(--color-bg-surface)', color: 'var(--color-text-main)'
     };
 
     return (
@@ -81,20 +81,22 @@ const ProductsServices = () => {
                         style={{
                             width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem',
                             borderRadius: '8px', border: '1px solid var(--color-border)',
-                            fontSize: '0.9rem'
+                            fontSize: '0.9rem',
+                            background: 'var(--color-bg-surface)',
+                            color: 'var(--color-text-main)',
                         }}
                     />
                 </div>
-                <div style={{ display: 'flex', background: 'var(--color-slate-100)', padding: '4px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', background: 'var(--color-bg-toggle-track)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                     {['All', 'Product', 'Service'].map(type => (
                         <button
                             key={type}
                             onClick={() => setFilterType(type)}
                             style={{
                                 padding: '6px 14px', border: 'none', borderRadius: '6px',
-                                background: filterType === type ? 'white' : 'transparent',
-                                boxShadow: filterType === type ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                                color: filterType === type ? 'var(--color-primary-600)' : 'var(--color-slate-600)',
+                                background: filterType === type ? 'var(--color-bg-surface)' : 'transparent',
+                                boxShadow: filterType === type ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
+                                color: filterType === type ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
                                 cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500
                             }}
                         >
@@ -106,10 +108,10 @@ const ProductsServices = () => {
 
             {/* Add/Edit Form */}
             {showForm && (
-                <Card className="padding-lg" style={{ border: '2px solid var(--color-primary-200)', background: 'linear-gradient(to bottom right, white, var(--color-primary-50))' }}>
+                <Card className="padding-lg" style={{ border: '2px solid var(--color-border)', background: 'linear-gradient(to bottom right, var(--color-bg-card), color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card)))' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{editingItem ? 'Edit Item' : 'Add New Item'}</h3>
-                        <button onClick={resetForm} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-500)' }}>
+                        <button onClick={resetForm} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
                             <X size={20} />
                         </button>
                     </div>
@@ -166,7 +168,7 @@ const ProductsServices = () => {
             <Card>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-slate-50)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-bg-table-header)' }}>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Item</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Type</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Unit</th>
@@ -183,7 +185,7 @@ const ProductsServices = () => {
                                         <div style={{
                                             width: '2.5rem', height: '2.5rem', borderRadius: '10px',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            background: item.type === 'Service' ? 'var(--color-primary-50)' : 'var(--color-success-dim)',
+                                            background: item.type === 'Service' ? 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))' : 'var(--color-success-dim)',
                                             color: item.type === 'Service' ? 'var(--color-primary-600)' : 'var(--color-success)'
                                         }}>
                                             {item.type === 'Service' ? <Briefcase size={18} /> : <Package size={18} />}
@@ -197,7 +199,7 @@ const ProductsServices = () => {
                                 <td style={{ padding: '1rem' }}>
                                     <span style={{
                                         padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600,
-                                        background: item.type === 'Service' ? 'var(--color-primary-50)' : 'var(--color-success-dim)',
+                                        background: item.type === 'Service' ? 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))' : 'var(--color-success-dim)',
                                         color: item.type === 'Service' ? 'var(--color-primary-600)' : 'var(--color-success)'
                                     }}>
                                         {item.type}

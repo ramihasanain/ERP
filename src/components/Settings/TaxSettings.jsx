@@ -50,8 +50,8 @@ const TaxSettings = () => {
                             padding: '0.5rem 1rem',
                             borderRadius: '2rem',
                             border: `1px solid ${selectedJurisdiction === jur.id ? 'var(--color-primary-600)' : 'var(--color-border)'}`,
-                            background: selectedJurisdiction === jur.id ? 'var(--color-primary-50)' : 'white',
-                            color: selectedJurisdiction === jur.id ? 'var(--color-primary-700)' : 'var(--color-slate-600)',
+                            background: selectedJurisdiction === jur.id ? 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))' : 'var(--color-bg-surface)',
+                            color: selectedJurisdiction === jur.id ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
                             cursor: 'pointer',
                             fontWeight: 500,
                             display: 'flex',
@@ -69,19 +69,19 @@ const TaxSettings = () => {
             {/* Rules Table */}
             <div style={{ border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                    <thead style={{ background: 'var(--color-slate-50)' }}>
+                    <thead style={{ background: 'var(--color-bg-table-header)' }}>
                         <tr>
-                            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-slate-600)' }}>Rule Name</th>
-                            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-slate-600)' }}>Rate (%)</th>
-                            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-slate-600)' }}>Type</th>
-                            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-slate-600)' }}>Accounts (Sales / Purch)</th>
-                            <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-slate-600)' }}>Actions</th>
+                            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Rule Name</th>
+                            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Rate (%)</th>
+                            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Type</th>
+                            <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Accounts (Sales / Purch)</th>
+                            <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredRules.length === 0 ? (
                             <tr>
-                                <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-slate-400)' }}>
+                                <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                                     No tax rules defined for {activeJurisdiction?.name}.
                                 </td>
                             </tr>
@@ -93,8 +93,8 @@ const TaxSettings = () => {
                                     <td style={{ padding: '0.75rem 1rem' }}>
                                         <span style={{
                                             padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600,
-                                            background: rule.type === 'Standard' ? 'var(--color-primary-50)' : 'var(--color-slate-100)',
-                                            color: rule.type === 'Standard' ? 'var(--color-primary-700)' : 'var(--color-slate-600)'
+                                            background: rule.type === 'Standard' ? 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))' : 'var(--color-bg-subtle)',
+                                            color: rule.type === 'Standard' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)'
                                         }}>
                                             {rule.type}
                                         </span>
@@ -105,7 +105,7 @@ const TaxSettings = () => {
                                     <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
                                         <button
                                             onClick={() => handleEdit(rule)}
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-400)', marginRight: '0.5rem' }}
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', marginRight: '0.5rem' }}
                                         >
                                             <Edit3 size={16} />
                                         </button>
@@ -177,7 +177,7 @@ const TaxRuleModal = ({ rule, jurisdictionId, onClose, onSave }) => {
                             <select
                                 value={formData.type}
                                 onChange={e => setFormData({ ...formData, type: e.target.value })}
-                                style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                                style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                             >
                                 <option value="Standard">Standard</option>
                                 <option value="Zero">Zero Rated</option>

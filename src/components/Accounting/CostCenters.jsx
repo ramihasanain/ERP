@@ -136,7 +136,7 @@ const CostCenters = () => {
                 <Card className="padding-none">
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
-                            <tr style={{ background: 'var(--color-slate-50)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                            <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
                                 <th style={{ padding: '1rem', width: '10%' }}>Code</th>
                                 <th style={{ padding: '1rem', width: '25%' }}>Name</th>
                                 <th style={{ padding: '1rem', width: '35%' }}>Budget Utilization</th>
@@ -155,14 +155,14 @@ const CostCenters = () => {
                                 return (
                                     <tr key={cc.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                                         <td style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>
-                                            <span style={{ padding: '0.2rem 0.5rem', background: 'var(--color-slate-100)', borderRadius: '4px' }}>
+                                            <span style={{ padding: '0.2rem 0.5rem', background: 'var(--color-bg-subtle)', borderRadius: '4px' }}>
                                                 {cc.code}
                                             </span>
                                         </td>
                                         <td style={{ padding: '1rem', fontWeight: 500 }}>{cc.name}</td>
                                         <td style={{ padding: '1rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8rem' }}>
-                                                <div style={{ flex: 1, height: '8px', background: 'var(--color-slate-100)', borderRadius: '4px', overflow: 'hidden' }}>
+                                                <div style={{ flex: 1, height: '8px', background: 'var(--color-bg-subtle)', borderRadius: '4px', overflow: 'hidden' }}>
                                                     <div style={{
                                                         width: `${Math.min(percent, 100)}%`,
                                                         height: '100%',

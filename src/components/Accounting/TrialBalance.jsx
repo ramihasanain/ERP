@@ -24,7 +24,7 @@ const TrialBalance = () => {
 
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                     <thead>
-                        <tr style={{ borderBottom: '2px solid var(--color-border)', textAlign: 'left', color: 'var(--color-text-main)' }}>
+                        <tr style={{ borderBottom: '2px solid var(--color-border)', textAlign: 'left', background: 'var(--color-bg-table-header)', color: 'var(--color-text-secondary)' }}>
                             <th style={{ padding: '0.75rem 0' }}>Account Code</th>
                             <th style={{ padding: '0.75rem 0' }}>Account Name</th>
                             <th style={{ padding: '0.75rem 0', textAlign: 'right' }}>Debit</th>
@@ -76,7 +76,7 @@ const TrialBalance = () => {
                         </tr>
 
                         {/* Totals */}
-                        <tr style={{ fontWeight: 700, background: 'var(--color-slate-50)' }}>
+                        <tr style={{ fontWeight: 700, background: 'var(--color-bg-table-header)', color: 'var(--color-text-main)' }}>
                             <td style={{ padding: '1rem 0' }}></td>
                             <td style={{ padding: '1rem 0' }}>Total</td>
                             <td style={{ padding: '1rem 0', textAlign: 'right' }}>$100,700.00</td>

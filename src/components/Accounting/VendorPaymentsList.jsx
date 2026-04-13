@@ -23,7 +23,7 @@ const VendorPaymentsList = () => {
             case 'Approved': return 'var(--color-success)';
             case 'Rejected': return 'var(--color-error)';
             case 'Pending Approval': return 'var(--color-warning)';
-            default: return 'var(--color-slate-500)';
+            default: return 'var(--color-text-muted)';
         }
     };
 
@@ -60,20 +60,22 @@ const VendorPaymentsList = () => {
                             style={{
                                 width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem',
                                 borderRadius: '8px', border: '1px solid var(--color-border)',
-                                fontSize: '0.9rem'
+                                fontSize: '0.9rem',
+                                background: 'var(--color-bg-surface)',
+                                color: 'var(--color-text-main)',
                             }}
                         />
                     </div>
-                    <div style={{ display: 'flex', background: 'var(--color-slate-100)', padding: '4px', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', background: 'var(--color-bg-toggle-track)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                         {['All', 'Pending Approval', 'Approved', 'Rejected'].map(status => (
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
                                 style={{
                                     padding: '6px 12px', border: 'none', borderRadius: '6px',
-                                    background: filterStatus === status ? 'white' : 'transparent',
+                                    background: filterStatus === status ? 'var(--color-bg-surface)' : 'transparent',
                                     boxShadow: filterStatus === status ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                                    color: filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-slate-600)',
+                                    color: filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
                                     cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500
                                 }}
                             >
@@ -87,7 +89,7 @@ const VendorPaymentsList = () => {
             <Card>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-slate-50)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-bg-table-header)' }}>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Payment ID</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Date</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Bill Reference</th>

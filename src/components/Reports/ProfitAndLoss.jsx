@@ -125,7 +125,7 @@ const ProfitAndLoss = () => {
                     )}
 
                     {/* Net Income */}
-                    <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--color-slate-100)', borderRadius: 'var(--radius-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>Net Income</span>
                         <span style={{ fontSize: '1.5rem', fontWeight: 800, color: reportData.netIncome >= 0 ? 'var(--color-success)' : 'var(--color-error)' }}>
                             {formatMoney(reportData.netIncome)}
@@ -151,7 +151,7 @@ const Row = ({ label, amount, formatter }) => (
 );
 
 const TotalRow = ({ label, amount, formatter }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, padding: '0.5rem 0', background: 'var(--color-slate-50)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, padding: '0.5rem 0', background: 'var(--color-bg-table-header)', borderRadius: 'var(--radius-sm)' }}>
         <span style={{ paddingLeft: '1rem' }}>{label}</span>
         <span style={{ paddingRight: '1rem' }}>{formatter(amount)}</span>
     </div>

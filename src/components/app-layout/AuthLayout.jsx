@@ -1,14 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../Shared/Card';
-import { useTheme } from '@/context/ThemeContext';
-import { useLanguage } from '@/context/LanguageContext';
-import { Sun, Moon } from 'lucide-react';
+import LanguageMenu from '@/components/Shared/LanguageMenu';
+import ThemeToggle from '@/components/Shared/ThemeToggle';
 
 const AuthLayout = ({ children, title, subtitle }) => {
-    const { theme, toggleTheme } = useTheme();
-    const { language, changeLanguage } = useLanguage();
-
     return (
         <div style={{
             minHeight: '100vh',
@@ -31,27 +27,9 @@ const AuthLayout = ({ children, title, subtitle }) => {
             }} />
 
             {/* Top Bar for controls */}
-            <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem', zIndex: 10 }}>
-                <button
-                    onClick={toggleTheme}
-                    style={{ background: 'transparent', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer' }}
-                >
-                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-                <select
-                    value={language}
-                    onChange={(e) => changeLanguage(e.target.value)}
-                    style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'var(--color-text-main)',
-                        cursor: 'pointer'
-                    }}
-                >
-                    <option value="en">EN</option>
-                    <option value="ar">AR</option>
-                    <option value="de">DE</option>
-                </select>
+            <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center', zIndex: 10 }}>
+                <ThemeToggle size="sm" />
+                <LanguageMenu align="end" size="sm" />
             </div>
 
             <div style={{ width: '100%', maxWidth: '450px', position: 'relative', zIndex: 1 }}>

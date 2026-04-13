@@ -49,7 +49,7 @@ const Warehouses = () => {
                     <Card key={wh.id} className="padding-md" style={{ borderTop: '4px solid var(--color-secondary-500)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <div style={{ padding: '0.75rem', background: 'var(--color-secondary-50)', borderRadius: '50%', color: 'var(--color-secondary-600)' }}>
+                                <div style={{ padding: '0.75rem', background: 'color-mix(in srgb, var(--color-secondary-500) 14%, var(--color-bg-card))', borderRadius: '50%', color: 'var(--color-secondary-600)' }}>
                                     <Warehouse size={24} />
                                 </div>
                                 <div>
@@ -65,7 +65,7 @@ const Warehouses = () => {
                             </button>
                         </div>
 
-                        <div style={{ padding: '1rem', background: 'var(--color-slate-50)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                        <div style={{ padding: '1rem', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', border: '1px solid var(--color-border)' }}>
                             <User size={16} color="var(--color-text-muted)" />
                             <span style={{ color: 'var(--color-text-secondary)' }}>Manager:</span>
                             <span style={{ fontWeight: 500 }}>{wh.managerId === '1' ? 'Ahmed Al-Sayed' : wh.managerId === '2' ? 'Sara Khalil' : 'Unassigned'}</span>
@@ -113,11 +113,11 @@ const modalOverlayStyle = {
 };
 
 const modalContentStyle = {
-    background: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', width: '400px',
-    boxShadow: 'var(--shadow-xl)'
+    background: 'var(--color-bg-card)', padding: '2rem', borderRadius: 'var(--radius-lg)', width: '400px',
+    boxShadow: 'var(--shadow-xl)', border: '1px solid var(--color-border)', color: 'var(--color-text-main)',
 };
 
-const labelStyle = { display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-text-primary)' };
-const inputStyle = { width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)' };
+const labelStyle = { display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-text-main)' };
+const inputStyle = { width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' };
 
 export default Warehouses;

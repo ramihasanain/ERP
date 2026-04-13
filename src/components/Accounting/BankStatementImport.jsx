@@ -159,7 +159,7 @@ const BankStatementImport = () => {
             </div>
 
             {/* Step 1: Download Template */}
-            <Card className="padding-lg" style={{ border: '2px solid var(--color-primary-200)', background: 'linear-gradient(to bottom right, white, var(--color-primary-50))' }}>
+            <Card className="padding-lg" style={{ border: '2px solid var(--color-border)', background: 'linear-gradient(to bottom right, var(--color-bg-card), color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card)))' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <div style={{
                         width: '3.5rem', height: '3.5rem', borderRadius: '16px',
@@ -182,9 +182,9 @@ const BankStatementImport = () => {
                     <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>Template Preview:</p>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                         <thead>
-                            <tr style={{ background: 'var(--color-primary-100)' }}>
+                            <tr style={{ background: 'var(--color-bg-table-header)' }}>
                                 {TEMPLATE_HEADERS.map(h => (
-                                    <th key={h} style={{ padding: '6px 12px', textAlign: 'left', fontWeight: 600, fontSize: '0.75rem', color: 'var(--color-primary-700)' }}>{h}</th>
+                                    <th key={h} style={{ padding: '6px 12px', textAlign: 'left', fontWeight: 600, fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -206,8 +206,8 @@ const BankStatementImport = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem' }}>
                     <div style={{
                         width: '3.5rem', height: '3.5rem', borderRadius: '16px',
-                        background: 'var(--color-slate-100)', color: 'var(--color-slate-600)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        background: 'var(--color-bg-subtle)', color: 'var(--color-text-secondary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--color-border)',
                     }}>
                         <Upload size={28} />
                     </div>
@@ -248,7 +248,7 @@ const BankStatementImport = () => {
                                 style={{
                                     border: '2px dashed var(--color-border)', borderRadius: '12px',
                                     padding: '3rem', textAlign: 'center', cursor: 'pointer',
-                                    background: 'var(--color-slate-50)', transition: 'border-color 0.2s'
+                                    background: 'var(--color-bg-subtle)', transition: 'border-color 0.2s'
                                 }}
                                 onMouseOver={e => e.currentTarget.style.borderColor = 'var(--color-primary-400)'}
                                 onMouseOut={e => e.currentTarget.style.borderColor = 'var(--color-border)'}
@@ -276,7 +276,7 @@ const BankStatementImport = () => {
 
                                 {/* Summary Cards */}
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
-                                    <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
+                                    <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-bg-subtle)' }}>
                                         <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>Total Rows</div>
                                         <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{uploadedData.length}</div>
                                     </div>
@@ -318,7 +318,7 @@ const BankStatementImport = () => {
                                 <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                                         <thead>
-                                            <tr style={{ background: 'var(--color-slate-50)' }}>
+                                            <tr style={{ background: 'var(--color-bg-table-header)' }}>
                                                 <th style={{ padding: '8px 12px', textAlign: 'center', width: '30px' }}>#</th>
                                                 <th style={{ padding: '8px 12px', textAlign: 'left' }}>Date</th>
                                                 <th style={{ padding: '8px 12px', textAlign: 'left' }}>Description</th>
@@ -333,7 +333,7 @@ const BankStatementImport = () => {
                                             {uploadedData.map((row, i) => (
                                                 <tr key={i} style={{
                                                     borderBottom: '1px solid var(--color-border)',
-                                                    background: row._valid ? 'white' : 'var(--color-error-dim)'
+                                                    background: row._valid ? 'var(--color-bg-surface)' : 'var(--color-error-dim)'
                                                 }}>
                                                     <td style={{ padding: '6px 12px', textAlign: 'center', color: 'var(--color-text-muted)' }}>{i + 1}</td>
                                                     <td style={{ padding: '6px 12px' }}>{row.Date}</td>

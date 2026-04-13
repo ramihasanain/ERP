@@ -43,7 +43,7 @@ const ItemsList = () => {
                             style={{
                                 width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.5rem',
                                 borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
-                                fontSize: '0.9rem'
+                                fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)',
                             }}
                         />
                     </div>
@@ -54,7 +54,7 @@ const ItemsList = () => {
                             onChange={(e) => setCategoryFilter(e.target.value)}
                             style={{
                                 padding: '0.6rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
-                                background: 'white', minWidth: '150px'
+                                background: 'var(--color-bg-surface)', minWidth: '150px', color: 'var(--color-text-main)',
                             }}
                         >
                             {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
@@ -70,7 +70,7 @@ const ItemsList = () => {
                             <div>
                                 <h3 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.25rem' }}>{item.name}</h3>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                                    <span style={{ background: 'var(--color-slate-100)', padding: '2px 6px', borderRadius: '4px' }}>{item.sku}</span>
+                                    <span style={{ background: 'var(--color-bg-subtle)', padding: '2px 6px', borderRadius: '4px', color: 'var(--color-text-secondary)' }}>{item.sku}</span>
                                     <span>•</span>
                                     <span>{item.category}</span>
                                 </div>
@@ -97,7 +97,7 @@ const ItemsList = () => {
                         </div>
 
                         {item.type === 'Stock' && (
-                            <div style={{ background: 'var(--color-slate-50)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ background: 'var(--color-bg-secondary)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--color-border)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Package size={16} color="var(--color-text-muted)" />
                                     <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Quality on Hand</span>
@@ -108,7 +108,7 @@ const ItemsList = () => {
                             </div>
                         )}
                         {item.type === 'Service' && (
-                            <div style={{ background: 'var(--color-slate-50)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                            <div style={{ background: 'var(--color-bg-secondary)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.9rem', border: '1px solid var(--color-border)' }}>
                                 <Tag size={16} />
                                 Service Item (Non-stock)
                             </div>
