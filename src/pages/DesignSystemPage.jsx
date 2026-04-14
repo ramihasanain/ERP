@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Button from '../components/Shared/Button';
-import Input from '../components/Shared/Input';
+import Button from '@/components/Shared/Button';
+import Input from '@/components/Shared/Input';
 import { Mail, Lock, Search, Plus, Trash, Save } from 'lucide-react';
 
 const DesignSystemPage = () => {

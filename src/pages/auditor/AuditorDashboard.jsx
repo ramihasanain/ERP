@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../../components/Shared/Card';
-import Button from '../../components/Shared/Button';
-import { useAudit } from '../../context/AuditContext';
-import { useAccounting } from '../../context/AccountingContext';
+import Card from '@/components/Shared/Card';
+import Button from '@/components/Shared/Button';
+import { useAudit } from '@/context/AuditContext';
+import { useAccounting } from '@/context/AccountingContext';
 import {
     Shield, LogOut, Clock, CheckCircle, AlertTriangle, FileText, Lock,
     Eye, ThumbsUp, ThumbsDown, Download, Stamp, Edit3, RotateCcw, Building2,

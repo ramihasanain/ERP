@@ -6,7 +6,7 @@ import Input from '@/components/Shared/Input';
 import { Search, Plus, Filter, FileText, MoreVertical, CreditCard } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
-import InvoicePaymentModal from './InvoicePaymentModal';
+import InvoicePaymentModal from '@/components/Accounting/InvoicePaymentModal';
 
 const Invoices = () => {
     const navigate = useNavigate();

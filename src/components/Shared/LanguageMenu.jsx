@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Globe, ChevronDown, Check } from 'lucide-react';
 import { useLanguage, languages } from '@/context/LanguageContext';
-import pill from './toolbarPill.module.css';
-import styles from './LanguageMenu.module.css';
+import pill from '@/components/Shared/toolbarPill.module.css';
+import styles from '@/components/Shared/LanguageMenu.module.css';
 
 const ORDER = ['en', 'ar', 'de'];
 

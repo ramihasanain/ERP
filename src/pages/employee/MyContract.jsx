@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Card from '../../components/Shared/Card';
-import Button from '../../components/Shared/Button';
-import { useHR } from '../../context/HRContext';
+import Card from '@/components/Shared/Card';
+import Button from '@/components/Shared/Button';
+import { useHR } from '@/context/HRContext';
 import { FileText, Printer, Copy, Download, Clock, CheckCircle } from 'lucide-react';
 
 const MyContract = () => {

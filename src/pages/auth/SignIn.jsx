@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '@/components/app-layout/AuthLayout';
-import Input from '../../components/Shared/Input';
-import Button from '../../components/Shared/Button';
+import Input from '@/components/Shared/Input';
+import Button from '@/components/Shared/Button';
 import { Mail, Lock, ArrowRight, Shield, User } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { errorToastOptions, successToastOptions } from '@/utils/toastOptions';
 
 const trackStyle = {
     display: 'flex',
@@ -32,20 +35,41 @@ const tabBase = {
 const SignIn = () => {
     const navigate = useNavigate();
     const { login, isLoading } = useAuth();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [role, setRole] = useState('admin');
+    const {
+        control,
+        handleSubmit,
+        watch,
+        setValue,
+        formState: { errors },
+    } = useForm({
+        defaultValues: {
+            email: '',
+            password: '',
+            role: 'admin',
+        },
+    });
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const user = await login(email, password, role);
-        if (user.role === 'admin') {
-            navigate('/admin/dashboard');
-        } else {
-            navigate('/employee/dashboard');
+    const onSubmit = async (values) => {
+        try {
+            const user = await login(values.email, values.password, values.role);
+            toast.success(`Welcome back, ${user?.name || 'User'}!`, successToastOptions);
+            if (user.role === 'admin') {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/employee/dashboard');
+            }
+        } catch (err) {
+            const message =
+                err?.response?.data?.detail ||
+                err?.response?.data?.error ||
+                err?.response?.data?.message ||
+                err?.message ||
+                'Sign in failed. Please verify your credentials.';
+            toast.error(message, errorToastOptions);
         }
     };
 
+    const role = watch('role');
     const adminActive = role === 'admin';
     const employeeActive = role === 'employee';
 
@@ -54,11 +78,12 @@ const SignIn = () => {
             title="Welcome back"
             subtitle="Sign in to your account to continue"
         >
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={trackStyle}>
                     <button
                         type="button"
-                        onClick={() => setRole('admin')}
+                        onClick={() => setValue('role', 'admin')}
+                        className={`auth-role-tab ${adminActive ? 'active' : ''}`}
                         style={{
                             ...tabBase,
                             background: adminActive ? 'var(--color-primary-600)' : 'transparent',
@@ -70,7 +95,8 @@ const SignIn = () => {
                     </button>
                     <button
                         type="button"
-                        onClick={() => setRole('employee')}
+                        onClick={() => setValue('role', 'employee')}
+                        className={`auth-role-tab ${employeeActive ? 'active' : ''}`}
                         style={{
                             ...tabBase,
                             background: employeeActive ? 'var(--color-primary-600)' : 'transparent',
@@ -82,28 +108,42 @@ const SignIn = () => {
                     </button>
                 </div>
 
-                <Input
-                    label="Email Address"
-                    type="email"
-                    placeholder="name@company.com"
-                    startIcon={<Mail size={18} />}
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
+                <Controller
+                    name="email"
+                    control={control}
+                    rules={{ required: 'Email is required' }}
+                    render={({ field }) => (
+                        <Input
+                            {...field}
+                            label="Email Address"
+                            type="email"
+                            placeholder="name@company.com"
+                            startIcon={<Mail size={18} />}
+                            error={errors.email?.message}
+                            required
+                        />
+                    )}
                 />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <Input
-                        label="Password"
-                        type="password"
-                        placeholder="••••••••"
-                        startIcon={<Lock size={18} />}
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
+                    <Controller
+                        name="password"
+                        control={control}
+                        rules={{ required: 'Password is required' }}
+                        render={({ field }) => (
+                            <Input
+                                {...field}
+                                label="Password"
+                                type="password"
+                                placeholder="••••••••"
+                                startIcon={<Lock size={18} />}
+                                error={errors.password?.message}
+                                required
+                            />
+                        )}
                     />
                     <div style={{ textAlign: 'right' }}>
-                        <Link to="/auth/forgot-password" style={{ fontSize: '0.875rem', color: 'var(--color-primary-600)' }}>
+                        <Link to="/auth/forgot-password" className="auth-inline-link" style={{ fontSize: '0.875rem', color: 'var(--color-primary-600)' }}>
                             Forgot password?
                         </Link>
                     </div>
@@ -112,24 +152,11 @@ const SignIn = () => {
                 <Button type="submit" size="lg" isLoading={isLoading} icon={<ArrowRight size={18} />}>
                     Sign In as {role === 'admin' ? 'Admin' : 'Employee'}
                 </Button>
-
-                <div style={{
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    background: 'var(--color-bg-subtle)',
-                    border: '1px solid var(--color-border)',
-                    fontSize: '0.8rem',
-                    color: 'var(--color-text-secondary)',
-                    textAlign: 'center',
-                }}
-                >
-                    Demo mode — enter any email/password to login
-                </div>
             </form>
 
             <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.95rem' }}>
                 Don&apos;t have an account?{' '}
-                <Link to="/auth/signup" style={{ color: 'var(--color-primary-600)', fontWeight: 600 }}>
+                <Link to="/auth/signup" className="auth-inline-link" style={{ color: 'var(--color-primary-600)', fontWeight: 600 }}>
                     Create account
                 </Link>
             </div>
@@ -145,6 +172,7 @@ const SignIn = () => {
             >
                 <Link
                     to="/auditor/login"
+                    className="auditor-link"
                     style={{
                         fontSize: '0.85rem',
                         color: 'var(--color-primary-500)',
@@ -159,6 +187,36 @@ const SignIn = () => {
                     <Shield size={16} /> Auditor Portal — External Auditor Login
                 </Link>
             </div>
+            <style>{`
+                .auth-role-tab:hover {
+                    transform: translateY(-1px);
+                }
+
+                .auth-role-tab.active:hover {
+                    transform: translateY(-1px) scale(1.01);
+                }
+
+                .auth-inline-link {
+                    text-decoration: none;
+                    transition: color 0.2s ease, opacity 0.2s ease;
+                }
+
+                .auth-inline-link:hover {
+                    color: var(--color-primary-700);
+                    opacity: 0.9;
+                    text-decoration: underline;
+                    text-underline-offset: 2px;
+                }
+
+                .auditor-link {
+                    transition: transform 0.2s ease, color 0.2s ease;
+                }
+
+                .auditor-link:hover {
+                    transform: translateY(-1px);
+                    color: var(--color-primary-600);
+                }
+            `}</style>
         </AuthLayout>
     );
 };

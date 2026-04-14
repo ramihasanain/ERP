@@ -1,14 +1,26 @@
 import React from 'react';
-import Card from '../../components/Shared/Card';
+import Card from '@/components/Shared/Card';
 import { Layers, Users, Package } from 'lucide-react';
 
-const modulesList = [
+const fallbackModulesList = [
     { id: 'accounting', name: 'Accounting', icon: <Layers />, desc: 'Ledgers, Invoicing, Tax' },
     { id: 'hr', name: 'HR & Payroll', icon: <Users />, desc: 'Employees, Payroll, Leaves' },
     { id: 'inventory', name: 'Inventory', icon: <Package />, desc: 'Stock, Warehouses, POs' },
 ];
 
-const StepModules = ({ data, updateData }) => {
+const StepModules = ({ data, updateData, options }) => {
+    const modulesList = (options?.modules?.length
+        ? options.modules.map((module) => ({
+            id: module.value,
+            name: module.label,
+            desc: module.description || 'ERP module',
+        }))
+        : fallbackModulesList
+    ).map((item, index) => ({
+        ...item,
+        icon: fallbackModulesList[index]?.icon || <Layers />,
+    }));
+
     const toggleModule = (id) => {
         const current = data.modules || [];
         if (current.includes(id)) {

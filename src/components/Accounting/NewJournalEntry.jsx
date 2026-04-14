@@ -5,7 +5,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Save, Plus, Trash2, ArrowLeft, Upload, FileText, CheckCircle, Clock, AlertTriangle, XCircle, Monitor, Lock } from 'lucide-react';
-import JournalEntryList from './JournalEntryList';
+import JournalEntryList from '@/components/Accounting/JournalEntryList';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
 
 const NewJournalEntry = () => {

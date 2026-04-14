@@ -1,0 +1,126 @@
+---
+description: ERP frontend project conventions and implementation defaults
+alwaysApply: true
+---
+
+# ERP Frontend Reference Rule
+
+Use these defaults when implementing features in this repo.
+
+Tech baseline in this project:
+- React 19 + Vite
+- React Router
+- CSS variables/theme system in `src/styles`
+- Context-based domain state (primary, current production pattern)
+- React Query + API helpers available for new backend-connected features
+
+## Architecture and Structure
+- Respect this folder ownership model:
+  - `src/components/*`: feature and layout UI
+  - `src/pages/*`: route-level pages (landing/auth/onboarding/employee/auditor)
+  - `src/routes/appRoutes.jsx`: canonical route tree
+  - `src/context/*`: domain state providers (Accounting, HR, Inventory, Audit, etc.)
+  - `src/api/*`: HTTP client and request helpers
+  - `src/hooks/*`: custom data hooks (`useCustomQuery`, `useCustomPost`, etc.)
+  - `src/services/*`: auth/token/session helpers
+  - `src/core/*`: cross-feature primitives (`Pagination`, `Spinner`, `ScrollToTop`)
+  - `src/utils/*`: formatting/export/error helpers
+  - `src/styles/*`: global theme variables and base styles
+- Prefer using existing shared utilities/hooks before introducing new abstractions.
+- Keep module-specific logic inside the owning module folder; promote to shared only when reused by 2+ modules.
+
+## Current Data Layer Reality (Important)
+- The current app is primarily context-driven with in-memory/mock domain data.
+- Do not assume every feature already uses API + React Query.
+- When editing existing modules:
+  - If module already depends on context providers, keep compatibility.
+  - If introducing API-driven flow, isolate it and avoid breaking current context behavior.
+- For new backend-connected features, use:
+  - `src/hooks/useQuery.js` (`useCustomQuery`) for reads
+  - `src/hooks/useMutation.js` (`useCustomPost`, `useCustomPatch`, `useCustomRemove`) for writes
+  - `src/services/auth.js` for auth/token/session and tenant-domain helpers
+- Do not call `get/post/patch/remove` directly inside pages/components when a custom hook can be used.
+- If adding API flow in context providers, wrap requests with `useCustomQuery`/`useCustomPost` style hooks.
+
+## Forms + API Standard (Project Default)
+- For forms that submit to APIs, use `react-hook-form` as the default form state/validation approach.
+- Prefer `Controller` with shared input components when they do not expose `ref` forwarding.
+- Avoid `useState` for API form fields and submission error state in pages/components; use `react-hook-form` state (`errors`, `setError`, `clearErrors`, etc.).
+- Combine `react-hook-form` with React Query custom hooks:
+  - Submit with `useCustomPost` / `useCustomPatch` / `useCustomRemove`
+  - Read option lists/details with `useCustomQuery`
+- Keep transport layer on axios through `src/api/index.js`; UI layers should consume hooks, not axios directly.
+
+## Routing and Navigation Rules
+- Treat `src/routes/appRoutes.jsx` as the source of truth for route structure.
+- Keep public/auth entry locking behavior consistent:
+  - Authenticated users must not access `/landing`, `/auth/signin`, or `/auth/signup`
+  - Redirect authenticated users from those public routes to their role dashboard (`/admin/dashboard` or `/employee/dashboard`)
+  - Keep `/` as the app entry that routes authenticated users to dashboard and unauthenticated users to `/landing`
+  - Protect `/admin/*` so unauthenticated users are redirected to `/auth/signin`
+- Keep role/layout boundaries intact:
+  - `/admin/*` under `AdminLayout`
+  - `/employee/*` under `EmployeeLayout`
+  - Auditor routes under `/auditor/*`
+- When adding a module/section:
+  - Add route entries in `appRoutes.jsx`
+  - Add matching sidebar/navigation entry when appropriate
+  - Verify route path naming stays consistent with existing conventions
+- Keep wildcard redirect behavior stable unless explicitly requested.
+
+## ERP UI Conventions
+- Use the standard module page flow:
+  1) header/title/actions
+  2) filters/search row
+  3) table or list
+  4) modal(s) for add/edit/confirm
+- Typography:
+  - Buttons: `font-medium`
+  - Inputs/selects/textarea: `font-normal`
+  - Labels: `font-medium`
+- Interaction:
+  - Clickable controls must include `cursor-pointer`
+  - Keep row hover/action affordances consistent
+- Tables:
+  - Keep horizontal safety (`overflow-x-auto` or equivalent)
+  - Preserve clear header/body visual separation
+- Modal behavior:
+  - Keep overlay + focus-safe layout patterns consistent with existing app
+  - Include clear cancel/submit actions
+- User feedback toasts:
+  - For user-triggered actions (submit/save/create/update/delete/login/logout), show a suitable toast for both success and failure outcomes.
+  - Use `sonner` (already mounted in `App.jsx`) for toast notifications.
+  - Keep toast styling compatible with theme tokens (`var(--color-*)`), and avoid inline form-level backend error blocks when a toast is more suitable.
+  - Prefer concise action-focused messages (what happened and what user can do next when relevant).
+
+## Responsive and Theme Rules
+- Preserve mobile-first behavior in app shell.
+- Do not regress sidebar/navbar behavior on small screens.
+- Maintain compatibility with the CSS variable theme system:
+  - Use `var(--color-*)` tokens from `src/styles/variables.css`
+  - Respect `[data-theme="dark"]` behavior and existing transitions
+- Avoid hardcoding colors when an existing token exists.
+
+## Naming and Imports
+- Components: PascalCase filenames and exports.
+- Hooks/utils: camelCase.
+- Use `@/` alias imports over long relative paths.
+- Keep route/query keys and state names explicit and stable (`isLoading`, `isOpen`, `currentPage`, etc.).
+
+## Feature Implementation Checklist (Default)
+- Add/adjust UI in the owning module folder.
+- Reuse shared core/util hooks where possible.
+- Wire routes/navigation if feature is route-visible.
+- Handle loading, empty, and error states.
+- Keep Arabic/RTL-friendly layouts stable where already present.
+- Validate both desktop and mobile layout behavior.
+
+## Quality and Safety
+- Make minimal, targeted edits that match current style and patterns.
+- Do not break existing flows in navbar/sidebar, auth, or role-specific routing.
+- Do not silently refactor large modules unless requested.
+- Preserve backward compatibility for context consumers when introducing new hooks/services.
+- After significant changes:
+  - run `pnpm lint`
+  - fix newly introduced issues
+  - verify the affected screen in dev mode

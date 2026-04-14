@@ -5,7 +5,7 @@ import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Search, Filter, Mail, Phone, MoreHorizontal, UserPlus, AlertTriangle, DollarSign, TrendingUp, Calendar, Settings } from 'lucide-react';
 import { useHR } from '@/context/HRContext';
-import EvaluationSettingsModal from './EvaluationSettingsModal';
+import EvaluationSettingsModal from '@/components/hr/EvaluationSettingsModal';
 
 const EmployeeDirectory = () => {
     const navigate = useNavigate();

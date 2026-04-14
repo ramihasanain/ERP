@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import Card from '../../components/Shared/Card';
-import Button from '../../components/Shared/Button';
+import Card from '@/components/Shared/Card';
+import Button from '@/components/Shared/Button';
 import { Plus, CheckCircle, Clock, FileText, Download, Eye, X, Printer, Share2 } from 'lucide-react';
-import Input from '../../components/Shared/Input';
+import Input from '@/components/Shared/Input';
 
 const MyRequests = () => {
     const [showRequestModal, setShowRequestModal] = useState(false);

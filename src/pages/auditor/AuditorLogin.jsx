@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../../components/Shared/Card';
-import Button from '../../components/Shared/Button';
-import Input from '../../components/Shared/Input';
+import Card from '@/components/Shared/Card';
+import Button from '@/components/Shared/Button';
+import Input from '@/components/Shared/Input';
 import { Shield, LogIn, ArrowLeft, Building2 } from 'lucide-react';
-import { useAudit } from '../../context/AuditContext';
+import { useAudit } from '@/context/AuditContext';
 
 const AuditorLogin = () => {
     const navigate = useNavigate();

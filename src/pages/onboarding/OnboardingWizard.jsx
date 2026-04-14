@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAccounting } from '../../context/AccountingContext';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AuthLayout from '@/components/app-layout/AuthLayout';
-import Button from '../../components/Shared/Button';
-import StepCompanyInfo from './StepCompanyInfo';
-import StepRegionalSettings from './StepRegionalSettings';
-import StepModules from './StepModules';
-import { Check } from 'lucide-react';
+import Button from '@/components/Shared/Button';
+import StepCompanyInfo from '@/pages/onboarding/StepCompanyInfo';
+import StepRegionalSettings from '@/pages/onboarding/StepRegionalSettings';
+import StepModules from '@/pages/onboarding/StepModules';
+import { useCustomQuery } from '@/hooks/useQuery';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
+import { errorToastOptions, successToastOptions } from '@/utils/toastOptions';
 
 const steps = [
     { id: 1, title: 'Company Info', component: StepCompanyInfo },
@@ -16,29 +18,113 @@ const steps = [
 
 const OnboardingWizard = () => {
     const navigate = useNavigate();
-    const { updateCompanyProfile } = useAccounting();
+    const location = useLocation();
+    const { register, isLoading } = useAuth();
+    const signupData = location.state?.signupData;
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
-        companyName: '',
+        companyName: signupData?.company_name || '',
         industry: '',
-        country: 'JO',
-        currency: 'JOD',
-        language: 'ar',
-        modules: ['accounting', 'hr', 'inventory']
+        country: '',
+        currency: '',
+        language: '',
+        modules: [],
     });
 
-    const handleNext = () => {
+    const industriesQuery = useCustomQuery('/tenants/industries/', ['signup-industries']);
+    const countriesQuery = useCustomQuery('/shared/countries/', ['signup-countries']);
+    const currenciesQuery = useCustomQuery('/shared/currencies/', ['signup-currencies']);
+    const languagesQuery = useCustomQuery('/shared/languages/', ['signup-languages']);
+    const modulesQuery = useCustomQuery('/shared/modules/', ['signup-modules']);
+
+    const listFromResponse = (response) => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.results)) return response.results;
+        if (Array.isArray(response?.data)) return response.data;
+        if (Array.isArray(response?.items)) return response.items;
+        return [];
+    };
+
+    const options = useMemo(() => ({
+        industries: listFromResponse(industriesQuery.data).map((item) => ({
+            value: item?.id || item?.uuid || item?.value,
+            label: item?.name || item?.title || item?.label,
+        })).filter((item) => item.value && item.label),
+        countries: listFromResponse(countriesQuery.data).map((item) => ({
+            value: item?.id || item?.uuid || item?.value,
+            label: item?.name || item?.title || item?.label,
+        })).filter((item) => item.value && item.label),
+        currencies: listFromResponse(currenciesQuery.data).map((item) => ({
+            value: item?.id || item?.uuid || item?.value,
+            label: item?.name || item?.code || item?.title || item?.label,
+        })).filter((item) => item.value && item.label),
+        languages: listFromResponse(languagesQuery.data).map((item) => ({
+            value: item?.id || item?.uuid || item?.value,
+            label: item?.name || item?.code || item?.title || item?.label,
+        })).filter((item) => item.value && item.label),
+        modules: listFromResponse(modulesQuery.data).map((item) => ({
+            value: item?.id || item?.uuid || item?.value,
+            label: item?.name || item?.title || item?.label,
+            description: item?.description || item?.desc || '',
+        })).filter((item) => item.value && item.label),
+    }), [
+        industriesQuery.data,
+        countriesQuery.data,
+        currenciesQuery.data,
+        languagesQuery.data,
+        modulesQuery.data,
+    ]);
+
+    const onboardingLoading =
+        industriesQuery.isLoading ||
+        countriesQuery.isLoading ||
+        currenciesQuery.isLoading ||
+        languagesQuery.isLoading ||
+        modulesQuery.isLoading;
+
+    const onboardingError =
+        industriesQuery.error ||
+        countriesQuery.error ||
+        currenciesQuery.error ||
+        languagesQuery.error ||
+        modulesQuery.error;
+
+    useEffect(() => {
+        setFormData((prev) => ({
+            ...prev,
+            industry: prev.industry || options.industries[0]?.value || '',
+            country: prev.country || options.countries[0]?.value || '',
+            currency: prev.currency || options.currencies[0]?.value || '',
+            language: prev.language || options.languages[0]?.value || '',
+            modules: prev.modules.length ? prev.modules : options.modules.slice(0, 3).map((mod) => mod.value),
+        }));
+    }, [options]);
+
+    const handleNext = async () => {
         if (currentStep < steps.length) {
-            setCurrentStep(curr => curr + 1);
+            setCurrentStep((curr) => curr + 1);
         } else {
-            // Final submit
-            console.log('Submitting:', formData);
-            updateCompanyProfile({
-                name: formData.companyName,
-                country: formData.country,
-                currency: formData.currency
-            });
-            navigate('/admin/dashboard');
+            try {
+                await register({
+                    ...signupData,
+                    company_name: formData.companyName || signupData.company_name || signupData.full_name,
+                    industry: formData.industry,
+                    country: formData.country,
+                    base_currency: formData.currency,
+                    default_language: formData.language,
+                    selected_modules: formData.modules,
+                });
+                toast.success('Account created successfully. Welcome to your workspace!', successToastOptions);
+                navigate('/admin/dashboard');
+            } catch (err) {
+                const message =
+                    err?.response?.data?.detail ||
+                    err?.response?.data?.error ||
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    'Registration failed. Please verify your setup details and try again.';
+                toast.error(message, errorToastOptions);
+            }
         }
     };
 
@@ -49,10 +135,52 @@ const OnboardingWizard = () => {
     };
 
     const updateData = (key, value) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
+        setFormData((prev) => ({ ...prev, [key]: value }));
     };
 
     const CurrentComponent = steps.find(s => s.id === currentStep)?.component || StepCompanyInfo;
+    const canContinue =
+        currentStep === 1
+            ? Boolean(formData.companyName && formData.industry && formData.country)
+            : currentStep === 2
+                ? Boolean(formData.currency && formData.language)
+                : formData.modules.length > 0;
+
+    if (!signupData) {
+        return (
+            <AuthLayout title="Create an account" subtitle="Start your 14-day free trial">
+                <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
+                    Please start from the signup form to continue onboarding.
+                </p>
+                <Button onClick={() => navigate('/auth/signup')}>
+                    Go to Sign Up
+                </Button>
+            </AuthLayout>
+        );
+    }
+
+    if (onboardingLoading) {
+        return (
+            <AuthLayout title="Setup your workspace" subtitle="Loading onboarding data...">
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                    Preparing industries, countries, currencies, languages, and modules.
+                </p>
+            </AuthLayout>
+        );
+    }
+
+    if (onboardingError) {
+        return (
+            <AuthLayout title="Setup your workspace" subtitle="Could not load onboarding data">
+                <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
+                    {onboardingError?.message || 'Failed to load onboarding data.'}
+                </p>
+                <Button onClick={() => window.location.reload()}>
+                    Retry
+                </Button>
+            </AuthLayout>
+        );
+    }
 
     return (
         <AuthLayout
@@ -79,6 +207,7 @@ const OnboardingWizard = () => {
                 <CurrentComponent
                     data={formData}
                     updateData={updateData}
+                    options={options}
                 />
             </div>
 
@@ -90,7 +219,7 @@ const OnboardingWizard = () => {
                 >
                     Back
                 </Button>
-                <Button onClick={handleNext}>
+                <Button onClick={handleNext} isLoading={isLoading} disabled={!canContinue || isLoading}>
                     {currentStep === steps.length ? 'Finish Setup' : 'Continue'}
                 </Button>
             </div>

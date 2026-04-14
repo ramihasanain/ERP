@@ -3,7 +3,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Search, Plus, Filter, Download, Lock, Unlock, ShieldAlert } from 'lucide-react';
-import JournalEntryList from './JournalEntryList';
+import JournalEntryList from '@/components/Accounting/JournalEntryList';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useNavigate } from 'react-router-dom';

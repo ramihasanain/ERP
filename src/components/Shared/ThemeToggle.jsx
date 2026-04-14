@@ -1,7 +1,7 @@
 import React from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
-import pill from './toolbarPill.module.css';
+import pill from '@/components/Shared/toolbarPill.module.css';
 
 /**
  * @param {{ size?: 'sm' | 'md'; className?: string }} props

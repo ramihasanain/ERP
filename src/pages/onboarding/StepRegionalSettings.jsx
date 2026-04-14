@@ -1,7 +1,12 @@
 import React from 'react';
-import Input from '../../components/Shared/Input';
 
-const StepRegionalSettings = ({ data, updateData }) => {
+const StepRegionalSettings = ({ data, updateData, options }) => {
+    const currencies = options?.currencies || [];
+    const languages = options?.languages || [];
+
+    const selectedCountryName =
+        options?.countries?.find((country) => country.value === data.country)?.label || 'your country';
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Regional Settings</h3>
@@ -13,11 +18,12 @@ const StepRegionalSettings = ({ data, updateData }) => {
                     onChange={(e) => updateData('currency', e.target.value)}
                     style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                 >
-                    <option value="JOD">Jordanian Dinar (JOD)</option>
-                    <option value="SAR">Saudi Riyal (SAR)</option>
-                    <option value="SYP">Syrian Pound (SYP)</option>
-                    <option value="EUR">Euro (EUR)</option>
-                    <option value="USD">States Dollar (USD)</option>
+                    <option value="">Select Currency...</option>
+                    {currencies.map((currency) => (
+                        <option key={currency.value} value={currency.value}>
+                            {currency.label}
+                        </option>
+                    ))}
                 </select>
             </div>
 
@@ -28,9 +34,12 @@ const StepRegionalSettings = ({ data, updateData }) => {
                     onChange={(e) => updateData('language', e.target.value)}
                     style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                 >
-                    <option value="ar">Arabic (RTL)</option>
-                    <option value="en">English (LTR)</option>
-                    <option value="de">German (LTR)</option>
+                    <option value="">Select Language...</option>
+                    {languages.map((language) => (
+                        <option key={language.value} value={language.value}>
+                            {language.label}
+                        </option>
+                    ))}
                 </select>
             </div>
 
@@ -46,7 +55,7 @@ const StepRegionalSettings = ({ data, updateData }) => {
                     Auto-Configuration
                 </h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                    Based on your selection of <strong style={{ color: 'var(--color-text-main)' }}>{data.country.toUpperCase()}</strong>, we will automatically apply localized tax rules, chart of accounts, and payroll policies.
+                    Based on your selection of <strong style={{ color: 'var(--color-text-main)' }}>{selectedCountryName}</strong>, we will automatically apply localized tax rules, chart of accounts, and payroll policies.
                 </p>
             </div>
         </div>

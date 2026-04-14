@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import { Bell, Search, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Input from '../Shared/Input';
+import Input from '@/components/Shared/Input';
 import NotificationDropdown from '@/components/app-layout/NotificationDropdown';
 import LanguageMenu from '@/components/Shared/LanguageMenu';
 import ThemeToggle from '@/components/Shared/ThemeToggle';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Construction, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Button from './Button';
+import Button from '@/components/Shared/Button';
 
 const ComingSoon = ({ title = "Under Construction", message = "This feature is currently being developed." }) => {
     const navigate = useNavigate();

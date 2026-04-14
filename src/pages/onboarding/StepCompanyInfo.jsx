@@ -1,8 +1,11 @@
 import React from 'react';
-import Input from '../../components/Shared/Input';
+import Input from '@/components/Shared/Input';
 import { Building2, Globe } from 'lucide-react';
 
-const StepCompanyInfo = ({ data, updateData }) => {
+const StepCompanyInfo = ({ data, updateData, options }) => {
+    const industries = options?.industries || [];
+    const countries = options?.countries || [];
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Company Details</h3>
@@ -30,10 +33,11 @@ const StepCompanyInfo = ({ data, updateData }) => {
                     }}
                 >
                     <option value="">Select Industry...</option>
-                    <option value="tech">Technology</option>
-                    <option value="retail">Retail</option>
-                    <option value="manufacturing">Manufacturing</option>
-                    <option value="services">Services</option>
+                    {industries.map((industry) => (
+                        <option key={industry.value} value={industry.value}>
+                            {industry.label}
+                        </option>
+                    ))}
                 </select>
             </div>
 
@@ -55,11 +59,12 @@ const StepCompanyInfo = ({ data, updateData }) => {
                             color: 'var(--color-text-main)'
                         }}
                     >
-                        <option value="JO">Jordan</option>
-                        <option value="SY">Syria</option>
-                        <option value="SA">Saudi Arabia</option>
-                        <option value="DE">Germany</option>
-                        <option value="US">United States</option>
+                        <option value="">Select Country...</option>
+                        {countries.map((country) => (
+                            <option key={country.value} value={country.value}>
+                                {country.label}
+                            </option>
+                        ))}
                     </select>
                 </div>
             </div>

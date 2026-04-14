@@ -7,7 +7,7 @@ import { User, FileText, CreditCard, ArrowLeft, Save, Upload, Plus, Calendar, Tr
 import { useHR } from '@/context/HRContext';
 import { usePayroll } from '@/context/PayrollContext';
 import Modal from '@/components/Shared/Modal';
-import TerminationModal from './TerminationModal';
+import TerminationModal from '@/components/hr/TerminationModal';
 
 const EmployeeDetails = () => {
     const { id } = useParams();

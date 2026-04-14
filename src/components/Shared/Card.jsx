@@ -1,6 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
-import styles from './Card.module.css';
+import styles from '@/components/Shared/Card.module.css';
 
 const Card = ({
     children,

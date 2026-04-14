@@ -4,7 +4,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Plus, Eye, Search, Filter, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import BillPaymentModal from './BillPaymentModal';
+import BillPaymentModal from '@/components/Procurement/BillPaymentModal';
 
 const VendorInvoiceList = () => {
     const { vendorInvoices, updateInvoiceStatus } = useProcurement();

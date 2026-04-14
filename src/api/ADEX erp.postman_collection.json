@@ -1,0 +1,1437 @@
+{
+	"info": {
+		"_postman_id": "3935e843-fc8e-4335-b311-5c6165820dc4",
+		"name": "ADEX erp",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29368996",
+		"_collection_link": "https://bold-shadow-754981.postman.co/workspace/Zeyad's-Projects~ee9934c2-0829-46da-8c38-13410d2e864d/collection/29368996-3935e843-fc8e-4335-b311-5c6165820dc4?action=share&source=collection_link&creator=29368996"
+	},
+	"item": [
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "me",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgyMjkwLCJpYXQiOjE3NzYwNzc0OTAsImp0aSI6ImFiODdmMjBkOWFmMDQxZjk5ZWRiMjllNTk4NDI3OGQ0IiwidXNlcl9pZCI6IjEifQ.5dGOhiIHVnxTsJ_VbfD1VaCckJGrFddS5PeeO1AXsGM",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/me/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"me",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "me",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "full_name",
+									"value": "Zeyad Salama",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": "/home/demo/Downloads/u1.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/me/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"me",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Shared",
+			"item": [
+				{
+					"name": "Currencies",
+					"item": [
+						{
+							"name": "currencies",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/shared/currencies/?name=jor",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"shared",
+										"currencies",
+										""
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": "jor"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Countries",
+					"item": [
+						{
+							"name": "countries",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/shared/countries/?name=jor",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"shared",
+										"countries",
+										""
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": "jor"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Languages",
+					"item": [
+						{
+							"name": "languages",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/shared/languages/",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"shared",
+										"languages",
+										""
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Modules",
+					"item": [
+						{
+							"name": "modules",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/shared/modules/",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"shared",
+										"modules",
+										""
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Industries",
+					"item": [
+						{
+							"name": "industries",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/tenants/industries/",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"tenants",
+										"industries",
+										""
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Account Types",
+					"item": [
+						{
+							"name": "List Account Types",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/shared/account-types/",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"shared",
+										"account-types",
+										""
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "login",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let res = pm.response.json();",
+									"pm.environment.set(\"token\", res.access);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\":\"zeyadslama23@gmail.com\",\n  \"password\":\"Test@123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/login/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "register",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"full_name\": \"demohome233\",\n  \"email\": \"demohome233@gmail.com\",\n  \"password\": \"Test@123\",\n  \"company_name\": \"demohome233\",\n  \"industry\": \"d63cb5db-3c80-47b7-93b0-4e73356b6efb\",\n  \"country\": \"6cb76803-0233-4ab0-b903-f743244a5ad9\",\n  \"base_currency\": \"cd61bd7d-a343-49a6-a09a-900bc6207e6e\",\n  \"default_language\": \"dcb5edbd-abb0-476f-a15d-a0d6e0cb826a\",\n  \"selected_modules\": [\n    \"8ec4b0a6-70ee-4b07-8e32-94b78773d703\",\n    \"9d65d7c5-d127-44f3-902c-92d4691a5e1a\",\n    \"531e9aff-d850-49c8-bc28-8957bbf7cbdc\"\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/register/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"register",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tennant",
+			"item": [
+				{
+					"name": "Accounting",
+					"item": [
+						{
+							"name": "Accounts",
+							"item": [
+								{
+									"name": "List Accounts",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/accounting/accounts/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"accounting",
+												"accounts",
+												""
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1",
+													"disabled": true
+												},
+												{
+													"key": "account_type",
+													"value": "cost of goods sold",
+													"disabled": true
+												},
+												{
+													"key": "is_system_account",
+													"value": "false",
+													"disabled": true
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "List Accounts tree",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/accounting/accounts/tree?is_system_account=false",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"accounting",
+												"accounts",
+												"tree"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1",
+													"disabled": true
+												},
+												{
+													"key": "account_type",
+													"value": "7a6aa490-acff-4b44-968c-d6813677d178",
+													"disabled": true
+												},
+												{
+													"key": "is_system_account",
+													"value": "false"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create Accounts",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"code\": \"412\",    \n  \"name\": \"{{$randomBankAccountName}}\",\n  \"description\": \"Small tools and consumables\",\n  \"account_type\": \"fd074380-43dc-4948-824a-53256f6d1080\",\n  \"parent\": \"bfcb72be-94c4-4588-9092-6031bc982f9f\",\n  \"is_active\": false,\n  \"order\": 10\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/accounting/accounts/create/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"accounting",
+												"accounts",
+												"create",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Journal Enteries",
+							"item": [
+								{
+									"name": "Create journal entery",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"date\": \"2026-04-12\",\n    \"reference\": \"INV-2026-0042\",\n    \"description\": \"Office supplies\",\n    \"currency\": \"JOD\",\n    \"lines\": [\n        {\n            \"account\": \"d20cbc2b-b5ec-4b7f-b295-011e79ccebec\",\n            \"description\": \"Expense — supplies\",\n            \"cost_center\": null,\n            \"debit\": \"150.00\",\n            \"credit\": \"0.00\",\n            \"order\": 0\n        },\n        {\n            \"account\": \"d20cbc2b-b5ec-4b7f-b295-011e79ccebec\",\n            \"description\": \"Expense — supplies\",\n            \"cost_center\": null,\n            \"debit\": \"250.00\",\n            \"credit\": \"0.00\",\n            \"order\": 0\n        },\n        {\n            \"account\": \"d20cbc2b-b5ec-4b7f-b295-011e79ccebec\",\n            \"description\": \"Expense — supplies\",\n            \"cost_center\": null,\n            \"debit\": \"0.00\",\n            \"credit\": \"50.00\",\n            \"order\": 0\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/accounting/journal-entries/create/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"accounting",
+												"journal-entries",
+												"create",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "List journal enteries",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"date\": \"2026-04-12\",\n    \"reference\": \"INV-2026-0042\",\n    \"description\": \"Office supplies\",\n    \"currency\": \"JOD\",\n    \"lines\": [\n        {\n            \"account\": \"d20cbc2b-b5ec-4b7f-b295-011e79ccebec\",\n            \"description\": \"Expense — supplies\",\n            \"cost_center\": null,\n            \"debit\": \"150.00\",\n            \"credit\": \"0.00\",\n            \"order\": 0\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/accounting/journal-entries/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"accounting",
+												"journal-entries",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update journal entery",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"date\": \"2026-04-11\",\n  \"reference\": \"INV-2026-0042-rev1\",\n  \"description\": \"Office supplies (corrected)\",\n  \"currency\": \"JOD\",\n  \"lines\": [\n    {\n      \"id\": \"352c9fb4-aff4-46c6-9535-df4ab44a4b0c\",\n      \"account\": \"d20cbc2b-b5ec-4b7f-b295-011e79ccebec\",\n      \"description\": \"Expense — supplies\",\n      \"cost_center\": null,\n      \"debit\": \"175.50\",\n      \"credit\": \"0.00\",\n      \"order\": 0\n    }\n  ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/accounting/journal-entries/132be754-4b02-4529-bfb8-5b05f8dc9692/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"accounting",
+												"journal-entries",
+												"132be754-4b02-4529-bfb8-5b05f8dc9692",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Journal Entry details",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"date\": \"2026-04-11\",\n  \"reference\": \"INV-2026-0042-rev1\",\n  \"description\": \"Office supplies (corrected)\",\n  \"currency\": \"JOD\",\n  \"lines\": [\n    {\n      \"id\": \"352c9fb4-aff4-46c6-9535-df4ab44a4b0c\",\n      \"account\": \"d20cbc2b-b5ec-4b7f-b295-011e79ccebec\",\n      \"description\": \"Expense — supplies\",\n      \"cost_center\": null,\n      \"debit\": \"175.50\",\n      \"credit\": \"0.00\",\n      \"order\": 0\n    }\n  ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/accounting/journal-entries/b1ebb239-617b-40d3-aca4-b10c3bc9da4f/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"accounting",
+												"journal-entries",
+												"b1ebb239-617b-40d3-aca4-b10c3bc9da4f",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "HR",
+					"item": [
+						{
+							"name": "Departments",
+							"item": [
+								{
+									"name": "Create Department",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"test dep\",\n//   \"parent\": \"6aa8523b-e071-4516-a0a8-d65ab250e0a0\",\n  \"head\": \"1\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/hr/departments/create/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"departments",
+												"create",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Department List",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgwNzI2LCJpYXQiOjE3NzYwNzU5MjYsImp0aSI6ImI4NzZiYjU2ZGJmMzQ4NmU4YjhiZTU5MTljMzVhYzFmIiwidXNlcl9pZCI6IjEifQ.9J4aRdxoJAmBhlx5d3plrB8w9jyaQOSUKRjTKemmVJM",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/departments/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"departments",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Department List tree",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/departments/tree",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"departments",
+												"tree"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Department details",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/departments/a0ad0319-498a-4ef4-8048-f7c16e5a61ee/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"departments",
+												"a0ad0319-498a-4ef4-8048-f7c16e5a61ee",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Department update",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"SW Development\",\n  \"parent\": \"df6eb4c0-b809-4954-9ffb-0062d45866f8\",\n  \"head\": \"1\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/hr/departments/a0ad0319-498a-4ef4-8048-f7c16e5a61ee/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"departments",
+												"a0ad0319-498a-4ef4-8048-f7c16e5a61ee",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Department update Copy",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"SW Development\",\n  \"parent\": \"df6eb4c0-b809-4954-9ffb-0062d45866f8\",\n  \"head\": \"1\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/hr/departments/d6569f4d-ca38-4ae5-8b5f-e419dca26820/delete/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"departments",
+												"d6569f4d-ca38-4ae5-8b5f-e419dca26820",
+												"delete",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Postions",
+							"item": [
+								{
+									"name": "List Positions",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/positions/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"positions",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Position details",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/positions/id/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"positions",
+												"id",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Position update",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/positions/id/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"positions",
+												"id",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Position update Copy",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/positions/id/delete/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"positions",
+												"id",
+												"delete",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create Positions",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/positions/create/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"positions",
+												"create",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Inventory",
+					"item": [
+						{
+							"name": "Wearhouses",
+							"item": [
+								{
+									"name": "List wearhouse",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/inventory/warehouses/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"warehouses",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create warehouse",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Main Warehouse\",\n  \"location\": \"123 Industrial Ave, Riyadh\",\n  \"manager\": \"1\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/inventory/warehouses/create/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"warehouses",
+												"create",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "warehouse details",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/inventory/warehouses/b230be85-635b-4dd6-be76-e28f56850cd2/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"warehouses",
+												"b230be85-635b-4dd6-be76-e28f56850cd2",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "warehouse update",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Main Warehouse - Updated\",\n  \"location\": \"Algalaa st., Cairo\", \n  \"manager\": 1\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/inventory/warehouses/b230be85-635b-4dd6-be76-e28f56850cd2/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"warehouses",
+												"b230be85-635b-4dd6-be76-e28f56850cd2",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "warehouse delete",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/inventory/warehouses/b230be85-635b-4dd6-be76-e28f56850cd2/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"warehouses",
+												"b230be85-635b-4dd6-be76-e28f56850cd2",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Product",
+							"item": [
+								{
+									"name": "Product Create",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"name\": \"Laptop Dell XPS 13\",\n    \"sku\": \"DELL-XPS-13\",\n    \"category\": \"c13189ba-042d-428a-94e5-fc4e679d5bcb\",\n    \"type\": \"stock_item\",\n    \"description\": \"13-inch ultrabook\",\n    \"unit\": \"8d878db3-af52-42a2-aa58-8c49365aeb6f\",\n    \"cost_price\": \"800.00\",\n    // \"tax_rule\": 2,\n    \"selling_price\": \"1000.00\",\n    // \"revenue_account\": 10,\n    //   \"inventory_asset_account\": 20,\n    \"reorder_level\": 5,\n    \"is_active\": true\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/inventory/products/create/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"products",
+												"create",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

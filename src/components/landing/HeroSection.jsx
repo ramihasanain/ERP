@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Button from '../../components/Shared/Button';
+import Button from '@/components/Shared/Button';
 import { ArrowRight, PlayCircle } from 'lucide-react';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 const HeroSection = () => {
     const { dir } = useLanguage();

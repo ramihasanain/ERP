@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Card from '../../components/Shared/Card';
-import Button from '../../components/Shared/Button';
+import Card from '@/components/Shared/Card';
+import Button from '@/components/Shared/Button';
 import { Check } from 'lucide-react';
 
 const sectionBackground =

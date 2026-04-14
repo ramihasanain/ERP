@@ -1,5 +1,5 @@
 import React from 'react';
-import Card from '../../components/Shared/Card';
+import Card from '@/components/Shared/Card';
 import { Layers, Users, Package, ShieldCheck, Globe2, BarChart3 } from 'lucide-react';
 
 const features = [

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle, Calendar, FileText } from 'lucide-react';
-import Button from '../Shared/Button';
-import Input from '../Shared/Input';
+import Button from '@/components/Shared/Button';
+import Input from '@/components/Shared/Input';
 
 const TerminationModal = ({ isOpen, onClose, employee, onConfirm }) => {
     const [formData, setFormData] = useState({

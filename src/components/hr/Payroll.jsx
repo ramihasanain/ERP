@@ -4,7 +4,7 @@ import Button from '@/components/Shared/Button';
 import { Download, PlayCircle, Settings, Layout, Users, TrendingUp, Percent, Shield, List, BarChart2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePayroll } from '@/context/PayrollContext';
-import FinalSettlementsList from './payroll/FinalSettlementsList';
+import FinalSettlementsList from '@/components/hr/payroll/FinalSettlementsList';
 
 const Payroll = () => {
     const navigate = useNavigate();

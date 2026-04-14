@@ -77,20 +77,69 @@ import AuditorDashboard from '@/pages/auditor/AuditorDashboard';
 import AuditManagement from '@/components/Accounting/AuditManagement';
 import AuditorAdjustmentsPage from '@/components/AuditorAdjustmentsPage';
 import NotificationsPage from '@/components/NotificationsPage';
+import { useAuth } from '@/context/AuthContext';
+
+const getDashboardPath = (user) => (user?.role === 'employee' ? '/employee/dashboard' : '/admin/dashboard');
+
+const PublicOnlyRoute = ({ children, isAuthenticated, user }) => {
+  if (isAuthenticated) {
+    return <Navigate to={getDashboardPath(user)} replace />;
+  }
+
+  return children;
+};
+
+const ProtectedRoute = ({ children, isAuthenticated }) => {
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/signin" replace />;
+  }
+
+  return children;
+};
 
 export default function AppRoutes() {
+  const { isAuthenticated, user } = useAuth();
+
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route
+        path="/"
+        element={(
+          <PublicOnlyRoute isAuthenticated={isAuthenticated} user={user}>
+            <LandingPage />
+          </PublicOnlyRoute>
+        )}
+      />
       <Route path="/design" element={<DesignSystemPage />} />
-      <Route path="/auth/signin" element={<SignIn />} />
-      <Route path="/auth/signup" element={<SignUp />} />
+      <Route
+        path="/auth/signin"
+        element={(
+          <PublicOnlyRoute isAuthenticated={isAuthenticated} user={user}>
+            <SignIn />
+          </PublicOnlyRoute>
+        )}
+      />
+      <Route
+        path="/auth/signup"
+        element={(
+          <PublicOnlyRoute isAuthenticated={isAuthenticated} user={user}>
+            <SignUp />
+          </PublicOnlyRoute>
+        )}
+      />
       <Route path="/onboarding" element={<OnboardingWizard />} />
 
       <Route path="/auditor/login" element={<AuditorLogin />} />
       <Route path="/auditor/dashboard" element={<AuditorDashboard />} />
 
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route
+        path="/admin"
+        element={(
+          <ProtectedRoute isAuthenticated={isAuthenticated}>
+            <AdminLayout />
+          </ProtectedRoute>
+        )}
+      >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
 

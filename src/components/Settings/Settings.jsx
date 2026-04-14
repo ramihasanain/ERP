@@ -4,7 +4,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Save, Globe, Lock, Bell, Shield } from 'lucide-react';
-import TaxSettings from './TaxSettings';
+import TaxSettings from '@/components/Settings/TaxSettings';
 
 const Settings = () => {
     const navigate = useNavigate();

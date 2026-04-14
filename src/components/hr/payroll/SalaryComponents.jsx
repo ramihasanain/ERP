@@ -4,7 +4,7 @@ import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { usePayroll } from '@/context/PayrollContext';
 import { Plus, Edit2, Trash2, DollarSign, TrendingDown } from 'lucide-react';
-import FormulaBuilder from './FormulaBuilder';
+import FormulaBuilder from '@/components/hr/payroll/FormulaBuilder';
 
 const SalaryComponents = () => {
     const { salaryComponents, addSalaryComponent, updateSalaryComponent } = usePayroll();
