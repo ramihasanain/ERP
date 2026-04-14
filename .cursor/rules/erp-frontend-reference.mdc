@@ -106,6 +106,8 @@ Tech baseline in this project:
 - Hooks/utils: camelCase.
 - Use `@/` alias imports over long relative paths.
 - Keep route/query keys and state names explicit and stable (`isLoading`, `isOpen`, `currentPage`, etc.).
+- For large components split into subcomponents, use a folder named after the feature component and make its `index.js` the real wrapper/orchestrator (state + hooks + subcomponent imports), not a re-export.
+- Avoid parallel standalone wrapper files when the feature already uses a component folder; import the folder path and rely on `index.js` as the module entry.
 
 ## Feature Implementation Checklist (Default)
 - Add/adjust UI in the owning module folder.

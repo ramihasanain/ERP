@@ -20,7 +20,11 @@ export const removeTokens = () => {
 
 const normalizeUrl = (value) => {
   if (!value || typeof value !== 'string') return null;
-  return value.trim().replace(/\/+$/, '');
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const withoutProtocol = trimmed.replace(/^https?:\/\//i, '');
+  return `https://${withoutProtocol}`.replace(/\/+$/, '');
 };
 
 export const storeTenantDomain = (domain) => {
@@ -29,7 +33,7 @@ export const storeTenantDomain = (domain) => {
   localStorage.setItem(TENANT_DOMAIN_KEY, normalizedDomain);
 };
 
-export const getTenantDomain = () => localStorage.getItem(TENANT_DOMAIN_KEY);
+export const getTenantDomain = () => normalizeUrl(localStorage.getItem(TENANT_DOMAIN_KEY));
 
 export const clearTenantDomain = () => {
   localStorage.removeItem(TENANT_DOMAIN_KEY);

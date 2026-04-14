@@ -7,7 +7,7 @@ import OnboardingWizard from '@/pages/onboarding/OnboardingWizard';
 import AdminLayout from '@/components/app-layout/AdminLayout';
 import AdminDashboard from '@/components/Dashboard/AdminDashboard';
 import AccountingDashboard from '@/components/Accounting/AccountingDashboard';
-import ChartOfAccounts from '@/components/Accounting/ChartOfAccounts';
+import ChartOfAccounts from '@/components/Accounting/ChartOfAccounts/index.jsx';
 import JournalEntries from '@/components/Accounting/JournalEntries';
 import NewJournalEntry from '@/components/Accounting/NewJournalEntry';
 import GeneralLedger from '@/components/Accounting/GeneralLedger';
