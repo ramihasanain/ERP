@@ -1,28 +1,134 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { Building2, ChevronRight, Edit2, Plus, Trash2, User } from 'lucide-react';
+import { remove } from '@/api';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { Plus, Building2, User, Users, ChevronRight, Edit2, Trash2, X } from 'lucide-react';
-import { useHR } from '@/context/HRContext';
+import Modal from '@/components/Shared/Modal';
+import ConfirmationModal from '@/components/Shared/ConfirmationModal';
+import Spinner from '@/core/Spinner';
+import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
+
+const normalizeArrayResponse = (response) => {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.results)) return response.results;
+    return [];
+};
+
+const normalizeDepartmentNode = (item) => {
+    const id = item?.id || item?.uuid || '';
+    return {
+        id,
+        name: item?.name || '',
+        parent: item?.parent || null,
+        head: item?.head ?? '',
+        headLabel: item?.head_name || item?.headName || '',
+        children: normalizeArrayResponse(item?.children).map(normalizeDepartmentNode),
+    };
+};
+
+const normalizeDepartmentsTree = (response) => normalizeArrayResponse(response).map(normalizeDepartmentNode);
+
+const normalizeDepartments = (response) =>
+    normalizeArrayResponse(response).map((item) => ({
+        id: item?.id || item?.uuid || '',
+        name: item?.name || '',
+    }));
+
+const normalizePositions = (response) =>
+    normalizeArrayResponse(response).map((item) => ({
+        id: item?.id || item?.uuid || '',
+        name: item?.name || '',
+        description: item?.description || '',
+        department: item?.department || item?.department_id || '',
+    }));
 
 const Organization = () => {
-    const { departments, jobPositions, employees, addDepartment, updateDepartment, deleteDepartment, addPosition, updatePosition, deletePosition } = useHR();
-    const [activeTab, setActiveTab] = useState('departments'); // departments, positions
-
-    // Modal States
+    const queryClient = useQueryClient();
+    const [activeTab, setActiveTab] = useState('departments');
     const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
     const [isPosModalOpen, setIsPosModalOpen] = useState(false);
     const [editingDept, setEditingDept] = useState(null);
     const [editingPos, setEditingPos] = useState(null);
+    const [deleteState, setDeleteState] = useState({ isOpen: false, type: '', id: '', name: '' });
 
-    const handleOpenDeptModal = (dept = null) => {
-        setEditingDept(dept);
+    const departmentsTreeQuery = useCustomQuery('/api/hr/departments/tree', ['hr-departments-tree'], {
+        select: normalizeDepartmentsTree,
+    });
+    const departmentsQuery = useCustomQuery('/api/hr/departments/', ['hr-departments'], {
+        select: normalizeDepartments,
+    });
+    const positionsQuery = useCustomQuery('/api/hr/positions/', ['hr-positions'], {
+        select: normalizePositions,
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: ({ type, id }) => {
+            if (type === 'department') {
+                return remove(`/api/hr/departments/${id}/delete/`);
+            }
+            return remove(`/api/hr/positions/${id}/delete/`);
+        },
+        onSuccess: async (_, variables) => {
+            if (variables.type === 'department') {
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ['hr-departments-tree'] }),
+                    queryClient.invalidateQueries({ queryKey: ['hr-departments'] }),
+                ]);
+                toast.success('Department deleted successfully.');
+            } else {
+                await queryClient.invalidateQueries({ queryKey: ['hr-positions'] });
+                toast.success('Position deleted successfully.');
+            }
+            setDeleteState({ isOpen: false, type: '', id: '', name: '' });
+        },
+        onError: (error) => {
+            const message = error?.response?.data?.detail || error?.message || 'Delete request failed.';
+            toast.error(message);
+        },
+    });
+
+    const departmentsTree = useMemo(() => departmentsTreeQuery.data ?? [], [departmentsTreeQuery.data]);
+    const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
+    const positions = useMemo(() => positionsQuery.data ?? [], [positionsQuery.data]);
+
+    const isLoading = departmentsTreeQuery.isLoading || departmentsQuery.isLoading || positionsQuery.isLoading;
+    const hasError = departmentsTreeQuery.isError || departmentsQuery.isError || positionsQuery.isError;
+
+    const handleOpenDeptModal = (department = null) => {
+        setEditingDept(department);
         setIsDeptModalOpen(true);
     };
 
-    const handleOpenPosModal = (pos = null) => {
-        setEditingPos(pos);
+    const handleOpenPosModal = (position = null) => {
+        setEditingPos(position);
         setIsPosModalOpen(true);
+    };
+
+    const handleDeleteRequest = (type, item) => {
+        setDeleteState({
+            isOpen: true,
+            type,
+            id: item.id,
+            name: item.name,
+        });
+    };
+
+    const handleDeleteConfirm = () => {
+        if (!deleteState.id || !deleteState.type) return;
+        deleteMutation.mutate({ type: deleteState.type, id: deleteState.id });
+    };
+
+    const handleRefresh = async () => {
+        await Promise.all([
+            departmentsTreeQuery.refetch(),
+            departmentsQuery.refetch(),
+            positionsQuery.refetch(),
+        ]);
     };
 
     return (
@@ -33,354 +139,452 @@ const Organization = () => {
                     <p style={{ color: 'var(--color-text-secondary)' }}>Manage departments, hierarchy, and job positions.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant={activeTab === 'departments' ? 'primary' : 'outline'} onClick={() => setActiveTab('departments')}>Departments</Button>
-                    <Button variant={activeTab === 'positions' ? 'primary' : 'outline'} onClick={() => setActiveTab('positions')}>Job Positions</Button>
+                    <Button variant={activeTab === 'departments' ? 'primary' : 'outline'} onClick={() => setActiveTab('departments')}>
+                        Departments
+                    </Button>
+                    <Button variant={activeTab === 'positions' ? 'primary' : 'outline'} onClick={() => setActiveTab('positions')}>
+                        Job Positions
+                    </Button>
                 </div>
             </div>
 
-            {activeTab === 'departments' ? (
-                <DepartmentsView
-                    departments={departments}
-                    onAdd={() => handleOpenDeptModal(null)}
-                    onEdit={handleOpenDeptModal}
-                    onDelete={deleteDepartment}
-                    employees={employees}
-                />
-            ) : (
-                <PositionsView
-                    positions={jobPositions}
-                    departments={departments}
-                    onAdd={() => handleOpenPosModal(null)}
-                    onEdit={handleOpenPosModal}
-                    onDelete={deletePosition}
-                />
+            {isLoading && <Spinner />}
+
+            {hasError && (
+                <Card className="padding-lg">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
+                        <p style={{ margin: 0, color: 'var(--color-error)' }}>Could not load organization data.</p>
+                        <Button variant="outline" onClick={handleRefresh}>
+                            Retry
+                        </Button>
+                    </div>
+                </Card>
             )}
 
-            {/* Modals */}
-            {isDeptModalOpen && (
-                <DepartmentModal
-                    isOpen={isDeptModalOpen}
-                    onClose={() => setIsDeptModalOpen(false)}
-                    onSave={editingDept ? updateDepartment : addDepartment}
-                    department={editingDept}
-                    allDepartments={departments}
-                    employees={employees}
-                />
+            {!isLoading && !hasError && (
+                <>
+                    {activeTab === 'departments' ? (
+                        <DepartmentsView
+                            departmentsTree={departmentsTree}
+                            onAdd={() => handleOpenDeptModal(null)}
+                            onEdit={handleOpenDeptModal}
+                            onDelete={(department) => handleDeleteRequest('department', department)}
+                        />
+                    ) : (
+                        <PositionsView
+                            positions={positions}
+                            departments={departments}
+                            onAdd={() => handleOpenPosModal(null)}
+                            onEdit={handleOpenPosModal}
+                            onDelete={(position) => handleDeleteRequest('position', position)}
+                        />
+                    )}
+                </>
             )}
 
-            {isPosModalOpen && (
-                <PositionModal
-                    isOpen={isPosModalOpen}
-                    onClose={() => setIsPosModalOpen(false)}
-                    onSave={editingPos ? updatePosition : addPosition}
-                    position={editingPos}
-                    departments={departments}
-                />
-            )}
+            <DepartmentModal
+                isOpen={isDeptModalOpen}
+                onClose={() => {
+                    setIsDeptModalOpen(false);
+                    setEditingDept(null);
+                }}
+                department={editingDept}
+                allDepartments={departments}
+            />
+
+            <PositionModal
+                isOpen={isPosModalOpen}
+                onClose={() => {
+                    setIsPosModalOpen(false);
+                    setEditingPos(null);
+                }}
+                position={editingPos}
+                departments={departments}
+            />
+
+            <ConfirmationModal
+                isOpen={deleteState.isOpen}
+                title={deleteState.type === 'department' ? 'Delete Department' : 'Delete Position'}
+                message={`Are you sure you want to delete "${deleteState.name}"? This action cannot be undone.`}
+                type="danger"
+                confirmText="Delete"
+                cancelText="Cancel"
+                onCancel={() => setDeleteState({ isOpen: false, type: '', id: '', name: '' })}
+                onConfirm={handleDeleteConfirm}
+            />
         </div>
     );
 };
 
-const DepartmentsView = ({ departments, onAdd, onEdit, onDelete, employees }) => {
-    // Basic Tree View Logic
-    const rootDepts = departments.filter(d => !d.parentId);
-
+const DepartmentsView = ({ departmentsTree, onAdd, onEdit, onDelete }) => {
     return (
         <Card className="padding-lg">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Department Hierarchy</h2>
-                <Button icon={<Plus size={16} />} onClick={onAdd}>Add Department</Button>
+                <Button icon={<Plus size={16} />} onClick={onAdd}>
+                    Add Department
+                </Button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {rootDepts.map(dept => (
-                    <DepartmentNode key={dept.id} dept={dept} allDepts={departments} level={0} onEdit={onEdit} onDelete={onDelete} employees={employees} />
-                ))}
-            </div>
+            {departmentsTree.length === 0 ? (
+                <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>No departments found.</p>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {departmentsTree.map((department) => (
+                        <DepartmentNode key={department.id} dept={department} level={0} onEdit={onEdit} onDelete={onDelete} />
+                    ))}
+                </div>
+            )}
         </Card>
     );
 };
 
-const DepartmentNode = ({ dept, allDepts, level, onEdit, onDelete, employees }) => {
-    const children = allDepts.filter(d => d.parentId === dept.id);
-    const deptEmployees = employees ? employees.filter(e => e.departmentId === dept.id) : [];
-
-    // Auto-expand if root or has children/employees
+const DepartmentNode = ({ dept, level, onEdit, onDelete }) => {
+    const hasChildren = dept.children.length > 0;
     const [expanded, setExpanded] = useState(true);
 
-    // Find Manager Name
-    const manager = employees?.find(e => e.id === dept.managerId);
-    const managerName = manager ? `${manager.firstName} ${manager.lastName}` : 'Unassigned';
+    const headLabel = dept.headLabel || dept.head || 'Unassigned';
 
     return (
-        <div style={{ marginLeft: `${level * 2}rem` }}>
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '1rem',
-                background: 'var(--color-bg-body)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--color-border)',
-                marginBottom: '0.5rem'
-            }}>
-                <div
-                    onClick={() => setExpanded(!expanded)}
-                    style={{ cursor: (children.length || deptEmployees.length) ? 'pointer' : 'default', opacity: (children.length || deptEmployees.length) ? 1 : 0.3 }}
+        <div style={{ marginLeft: `${level * 1.5}rem` }}>
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '1rem',
+                    background: 'var(--color-bg-body)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border)',
+                    marginBottom: '0.5rem',
+                }}
+            >
+                <button
+                    type="button"
+                    onClick={() => hasChildren && setExpanded((prev) => !prev)}
+                    style={{
+                        cursor: hasChildren ? 'pointer' : 'default',
+                        opacity: hasChildren ? 1 : 0.3,
+                        border: 'none',
+                        background: 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                    aria-label={hasChildren ? 'Toggle sub departments' : 'No sub departments'}
                 >
                     <ChevronRight size={18} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
-                </div>
-                <div style={{
-                    padding: '0.5rem',
-                    background: 'color-mix(in srgb, var(--color-primary-600) 22%, var(--color-bg-card))',
-                    borderRadius: '0.5rem',
-                    color: 'var(--color-primary-500)'
-                }}>
+                </button>
+                <div
+                    style={{
+                        padding: '0.5rem',
+                        background: 'color-mix(in srgb, var(--color-primary-600) 22%, var(--color-bg-card))',
+                        borderRadius: '0.5rem',
+                        color: 'var(--color-primary-500)',
+                    }}
+                >
                     <Building2 size={20} />
                 </div>
                 <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{dept.name}</div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <User size={14} /> Head: {managerName} • {deptEmployees.length} Members
+                        <User size={14} /> Head: {headLabel}
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <Button variant="ghost" icon={<Edit2 size={16} />} onClick={() => onEdit(dept)} />
-                    <Button variant="ghost" icon={<Trash2 size={16} />} style={{ color: 'var(--color-error)' }} onClick={() => onDelete(dept.id)} />
+                    <Button variant="ghost" icon={<Trash2 size={16} />} style={{ color: 'var(--color-error)' }} onClick={() => onDelete(dept)} />
                 </div>
             </div>
 
-            {expanded && (
-                <div>
-                    {/* Employees List */}
-                    {deptEmployees.length > 0 && (
-                        <div style={{ marginBottom: '0.5rem' }}>
-                            {deptEmployees.map(emp => (
-                                <div key={emp.id} style={{
-                                    marginLeft: '2.5rem',
-                                    display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                    padding: '0.5rem 1rem',
-                                    borderLeft: '2px solid var(--color-border)',
-                                    marginBottom: '0.25rem'
-                                }}>
-                                    <div style={{
-                                        width: '2rem', height: '2rem', borderRadius: '50%',
-                                        background: 'color-mix(in srgb, var(--color-text-main) 14%, var(--color-bg-card))',
-                                        border: '1px solid var(--color-border)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-main)'
-                                    }}>
-                                        {emp.firstName[0]}{emp.lastName[0]}
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{emp.firstName} {emp.lastName}</div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{emp.positionId}</div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Sub Departments */}
-                    {children.map(child => (
-                        <DepartmentNode key={child.id} dept={child} allDepts={allDepts} level={level + 1} onEdit={onEdit} onDelete={onDelete} employees={employees} />
-                    ))}
-                </div>
-            )}
+            {expanded &&
+                hasChildren &&
+                dept.children.map((child) => (
+                    <DepartmentNode key={child.id} dept={child} level={level + 1} onEdit={onEdit} onDelete={onDelete} />
+                ))}
         </div>
     );
 };
 
 const PositionsView = ({ positions, departments, onAdd, onEdit, onDelete }) => {
-    const getDeptName = (id) => departments.find(d => d.id === id)?.name || 'Unknown';
+    const departmentMap = useMemo(() => {
+        return new Map(departments.map((department) => [department.id, department.name]));
+    }, [departments]);
 
     return (
         <Card className="padding-lg">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Job Positions</h2>
-                <Button icon={<Plus size={16} />} onClick={onAdd}>Add Position</Button>
+                <Button icon={<Plus size={16} />} onClick={onAdd}>
+                    Add Position
+                </Button>
             </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                    <tr>
-                        <th style={{ textAlign: 'left', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>Title</th>
-                        <th style={{ textAlign: 'left', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>Department</th>
-                        <th style={{ textAlign: 'left', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>Grade</th>
-                        <th style={{ textAlign: 'right', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>Status</th>
-                        <th style={{ textAlign: 'right', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {positions.map(pos => (
-                        <tr key={pos.id}>
-                            <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', fontWeight: 500, color: 'var(--color-text-main)' }}>{pos.title}</td>
-                            <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>{getDeptName(pos.departmentId)}</td>
-                            <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)' }}><span style={{
-                                background: 'color-mix(in srgb, var(--color-text-main) 10%, var(--color-bg-card))',
-                                padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.85rem',
-                                color: 'var(--color-text-main)'
-                            }}>Grade {pos.grade}</span></td>
-                            <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', textAlign: 'right' }}>
-                                <span style={{ color: 'var(--color-success)', background: 'var(--color-success-bg)', padding: '0.25rem 0.75rem', borderRadius: '999px', fontSize: '0.85rem' }}>Active</span>
-                            </td>
-                            <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', textAlign: 'right' }}>
-                                <Button variant="ghost" size="sm" icon={<Edit2 size={16} />} onClick={() => onEdit(pos)} />
-                                <Button variant="ghost" size="sm" icon={<Trash2 size={16} />} style={{ color: 'var(--color-error)' }} onClick={() => onDelete(pos.id)} />
-                            </td>
+            <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr>
+                            <th style={{ textAlign: 'left', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>Name</th>
+                            <th style={{ textAlign: 'left', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>Description</th>
+                            <th style={{ textAlign: 'left', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>Department</th>
+                            <th style={{ textAlign: 'right', padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>Actions</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {positions.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} style={{ padding: '1rem', color: 'var(--color-text-secondary)' }}>
+                                    No positions found.
+                                </td>
+                            </tr>
+                        ) : (
+                            positions.map((position) => (
+                                <tr key={position.id}>
+                                    <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', fontWeight: 500, color: 'var(--color-text-main)' }}>{position.name}</td>
+                                    <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>{position.description || '—'}</td>
+                                    <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>
+                                        {departmentMap.get(position.department) || 'Unknown'}
+                                    </td>
+                                    <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', textAlign: 'right' }}>
+                                        <Button variant="ghost" size="sm" icon={<Edit2 size={16} />} onClick={() => onEdit(position)} />
+                                        <Button variant="ghost" size="sm" icon={<Trash2 size={16} />} style={{ color: 'var(--color-error)' }} onClick={() => onDelete(position)} />
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </Card>
     );
 };
 
-// --- Modals ---
-
-const DepartmentModal = ({ isOpen, onClose, onSave, department, allDepartments, employees }) => {
-    const [formData, setFormData] = useState(department || {
-        name: '',
-        parentId: '',
-        managerId: ''
+const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
+    const { control, handleSubmit, reset } = useForm({
+        defaultValues: {
+            name: '',
+            parent: '',
+            head: '',
+        },
     });
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave(department ? department.id : null, formData);
-        onClose();
+    const createDepartmentMutation = useCustomPost('/api/hr/departments/create/', [['hr-departments-tree'], ['hr-departments']]);
+    const updateDepartmentMutation = useCustomPut(`/api/hr/departments/${department?.id || 'new'}/`, [['hr-departments-tree'], ['hr-departments']]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        reset({
+            name: department?.name || '',
+            parent: department?.parent || '',
+            head: String(department?.head || ''),
+        });
+    }, [department, isOpen, reset]);
+
+    const onSubmit = async (values) => {
+        const payload = {
+            name: values.name.trim(),
+            parent: values.parent || null,
+            head: values.head || '',
+        };
+
+        try {
+            if (department) {
+                await updateDepartmentMutation.mutateAsync(payload);
+                toast.success('Department updated successfully.');
+            } else {
+                await createDepartmentMutation.mutateAsync(payload);
+                toast.success('Department created successfully.');
+            }
+            onClose();
+        } catch (error) {
+            const message = error?.response?.data?.detail || error?.message || 'Department request failed.';
+            toast.error(message);
+        }
     };
 
-    if (!isOpen) return null;
+    const isSubmitting = createDepartmentMutation.isPending || updateDepartmentMutation.isPending;
 
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-            <div style={{
-                background: 'var(--color-bg-card)', color: 'var(--color-text-main)',
-                padding: '2rem', borderRadius: 'var(--radius-lg)', width: '500px', maxWidth: '90%',
-                border: '1px solid var(--color-border)'
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{department ? 'Edit Department' : 'Add Department'}</h2>
-                    <Button variant="ghost" icon={<X size={20} />} onClick={onClose} />
+        <Modal isOpen={isOpen} onClose={onClose} title={department ? 'Edit Department' : 'Add Department'}>
+            <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <Controller
+                    name="name"
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => <Input label="Department Name" placeholder="Enter department name" {...field} required />}
+                />
+
+                <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Parent Department</label>
+                    <Controller
+                        name="parent"
+                        control={control}
+                        render={({ field }) => (
+                            <select
+                                value={field.value || ''}
+                                onChange={(event) => field.onChange(event.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.625rem',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--color-border)',
+                                    background: 'var(--color-bg-surface)',
+                                    color: 'var(--color-text-main)',
+                                }}
+                            >
+                                <option value="">None (Root Level)</option>
+                                {allDepartments
+                                    .filter((dept) => dept.id !== department?.id)
+                                    .map((dept) => (
+                                        <option key={dept.id} value={dept.id}>
+                                            {dept.name}
+                                        </option>
+                                    ))}
+                            </select>
+                        )}
+                    />
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <Input label="Department Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                <Controller
+                    name="head"
+                    control={control}
+                    render={({ field }) => <Input label="Head (Employee ID)" placeholder="e.g. 1" {...field} />}
+                />
 
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Parent Department</label>
-                        <select
-                            style={{
-                                width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--color-border)',
-                                background: 'var(--color-bg-surface)', color: 'var(--color-text-main)'
-                            }}
-                            value={formData.parentId || ''}
-                            onChange={e => setFormData({ ...formData, parentId: e.target.value || null })}
-                        >
-                            <option value="">None (Root Level)</option>
-                            {allDepartments.filter(d => d.id !== (department ? department.id : null)).map(d => (
-                                <option key={d.id} value={d.id}>{d.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Manager (Optional)</label>
-                        <select
-                            style={{
-                                width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--color-border)',
-                                background: 'var(--color-bg-surface)', color: 'var(--color-text-main)'
-                            }}
-                            value={formData.managerId}
-                            onChange={e => setFormData({ ...formData, managerId: e.target.value })}
-                        >
-                            <option value="">Select Manager</option>
-                            {employees.map(emp => (
-                                <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                        <Button variant="outline" onClick={onClose} type="button">Cancel</Button>
-                        <Button type="submit">Save Department</Button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                    <Button variant="outline" onClick={onClose} type="button">
+                        Cancel
+                    </Button>
+                    <Button type="submit" isLoading={isSubmitting}>
+                        {department ? 'Save Changes' : 'Create Department'}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     );
 };
 
-const PositionModal = ({ isOpen, onClose, onSave, position, departments }) => {
-    const [formData, setFormData] = useState(position || {
-        title: '',
-        departmentId: '',
-        grade: 1
+const PositionModal = ({ isOpen, onClose, position, departments }) => {
+    const { control, handleSubmit, reset } = useForm({
+        defaultValues: {
+            name: '',
+            description: '',
+            department: '',
+        },
     });
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave(position ? position.id : null, formData);
-        onClose();
+    const createPositionMutation = useCustomPost('/api/hr/positions/create/', [['hr-positions']]);
+    const updatePositionMutation = useCustomPut(`/api/hr/positions/${position?.id || 'new'}/`, [['hr-positions']]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        reset({
+            name: position?.name || '',
+            description: position?.description || '',
+            department: position?.department || '',
+        });
+    }, [isOpen, position, reset]);
+
+    const onSubmit = async (values) => {
+        const payload = {
+            name: values.name.trim(),
+            description: values.description.trim(),
+            department: values.department,
+        };
+
+        try {
+            if (position) {
+                await updatePositionMutation.mutateAsync(payload);
+                toast.success('Position updated successfully.');
+            } else {
+                await createPositionMutation.mutateAsync(payload);
+                toast.success('Position created successfully.');
+            }
+            onClose();
+        } catch (error) {
+            const message = error?.response?.data?.detail || error?.message || 'Position request failed.';
+            toast.error(message);
+        }
     };
 
-    if (!isOpen) return null;
+    const isSubmitting = createPositionMutation.isPending || updatePositionMutation.isPending;
 
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-            <div style={{
-                background: 'var(--color-bg-card)', color: 'var(--color-text-main)',
-                padding: '2rem', borderRadius: 'var(--radius-lg)', width: '500px', maxWidth: '90%',
-                border: '1px solid var(--color-border)'
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{position ? 'Edit Position' : 'Add Position'}</h2>
-                    <Button variant="ghost" icon={<X size={20} />} onClick={onClose} />
+        <Modal isOpen={isOpen} onClose={onClose} title={position ? 'Edit Position' : 'Add Position'}>
+            <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <Controller
+                    name="name"
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => <Input label="Position Name" placeholder="Enter position name" {...field} required />}
+                />
+
+                <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Description</label>
+                    <Controller
+                        name="description"
+                        control={control}
+                        rules={{ required: true }}
+                        render={({ field }) => (
+                            <textarea
+                                {...field}
+                                rows={4}
+                                required
+                                style={{
+                                    width: '100%',
+                                    padding: '0.625rem',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--color-border)',
+                                    background: 'var(--color-bg-surface)',
+                                    color: 'var(--color-text-main)',
+                                    resize: 'vertical',
+                                }}
+                            />
+                        )}
+                    />
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <Input label="Job Title" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} required />
+                <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Department</label>
+                    <Controller
+                        name="department"
+                        control={control}
+                        rules={{ required: true }}
+                        render={({ field }) => (
+                            <select
+                                value={field.value}
+                                onChange={(event) => field.onChange(event.target.value)}
+                                required
+                                style={{
+                                    width: '100%',
+                                    padding: '0.625rem',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--color-border)',
+                                    background: 'var(--color-bg-surface)',
+                                    color: 'var(--color-text-main)',
+                                }}
+                            >
+                                <option value="">Select Department</option>
+                                {departments.map((department) => (
+                                    <option key={department.id} value={department.id}>
+                                        {department.name}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                    />
+                </div>
 
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Department</label>
-                        <select
-                            style={{
-                                width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--color-border)',
-                                background: 'var(--color-bg-surface)', color: 'var(--color-text-main)'
-                            }}
-                            value={formData.departmentId}
-                            onChange={e => setFormData({ ...formData, departmentId: e.target.value })}
-                            required
-                        >
-                            <option value="">Select Department</option>
-                            {departments.map(d => (
-                                <option key={d.id} value={d.id}>{d.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Grade Level</label>
-                        <Input type="number" min="1" max="20" value={formData.grade} onChange={e => setFormData({ ...formData, grade: parseInt(e.target.value) })} required />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                        <Button variant="outline" onClick={onClose} type="button">Cancel</Button>
-                        <Button type="submit">Save Position</Button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                    <Button variant="outline" onClick={onClose} type="button">
+                        Cancel
+                    </Button>
+                    <Button type="submit" isLoading={isSubmitting}>
+                        {position ? 'Save Changes' : 'Create Position'}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     );
 };
 

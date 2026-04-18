@@ -1,17 +1,28 @@
 import React from 'react';
 import { useAccounting } from '@/context/AccountingContext';
-import { useNavigate } from 'react-router-dom';
-import { Shield, ShieldAlert, Monitor, User, Eye } from 'lucide-react';
+import { Monitor, Eye } from 'lucide-react';
 
-const JournalEntryList = ({ limit }) => {
-    const { entries, costCenters, openDrawer } = useAccounting();
-    const navigate = useNavigate();
+const formatStatusLabel = (status) => {
+    if (!status || typeof status !== 'string') return '';
+    const s = status.toLowerCase();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+};
 
-    const getCostCenterName = (id) => {
-        const cc = costCenters.find(c => c.id === id);
-        return cc ? cc.code : '-';
-    };
+const getEntryTotalAmount = (entry) => {
+    if (entry.total != null && entry.total !== '') return Number(entry.total);
+    if (Array.isArray(entry.lines)) {
+        return entry.lines.reduce((sum, l) => sum + Number(l.debit), 0);
+    }
+    return 0;
+};
 
+const isSystemSourceEntry = (entry) => {
+    if (entry.isAutomatic) return true;
+    return /\bPAYROLL\b/i.test(entry.reference || '');
+};
+
+const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
+    const { openDrawer } = useAccounting();
     // Sort entries by date desc (newest first)
     const sortedEntries = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
     const displayEntries = limit ? sortedEntries.slice(0, limit) : sortedEntries;
@@ -40,16 +51,18 @@ const JournalEntryList = ({ limit }) => {
                         </tr>
                     ) : (
                         displayEntries.map((entry) => {
-                            const totalAmount = entry.lines.reduce((sum, l) => sum + Number(l.debit), 0);
+                            const totalAmount = getEntryTotalAmount(entry);
                             const currency = entry.currency || 'JOD';
-                            const isAuto = entry.isAutomatic;
+                            const isAuto = isSystemSourceEntry(entry);
+                            const statusKey = (entry.status || '').toLowerCase();
+                            const statusLabel = formatStatusLabel(entry.status);
 
                             return (
                                 <tr
                                     key={entry.id}
                                     style={{ borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }}
                                     className="erp-table-row-hover"
-                                    onClick={() => navigate(`/admin/accounting/journal/${entry.id}`)}
+                                    onClick={() => onViewEntry?.(entry.id)}
                                 >
                                     <td style={{ padding: '1rem 1rem' }}>{entry.date}</td>
                                     <td style={{ padding: '1rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{entry.id}</td>
@@ -61,7 +74,7 @@ const JournalEntryList = ({ limit }) => {
                                                 fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-primary-600)',
                                                 background: 'color-mix(in srgb, var(--color-primary-600) 16%, var(--color-bg-card))', padding: '0.25rem 0.5rem', borderRadius: '4px'
                                             }}>
-                                                <Monitor size={12} /> {entry.sourceType || 'System'}
+                                                <Monitor size={12} /> {entry.sourceType || 'Payroll'}
                                             </span>
                                         ) : (
                                             <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Manual</span>
@@ -78,18 +91,18 @@ const JournalEntryList = ({ limit }) => {
                                         <span style={{
                                             padding: '0.25rem 0.75rem',
                                             borderRadius: '1rem',
-                                            background: entry.status === 'Posted'
+                                            background: statusKey === 'posted'
                                                 ? 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))'
-                                                : entry.status === 'Draft'
+                                                : statusKey === 'draft'
                                                     ? 'color-mix(in srgb, var(--color-text-main) 6%, var(--color-bg-card))'
                                                     : 'color-mix(in srgb, var(--color-primary-600) 16%, var(--color-bg-card))',
-                                            color: entry.status === 'Posted' ? 'var(--color-success)' :
-                                                entry.status === 'Draft' ? 'var(--color-text-secondary)' : 'var(--color-primary-500)',
+                                            color: statusKey === 'posted' ? 'var(--color-success)' :
+                                                statusKey === 'draft' ? 'var(--color-text-secondary)' : 'var(--color-primary-500)',
                                             fontSize: '0.75rem',
                                             fontWeight: 500,
-                                            border: `1px solid ${entry.status === 'Posted' ? 'color-mix(in srgb, var(--color-success) 35%, var(--color-border))' :
-                                                entry.status === 'Draft' ? 'var(--color-border)' : 'color-mix(in srgb, var(--color-primary-600) 30%, var(--color-border))'}`
-                                        }}>{entry.status}</span>
+                                            border: `1px solid ${statusKey === 'posted' ? 'color-mix(in srgb, var(--color-success) 35%, var(--color-border))' :
+                                                statusKey === 'draft' ? 'var(--color-border)' : 'color-mix(in srgb, var(--color-primary-600) 30%, var(--color-border))'}`
+                                        }}>{statusLabel}</span>
                                     </td>
                                     <td style={{ padding: '1rem 1rem' }}>
                                         <button

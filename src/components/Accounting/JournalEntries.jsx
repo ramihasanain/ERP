@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { Search, Plus, Filter, Download, Lock, Unlock, ShieldAlert } from 'lucide-react';
+import { Search, Plus, Download, Lock, Unlock, ShieldAlert } from 'lucide-react';
 import JournalEntryList from '@/components/Accounting/JournalEntryList';
+import JournalEntryDetailModal from '@/components/Accounting/JournalEntryDetailModal';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { exportToCSV } from '@/utils/exportUtils';
+import useCustomQuery from '@/hooks/useQuery';
+import { toast } from 'sonner';
 
 const PeriodStatusCard = () => {
     const { accountingPeriods, togglePeriodStatus } = useAccounting();
@@ -55,15 +58,34 @@ const PeriodStatusCard = () => {
 };
 
 const JournalEntries = () => {
-    const { entries, accounts } = useAccounting();
+    const { accounts } = useAccounting();
     const { language } = useLanguage();
     const navigate = useNavigate();
+    const [selectedEntryId, setSelectedEntryId] = useState(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+    const journalEntriesQuery = useCustomQuery('/accounting/journal-entries/', ['journal-entries']);
+    const entries = useMemo(() => {
+        const source = journalEntriesQuery.data;
+        if (Array.isArray(source)) return source;
+        if (Array.isArray(source?.data)) return source.data;
+        if (Array.isArray(source?.results)) return source.results;
+        return [];
+    }, [journalEntriesQuery.data]);
+
+    useEffect(() => {
+        if (journalEntriesQuery.error) {
+            toast.error(language === 'ar' ? 'فشل تحميل قيود اليومية' : 'Failed to load journal entries.');
+        }
+    }, [journalEntriesQuery.error, language]);
 
     const handleDetailedExport = () => {
         const fullLedger = [];
 
         entries.forEach(entry => {
-            entry.lines.forEach(line => {
+            const lines = entry.lines;
+            if (!Array.isArray(lines) || lines.length === 0) return;
+            lines.forEach(line => {
                 const account = accounts.find(a => a.id === line.account);
                 const isDebit = Number(line.debit) > 0;
 
@@ -85,6 +107,11 @@ const JournalEntries = () => {
         });
 
         exportToCSV(fullLedger, 'All_Journal_Entries_Detailed');
+    };
+
+    const openDetailModal = (entryId) => {
+        setSelectedEntryId(entryId);
+        setIsDetailOpen(true);
     };
 
     return (
@@ -112,8 +139,23 @@ const JournalEntries = () => {
                     <div style={{ width: '240px' }}><Input placeholder={language === 'ar' ? 'بحث برقم القيد...' : "Search journal no..."} startIcon={<Search size={16} />} style={{ fontSize: '0.875rem' }} /></div>
                 </div>
 
-                <JournalEntryList />
+                {journalEntriesQuery.isLoading ? (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                        Loading journal entries...
+                    </div>
+                ) : (
+                    <JournalEntryList entries={entries} onViewEntry={openDetailModal} />
+                )}
             </Card>
+
+            <JournalEntryDetailModal
+                isOpen={isDetailOpen}
+                entryId={selectedEntryId}
+                onClose={() => {
+                    setIsDetailOpen(false);
+                    setSelectedEntryId(null);
+                }}
+            />
         </div>
     );
 };

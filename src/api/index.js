@@ -38,12 +38,28 @@ export const get = async (url, config = {}) => {
 };
 
 export const post = async (url, data = {}, config = {}) => {
-  const response = await apiClient.post(url, data, config);
+  const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+  const resolvedConfig = isFormData
+    ? {
+        ...config,
+        headers: {
+          ...(config.headers || {}),
+          'Content-Type': undefined,
+        },
+      }
+    : config;
+
+  const response = await apiClient.post(url, data, resolvedConfig);
   return response.data;
 };
 
 export const patch = async (url, data = {}, config = {}) => {
   const response = await apiClient.patch(url, data, config);
+  return response.data;
+};
+
+export const put = async (url, data = {}, config = {}) => {
+  const response = await apiClient.put(url, data, config);
   return response.data;
 };
 

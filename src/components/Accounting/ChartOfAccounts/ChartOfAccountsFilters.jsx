@@ -52,16 +52,17 @@ const ChartOfAccountsFilters = ({
 }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <Card
-                    className="padding-none"
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div
                     style={{
-                        flex: 1,
+                        flex: '1 1 360px',
+                        minWidth: '280px',
                         display: 'flex',
                         alignItems: 'center',
-                        height: '3.5rem',
-                        overflow: 'hidden',
-                        border: searchTerm ? '2px solid var(--color-primary-200)' : '1px solid var(--color-border)',
+                        height: '46px',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: '12px',
+                        background: 'var(--color-bg-surface)',
                     }}
                 >
                     <div style={{ padding: '0 1.25rem', color: 'var(--color-text-muted)' }}>
@@ -98,7 +99,7 @@ const ChartOfAccountsFilters = ({
                             <X size={18} />
                         </button>
                     )}
-                </Card>
+                </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <Button variant="outline" onClick={() => exportToCSV(accountsForExport, 'CoA')} icon={<Download size={16} />}>
                         {t.export}

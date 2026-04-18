@@ -31,11 +31,7 @@ const OnboardingWizard = () => {
         modules: [],
     });
 
-    const industriesQuery = useCustomQuery('/tenants/industries/', ['signup-industries']);
-    const countriesQuery = useCustomQuery('/shared/countries/', ['signup-countries']);
-    const currenciesQuery = useCustomQuery('/shared/currencies/', ['signup-currencies']);
-    const languagesQuery = useCustomQuery('/shared/languages/', ['signup-languages']);
-    const modulesQuery = useCustomQuery('/shared/modules/', ['signup-modules']);
+    const bootstrapQuery = useCustomQuery('/shared/bootstrap-data/', ['signup-bootstrap-data']);
 
     const listFromResponse = (response) => {
         if (Array.isArray(response)) return response;
@@ -45,49 +41,39 @@ const OnboardingWizard = () => {
         return [];
     };
 
+    const bootstrapData = useMemo(() => {
+        const response = bootstrapQuery.data;
+        if (!response || typeof response !== 'object') return {};
+        if (response?.data && typeof response.data === 'object') return response.data;
+        return response;
+    }, [bootstrapQuery.data]);
+
     const options = useMemo(() => ({
-        industries: listFromResponse(industriesQuery.data).map((item) => ({
+        industries: listFromResponse(bootstrapData.industries).map((item) => ({
             value: item?.id || item?.uuid || item?.value,
             label: item?.name || item?.title || item?.label,
         })).filter((item) => item.value && item.label),
-        countries: listFromResponse(countriesQuery.data).map((item) => ({
+        countries: listFromResponse(bootstrapData.countries).map((item) => ({
             value: item?.id || item?.uuid || item?.value,
             label: item?.name || item?.title || item?.label,
         })).filter((item) => item.value && item.label),
-        currencies: listFromResponse(currenciesQuery.data).map((item) => ({
+        currencies: listFromResponse(bootstrapData.currencies).map((item) => ({
             value: item?.id || item?.uuid || item?.value,
             label: item?.name || item?.code || item?.title || item?.label,
         })).filter((item) => item.value && item.label),
-        languages: listFromResponse(languagesQuery.data).map((item) => ({
+        languages: listFromResponse(bootstrapData.languages).map((item) => ({
             value: item?.id || item?.uuid || item?.value,
             label: item?.name || item?.code || item?.title || item?.label,
         })).filter((item) => item.value && item.label),
-        modules: listFromResponse(modulesQuery.data).map((item) => ({
+        modules: listFromResponse(bootstrapData.modules).map((item) => ({
             value: item?.id || item?.uuid || item?.value,
             label: item?.name || item?.title || item?.label,
             description: item?.description || item?.desc || '',
         })).filter((item) => item.value && item.label),
-    }), [
-        industriesQuery.data,
-        countriesQuery.data,
-        currenciesQuery.data,
-        languagesQuery.data,
-        modulesQuery.data,
-    ]);
+    }), [bootstrapData]);
 
-    const onboardingLoading =
-        industriesQuery.isLoading ||
-        countriesQuery.isLoading ||
-        currenciesQuery.isLoading ||
-        languagesQuery.isLoading ||
-        modulesQuery.isLoading;
-
-    const onboardingError =
-        industriesQuery.error ||
-        countriesQuery.error ||
-        currenciesQuery.error ||
-        languagesQuery.error ||
-        modulesQuery.error;
+    const onboardingLoading = bootstrapQuery.isLoading;
+    const onboardingError = bootstrapQuery.error;
 
     useEffect(() => {
         setFormData((prev) => ({

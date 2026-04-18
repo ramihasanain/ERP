@@ -42,7 +42,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgyMjkwLCJpYXQiOjE3NzYwNzc0OTAsImp0aSI6ImFiODdmMjBkOWFmMDQxZjk5ZWRiMjllNTk4NDI3OGQ0IiwidXNlcl9pZCI6IjEifQ.5dGOhiIHVnxTsJ_VbfD1VaCckJGrFddS5PeeO1AXsGM",
+									"value": "{{token}}",
 									"type": "string"
 								}
 							]
@@ -145,19 +145,23 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"type": "text/javascript",
 										"exec": [
 											""
-										]
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
 									}
 								},
 								{
 									"listen": "test",
 									"script": {
-										"type": "text/javascript",
 										"exec": [
 											""
-										]
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
 									}
 								}
 							],
@@ -165,7 +169,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{url}}/api/shared/currencies/?name=jor",
+									"raw": "{{url}}/api/shared/currencies/?name=egy",
 									"host": [
 										"{{url}}"
 									],
@@ -178,7 +182,7 @@
 									"query": [
 										{
 											"key": "name",
-											"value": "jor"
+											"value": "egy"
 										}
 									]
 								}
@@ -400,6 +404,29 @@
 							"response": []
 						}
 					]
+				},
+				{
+					"name": "Boot strap data",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/shared/bootstrap-data/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"shared",
+								"bootstrap-data",
+								""
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -460,6 +487,59 @@
 					"response": []
 				},
 				{
+					"name": "login employee -- only for testing purpose",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let res = pm.response.json();",
+									"pm.environment.set(\"token\", res.access);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\":\"employee11@zeyad.localhost\",\n  \"password\":\"Da5W1PcbZ4Zw\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/login/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "register",
 					"event": [
 						{
@@ -490,7 +570,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"full_name\": \"demohome233\",\n  \"email\": \"demohome233@gmail.com\",\n  \"password\": \"Test@123\",\n  \"company_name\": \"demohome233\",\n  \"industry\": \"d63cb5db-3c80-47b7-93b0-4e73356b6efb\",\n  \"country\": \"6cb76803-0233-4ab0-b903-f743244a5ad9\",\n  \"base_currency\": \"cd61bd7d-a343-49a6-a09a-900bc6207e6e\",\n  \"default_language\": \"dcb5edbd-abb0-476f-a15d-a0d6e0cb826a\",\n  \"selected_modules\": [\n    \"8ec4b0a6-70ee-4b07-8e32-94b78773d703\",\n    \"9d65d7c5-d127-44f3-902c-92d4691a5e1a\",\n    \"531e9aff-d850-49c8-bc28-8957bbf7cbdc\"\n  ]\n}",
+							"raw": "{\n  \"full_name\": \"Zeyad Slama\",\n  \"email\": \"zeyadslama23@gmail.com\",\n  \"password\": \"Test@123\",\n  \"company_name\": \"zeyadslama23\",\n  \"industry\": \"d63cb5db-3c80-47b7-93b0-4e73356b6efb\",\n  \"country\": \"6cb76803-0233-4ab0-b903-f743244a5ad9\",\n  \"base_currency\": \"cd61bd7d-a343-49a6-a09a-900bc6207e6e\",\n  \"default_language\": \"dcb5edbd-abb0-476f-a15d-a0d6e0cb826a\",\n  \"selected_modules\": [\n    \"8ec4b0a6-70ee-4b07-8e32-94b78773d703\",\n    \"9d65d7c5-d127-44f3-902c-92d4691a5e1a\",\n    \"531e9aff-d850-49c8-bc28-8957bbf7cbdc\"\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1091,7 +1171,7 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{url}}/api/hr/positions/id/",
+											"raw": "{{url}}/api/hr/positions/1c54c62b-7572-4d6b-8a01-b0169f0f7ed8/",
 											"host": [
 												"{{url}}"
 											],
@@ -1099,7 +1179,7 @@
 												"api",
 												"hr",
 												"positions",
-												"id",
+												"1c54c62b-7572-4d6b-8a01-b0169f0f7ed8",
 												""
 											]
 										}
@@ -1121,8 +1201,17 @@
 										},
 										"method": "PUT",
 										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Senior Backend Engineer\",\n  \"description\": \"Handles backend related authentication and authorization and creates APIs for the frontend team to interact with the backend services.\",\n  \"department\": \"df6eb4c0-b809-4954-9ffb-0062d45866f8\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
 										"url": {
-											"raw": "{{url}}/api/hr/positions/id/",
+											"raw": "{{url}}/api/hr/positions/1c54c62b-7572-4d6b-8a01-b0169f0f7ed8/",
 											"host": [
 												"{{url}}"
 											],
@@ -1130,7 +1219,7 @@
 												"api",
 												"hr",
 												"positions",
-												"id",
+												"1c54c62b-7572-4d6b-8a01-b0169f0f7ed8",
 												""
 											]
 										}
@@ -1170,7 +1259,7 @@
 									"response": []
 								},
 								{
-									"name": "Create Positions",
+									"name": "Create Position",
 									"request": {
 										"auth": {
 											"type": "bearer",
@@ -1184,6 +1273,15 @@
 										},
 										"method": "POST",
 										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Jounir Software Engineer\",\n  \"description\": \"Handles backend related authentication and authorization and creates APIs for the frontend team to interact with the backend services.\",\n  \"department\": \"6aa8523b-e071-4516-a0a8-d65ab250e0a0\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
 										"url": {
 											"raw": "{{url}}/api/hr/positions/create/",
 											"host": [
@@ -1199,6 +1297,2416 @@
 										}
 									},
 									"response": []
+								}
+							]
+						},
+						{
+							"name": "Employee Module",
+							"item": [
+								{
+									"name": "Employee CRUDS",
+									"item": [
+										{
+											"name": "Create Employee",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{token}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"user_data\": {\n    \"email\": \"employee11@zeyad.localhost\",\n    \"first_name\": \"Jackal\",\n    \"last_name\": \"Killer\"\n  },\n  \"profile_data\": {\n    \"date_of_birth\": \"1995-08-15\",\n    \"nationality\": \"Egyptian\",\n    \"phone_number\": \"+204234563890\",\n    \"address\": \"Cairo, Egypt\",\n    \"department\": \"df6eb4c0-b809-4954-9ffb-0062d45866f8\",\n    \"position\": \"1c54c62b-7572-4d6b-8a01-b0169f0f7ed8\",\n    \"joining_date\": \"2026-04-14\",\n    \"status\": \"active\",\n    \"bank_name\": \"National Bank\",\n    \"account_number\": \"4234567390\",\n    \"iban\": \"EG380010000500000300263189002\"\n  }\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/hr/employees/create/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"employees",
+														"create",
+														""
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Employee change_passowrd_first_time",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{token}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"current_password\": \"zMx889ye37ch\",\n    \"new_password\": \"NewStrongPass123!\",\n    \"confirm_password\": \"NewStrongPass123!\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/change-password-first-login/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"change-password-first-login",
+														""
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "List Employees",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{token}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "GET",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"user_data\": {\n    \"email\": \"employee12@zeyad.localhost\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\"\n  },\n  \"profile_data\": {\n    \"date_of_birth\": \"1995-08-15\",\n    \"nationality\": \"Egyptian\",\n    \"phone_number\": \"+201234567890\",\n    \"address\": \"Cairo, Egypt\",\n    \"department\": \"df6eb4c0-b809-4954-9ffb-0062d45866f8\",\n    \"position\": \"1c54c62b-7572-4d6b-8a01-b0169f0f7ed8\",\n    \"joining_date\": \"2026-04-14\",\n    \"status\": \"active\",\n    \"bank_name\": \"National Bank\",\n    \"account_number\": \"1234567890\",\n    \"iban\": \"EG380019000500000000263189002\"\n  }\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/hr/employees/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"employees",
+														""
+													],
+													"query": [
+														{
+															"key": "position",
+															"value": "1c54c62b-7572-4d6b-8a01-b0169f0f7ed8",
+															"disabled": true
+														},
+														{
+															"key": "department",
+															"value": "6aa8523b-e071-4516-a0a8-d65ab250e0a0",
+															"disabled": true
+														},
+														{
+															"key": "status",
+															"value": "active",
+															"disabled": true
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Employee details",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{token}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "GET",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"user_data\": {\n    \"email\": \"employee12@zeyad.localhost\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\"\n  },\n  \"profile_data\": {\n    \"date_of_birth\": \"1995-08-15\",\n    \"nationality\": \"Egyptian\",\n    \"phone_number\": \"+201234567890\",\n    \"address\": \"Cairo, Egypt\",\n    \"department\": \"df6eb4c0-b809-4954-9ffb-0062d45866f8\",\n    \"position\": \"1c54c62b-7572-4d6b-8a01-b0169f0f7ed8\",\n    \"joining_date\": \"2026-04-14\",\n    \"status\": \"active\",\n    \"bank_name\": \"National Bank\",\n    \"account_number\": \"1234567890\",\n    \"iban\": \"EG380019000500000000263189002\"\n  }\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/hr/employees/2eb715a0-1475-4bfc-9ab4-672412fa7c2a/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"employees",
+														"2eb715a0-1475-4bfc-9ab4-672412fa7c2a",
+														""
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Update Employee",
+											"request": {
+												"auth": {
+													"type": "bearer",
+													"bearer": [
+														{
+															"key": "token",
+															"value": "{{token}}",
+															"type": "string"
+														}
+													]
+												},
+												"method": "PUT",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"user_data\": {\n    \"email\": \"demo@zeyad.localhost\",\n    \"first_name\": \"Demo\",\n    \"last_name\": \"Home\"\n  },\n  \"profile_data\": {\n    \"date_of_birth\": \"1992-06-15\",\n    \"nationality\": \"Jordanian\",\n    \"phone_number\": \"+201234567890\",\n    \"address\": \"Amman, Jordan\",\n    \"department\": \"6aa8523b-e071-4516-a0a8-d65ab250e0a0\",\n    \"position\": \"03d0eb16-b843-4548-a1bc-ddf8eba9fbfa\",\n    \"joining_date\": \"2026-04-11\",\n    \"status\": \"active\",\n    \"reset_password_required\": false,\n    \"bank_name\": \"ABC Bank\",\n    \"account_number\": \"1234567899\",\n    \"iban\": \"EG380019000500000000463189002\"\n  }\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/hr/employees/2eb715a0-1475-4bfc-9ab4-672412fa7c2a/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"employees",
+														"2eb715a0-1475-4bfc-9ab4-672412fa7c2a",
+														""
+													]
+												}
+											},
+											"response": []
+										}
+									]
+								},
+								{
+									"name": "Salaries & Contracts",
+									"item": [
+										{
+											"name": "Salaries",
+											"item": [
+												{
+													"name": "List Salary Structures",
+													"protocolProfileBehavior": {
+														"disableBodyPruning": true
+													},
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}"
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/salary-structures/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"salary-structures",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "List Salary Structures",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}"
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/salary-structures/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"salary-structures",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 11:27:17 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "OPTIONS, GET"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "362"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"next\": null,\n    \"previous\": 0,\n    \"count\": 1,\n    \"data\": [\n        {\n            \"id\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n            \"name\": \"Standard full-time\",\n            \"description\": \"Basic Salary:Variable\\r\\nHousing Allowance:Variable\\r\\nTransportation:Variable\\r\\nSocial Security (Employee):Variable\\r\\nIncome Tax:Variable\",\n            \"created_at\": \"2026-04-15T09:21:46.772816Z\",\n            \"updated_at\": \"2026-04-15T09:21:46.772771Z\"\n        }\n    ]\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "Contracts",
+											"item": [
+												{
+													"name": "List Contract Templates",
+													"protocolProfileBehavior": {
+														"disableBodyPruning": true
+													},
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}"
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/contract-templates/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"contract-templates",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "List Salary Structures Copy",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}"
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/contract-templates/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"contract-templates",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 09:26:13 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "OPTIONS, GET"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "719"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"next\": null,\n    \"previous\": 0,\n    \"count\": 1,\n    \"data\": [\n        {\n            \"id\": \"c65b5860-8ffd-4faa-a4c9-9c679c6af9d8\",\n            \"name\": \"Full-Time Employment Contract\",\n            \"body\": \"\\\"body\\\": \\\"EMPLOYMENT AGREEMENT\\\\n\\\\nThis Employment Agreement is made between {company_name} and {employee_name}.\\\\n\\\\nPosition: {position}\\\\nDepartment: {department}\\\\nContract Type: {contract_type}\\\\nStart Date: {start_date}\\\\nEnd Date: {end_date}\\\\nBasic Salary: {basic_salary} {currency}\\\\nAnnual Leave Entitlement: {annual_leave_days} days\\\\n\\\\nTerms and conditions apply as per company policy.\\\\n\\\\nEmployer Signature: __________\\\\nEmployee Signature: __________\\\\nDate: {today_date}\\\"\",\n            \"created_at\": \"2026-04-15T09:19:39.351445Z\",\n            \"updated_at\": \"2026-04-15T09:23:27.977222Z\"\n        }\n    ]\n}"
+														}
+													]
+												},
+												{
+													"name": "Save contract compensation",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "POST",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-05-1\",\n    \"annual_leave_days\": 13,\n    \"template\": \"c65b5860-8ffd-4faa-a4c9-9c679c6af9d8\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n    \"basic_salary\": \"3000.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/contract-compensation/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"contract-compensation",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "New Request",
+															"originalRequest": {
+																"method": "POST",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"c65b5860-8ffd-4faa-a4c9-9c679c6af9d8\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/contract-compensation/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																		"contract-compensation",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 09:26:35 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "POST, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "966"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"contract\": {\n        \"id\": \"64193312-b15e-4014-b1d5-b54e5e231169\",\n        \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n        \"contract_type\": \"full_time\",\n        \"contract_type_display\": \"Full-Time\",\n        \"start_date\": \"2026-04-01\",\n        \"end_date\": \"2027-04-14\",\n        \"annual_leave_days\": 14,\n        \"template\": \"c65b5860-8ffd-4faa-a4c9-9c679c6af9d8\",\n        \"document\": null,\n        \"created_at\": \"2026-04-15T09:26:34.856144Z\",\n        \"updated_at\": \"2026-04-15T09:26:34.856102Z\"\n    },\n    \"compensation\": {\n        \"id\": \"5679f807-722f-436e-972b-690ea4f4cb94\",\n        \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n        \"structure\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n        \"structure_name\": \"Standard full-time\",\n        \"basic_salary\": \"1200.00\",\n        \"currency\": \"JOD\",\n        \"transportation\": \"100.00\",\n        \"housing\": \"150.00\",\n        \"other_allowances\": \"50.00\",\n        \"social_security\": \"80.00\",\n        \"health_insurance\": \"30.00\",\n        \"other_deductions\": \"20.00\",\n        \"total_allowances\": \"300.00\",\n        \"total_deductions\": \"130.00\",\n        \"estimated_net_salary\": \"1370.00\",\n        \"created_at\": \"2026-04-15T09:26:35.485453Z\",\n        \"updated_at\": \"2026-04-15T09:26:35.485431Z\"\n    }\n}"
+														}
+													]
+												},
+												{
+													"name": "update contract / compensation",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "PUT",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"compensation_data\": {\n    // \"structure\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n    \"basic_salary\": \"3000.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"50.00\",\n    \"housing\": \"50.00\",\n    \"other_allowances\": \"300.00\",\n    \"social_security\": \"900.00\",\n    \"health_insurance\": \"350.00\",\n    \"other_deductions\": \"250.00\"\n  },\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-01\",\n    \"end_date\": \"2026-04-20\",\n    \"annual_leave_days\": 12\n    // \"template\": \"c65b5860-8ffd-4faa-a4c9-9c679c6af9d8\"\n  }\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/contract-compensation/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"contract-compensation",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Save contract compensation Copy",
+															"originalRequest": {
+																"method": "PUT",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"compensation_data\": {\n    // \"structure\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n    \"basic_salary\": \"4500.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"50.00\",\n    \"housing\": \"50.00\",\n    \"other_allowances\": \"300.00\",\n    \"social_security\": \"900.00\",\n    \"health_insurance\": \"350.00\",\n    \"other_deductions\": \"250.00\"\n  },\n  \"contract_data\": {\n    \"contract_type\": \"part_time\",\n    \"start_date\": \"2026-09-01\",\n    \"end_date\": \"2027-05-01\",\n    \"annual_leave_days\": 12\n    // \"template\": \"c65b5860-8ffd-4faa-a4c9-9c679c6af9d8\"\n  }\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/contract-compensation/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																		"contract-compensation",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 10:54:48 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "OPTIONS, PUT, POST"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "953"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"contract\": {\n        \"id\": \"58113d0c-f8a6-4bad-b4ad-2b095e735722\",\n        \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n        \"contract_type\": \"part_time\",\n        \"contract_type_display\": \"Part-Time\",\n        \"start_date\": \"2026-09-01\",\n        \"end_date\": \"2027-05-01\",\n        \"status\": \"active\",\n        \"annual_leave_days\": 12,\n        \"template\": null,\n        \"document\": null,\n        \"created_at\": \"2026-04-15T10:54:06.636690Z\",\n        \"updated_at\": \"2026-04-15T10:54:06.636671Z\"\n    },\n    \"compensation\": {\n        \"id\": \"5679f807-722f-436e-972b-690ea4f4cb94\",\n        \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n        \"structure\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n        \"structure_name\": \"Standard full-time\",\n        \"basic_salary\": \"4500.00\",\n        \"currency\": \"JOD\",\n        \"transportation\": \"50.00\",\n        \"housing\": \"50.00\",\n        \"other_allowances\": \"300.00\",\n        \"social_security\": \"900.00\",\n        \"health_insurance\": \"350.00\",\n        \"other_deductions\": \"250.00\",\n        \"total_allowances\": \"400.00\",\n        \"total_deductions\": \"1500.00\",\n        \"estimated_net_salary\": \"3400.00\",\n        \"created_at\": \"2026-04-15T09:26:35.485453Z\",\n        \"updated_at\": \"2026-04-15T10:54:48.596106Z\"\n    }\n}"
+														}
+													]
+												},
+												{
+													"name": "Delete contract from contract history",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "DELETE",
+														"header": [],
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/history/contracts/537baca1-fa59-4e66-85ea-bc6bbce884d6/delete/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"history",
+																"contracts",
+																"537baca1-fa59-4e66-85ea-bc6bbce884d6",
+																"delete",
+																""
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Create salary increase",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "POST",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"effective_date\": \"2026-05-01\",\n  \"new_basic_salary\": \"1350.00\",\n  \"reason\": \"Annual increment\"\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/salary-increases/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"salary-increases",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Save contract compensation Copy",
+															"originalRequest": {
+																"method": "POST",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"effective_date\": \"2026-05-01\",\n  \"new_basic_salary\": \"1350.00\",\n  \"reason\": \"Annual increment\"\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/salary-increases/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																		"salary-increases",
+																		""
+																	]
+																}
+															},
+															"status": "Created",
+															"code": 201,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 09:29:58 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "POST, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "268"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"id\": \"1f295e7d-ba76-4aa7-bae7-a98e3446b596\",\n    \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n    \"effective_date\": \"2026-05-01\",\n    \"new_basic_salary\": \"1350.00\",\n    \"reason\": \"Annual increment\",\n    \"created_at\": \"2026-04-15T09:29:57.587292Z\",\n    \"updated_at\": \"2026-04-15T09:29:57.587252Z\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Create performance evaluation",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "POST",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"review_period_start\": \"2026-01-01\",\n  \"review_period_end\": \"2026-03-31\",\n  \"job_knowledge\": 4,\n  \"work_quality\": 5,\n  \"attendance\": 4,\n  \"communication\": 4,\n  \"initiative\": 5,\n  \"comments\": \"Strong performance this quarter.\"\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/evaluations/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"evaluations",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Create salary increase Copy",
+															"originalRequest": {
+																"method": "POST",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"review_period_start\": \"2026-01-01\",\n  \"review_period_end\": \"2026-03-31\",\n  \"job_knowledge\": 4,\n  \"work_quality\": 5,\n  \"attendance\": 4,\n  \"communication\": 4,\n  \"initiative\": 5,\n  \"comments\": \"Strong performance this quarter.\"\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/evaluations/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																		"evaluations",
+																		""
+																	]
+																}
+															},
+															"status": "Created",
+															"code": 201,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 09:30:25 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "POST, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "469"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"id\": \"7c754717-bd20-4415-95e2-5f2ff3f85634\",\n    \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n    \"review_period_start\": \"2026-01-01\",\n    \"review_period_end\": \"2026-03-31\",\n    \"job_knowledge\": 4,\n    \"work_quality\": 5,\n    \"attendance\": 4,\n    \"communication\": 4,\n    \"initiative\": 5,\n    \"comments\": \"Strong performance this quarter.\",\n    \"evaluator\": 1,\n    \"evaluator_name\": \"Zeyad Salama\",\n    \"calculated_score\": 4.4,\n    \"rating_class\": \"good\",\n    \"created_at\": \"2026-04-15T09:30:25.336563Z\",\n    \"updated_at\": \"2026-04-15T09:30:25.336509Z\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Employee Salary & Contract history",
+													"protocolProfileBehavior": {
+														"disableBodyPruning": true
+													},
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/history/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"history",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Create performance evaluation Copy",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/history/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																		"history",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 11:42:10 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "GET, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "2409"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"current_compensation\": {\n        \"id\": \"5679f807-722f-436e-972b-690ea4f4cb94\",\n        \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n        \"structure\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n        \"structure_name\": \"Standard full-time\",\n        \"basic_salary\": \"4500.00\",\n        \"currency\": \"JOD\",\n        \"transportation\": \"50.00\",\n        \"housing\": \"50.00\",\n        \"other_allowances\": \"300.00\",\n        \"social_security\": \"900.00\",\n        \"health_insurance\": \"350.00\",\n        \"other_deductions\": \"250.00\",\n        \"total_allowances\": \"400.00\",\n        \"total_deductions\": \"1500.00\",\n        \"estimated_net_salary\": \"3400.00\",\n        \"created_at\": \"2026-04-15T09:26:35.485453Z\",\n        \"updated_at\": \"2026-04-15T10:54:48.596106Z\"\n    },\n    \"contract_history\": [\n        {\n            \"contract_id\": \"8618bc27-dba9-4bf6-a85c-d0bc4464dea4\",\n            \"period\": \"2026-09-01 - 2027-05-01\",\n            \"salary\": 4500,\n            \"document\": null,\n            \"status\": \"expired\"\n        },\n        {\n            \"contract_id\": \"7e37a718-f3e7-4ceb-99fe-f66e8f8590bd\",\n            \"period\": \"2026-09-01 - 2027-05-01\",\n            \"salary\": 4500,\n            \"document\": null,\n            \"status\": \"expired\"\n        },\n        {\n            \"contract_id\": \"487a995b-4998-4b9a-934f-43ceb7ce177a\",\n            \"period\": \"2026-09-01 - 2027-05-01\",\n            \"salary\": 4500,\n            \"document\": null,\n            \"status\": \"expired\"\n        },\n        {\n            \"contract_id\": \"58113d0c-f8a6-4bad-b4ad-2b095e735722\",\n            \"period\": \"2026-09-01 - 2027-05-01\",\n            \"salary\": 4500,\n            \"document\": null,\n            \"status\": \"active\"\n        },\n        {\n            \"contract_id\": \"5d379b46-9283-4f35-9dd9-06f1f2b66e3b\",\n            \"period\": \"2026-05-01 - 2027-05-01\",\n            \"salary\": 4500,\n            \"document\": null,\n            \"status\": \"expired\"\n        },\n        {\n            \"contract_id\": \"af6aaa88-e1b5-4c8f-8dd5-dec61c168aca\",\n            \"period\": \"2026-05-01 - 2027-05-01\",\n            \"salary\": 4500,\n            \"document\": null,\n            \"status\": \"expired\"\n        },\n        {\n            \"contract_id\": \"64193312-b15e-4014-b1d5-b54e5e231169\",\n            \"period\": \"2026-04-01 - 2027-04-14\",\n            \"salary\": 4500,\n            \"document\": null,\n            \"status\": \"expired\"\n        }\n    ],\n    \"contract_details\": {\n        \"contract_type\": \"part_time\",\n        \"start_date\": \"2026-09-01\",\n        \"end_date\": \"2027-05-01\",\n        \"status\": \"active\",\n        \"leaves\": 12\n    },\n    \"salary_history\": [\n        {\n            \"date\": \"2026-05-01\",\n            \"amount\": \"1350.00\",\n            \"reason\": \"Annual increment\"\n        },\n        {\n            \"date\": \"2026-04-15\",\n            \"amount\": \"4500.00\",\n            \"reason\": \"\"\n        },\n        {\n            \"date\": \"2026-04-15\",\n            \"amount\": \"4000.00\",\n            \"reason\": \"\"\n        }\n    ],\n    \"performance_evaluations\": [\n        {\n            \"id\": \"7c754717-bd20-4415-95e2-5f2ff3f85634\",\n            \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n            \"review_period_start\": \"2026-01-01\",\n            \"review_period_end\": \"2026-03-31\",\n            \"job_knowledge\": 4,\n            \"work_quality\": 5,\n            \"attendance\": 4,\n            \"communication\": 4,\n            \"initiative\": 5,\n            \"comments\": \"Strong performance this quarter.\",\n            \"evaluator\": 1,\n            \"evaluator_name\": \"Zeyad Salama\",\n            \"calculated_score\": 4.4,\n            \"rating_class\": \"good\",\n            \"created_at\": \"2026-04-15T09:30:25.336563Z\",\n            \"updated_at\": \"2026-04-15T09:30:25.336509Z\"\n        }\n    ]\n}"
+														}
+													]
+												},
+												{
+													"name": "List Expiring Soon Contracts",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3MDk2ODAzLCJpYXQiOjE3NzY0OTIwMDMsImp0aSI6IjUxZGIyMTg3YzlkZDQ4ODliOWRlNzViMTJiMDcyZjg3IiwidXNlcl9pZCI6IjEifQ.4LjKaLeUcytAf8llhbnKU_hn4oWBTNZnc3t3AMzhPHc",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{url}}/api/hr/contracts/expiring-soon/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"contracts",
+																"expiring-soon",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "List Expiring Soon Contracts",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/contracts/expiring-soon/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"contracts",
+																		"expiring-soon",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "",
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Sat, 18 Apr 2026 07:25:52 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "GET, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "285"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"count\": 1,\n    \"results\": [\n        {\n            \"id\": \"c935ea47-773e-419b-a6f3-29e6b2037d7c\",\n            \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n            \"employee_name\": \"John Doe\",\n            \"department_name\": \"Software\",\n            \"contract_type\": \"full_time\",\n            \"contract_type_display\": \"Full-Time\",\n            \"end_date\": \"2026-04-20\",\n            \"days_until_expiry\": 2\n        }\n    ]\n}"
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "Leavs",
+									"item": [
+										{
+											"name": "Employee",
+											"item": [
+												{
+													"name": "Create Leaves request for employee --  employee should be the requesting user",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "POST",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"leave_type\": \"annual\",\n  \"start_date\": \"2026-05-10\",\n  \"end_date\": \"2026-05-12\",\n  \"days\": 3,\n  \"notes\": \"Family travel\"\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/leaves/create/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"leaves",
+																"create",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "List Leaves request for employee Copy",
+															"originalRequest": {
+																"method": "POST",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"leave_type\": \"annual\",\n  \"start_date\": \"2026-05-10\",\n  \"end_date\": \"2026-05-12\",\n  \"days\": 3,\n  \"notes\": \"Family travel\"\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/leaves/create/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"leaves",
+																		"create",
+																		""
+																	]
+																}
+															},
+															"status": "Created",
+															"code": 201,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 13:38:36 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "POST, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "498"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"record\": {\n        \"id\": \"fbc664cf-cd97-4897-8780-73104c5ced64\",\n        \"employee\": \"47a0fc70-50e7-4c88-9dc4-58bd75f0492d\",\n        \"leave_type\": \"annual\",\n        \"leave_type_display\": \"Annual Leave\",\n        \"start_date\": \"2026-05-10\",\n        \"end_date\": \"2026-05-12\",\n        \"days\": 3,\n        \"status\": \"pending\",\n        \"status_display\": \"Pending\",\n        \"notes\": \"Family travel\",\n        \"created_at\": \"2026-04-15T13:38:35.566602Z\",\n        \"updated_at\": \"2026-04-15T13:38:35.566524Z\"\n    },\n    \"summary\": {\n        \"annual_entitlement\": 14,\n        \"used_annual_leave\": 0,\n        \"remaining_balance\": 14,\n        \"sick_leave_taken\": 0,\n        \"unpaid_leave\": 0\n    }\n}"
+														}
+													]
+												},
+												{
+													"name": "List Leaves request for employee",
+													"protocolProfileBehavior": {
+														"disableBodyPruning": true
+													},
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}"
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/leaves/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"leaves",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "List Leaves request for employee",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}"
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/leaves/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"leaves",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 13:50:50 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "GET, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "509"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"summary\": {\n        \"annual_entitlement\": 14,\n        \"used_annual_leave\": 3,\n        \"remaining_balance\": 11,\n        \"sick_leave_taken\": 0,\n        \"unpaid_leave\": 0\n    },\n    \"leave_history\": [\n        {\n            \"id\": \"fbc664cf-cd97-4897-8780-73104c5ced64\",\n            \"employee\": \"47a0fc70-50e7-4c88-9dc4-58bd75f0492d\",\n            \"leave_type\": \"annual\",\n            \"leave_type_display\": \"Annual Leave\",\n            \"start_date\": \"2026-05-10\",\n            \"end_date\": \"2026-05-12\",\n            \"days\": 3,\n            \"status\": \"approved\",\n            \"status_display\": \"Approved\",\n            \"notes\": \"Family travel\",\n            \"created_at\": \"2026-04-15T13:38:35.566602Z\",\n            \"updated_at\": \"2026-04-15T13:38:35.566524Z\"\n        }\n    ]\n}"
+														}
+													]
+												},
+												{
+													"name": "Delete employee leave",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "DELETE",
+														"header": [],
+														"url": {
+															"raw": "{{url}}/api/hr/employees/leaves/fbc664cf-cd97-4897-8780-73104c5ced64/approve/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"leaves",
+																"fbc664cf-cd97-4897-8780-73104c5ced64",
+																"approve",
+																""
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Leaves request for employee Details",
+													"protocolProfileBehavior": {
+														"disableBodyPruning": true
+													},
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}"
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/leaves/fbc664cf-cd97-4897-8780-73104c5ced64/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"leaves",
+																"fbc664cf-cd97-4897-8780-73104c5ced64",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "List Leaves request for employee Copy",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-1\",\n    \"end_date\": \"2027-04-14\",\n    \"annual_leave_days\": 14,\n    \"template\": \"a3d1f8b9-8a39-4b9a-9e34-9f0f0f0f0f01\"\n  },\n  \"compensation_data\": {\n    \"structure\": \"b7c2a1d3-6f21-4e51-8af9-1d2d2d2d2d02\",\n    \"basic_salary\": \"1200.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"100.00\",\n    \"housing\": \"150.00\",\n    \"other_allowances\": \"50.00\",\n    \"social_security\": \"80.00\",\n    \"health_insurance\": \"30.00\",\n    \"other_deductions\": \"20.00\"\n  }\n}"
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/leaves/fbc664cf-cd97-4897-8780-73104c5ced64/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"leaves",
+																		"fbc664cf-cd97-4897-8780-73104c5ced64",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 13:57:15 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "GET, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "500"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"record\": {\n        \"id\": \"fbc664cf-cd97-4897-8780-73104c5ced64\",\n        \"employee\": \"47a0fc70-50e7-4c88-9dc4-58bd75f0492d\",\n        \"leave_type\": \"annual\",\n        \"leave_type_display\": \"Annual Leave\",\n        \"start_date\": \"2026-05-10\",\n        \"end_date\": \"2026-05-12\",\n        \"days\": 3,\n        \"status\": \"approved\",\n        \"status_display\": \"Approved\",\n        \"notes\": \"Family travel\",\n        \"created_at\": \"2026-04-15T13:38:35.566602Z\",\n        \"updated_at\": \"2026-04-15T13:38:35.566524Z\"\n    },\n    \"summary\": {\n        \"annual_entitlement\": 14,\n        \"used_annual_leave\": 3,\n        \"remaining_balance\": 11,\n        \"sick_leave_taken\": 0,\n        \"unpaid_leave\": 0\n    }\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "Admin",
+											"item": [
+												{
+													"name": "List employee leavs",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/leaves/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																"leaves",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "New Request",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/leaves/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																		"leaves",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 13:50:11 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "GET, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "509"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"summary\": {\n        \"annual_entitlement\": 14,\n        \"used_annual_leave\": 3,\n        \"remaining_balance\": 11,\n        \"sick_leave_taken\": 0,\n        \"unpaid_leave\": 0\n    },\n    \"leave_history\": [\n        {\n            \"id\": \"fbc664cf-cd97-4897-8780-73104c5ced64\",\n            \"employee\": \"47a0fc70-50e7-4c88-9dc4-58bd75f0492d\",\n            \"leave_type\": \"annual\",\n            \"leave_type_display\": \"Annual Leave\",\n            \"start_date\": \"2026-05-10\",\n            \"end_date\": \"2026-05-12\",\n            \"days\": 3,\n            \"status\": \"approved\",\n            \"status_display\": \"Approved\",\n            \"notes\": \"Family travel\",\n            \"created_at\": \"2026-04-15T13:38:35.566602Z\",\n            \"updated_at\": \"2026-04-15T13:38:35.566524Z\"\n        }\n    ]\n}"
+														},
+														{
+															"name": "List employee leavs",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/leaves/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																		"leaves",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 14:17:20 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "GET, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "530"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"summary\": {\n        \"annual_entitlement\": 14,\n        \"used_annual_leave\": 6,\n        \"remaining_balance\": 8,\n        \"sick_leave_taken\": 0,\n        \"unpaid_leave\": 0\n    },\n    \"leave_history\": [\n        {\n            \"id\": \"0a32aef2-b299-46a9-a9f5-66f7158792f9\",\n            \"type\": \"annual\",\n            \"start\": \"2026-05-10\",\n            \"end\": \"2026-05-12\",\n            \"days\": 3,\n            \"status\": \"rejected\"\n        },\n        {\n            \"id\": \"a3a402b6-e29b-48b3-b574-81538fedf33d\",\n            \"type\": \"annual\",\n            \"start\": \"2026-05-10\",\n            \"end\": \"2026-05-12\",\n            \"days\": 3,\n            \"status\": \"approved\"\n        },\n        {\n            \"id\": \"fbc664cf-cd97-4897-8780-73104c5ced64\",\n            \"type\": \"annual\",\n            \"start\": \"2026-05-10\",\n            \"end\": \"2026-05-12\",\n            \"days\": 3,\n            \"status\": \"approved\"\n        }\n    ]\n}"
+														}
+													]
+												},
+												{
+													"name": "Approve employee leaves",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "PUT",
+														"header": [],
+														"url": {
+															"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/leaves/fbc664cf-cd97-4897-8780-73104c5ced64/approve/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																"leaves",
+																"fbc664cf-cd97-4897-8780-73104c5ced64",
+																"approve",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "List employee leavs Copy",
+															"originalRequest": {
+																"method": "PUT",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/leaves/fbc664cf-cd97-4897-8780-73104c5ced64/approve/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																		"leaves",
+																		"fbc664cf-cd97-4897-8780-73104c5ced64",
+																		"approve",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 13:50:03 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "PUT, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "370"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"id\": \"fbc664cf-cd97-4897-8780-73104c5ced64\",\n    \"employee\": \"47a0fc70-50e7-4c88-9dc4-58bd75f0492d\",\n    \"leave_type\": \"annual\",\n    \"leave_type_display\": \"Annual Leave\",\n    \"start_date\": \"2026-05-10\",\n    \"end_date\": \"2026-05-12\",\n    \"days\": 3,\n    \"status\": \"approved\",\n    \"status_display\": \"Approved\",\n    \"notes\": \"Family travel\",\n    \"created_at\": \"2026-04-15T13:38:35.566602Z\",\n    \"updated_at\": \"2026-04-15T13:38:35.566524Z\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Reject employee leaves",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "PUT",
+														"header": [],
+														"url": {
+															"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/leaves/0a32aef2-b299-46a9-a9f5-66f7158792f9/reject/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																"leaves",
+																"0a32aef2-b299-46a9-a9f5-66f7158792f9",
+																"reject",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Reject employee leaves",
+															"originalRequest": {
+																"method": "PUT",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/leaves/0a32aef2-b299-46a9-a9f5-66f7158792f9/reject/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																		"leaves",
+																		"0a32aef2-b299-46a9-a9f5-66f7158792f9",
+																		"reject",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 14:17:07 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "PUT, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "370"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"id\": \"0a32aef2-b299-46a9-a9f5-66f7158792f9\",\n    \"employee\": \"47a0fc70-50e7-4c88-9dc4-58bd75f0492d\",\n    \"leave_type\": \"annual\",\n    \"leave_type_display\": \"Annual Leave\",\n    \"start_date\": \"2026-05-10\",\n    \"end_date\": \"2026-05-12\",\n    \"days\": 3,\n    \"status\": \"rejected\",\n    \"status_display\": \"Rejected\",\n    \"notes\": \"Family travel\",\n    \"created_at\": \"2026-04-15T14:16:21.405752Z\",\n    \"updated_at\": \"2026-04-15T14:16:21.405739Z\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Employee leaves Details",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/leaves/a3a402b6-e29b-48b3-b574-81538fedf33d/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																"leaves",
+																"a3a402b6-e29b-48b3-b574-81538fedf33d",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Approve employee leaves Copy",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/leaves/fbc664cf-cd97-4897-8780-73104c5ced64/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																		"leaves",
+																		"fbc664cf-cd97-4897-8780-73104c5ced64",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Wed, 15 Apr 2026 13:58:36 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "GET, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "500"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"record\": {\n        \"id\": \"fbc664cf-cd97-4897-8780-73104c5ced64\",\n        \"employee\": \"47a0fc70-50e7-4c88-9dc4-58bd75f0492d\",\n        \"leave_type\": \"annual\",\n        \"leave_type_display\": \"Annual Leave\",\n        \"start_date\": \"2026-05-10\",\n        \"end_date\": \"2026-05-12\",\n        \"days\": 3,\n        \"status\": \"approved\",\n        \"status_display\": \"Approved\",\n        \"notes\": \"Family travel\",\n        \"created_at\": \"2026-04-15T13:38:35.566602Z\",\n        \"updated_at\": \"2026-04-15T13:38:35.566524Z\"\n    },\n    \"summary\": {\n        \"annual_entitlement\": 14,\n        \"used_annual_leave\": 3,\n        \"remaining_balance\": 11,\n        \"sick_leave_taken\": 0,\n        \"unpaid_leave\": 0\n    }\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "Documents",
+											"item": [
+												{
+													"name": "Employee",
+													"item": [
+														{
+															"name": "List documents",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{token}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/documents/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"documents",
+																		""
+																	]
+																}
+															},
+															"response": [
+																{
+																	"name": "New Request",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [],
+																		"url": {
+																			"raw": "{{url}}/api/hr/employees/documents/",
+																			"host": [
+																				"{{url}}"
+																			],
+																			"path": [
+																				"api",
+																				"hr",
+																				"employees",
+																				"documents",
+																				""
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": null,
+																	"header": [
+																		{
+																			"key": "Date",
+																			"value": "Wed, 15 Apr 2026 14:33:29 GMT"
+																		},
+																		{
+																			"key": "Server",
+																			"value": "WSGIServer/0.2 CPython/3.12.3"
+																		},
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		},
+																		{
+																			"key": "Vary",
+																			"value": "Accept, origin"
+																		},
+																		{
+																			"key": "Allow",
+																			"value": "GET, OPTIONS"
+																		},
+																		{
+																			"key": "X-Frame-Options",
+																			"value": "DENY"
+																		},
+																		{
+																			"key": "Content-Length",
+																			"value": "2"
+																		},
+																		{
+																			"key": "X-Content-Type-Options",
+																			"value": "nosniff"
+																		},
+																		{
+																			"key": "Referrer-Policy",
+																			"value": "same-origin"
+																		},
+																		{
+																			"key": "Cross-Origin-Opener-Policy",
+																			"value": "same-origin"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "[]"
+																}
+															]
+														},
+														{
+															"name": "Upload documents",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{token}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "POST",
+																"header": [],
+																"body": {
+																	"mode": "formdata",
+																	"formdata": [
+																		{
+																			"key": "name",
+																			"value": "CV",
+																			"type": "text"
+																		},
+																		{
+																			"key": "file",
+																			"type": "file",
+																			"src": "/home/demo/Documents/Zeyad_Salama_Sofrware_Engineer.pdf"
+																		}
+																	]
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/documents/upload/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"documents",
+																		"upload",
+																		""
+																	]
+																}
+															},
+															"response": [
+																{
+																	"name": "List documents Copy",
+																	"originalRequest": {
+																		"method": "POST",
+																		"header": [],
+																		"body": {
+																			"mode": "formdata",
+																			"formdata": [
+																				{
+																					"key": "name",
+																					"value": "CV",
+																					"type": "text"
+																				},
+																				{
+																					"key": "file",
+																					"type": "file",
+																					"src": "/home/demo/Documents/Zeyad_Salama_Sofrware_Engineer.pdf"
+																				}
+																			]
+																		},
+																		"url": {
+																			"raw": "{{url}}/api/hr/employees/documents/upload/",
+																			"host": [
+																				"{{url}}"
+																			],
+																			"path": [
+																				"api",
+																				"hr",
+																				"employees",
+																				"documents",
+																				"upload",
+																				""
+																			]
+																		}
+																	},
+																	"status": "Created",
+																	"code": 201,
+																	"_postman_previewlanguage": null,
+																	"header": [
+																		{
+																			"key": "Date",
+																			"value": "Wed, 15 Apr 2026 14:38:16 GMT"
+																		},
+																		{
+																			"key": "Server",
+																			"value": "WSGIServer/0.2 CPython/3.12.3"
+																		},
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		},
+																		{
+																			"key": "Vary",
+																			"value": "Accept, origin"
+																		},
+																		{
+																			"key": "Allow",
+																			"value": "POST, OPTIONS"
+																		},
+																		{
+																			"key": "X-Frame-Options",
+																			"value": "DENY"
+																		},
+																		{
+																			"key": "Content-Length",
+																			"value": "361"
+																		},
+																		{
+																			"key": "X-Content-Type-Options",
+																			"value": "nosniff"
+																		},
+																		{
+																			"key": "Referrer-Policy",
+																			"value": "same-origin"
+																		},
+																		{
+																			"key": "Cross-Origin-Opener-Policy",
+																			"value": "same-origin"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n    \"id\": \"466462d2-01e7-489b-ad94-0ab05ac38d13\",\n    \"employee\": \"47a0fc70-50e7-4c88-9dc4-58bd75f0492d\",\n    \"name\": \"CV\",\n    \"file\": \"https://adex-erp.fra1.digitaloceanspaces.com/adex-erp/media/employees/documents/Zeyad_Salama_Sofrware_Engineer.pdf\",\n    \"uploaded_at\": \"2026-04-15T14:38:16.539339Z\",\n    \"created_at\": \"2026-04-15T14:38:15.388392Z\",\n    \"updated_at\": \"2026-04-15T14:38:15.388332Z\"\n}"
+																}
+															]
+														}
+													]
+												},
+												{
+													"name": "Admin",
+													"item": [
+														{
+															"name": "List employee documents",
+															"request": {
+																"auth": {
+																	"type": "bearer",
+																	"bearer": [
+																		{
+																			"key": "token",
+																			"value": "{{token}}",
+																			"type": "string"
+																		}
+																	]
+																},
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/documents/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																		"documents",
+																		""
+																	]
+																}
+															},
+															"response": [
+																{
+																	"name": "New Request",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [],
+																		"url": {
+																			"raw": "{{url}}/api/hr/employees/47a0fc70-50e7-4c88-9dc4-58bd75f0492d/documents/",
+																			"host": [
+																				"{{url}}"
+																			],
+																			"path": [
+																				"api",
+																				"hr",
+																				"employees",
+																				"47a0fc70-50e7-4c88-9dc4-58bd75f0492d",
+																				"documents",
+																				""
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": null,
+																	"header": [
+																		{
+																			"key": "Date",
+																			"value": "Wed, 15 Apr 2026 14:40:36 GMT"
+																		},
+																		{
+																			"key": "Server",
+																			"value": "WSGIServer/0.2 CPython/3.12.3"
+																		},
+																		{
+																			"key": "Content-Type",
+																			"value": "application/json"
+																		},
+																		{
+																			"key": "Vary",
+																			"value": "Accept, origin"
+																		},
+																		{
+																			"key": "Allow",
+																			"value": "GET, OPTIONS"
+																		},
+																		{
+																			"key": "X-Frame-Options",
+																			"value": "DENY"
+																		},
+																		{
+																			"key": "Content-Length",
+																			"value": "227"
+																		},
+																		{
+																			"key": "X-Content-Type-Options",
+																			"value": "nosniff"
+																		},
+																		{
+																			"key": "Referrer-Policy",
+																			"value": "same-origin"
+																		},
+																		{
+																			"key": "Cross-Origin-Opener-Policy",
+																			"value": "same-origin"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "[\n    {\n        \"id\": \"466462d2-01e7-489b-ad94-0ab05ac38d13\",\n        \"name\": \"CV\",\n        \"file\": \"https://adex-erp.fra1.digitaloceanspaces.com/adex-erp/media/employees/documents/Zeyad_Salama_Sofrware_Engineer.pdf\",\n        \"uploaded_at\": \"2026-04-15T14:38:16.539339Z\"\n    }\n]"
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
 								}
 							]
 						}
@@ -1218,7 +3726,7 @@
 											"bearer": [
 												{
 													"key": "token",
-													"value": "{{token}}",
+													"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3MDk2ODAzLCJpYXQiOjE3NzY0OTIwMDMsImp0aSI6IjUxZGIyMTg3YzlkZDQ4ODliOWRlNzViMTJiMDcyZjg3IiwidXNlcl9pZCI6IjEifQ.4LjKaLeUcytAf8llhbnKU_hn4oWBTNZnc3t3AMzhPHc",
 													"type": "string"
 												}
 											]
@@ -1421,6 +3929,981 @@
 												"inventory",
 												"products",
 												"create",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Products list",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/inventory/products/?category=c13189ba-042d-428a-94e5-fc4e679d5bcb",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"products",
+												""
+											],
+											"query": [
+												{
+													"key": "category",
+													"value": "c13189ba-042d-428a-94e5-fc4e679d5bcb"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Product Update",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"name\": \"Updated Laptop\",\n    \"sku\": \"DELL-XPS-13-NEW\",\n    // \"category\": \"c13189ba-042d-428a-94e5-fc4e679d5bcb\",\n    \"type\": \"stock_item\",\n    \"description\": \"Updated description\",\n    \"unit\": \"8d878db3-af52-42a2-aa58-8c49365aeb6f\",\n    \"cost_price\": \"850.00\",\n    \"selling_price\": \"1100.00\",\n    // \"tax_rule\": 2,\n    \"reorder_level\": 10,\n    // \"revenue_account\": 10,\n    // \"inventory_asset_account\": 20,\n    \"is_active\": true\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/inventory/products/8aee28ef-6c3c-4f44-ba8c-fc1135fecf36/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"products",
+												"8aee28ef-6c3c-4f44-ba8c-fc1135fecf36",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Product Details",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/inventory/products/8aee28ef-6c3c-4f44-ba8c-fc1135fecf36/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"products",
+												"8aee28ef-6c3c-4f44-ba8c-fc1135fecf36",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Product Delete",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/inventory/products/8aee28ef-6c3c-4f44-ba8c-fc1135fecf36/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"products",
+												"8aee28ef-6c3c-4f44-ba8c-fc1135fecf36",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Settings",
+					"item": [
+						{
+							"name": "General",
+							"item": [
+								{
+									"name": "Company Profile Details",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgyMjkwLCJpYXQiOjE3NzYwNzc0OTAsImp0aSI6ImFiODdmMjBkOWFmMDQxZjk5ZWRiMjllNTk4NDI3OGQ0IiwidXNlcl9pZCI6IjEifQ.5dGOhiIHVnxTsJ_VbfD1VaCckJGrFddS5PeeO1AXsGM",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/tenants/clients/settings/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"tenants",
+												"clients",
+												"settings",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Company Profile Update",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgyMjkwLCJpYXQiOjE3NzYwNzc0OTAsImp0aSI6ImFiODdmMjBkOWFmMDQxZjk5ZWRiMjllNTk4NDI3OGQ0IiwidXNlcl9pZCI6IjEifQ.5dGOhiIHVnxTsJ_VbfD1VaCckJGrFddS5PeeO1AXsGM",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PATCH",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"company_name\": \"zeyadd\",\n    \"tax_id\": \"\",\n    \"industry\": \"d63cb5db-3c80-47b7-93b0-4e73356b6efb\",\n    \"default_currency\": \"b03ed094-c56f-4d58-b563-2407f4c4977d\",\n    \"date_format\": \"DD/MM/YYYY\",\n    \"timezone\": \"Africa/Egypt\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/tenants/clients/settings/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"tenants",
+												"clients",
+												"settings",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Tax Rate",
+							"item": [
+								{
+									"name": "List tax-rules",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgyMjkwLCJpYXQiOjE3NzYwNzc0OTAsImp0aSI6ImFiODdmMjBkOWFmMDQxZjk5ZWRiMjllNTk4NDI3OGQ0IiwidXNlcl9pZCI6IjEifQ.5dGOhiIHVnxTsJ_VbfD1VaCckJGrFddS5PeeO1AXsGM",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"company_name\": \"zeyadd\",\n    \"tax_id\": \"\",\n    \"industry\": \"d63cb5db-3c80-47b7-93b0-4e73356b6efb\",\n    \"default_currency\": \"b03ed094-c56f-4d58-b563-2407f4c4977d\",\n    \"date_format\": \"DD/MM/YYYY\",\n    \"timezone\": \"Africa/Egypt\"\n}"
+										},
+										"url": {
+											"raw": "{{url}}/api/sales/tax-rules/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"sales",
+												"tax-rules",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create tax-rule",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgyMjkwLCJpYXQiOjE3NzYwNzc0OTAsImp0aSI6ImFiODdmMjBkOWFmMDQxZjk5ZWRiMjllNTk4NDI3OGQ0IiwidXNlcl9pZCI6IjEifQ.5dGOhiIHVnxTsJ_VbfD1VaCckJGrFddS5PeeO1AXsGM",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Standard VAT 16%\",\n  \"rate_percent\": \"20.00\",\n  \"tax_type\": \"standard\",\n  \"sales_gl_account\": \"d20cbc2b-b5ec-4b7f-b295-011e79ccebec\",\n  \"purchase_gl_account\": \"bfcb72be-94c4-4588-9092-6031bc982f9f\",\n  \"is_default\": true\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/sales/tax-rules/create/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"sales",
+												"tax-rules",
+												"create",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "tax-rule details",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgyMjkwLCJpYXQiOjE3NzYwNzc0OTAsImp0aSI6ImFiODdmMjBkOWFmMDQxZjk5ZWRiMjllNTk4NDI3OGQ0IiwidXNlcl9pZCI6IjEifQ.5dGOhiIHVnxTsJ_VbfD1VaCckJGrFddS5PeeO1AXsGM",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/sales/tax-rules/70c43188-d0ab-4b8b-a124-30e24f14e552/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"sales",
+												"tax-rules",
+												"70c43188-d0ab-4b8b-a124-30e24f14e552",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update tax-rule",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgyMjkwLCJpYXQiOjE3NzYwNzc0OTAsImp0aSI6ImFiODdmMjBkOWFmMDQxZjk5ZWRiMjllNTk4NDI3OGQ0IiwidXNlcl9pZCI6IjEifQ.5dGOhiIHVnxTsJ_VbfD1VaCckJGrFddS5PeeO1AXsGM",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Standard VAT 20%\",\n  \"rate_percent\": \"20.00\",\n  \"tax_type\": \"standard\",\n//   \"sales_gl_account\": \"d20cbc2b-b5ec-4b7f-b295-011e79ccebec\",\n//   \"purchase_gl_account\": \"bfcb72be-94c4-4588-9092-6031bc982f9f\",\n  \"is_default\": true\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/sales/tax-rules/70c43188-d0ab-4b8b-a124-30e24f14e552/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"sales",
+												"tax-rules",
+												"70c43188-d0ab-4b8b-a124-30e24f14e552",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete tax_rule",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NjgyMjkwLCJpYXQiOjE3NzYwNzc0OTAsImp0aSI6ImFiODdmMjBkOWFmMDQxZjk5ZWRiMjllNTk4NDI3OGQ0IiwidXNlcl9pZCI6IjEifQ.5dGOhiIHVnxTsJ_VbfD1VaCckJGrFddS5PeeO1AXsGM",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/sales/tax-rules/70c43188-d0ab-4b8b-a124-30e24f14e552/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"sales",
+												"tax-rules",
+												"70c43188-d0ab-4b8b-a124-30e24f14e552",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Categories",
+							"item": [
+								{
+									"name": "List category types",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/inventory/category-types/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"category-types",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "New Request",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{url}}/api/inventory/category-types/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"inventory",
+														"category-types",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": null,
+											"header": [
+												{
+													"key": "Date",
+													"value": "Wed, 15 Apr 2026 15:00:33 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "GET, OPTIONS"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "666"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"next\": null,\n    \"previous\": 0,\n    \"count\": 4,\n    \"data\": [\n        {\n            \"id\": \"c32d6a01-1891-49cd-ae61-dd7e78d5ad6b\",\n            \"name\": \"Account Types\",\n            \"created_at\": \"2026-04-15T14:57:02.029398Z\",\n            \"updated_at\": \"2026-04-15T14:57:02.029344Z\"\n        },\n        {\n            \"id\": \"f7fce12d-9a75-40db-81f0-ac6ee3cd19f7\",\n            \"name\": \"Expense Types\",\n            \"created_at\": \"2026-04-15T14:56:49.525691Z\",\n            \"updated_at\": \"2026-04-15T14:56:49.525629Z\"\n        },\n        {\n            \"id\": \"6055824f-5025-43da-bec1-06fa96d9a276\",\n            \"name\": \"Fixed Assets\",\n            \"created_at\": \"2026-04-15T14:55:14.679858Z\",\n            \"updated_at\": \"2026-04-15T14:55:14.679800Z\"\n        },\n        {\n            \"id\": \"6ab5fa42-234d-4247-935e-4c2e8e27c701\",\n            \"name\": \"Inventory Items\",\n            \"created_at\": \"2026-04-15T14:55:05.236694Z\",\n            \"updated_at\": \"2026-04-15T14:55:05.236682Z\"\n        }\n    ]\n}"
+										}
+									]
+								},
+								{
+									"name": "Create Category",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"name\": \"Devices\", \n    \"group\": \"6ab5fa42-234d-4247-935e-4c2e8e27c701\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/inventory/categories/create/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"categories",
+												"create",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "List category types Copy",
+											"originalRequest": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"name\": \"Devices\", \n    \"group\": \"6ab5fa42-234d-4247-935e-4c2e8e27c701\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/inventory/categories/create/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"inventory",
+														"categories",
+														"create",
+														""
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": null,
+											"header": [
+												{
+													"key": "Date",
+													"value": "Wed, 15 Apr 2026 15:02:18 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "OPTIONS, POST"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "140"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"id\": \"9542f9c8-a15b-4ff6-a6a7-0066cbc6d62a\",\n    \"name\": \"Devices\",\n    \"group\": \"6ab5fa42-234d-4247-935e-4c2e8e27c701\",\n    \"group_name\": \"Inventory Items\"\n}"
+										}
+									]
+								},
+								{
+									"name": "List categories",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/inventory/categories/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"categories",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "List category types Copy 2",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{url}}/api/inventory/categories/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"inventory",
+														"categories",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": null,
+											"header": [
+												{
+													"key": "Date",
+													"value": "Wed, 15 Apr 2026 15:02:43 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "GET, OPTIONS"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "335"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"next\": null,\n    \"previous\": 0,\n    \"count\": 3,\n    \"data\": [\n        {\n            \"id\": \"9542f9c8-a15b-4ff6-a6a7-0066cbc6d62a\",\n            \"name\": \"Devices\",\n            \"group\": \"6ab5fa42-234d-4247-935e-4c2e8e27c701\",\n            \"group_name\": \"Inventory Items\"\n        },\n        {\n            \"id\": \"c13189ba-042d-428a-94e5-fc4e679d5bcb\",\n            \"name\": \"Labtops\",\n            \"group\": null\n        },\n        {\n            \"id\": \"b48dd905-c2d9-4127-aa55-ef92df242662\",\n            \"name\": \"tech\",\n            \"group\": null\n        }\n    ]\n}"
+										}
+									]
+								},
+								{
+									"name": "categories details",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/inventory/categories/b48dd905-c2d9-4127-aa55-ef92df242662/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"categories",
+												"b48dd905-c2d9-4127-aa55-ef92df242662",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "List categories Copy",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{url}}/api/inventory/categories/b48dd905-c2d9-4127-aa55-ef92df242662/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"inventory",
+														"categories",
+														"b48dd905-c2d9-4127-aa55-ef92df242662",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": null,
+											"header": [
+												{
+													"key": "Date",
+													"value": "Wed, 15 Apr 2026 15:03:52 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "PATCH, GET, PUT, OPTIONS"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "72"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"id\": \"b48dd905-c2d9-4127-aa55-ef92df242662\",\n    \"name\": \"tech\",\n    \"group\": null\n}"
+										}
+									]
+								},
+								{
+									"name": "Category Update",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"name\": \"Tech\", \n    \"group\": \"6ab5fa42-234d-4247-935e-4c2e8e27c701\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/inventory/categories/b48dd905-c2d9-4127-aa55-ef92df242662/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"categories",
+												"b48dd905-c2d9-4127-aa55-ef92df242662",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "categories details Copy",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"name\": \"Tech\", \n    \"group\": \"6ab5fa42-234d-4247-935e-4c2e8e27c701\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/inventory/categories/b48dd905-c2d9-4127-aa55-ef92df242662/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"inventory",
+														"categories",
+														"b48dd905-c2d9-4127-aa55-ef92df242662",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": null,
+											"header": [
+												{
+													"key": "Date",
+													"value": "Wed, 15 Apr 2026 15:05:11 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "PATCH, GET, PUT, OPTIONS"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "137"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"id\": \"b48dd905-c2d9-4127-aa55-ef92df242662\",\n    \"name\": \"Tech\",\n    \"group\": \"6ab5fa42-234d-4247-935e-4c2e8e27c701\",\n    \"group_name\": \"Inventory Items\"\n}"
+										}
+									]
+								},
+								{
+									"name": "Category Delete",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"name\": \"Tech\", \n    \"group\": \"6ab5fa42-234d-4247-935e-4c2e8e27c701\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/inventory/categories/b48dd905-c2d9-4127-aa55-ef92df242662/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"inventory",
+												"categories",
+												"b48dd905-c2d9-4127-aa55-ef92df242662",
 												""
 											]
 										}

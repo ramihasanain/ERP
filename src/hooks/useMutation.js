@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { patch, post, remove } from '@/api';
+import { patch, post, put, remove } from '@/api';
 
 const invalidateQueryKeys = async (queryClient, invalidateKeys = []) => {
   await Promise.all(
@@ -35,11 +35,29 @@ export const useCustomPatch = (url, invalidateKeys = []) => {
   });
 };
 
+export const useCustomPut = (url, invalidateKeys = []) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data) => {
+      const resolvedUrl = typeof url === 'function' ? url(data) : url;
+      return put(resolvedUrl, data);
+    },
+    onSuccess: async (...args) => {
+      await invalidateQueryKeys(queryClient, invalidateKeys);
+      return args;
+    },
+  });
+};
+
 export const useCustomRemove = (url, invalidateKeys = []) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => remove(url),
+    mutationFn: (identifier) => {
+      const resolvedUrl = typeof url === 'function' ? url(identifier) : url;
+      return remove(resolvedUrl);
+    },
     onSuccess: async (...args) => {
       await invalidateQueryKeys(queryClient, invalidateKeys);
       return args;

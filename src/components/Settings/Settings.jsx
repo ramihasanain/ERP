@@ -1,14 +1,97 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
+import Spinner from '@/core/Spinner';
+import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPatch } from '@/hooks/useMutation';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { Save, Globe, Lock, Bell, Shield } from 'lucide-react';
 import TaxSettings from '@/components/Settings/TaxSettings';
 
 const Settings = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('general');
+    const updateCompanySettings = useCustomPatch('/api/tenants/clients/settings/', ['company-settings']);
+
+    const { control, handleSubmit, reset } = useForm({
+        defaultValues: {
+            company_name: '',
+            industry: '',
+            tax_id: '',
+            default_currency: '',
+            date_format: 'DD/MM/YYYY',
+            timezone: 'Africa/Egypt',
+        },
+    });
+
+    const listFromResponse = (response) => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.results)) return response.results;
+        if (Array.isArray(response?.data)) return response.data;
+        if (Array.isArray(response?.items)) return response.items;
+        return [];
+    };
+
+    const settingsQuery = useCustomQuery('/api/tenants/clients/settings/', ['company-settings']);
+    const industriesQuery = useCustomQuery('/api/tenants/industries/', ['settings-industries']);
+    const currenciesQuery = useCustomQuery('/api/shared/currencies/', ['settings-currencies']);
+
+    const industries = useMemo(() => {
+        return listFromResponse(industriesQuery.data)
+            .map((item) => ({
+                id: item?.id || item?.uuid || item?.value || '',
+                name: item?.name || item?.title || item?.label || '',
+            }))
+            .filter((item) => item.id && item.name);
+    }, [industriesQuery.data]);
+
+    const currencies = useMemo(() => {
+        return listFromResponse(currenciesQuery.data)
+            .map((item) => ({
+                id: item?.id || item?.uuid || item?.value || '',
+                name: item?.name || item?.code || item?.title || item?.label || '',
+            }))
+            .filter((item) => item.id && item.name);
+    }, [currenciesQuery.data]);
+
+    useEffect(() => {
+        if (!settingsQuery.data) return;
+
+        const data = settingsQuery.data?.data && typeof settingsQuery.data.data === 'object'
+            ? settingsQuery.data.data
+            : settingsQuery.data;
+
+        reset({
+            company_name: data?.company_name || '',
+            industry: data?.industry || '',
+            tax_id: data?.tax_id || '',
+            default_currency: data?.default_currency || '',
+            date_format: data?.date_format || 'DD/MM/YYYY',
+            timezone: data?.timezone || 'Africa/Egypt',
+        });
+    }, [settingsQuery.data, reset]);
+
+    const onSubmitGeneral = async (values) => {
+        const payload = {
+            company_name: values.company_name?.trim() || '',
+            industry: values.industry || null,
+            tax_id: values.tax_id?.trim() || '',
+            default_currency: values.default_currency || null,
+            date_format: values.date_format || 'DD/MM/YYYY',
+            timezone: values.timezone || 'Africa/Egypt',
+        };
+
+        try {
+            await updateCompanySettings.mutateAsync(payload);
+            toast.success('Company settings updated successfully.');
+        } catch (error) {
+            const message = error?.response?.data?.detail || 'Failed to update company settings.';
+            toast.error(message);
+        }
+    };
 
     const tabs = [
         { id: 'general', label: 'General', icon: <Globe size={18} /> },
@@ -60,39 +143,138 @@ const Settings = () => {
                         <Card className="padding-lg" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Company Profile</h3>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                <Input label="Company Name" defaultValue="Acme Corp" />
-                                <Input label="Industry" defaultValue="Technology" />
-                                <Input label="Tax ID" defaultValue="TRN-123456789" />
-                                <Input label="Default Currency" defaultValue="USD" disabled />
-                            </div>
+                            {(settingsQuery.isLoading || industriesQuery.isLoading || currenciesQuery.isLoading) && <Spinner />}
 
-                            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem', marginTop: '1rem' }}>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Localization</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Date Format</label>
-                                        <select style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-                                            <option>DD/MM/YYYY</option>
-                                            <option>MM/DD/YYYY</option>
-                                            <option>YYYY-MM-DD</option>
-                                        </select>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Timezone</label>
-                                        <select style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-                                            <option>(GMT+03:00) Amman</option>
-                                            <option>(GMT+03:00) Riyadh</option>
-                                            <option>(GMT+01:00) Berlin</option>
-                                            <option>(GMT-05:00) Eastern Time</option>
-                                        </select>
-                                    </div>
+                            {(settingsQuery.isError || industriesQuery.isError || currenciesQuery.isError) && (
+                                <div style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
+                                    Could not load company settings data.
                                 </div>
-                            </div>
+                            )}
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                                <Button icon={<Save size={18} />}>Save Changes</Button>
-                            </div>
+                            {!settingsQuery.isLoading && !industriesQuery.isLoading && !currenciesQuery.isLoading && (
+                                <form onSubmit={handleSubmit(onSubmitGeneral)} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                        <Controller
+                                            name="company_name"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Input
+                                                    label="Company Name"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                />
+                                            )}
+                                        />
+
+                                        <Controller
+                                            name="industry"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Industry</label>
+                                                    <select
+                                                        value={field.value || ''}
+                                                        onChange={field.onChange}
+                                                        style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
+                                                    >
+                                                        <option value="">Select industry</option>
+                                                        {industries.map((industry) => (
+                                                            <option key={industry.id} value={industry.id}>
+                                                                {industry.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+                                        />
+
+                                        <Controller
+                                            name="tax_id"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Input
+                                                    label="Tax ID"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                />
+                                            )}
+                                        />
+
+                                        <Controller
+                                            name="default_currency"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Default Currency</label>
+                                                    <select
+                                                        value={field.value || ''}
+                                                        onChange={field.onChange}
+                                                        disabled
+                                                        style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
+                                                    >
+                                                        <option value="">Select currency</option>
+                                                        {currencies.map((currency) => (
+                                                            <option key={currency.id} value={currency.id}>
+                                                                {currency.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem', marginTop: '1rem' }}>
+                                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Localization</h3>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                            <Controller
+                                                name="date_format"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Date Format</label>
+                                                        <select
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
+                                                        >
+                                                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+                                            />
+                                            <Controller
+                                                name="timezone"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Timezone</label>
+                                                        <select
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
+                                                        >
+                                                            <option value="Africa/Amman">Africa/Amman</option>
+                                                            <option value="Asia/Riyadh">Asia/Riyadh</option>
+                                                            <option value="Europe/Berlin">Europe/Berlin</option>
+                                                            <option value="America/New_York">America/New_York</option>
+                                                            <option value="Africa/Egypt">Africa/Egypt</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                                        <Button icon={<Save size={18} />} type="submit" disabled={updateCompanySettings.isPending}>
+                                            {updateCompanySettings.isPending ? 'Saving...' : 'Save Changes'}
+                                        </Button>
+                                    </div>
+                                </form>
+                            )}
                         </Card>
                     )}
 

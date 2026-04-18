@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Download, PlayCircle, Settings, Layout, Users, TrendingUp, Percent, Shield, List, BarChart2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePayroll } from '@/context/PayrollContext';
 import FinalSettlementsList from '@/components/hr/payroll/FinalSettlementsList';
 
 const Payroll = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { payrollPeriods } = usePayroll();
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState(() => (location.state?.activeTab === 'settlements' ? 'settlements' : 'overview'));
+
+    useEffect(() => {
+        if (location.state?.activeTab === 'settlements') {
+            setActiveTab('settlements');
+        }
+    }, [location.state]);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
