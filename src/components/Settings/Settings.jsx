@@ -8,7 +8,7 @@ import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPatch } from '@/hooks/useMutation';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Save, Globe, Lock, Bell, Shield } from 'lucide-react';
+import { Save, Globe, Lock, Bell, Shield, Percent } from 'lucide-react';
 import TaxSettings from '@/components/Settings/TaxSettings';
 
 const Settings = () => {
@@ -96,7 +96,7 @@ const Settings = () => {
     const tabs = [
         { id: 'general', label: 'General', icon: <Globe size={18} /> },
         { id: 'security', label: 'Security', icon: <Lock size={18} /> },
-        { id: 'tax', label: 'Tax Management', icon: <Globe size={18} /> }, // New
+        { id: 'tax', label: 'Tax Management', icon: <Percent size={18} /> },
         { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
         { id: 'permissions', label: 'Permissions & Roles', icon: <Shield size={18} /> },
     ];
@@ -108,37 +108,60 @@ const Settings = () => {
                 <p style={{ color: 'var(--color-text-secondary)' }}>Manage your workspace preferences.</p>
             </div>
 
-            <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-                {/* Settings Navigation */}
-                <Card className="padding-md" style={{ width: '250px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.75rem',
-                                padding: '0.75rem 1rem',
-                                border: 'none',
-                                background: activeTab === tab.id
-                                    ? 'color-mix(in srgb, var(--color-primary-600) 20%, var(--color-bg-card))'
-                                    : 'transparent',
-                                color: activeTab === tab.id ? 'var(--color-primary-500)' : 'var(--color-text-secondary)',
-                                borderRadius: 'var(--radius-md)',
-                                fontWeight: activeTab === tab.id ? 600 : 400,
-                                cursor: 'pointer',
-                                textAlign: 'left'
-                            }}
-                        >
-                            {tab.icon}
-                            {tab.label}
-                        </button>
-                    ))}
-                </Card>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                {/* Underline tabs — left-aligned, full-width rule below */}
+                <div style={{ width: '100%', overflowX: 'auto' }}>
+                    <div
+                        role="tablist"
+                        aria-label="Settings sections"
+                        style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'flex-end',
+                            gap: '0.25rem',
+                            borderBottom: '1px solid var(--color-border)',
+                            minWidth: 'min-content',
+                        }}
+                    >
+                        {tabs.map((tab) => {
+                            const selected = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={selected}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.75rem 1rem 0.625rem',
+                                        marginBottom: '-1px',
+                                        border: 'none',
+                                        borderBottom: selected
+                                            ? '3px solid var(--color-primary-500)'
+                                            : '3px solid transparent',
+                                        background: 'transparent',
+                                        color: selected ? 'var(--color-primary-500)' : 'var(--color-text-secondary)',
+                                        fontWeight: selected ? 600 : 500,
+                                        fontSize: '0.9375rem',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    {tab.icon}
+                                    <span>{tab.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
 
                 {/* Content */}
-                <div style={{ flex: 1 }}>
+                <div style={{ width: '100%', minWidth: 0 }}>
                     {activeTab === 'general' && (
                         <Card className="padding-lg" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Company Profile</h3>
