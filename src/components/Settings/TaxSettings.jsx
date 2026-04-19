@@ -13,33 +13,50 @@ import { Plus, Edit3, Trash2, Eye } from 'lucide-react';
 
 const TAX_TYPE_OPTIONS = [
     { value: 'standard', label: 'Standard' },
-    { value: 'zero_rated', label: 'Zero Rated' },
-    { value: 'exempt', label: 'Exempt' },
-    { value: 'reverse_charge', label: 'Reverse Charge' },
+    { value: 'reduced', label: 'reduced' },
+    { value: 'zero', label: 'zero' },
+    { value: 'exempt', label: 'Reverse exempt' },
 ];
 
 const normalizeArrayResponse = (response) => {
     if (Array.isArray(response)) return response;
     if (Array.isArray(response?.results)) return response.results;
     if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.data?.tax_rules)) return response.data.tax_rules;
+    if (Array.isArray(response?.tax_rules)) return response.tax_rules;
     if (Array.isArray(response?.items)) return response.items;
     return [];
 };
 
 const getEntityId = (entity) => entity?.id || entity?.uuid || '';
 
-const normalizeTaxRule = (item) => ({
-    id: getEntityId(item),
-    name: item?.name || '',
-    rate_percent: item?.rate_percent ?? '',
-    tax_type: item?.tax_type || 'standard',
-    sales_gl_account: item?.sales_gl_account || item?.sales_gl_account_id || '',
-    purchase_gl_account: item?.purchase_gl_account || item?.purchase_gl_account_id || '',
-    is_default: Boolean(item?.is_default),
-    raw: item,
-});
+const unwrapTaxRulePayload = (payload) => {
+    if (!payload || typeof payload !== 'object') return payload;
+    const nested = payload.data;
+    if (!nested || typeof nested !== 'object' || Array.isArray(nested)) return payload;
+    if (Array.isArray(nested.tax_rules)) return payload;
+    if (nested.id || nested.uuid) return nested;
+    return payload;
+};
 
-const normalizeTaxRules = (response) => normalizeArrayResponse(response).map(normalizeTaxRule);
+const normalizeTaxRule = (item) => {
+    const source = unwrapTaxRulePayload(item);
+    return {
+        id: getEntityId(source),
+        name: source?.name || '',
+        rate_percent: source?.rate_percent ?? '',
+        tax_type: source?.tax_type || 'standard',
+        sales_gl_account: source?.sales_gl_account || source?.sales_gl_account_id || '',
+        purchase_gl_account: source?.purchase_gl_account || source?.purchase_gl_account_id || '',
+        is_default: Boolean(source?.is_default),
+        raw: source,
+    };
+};
+
+const normalizeTaxRulesList = (response) => ({
+    taxRules: normalizeArrayResponse(response).map((row) => normalizeTaxRule(row)),
+    country: response?.data?.country || '',
+});
 
 const normalizeAccount = (item) => ({
     id: getEntityId(item),
@@ -57,7 +74,7 @@ const TaxSettings = () => {
     const [selectedTaxRuleId, setSelectedTaxRuleId] = useState(null);
 
     const taxRulesQuery = useCustomQuery('/api/sales/tax-rules/', ['tax-rules'], {
-        select: normalizeTaxRules,
+        select: normalizeTaxRulesList,
     });
 
     const taxRuleDetailsQuery = useCustomQuery(
@@ -75,7 +92,7 @@ const TaxSettings = () => {
 
     const createTaxRule = useCustomPost('/api/sales/tax-rules/create/', ['tax-rules']);
     const updateTaxRule = useCustomPut((data) => `/api/sales/tax-rules/${data.id}/`, ['tax-rules', 'tax-rule-detail']);
-    const deleteTaxRule = useCustomRemove((id) => `/api/sales/tax-rules/${id}/`, ['tax-rules', 'tax-rule-detail']);
+    const deleteTaxRule = useCustomRemove((id) => `/api/sales/tax-rules/${id}/delete/`, ['tax-rules', 'tax-rule-detail']);
 
     const {
         control,
@@ -94,7 +111,8 @@ const TaxSettings = () => {
     });
 
     const accounts = useMemo(() => accountsQuery.data || [], [accountsQuery.data]);
-    const taxRules = useMemo(() => taxRulesQuery.data || [], [taxRulesQuery.data]);
+    const taxRules = useMemo(() => taxRulesQuery.data?.taxRules || [], [taxRulesQuery.data]);
+    const taxRulesCountry = taxRulesQuery.data?.country || '';
     const selectedRuleData = taxRuleDetailsQuery.data || selectedTaxRule;
 
     const actionInProgress = createTaxRule.isPending || updateTaxRule.isPending;
@@ -222,7 +240,10 @@ const TaxSettings = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Tax Management</h3>
-                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Create and maintain tax rules for sales operations.</p>
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+                        Create and maintain tax rules for sales operations
+                        {taxRulesCountry ? ` (${taxRulesCountry})` : ''}.
+                    </p>
                 </div>
                 <Button icon={<Plus size={16} />} onClick={openCreateModal}>Add Tax Rule</Button>
             </div>

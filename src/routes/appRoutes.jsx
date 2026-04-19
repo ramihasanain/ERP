@@ -34,9 +34,11 @@ import Payroll from '@/components/hr/Payroll';
 import SalaryComponents from '@/components/hr/payroll/SalaryComponents';
 import SalaryStructures from '@/components/hr/payroll/SalaryStructures';
 import RunPayroll from '@/components/hr/payroll/RunPayroll';
+import RunPayrollWorkflow from '@/components/hr/payroll/RunPayrollWorkflow';
 import TaxSlabs from '@/components/hr/payroll/TaxSlabs';
 import SocialSecuritySettings from '@/components/hr/payroll/SocialSecuritySettings';
 import PeriodDetails from '@/components/hr/payroll/PeriodDetails';
+import FinalizePayrollPage from '@/components/hr/payroll/FinalizePayrollPage';
 import PayslipPDF from '@/components/hr/payroll/PayslipPDF';
 import Attendance from '@/components/hr/Attendance';
 import LeaveRequests from '@/components/hr/LeaveRequests';
@@ -45,7 +47,8 @@ import ProjectsManagement from '@/components/hr/ProjectsManagement';
 import ContractTemplates from '@/components/hr/ContractTemplates';
 import InventoryDashboard from '@/components/Inventory/InventoryDashboard';
 import ItemsList from '@/components/Inventory/ItemsList';
-import AddItem from '@/components/Inventory/AddItem';
+import AddInventoryItem from '@/components/Inventory/AddInventoryItem';
+import EditInventoryItem from '@/components/Inventory/EditInventoryItem';
 import PurchaseOrderList from '@/components/Procurement/PurchaseOrderList';
 import PurchaseOrderForm from '@/components/Procurement/PurchaseOrderForm';
 import VendorInvoiceList from '@/components/Procurement/VendorInvoiceList';
@@ -180,8 +183,10 @@ export default function AppRoutes() {
           <Route path="payroll/components" element={<SalaryComponents />} />
           <Route path="payroll/structures" element={<SalaryStructures />} />
           <Route path="payroll/run" element={<RunPayroll />} />
+          <Route path="payroll/run/workflow" element={<RunPayrollWorkflow />} />
           <Route path="payroll/tax-slabs" element={<TaxSlabs />} />
           <Route path="payroll/social-security" element={<SocialSecuritySettings />} />
+          <Route path="payroll/period/:id/finalize" element={<FinalizePayrollPage />} />
           <Route path="payroll/period/:id" element={<PeriodDetails />} />
           <Route path="payroll/payslip/:id" element={<PayslipPDF />} />
           <Route path="attendance" element={<Attendance />} />
@@ -195,7 +200,8 @@ export default function AppRoutes() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<InventoryDashboard />} />
           <Route path="items" element={<ItemsList />} />
-          <Route path="items/new" element={<AddItem />} />
+          <Route path="items/new" element={<AddInventoryItem />} />
+          <Route path="items/:id/edit" element={<EditInventoryItem />} />
           <Route path="purchase-orders" element={<PurchaseOrderList />} />
           <Route path="purchase-orders/new" element={<PurchaseOrderForm />} />
           <Route path="purchase-orders/:id" element={<PurchaseOrderForm />} />

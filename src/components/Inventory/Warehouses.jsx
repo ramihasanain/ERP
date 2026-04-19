@@ -13,6 +13,7 @@ import { Plus, Edit, Trash2, MapPin, User, Warehouse, Eye } from 'lucide-react';
 const normalizeArrayResponse = (response) => {
     if (Array.isArray(response)) return response;
     if (Array.isArray(response?.results)) return response.results;
+    if (Array.isArray(response?.data)) return response.data;
     return [];
 };
 
@@ -23,16 +24,32 @@ const normalizeWarehouse = (item) => ({
     name: item?.name || '',
     location: item?.location || '',
     manager: item?.manager || item?.manager_id || item?.managerId || '',
+    managerName: (item?.manager_name && String(item.manager_name).trim()) || '',
     raw: item,
 });
 
 const normalizeWarehouses = (response) => normalizeArrayResponse(response).map(normalizeWarehouse);
 
+const getEmployeeRoleKey = (item) => {
+    const raw = item?.role ?? item?.user_data?.role;
+    if (raw == null || raw === '') return '';
+    if (typeof raw === 'string') return raw.trim().toLowerCase();
+    if (typeof raw === 'object') {
+        const nested = raw.name ?? raw.slug ?? raw.code ?? raw.label;
+        if (typeof nested === 'string') return nested.trim().toLowerCase();
+    }
+    return String(raw).toLowerCase();
+};
+
 const normalizeEmployee = (item) => {
     const userData = item?.user_data || {};
+    const firstName = item?.first_name ?? userData?.first_name ?? '';
+    const lastName = item?.last_name ?? userData?.last_name ?? '';
+    const email = item?.email ?? userData?.email ?? '';
     return {
         id: getEntityId(item),
-        fullName: `${userData?.first_name || ''} ${userData?.last_name || ''}`.trim() || userData?.email || 'Unknown',
+        fullName: `${firstName} ${lastName}`.trim() || email || 'Unknown',
+        roleKey: getEmployeeRoleKey(item),
     };
 };
 
@@ -89,6 +106,28 @@ const Warehouses = () => {
     const warehouses = useMemo(() => warehousesQuery.data ?? [], [warehousesQuery.data]);
     const employees = useMemo(() => employeesQuery.data ?? [], [employeesQuery.data]);
 
+    const managerEmployees = useMemo(
+        () => employees.filter((employee) => employee.roleKey === 'manager'),
+        [employees]
+    );
+
+    /** Dropdown: managers only; when editing, keep current assignee visible even if not role manager */
+    const managerSelectOptions = useMemo(() => {
+        const byId = new Map(managerEmployees.map((e) => [e.id, e]));
+        const currentId = editingWarehouse?.manager;
+        if (!currentId || byId.has(currentId)) return managerEmployees;
+        const fromAll = employees.find((e) => e.id === currentId);
+        if (fromAll) return [...managerEmployees, fromAll];
+        return [
+            ...managerEmployees,
+            {
+                id: currentId,
+                fullName: editingWarehouse.managerName?.trim() || 'Current manager',
+                roleKey: '',
+            },
+        ];
+    }, [managerEmployees, employees, editingWarehouse]);
+
     const managerNameMap = useMemo(
         () => new Map(employees.map((employee) => [employee.id, employee.fullName])),
         [employees]
@@ -126,10 +165,12 @@ const Warehouses = () => {
     };
 
     const onSubmit = async (values) => {
+        const managerId =
+            typeof values.manager === 'string' && values.manager.trim() !== '' ? values.manager.trim() : null;
         const payload = {
             name: values.name.trim(),
             location: values.location.trim(),
-            manager: values.manager || null,
+            manager: managerId,
         };
 
         try {
@@ -249,7 +290,7 @@ const Warehouses = () => {
                                     <User size={16} color="var(--color-text-muted)" />
                                     <span style={{ color: 'var(--color-text-secondary)' }}>Manager:</span>
                                     <span style={{ fontWeight: 500 }}>
-                                        {managerNameMap.get(wh.manager) || 'Unassigned'}
+                                        {managerNameMap.get(wh.manager) || wh.managerName || 'Unassigned'}
                                     </span>
                                 </div>
                             </Card>
@@ -296,7 +337,7 @@ const Warehouses = () => {
                             render={({ field }) => (
                                 <select {...field} style={inputStyle}>
                                     <option value="">Select Manager</option>
-                                    {employees.map((employee) => (
+                                    {managerSelectOptions.map((employee) => (
                                         <option key={employee.id} value={employee.id}>
                                             {employee.fullName}
                                         </option>
@@ -345,7 +386,11 @@ const Warehouses = () => {
                         </div>
                         <div style={detailRowStyle}>
                             <span style={detailLabelStyle}>Manager</span>
-                            <span>{managerNameMap.get(selectedWarehouse.manager) || 'Unassigned'}</span>
+                            <span>
+                                {managerNameMap.get(selectedWarehouse.manager) ||
+                                    selectedWarehouse.managerName ||
+                                    'Unassigned'}
+                            </span>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -10,7 +10,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { exportToCSV } from '@/utils/exportUtils';
 import useCustomQuery from '@/hooks/useQuery';
-import { toast } from 'sonner';
+import ResourceLoadError from '@/core/ResourceLoadError';
 
 const PeriodStatusCard = () => {
     const { accountingPeriods, togglePeriodStatus } = useAccounting();
@@ -73,12 +73,6 @@ const JournalEntries = () => {
         return [];
     }, [journalEntriesQuery.data]);
 
-    useEffect(() => {
-        if (journalEntriesQuery.error) {
-            toast.error(language === 'ar' ? 'فشل تحميل قيود اليومية' : 'Failed to load journal entries.');
-        }
-    }, [journalEntriesQuery.error, language]);
-
     const handleDetailedExport = () => {
         const fullLedger = [];
 
@@ -131,22 +125,32 @@ const JournalEntries = () => {
                 </div>
             </div>
 
-            <PeriodStatusCard />
+            {journalEntriesQuery.isError ? (
+                <ResourceLoadError
+                    error={journalEntriesQuery.error}
+                    title={language === 'ar' ? 'تعذر تحميل قيود اليومية' : 'Could not load journal entries'}
+                    onGoBack={() => navigate(-1)}
+                />
+            ) : (
+                <>
+                    <PeriodStatusCard />
 
-            <Card className="padding-none" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{language === 'ar' ? 'كل القيود' : 'All Entries'}</h2>
-                    <div style={{ width: '240px' }}><Input placeholder={language === 'ar' ? 'بحث برقم القيد...' : "Search journal no..."} startIcon={<Search size={16} />} style={{ fontSize: '0.875rem' }} /></div>
-                </div>
+                    <Card className="padding-none" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{language === 'ar' ? 'كل القيود' : 'All Entries'}</h2>
+                            <div style={{ width: '240px' }}><Input placeholder={language === 'ar' ? 'بحث برقم القيد...' : "Search journal no..."} startIcon={<Search size={16} />} style={{ fontSize: '0.875rem' }} /></div>
+                        </div>
 
-                {journalEntriesQuery.isLoading ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                        Loading journal entries...
-                    </div>
-                ) : (
-                    <JournalEntryList entries={entries} onViewEntry={openDetailModal} />
-                )}
-            </Card>
+                        {journalEntriesQuery.isLoading ? (
+                            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                                Loading journal entries...
+                            </div>
+                        ) : (
+                            <JournalEntryList entries={entries} onViewEntry={openDetailModal} />
+                        )}
+                    </Card>
+                </>
+            )}
 
             <JournalEntryDetailModal
                 isOpen={isDetailOpen}

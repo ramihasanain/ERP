@@ -465,7 +465,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\":\"zeyadslama23@gmail.com\",\n  \"password\":\"Test@123\"\n}",
+							"raw": "{\n  \"email\":\"zeyadslama@gmail.com\",\n  \"password\":\"Test@123\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -473,9 +473,11 @@
 							}
 						},
 						"url": {
-							"raw": "{{url}}/api/login/",
+							"raw": "https://erp-api.site/api/login/",
+							"protocol": "https",
 							"host": [
-								"{{url}}"
+								"erp-api",
+								"site"
 							],
 							"path": [
 								"api",
@@ -570,7 +572,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"full_name\": \"Zeyad Slama\",\n  \"email\": \"zeyadslama23@gmail.com\",\n  \"password\": \"Test@123\",\n  \"company_name\": \"zeyadslama23\",\n  \"industry\": \"d63cb5db-3c80-47b7-93b0-4e73356b6efb\",\n  \"country\": \"6cb76803-0233-4ab0-b903-f743244a5ad9\",\n  \"base_currency\": \"cd61bd7d-a343-49a6-a09a-900bc6207e6e\",\n  \"default_language\": \"dcb5edbd-abb0-476f-a15d-a0d6e0cb826a\",\n  \"selected_modules\": [\n    \"8ec4b0a6-70ee-4b07-8e32-94b78773d703\",\n    \"9d65d7c5-d127-44f3-902c-92d4691a5e1a\",\n    \"531e9aff-d850-49c8-bc28-8957bbf7cbdc\"\n  ]\n}",
+							"raw": "{\n  \"full_name\": \"Zeyad Slama\",\n  \"email\": \"zeyaduser433@gmail.com\",\n  \"password\": \"Test@123\",\n  \"company_name\": \"zeyadcorp3\",\n  \"industry\": \"d63cb5db-3c80-47b7-93b0-4e73356b6efb\",\n  \"country\": \"6cb76803-0233-4ab0-b903-f743244a5ad9\",\n  \"base_currency\": \"cd61bd7d-a343-49a6-a09a-900bc6207e6e\",\n  \"default_language\": \"dcb5edbd-abb0-476f-a15d-a0d6e0cb826a\",\n  \"selected_modules\": [\n    \"8ec4b0a6-70ee-4b07-8e32-94b78773d703\",\n    \"9d65d7c5-d127-44f3-902c-92d4691a5e1a\",\n    \"531e9aff-d850-49c8-bc28-8957bbf7cbdc\"\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -664,7 +666,7 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{url}}/accounting/accounts/tree?is_system_account=false",
+											"raw": "{{url}}/accounting/accounts/tree",
 											"host": [
 												"{{url}}"
 											],
@@ -686,7 +688,8 @@
 												},
 												{
 													"key": "is_system_account",
-													"value": "false"
+													"value": "false",
+													"disabled": true
 												}
 											]
 										}
@@ -1471,7 +1474,7 @@
 													}
 												},
 												"url": {
-													"raw": "{{url}}/api/hr/employees/2eb715a0-1475-4bfc-9ab4-672412fa7c2a/",
+													"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/",
 													"host": [
 														"{{url}}"
 													],
@@ -1479,7 +1482,7 @@
 														"api",
 														"hr",
 														"employees",
-														"2eb715a0-1475-4bfc-9ab4-672412fa7c2a",
+														"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
 														""
 													]
 												}
@@ -1891,7 +1894,7 @@
 														"header": [],
 														"body": {
 															"mode": "raw",
-															"raw": "{\n  \"compensation_data\": {\n    // \"structure\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n    \"basic_salary\": \"3000.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"50.00\",\n    \"housing\": \"50.00\",\n    \"other_allowances\": \"300.00\",\n    \"social_security\": \"900.00\",\n    \"health_insurance\": \"350.00\",\n    \"other_deductions\": \"250.00\"\n  },\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-01\",\n    \"end_date\": \"2026-04-20\",\n    \"annual_leave_days\": 12\n    // \"template\": \"c65b5860-8ffd-4faa-a4c9-9c679c6af9d8\"\n  }\n}",
+															"raw": "{\n  \"compensation_data\": {\n    // \"structure\": \"7505dd0c-9706-4be1-9e5b-cba5ead0cadc\",\n    \"basic_salary\": \"2000.00\",\n    \"currency\": \"JOD\",\n    \"transportation\": \"50.00\",\n    \"housing\": \"50.00\",\n    \"other_allowances\": \"300.00\",\n    \"social_security\": \"900.00\",\n    \"health_insurance\": \"350.00\",\n    \"other_deductions\": \"250.00\"\n  },\n  \"contract_data\": {\n    \"contract_type\": \"full_time\",\n    \"start_date\": \"2026-04-01\",\n    \"end_date\": \"2026-05-20\",\n    \"annual_leave_days\": 12\n    // \"template\": \"c65b5860-8ffd-4faa-a4c9-9c679c6af9d8\"\n  }\n}",
 															"options": {
 																"raw": {
 																	"language": "json"
@@ -2439,7 +2442,7 @@
 															},
 															"status": "OK",
 															"code": 200,
-															"_postman_previewlanguage": "",
+															"_postman_previewlanguage": null,
 															"header": [
 																{
 																	"key": "Date",
@@ -2484,6 +2487,581 @@
 															],
 															"cookie": [],
 															"body": "{\n    \"count\": 1,\n    \"results\": [\n        {\n            \"id\": \"c935ea47-773e-419b-a6f3-29e6b2037d7c\",\n            \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n            \"employee_name\": \"John Doe\",\n            \"department_name\": \"Software\",\n            \"contract_type\": \"full_time\",\n            \"contract_type_display\": \"Full-Time\",\n            \"end_date\": \"2026-04-20\",\n            \"days_until_expiry\": 2\n        }\n    ]\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "Terminations",
+											"item": [
+												{
+													"name": "Calculate termination",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "POST",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"termination_type\": \"resignation\",\n  \"last_working_day\": \"2026-05-10\",\n  \"notice_period_days\": 30,\n  \"reason\": \"Making so many problems\"\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/termination/calculate/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"termination",
+																"calculate",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "New Request",
+															"originalRequest": {
+																"method": "POST",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"termination_type\": \"resignation\",\n  \"last_working_day\": \"2026-05-10\",\n  \"notice_period_days\": 30,\n  \"reason\": \"Making so many problems\"\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/termination/calculate/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																		"termination",
+																		"calculate",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Sat, 18 Apr 2026 09:25:15 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "OPTIONS, POST"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "1248"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"id\": \"c40a7b6b-dd52-450b-bed1-9c7101a37cb1\",\n    \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n    \"termination_type\": \"resignation\",\n    \"termination_type_display\": \"Resignation (Employee Choice)\",\n    \"last_working_day\": \"2026-05-10\",\n    \"notice_period_days\": 30,\n    \"reason\": \"Making so many problems\",\n    \"status\": \"pending_settlement\",\n    \"status_display\": \"Pending settlement\",\n    \"payment_date\": \"2026-05-11\",\n    \"include_pay_in_lieu_of_notice\": false,\n    \"currency\": \"JOD\",\n    \"gratuity_amount\": \"0.00\",\n    \"gratuity_tenure_years\": \"0.0712\",\n    \"gratuity_rule_description\": \"Resignation under 5 years (not vested)\",\n    \"leave_encashment_amount\": \"360.00\",\n    \"leave_encashment_days\": \"12.00\",\n    \"leave_encashment_daily_rate\": \"30.0000\",\n    \"current_month_salary_amount\": \"900.00\",\n    \"notice_period_pay_amount\": \"0.00\",\n    \"manual_adjustments\": [],\n    \"total_net_payable\": \"1260.00\",\n    \"journal_preview\": [\n        {\n            \"account_code\": \"6430\",\n            \"label\": \"End of Service Gratuity\",\n            \"debit\": \"0.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6110\",\n            \"label\": \"Leave Encashment\",\n            \"debit\": \"360.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6110\",\n            \"label\": \"Final Month Salary\",\n            \"debit\": \"900.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"2130\",\n            \"label\": \"Salaries Payable\",\n            \"debit\": \"0\",\n            \"credit\": \"1260.00\"\n        }\n    ],\n    \"finalized_at\": null,\n    \"created_at\": \"2026-04-18T09:25:14.845467Z\",\n    \"updated_at\": \"2026-04-18T09:25:15.408797Z\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Get termination details",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/termination/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"termination",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Calculate termination Copy",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/termination/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																		"termination",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Sat, 18 Apr 2026 10:09:50 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "PATCH, OPTIONS, GET"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "1608"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"id\": \"c40a7b6b-dd52-450b-bed1-9c7101a37cb1\",\n    \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n    \"termination_type\": \"resignation\",\n    \"termination_type_display\": \"Resignation (Employee Choice)\",\n    \"last_working_day\": \"2026-05-10\",\n    \"notice_period_days\": 30,\n    \"reason\": \"Making so many problems\",\n    \"status\": \"pending_settlement\",\n    \"status_display\": \"Pending settlement\",\n    \"payment_date\": \"2026-05-11\",\n    \"include_pay_in_lieu_of_notice\": true,\n    \"currency\": \"JOD\",\n    \"gratuity_amount\": \"0.00\",\n    \"gratuity_gross_before_vesting\": \"51.76\",\n    \"gratuity_vesting_multiplier\": \"0\",\n    \"gratuity_tenure_years\": \"0.0712\",\n    \"gratuity_rule_description\": \"Resignation under 5 years (not vested)\",\n    \"leave_encashment_amount\": \"360.00\",\n    \"leave_encashment_days\": \"12.00\",\n    \"leave_encashment_daily_rate\": \"30.0000\",\n    \"current_month_salary_amount\": \"900.00\",\n    \"notice_period_pay_amount\": \"900.00\",\n    \"manual_adjustments\": [\n        {\n            \"kind\": \"addition\",\n            \"amount\": \"1000.00\",\n            \"description\": \"test\"\n        },\n        {\n            \"kind\": \"deduction\",\n            \"amount\": \"500.00\",\n            \"description\": \"test1\"\n        }\n    ],\n    \"total_net_payable\": \"2660.00\",\n    \"journal_preview\": [\n        {\n            \"debit\": \"0.00\",\n            \"label\": \"End of Service Gratuity\",\n            \"credit\": \"0\",\n            \"account_code\": \"6430\"\n        },\n        {\n            \"debit\": \"360.00\",\n            \"label\": \"Leave Encashment\",\n            \"credit\": \"0\",\n            \"account_code\": \"6110\"\n        },\n        {\n            \"debit\": \"900.00\",\n            \"label\": \"Final Month Salary\",\n            \"credit\": \"0\",\n            \"account_code\": \"6110\"\n        },\n        {\n            \"debit\": \"900.00\",\n            \"label\": \"Notice Period Pay\",\n            \"credit\": \"0\",\n            \"account_code\": \"6110\"\n        },\n        {\n            \"debit\": \"500.00\",\n            \"label\": \"Manual adjustments\",\n            \"credit\": \"0\",\n            \"account_code\": \"6199\"\n        },\n        {\n            \"debit\": \"0\",\n            \"label\": \"Salaries Payable\",\n            \"credit\": \"2660.00\",\n            \"account_code\": \"2130\"\n        }\n    ],\n    \"finalized_at\": null,\n    \"created_at\": \"2026-04-18T09:25:14.845467Z\",\n    \"updated_at\": \"2026-04-18T10:08:40.639254Z\"\n}"
+														}
+													]
+												},
+												{
+													"name": "List terminations",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{url}}/api/hr/terminations/?status=finalized",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"terminations",
+																""
+															],
+															"query": [
+																{
+																	"key": "status",
+																	"value": "finalized"
+																}
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Get termination details Copy",
+															"originalRequest": {
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{url}}/api/hr/terminations/?status=finalized",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"terminations",
+																		""
+																	],
+																	"query": [
+																		{
+																			"key": "status",
+																			"value": "finalized"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Sat, 18 Apr 2026 10:53:12 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "GET, OPTIONS"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "234"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"next\": null,\n    \"previous\": 0,\n    \"count\": 1,\n    \"data\": [\n        {\n            \"id\": \"c40a7b6b-dd52-450b-bed1-9c7101a37cb1\",\n            \"employee_name\": \"John Doe\",\n            \"termination_type\": \"Resignation (Employee Choice)\",\n            \"date\": \"2026-05-10\",\n            \"net_payable\": \"2660.00\",\n            \"status\": \"Finalized\"\n        }\n    ]\n}"
+														}
+													]
+												},
+												{
+													"name": "Update Termination data",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "PATCH",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n//   \"payment_date\": \"2026-04-11\",\n  \"include_pay_in_lieu_of_notice\": true,\n  \"notice_period_days\": 30,\n//   \"gratuity_amount\": \"50\",\n//   \"leave_encashment_amount\": \"760\",\n//   \"notice_period_pay_amount\": \"5650.00\",\n  \"manual_adjustments\": [\n    {\n      \"description\": \"test\",\n      \"amount\": \"1000.00\",\n      \"kind\": \"addition\"\n    },\n    {\n      \"description\": \"test1\",\n      \"amount\": \"500.00\",\n      \"kind\": \"deduction\"\n    }\n  ]\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/termination/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"termination",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Calculate termination Copy 2",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n//   \"payment_date\": \"2026-04-11\",\n  \"include_pay_in_lieu_of_notice\": true,\n  \"notice_period_days\": 30,\n//   \"gratuity_amount\": \"50\",\n//   \"leave_encashment_amount\": \"760\",\n//   \"notice_period_pay_amount\": \"5650.00\",\n  \"manual_adjustments\": [\n    {\n      \"description\": \"test\",\n      \"amount\": \"1000.00\",\n      \"kind\": \"addition\"\n    },\n    {\n      \"description\": \"test1\",\n      \"amount\": \"500.00\",\n      \"kind\": \"deduction\"\n    }\n  ]\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/termination/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																		"termination",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Sat, 18 Apr 2026 10:08:40 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "PATCH, OPTIONS, GET"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "1608"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"id\": \"c40a7b6b-dd52-450b-bed1-9c7101a37cb1\",\n    \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n    \"termination_type\": \"resignation\",\n    \"termination_type_display\": \"Resignation (Employee Choice)\",\n    \"last_working_day\": \"2026-05-10\",\n    \"notice_period_days\": 30,\n    \"reason\": \"Making so many problems\",\n    \"status\": \"pending_settlement\",\n    \"status_display\": \"Pending settlement\",\n    \"payment_date\": \"2026-05-11\",\n    \"include_pay_in_lieu_of_notice\": true,\n    \"currency\": \"JOD\",\n    \"gratuity_amount\": \"0.00\",\n    \"gratuity_gross_before_vesting\": \"51.76\",\n    \"gratuity_vesting_multiplier\": \"0\",\n    \"gratuity_tenure_years\": \"0.0712\",\n    \"gratuity_rule_description\": \"Resignation under 5 years (not vested)\",\n    \"leave_encashment_amount\": \"360.00\",\n    \"leave_encashment_days\": \"12.00\",\n    \"leave_encashment_daily_rate\": \"30.0000\",\n    \"current_month_salary_amount\": \"900.00\",\n    \"notice_period_pay_amount\": \"900.00\",\n    \"manual_adjustments\": [\n        {\n            \"description\": \"test\",\n            \"amount\": \"1000.00\",\n            \"kind\": \"addition\"\n        },\n        {\n            \"description\": \"test1\",\n            \"amount\": \"500.00\",\n            \"kind\": \"deduction\"\n        }\n    ],\n    \"total_net_payable\": \"2660.00\",\n    \"journal_preview\": [\n        {\n            \"account_code\": \"6430\",\n            \"label\": \"End of Service Gratuity\",\n            \"debit\": \"0.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6110\",\n            \"label\": \"Leave Encashment\",\n            \"debit\": \"360.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6110\",\n            \"label\": \"Final Month Salary\",\n            \"debit\": \"900.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6110\",\n            \"label\": \"Notice Period Pay\",\n            \"debit\": \"900.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6199\",\n            \"label\": \"Manual adjustments\",\n            \"debit\": \"500.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"2130\",\n            \"label\": \"Salaries Payable\",\n            \"debit\": \"0\",\n            \"credit\": \"2660.00\"\n        }\n    ],\n    \"finalized_at\": null,\n    \"created_at\": \"2026-04-18T09:25:14.845467Z\",\n    \"updated_at\": \"2026-04-18T10:08:40.639254Z\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Finalize Termination",
+													"request": {
+														"auth": {
+															"type": "bearer",
+															"bearer": [
+																{
+																	"key": "token",
+																	"value": "{{token}}",
+																	"type": "string"
+																}
+															]
+														},
+														"method": "POST",
+														"header": [],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n//   \"payment_date\": \"2026-04-11\",\n  \"include_pay_in_lieu_of_notice\": true,\n  \"notice_period_days\": 30,\n//   \"gratuity_amount\": \"50\",\n//   \"leave_encashment_amount\": \"760\",\n//   \"notice_period_pay_amount\": \"5650.00\",\n  \"manual_adjustments\": [\n    {\n      \"description\": \"test\",\n      \"amount\": \"1000.00\",\n      \"kind\": \"addition\"\n    },\n    {\n      \"description\": \"test1\",\n      \"amount\": \"500.00\",\n      \"kind\": \"deduction\"\n    }\n  ]\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/termination/finalize/",
+															"host": [
+																"{{url}}"
+															],
+															"path": [
+																"api",
+																"hr",
+																"employees",
+																"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																"termination",
+																"finalize",
+																""
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "Calculate termination Copy 2",
+															"originalRequest": {
+																"method": "PATCH",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n//   \"payment_date\": \"2026-04-11\",\n  \"include_pay_in_lieu_of_notice\": true,\n  \"notice_period_days\": 30,\n//   \"gratuity_amount\": \"50\",\n//   \"leave_encashment_amount\": \"760\",\n//   \"notice_period_pay_amount\": \"5650.00\",\n  \"manual_adjustments\": [\n    {\n      \"description\": \"test\",\n      \"amount\": \"1000.00\",\n      \"kind\": \"addition\"\n    },\n    {\n      \"description\": \"test1\",\n      \"amount\": \"500.00\",\n      \"kind\": \"deduction\"\n    }\n  ]\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{url}}/api/hr/employees/a47ddfbf-2231-4b67-be6d-034f6a7563d7/termination/",
+																	"host": [
+																		"{{url}}"
+																	],
+																	"path": [
+																		"api",
+																		"hr",
+																		"employees",
+																		"a47ddfbf-2231-4b67-be6d-034f6a7563d7",
+																		"termination",
+																		""
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": null,
+															"header": [
+																{
+																	"key": "Date",
+																	"value": "Sat, 18 Apr 2026 10:08:40 GMT"
+																},
+																{
+																	"key": "Server",
+																	"value": "WSGIServer/0.2 CPython/3.12.3"
+																},
+																{
+																	"key": "Content-Type",
+																	"value": "application/json"
+																},
+																{
+																	"key": "Vary",
+																	"value": "Accept, origin"
+																},
+																{
+																	"key": "Allow",
+																	"value": "PATCH, OPTIONS, GET"
+																},
+																{
+																	"key": "X-Frame-Options",
+																	"value": "DENY"
+																},
+																{
+																	"key": "Content-Length",
+																	"value": "1608"
+																},
+																{
+																	"key": "X-Content-Type-Options",
+																	"value": "nosniff"
+																},
+																{
+																	"key": "Referrer-Policy",
+																	"value": "same-origin"
+																},
+																{
+																	"key": "Cross-Origin-Opener-Policy",
+																	"value": "same-origin"
+																}
+															],
+															"cookie": [],
+															"body": "{\n    \"id\": \"c40a7b6b-dd52-450b-bed1-9c7101a37cb1\",\n    \"employee\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n    \"termination_type\": \"resignation\",\n    \"termination_type_display\": \"Resignation (Employee Choice)\",\n    \"last_working_day\": \"2026-05-10\",\n    \"notice_period_days\": 30,\n    \"reason\": \"Making so many problems\",\n    \"status\": \"pending_settlement\",\n    \"status_display\": \"Pending settlement\",\n    \"payment_date\": \"2026-05-11\",\n    \"include_pay_in_lieu_of_notice\": true,\n    \"currency\": \"JOD\",\n    \"gratuity_amount\": \"0.00\",\n    \"gratuity_gross_before_vesting\": \"51.76\",\n    \"gratuity_vesting_multiplier\": \"0\",\n    \"gratuity_tenure_years\": \"0.0712\",\n    \"gratuity_rule_description\": \"Resignation under 5 years (not vested)\",\n    \"leave_encashment_amount\": \"360.00\",\n    \"leave_encashment_days\": \"12.00\",\n    \"leave_encashment_daily_rate\": \"30.0000\",\n    \"current_month_salary_amount\": \"900.00\",\n    \"notice_period_pay_amount\": \"900.00\",\n    \"manual_adjustments\": [\n        {\n            \"description\": \"test\",\n            \"amount\": \"1000.00\",\n            \"kind\": \"addition\"\n        },\n        {\n            \"description\": \"test1\",\n            \"amount\": \"500.00\",\n            \"kind\": \"deduction\"\n        }\n    ],\n    \"total_net_payable\": \"2660.00\",\n    \"journal_preview\": [\n        {\n            \"account_code\": \"6430\",\n            \"label\": \"End of Service Gratuity\",\n            \"debit\": \"0.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6110\",\n            \"label\": \"Leave Encashment\",\n            \"debit\": \"360.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6110\",\n            \"label\": \"Final Month Salary\",\n            \"debit\": \"900.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6110\",\n            \"label\": \"Notice Period Pay\",\n            \"debit\": \"900.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"6199\",\n            \"label\": \"Manual adjustments\",\n            \"debit\": \"500.00\",\n            \"credit\": \"0\"\n        },\n        {\n            \"account_code\": \"2130\",\n            \"label\": \"Salaries Payable\",\n            \"debit\": \"0\",\n            \"credit\": \"2660.00\"\n        }\n    ],\n    \"finalized_at\": null,\n    \"created_at\": \"2026-04-18T09:25:14.845467Z\",\n    \"updated_at\": \"2026-04-18T10:08:40.639254Z\"\n}"
 														}
 													]
 												}
@@ -3705,6 +4283,877 @@
 													]
 												}
 											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "Payroll",
+							"item": [
+								{
+									"name": "List drafts",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/payroll/periods/drafts/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"payroll",
+												"periods",
+												"drafts",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "List drafts",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{url}}/api/hr/payroll/periods/drafts/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"payroll",
+														"periods",
+														"drafts",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Sun, 19 Apr 2026 07:09:28 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "GET, OPTIONS"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "2"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "[]"
+										}
+									]
+								},
+								{
+									"name": "Dashboard",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/payroll/dashboard/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"payroll",
+												"dashboard",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "Dashboard",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{url}}/api/hr/payroll/dashboard/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"payroll",
+														"dashboard",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Sun, 19 Apr 2026 07:10:01 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "GET, OPTIONS"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "672"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"total_payroll_cost\": \"5250.00\",\n    \"active_employees\": 6,\n    \"next_pay_date\": null,\n    \"last_run_status\": {\n        \"label\": \"Posted\",\n        \"journal_reference\": \"PAYROLL - PER-2026-02\",\n        \"period_name\": \"February 2026\"\n    },\n    \"periods\": {\n        \"next\": null,\n        \"previous\": 0,\n        \"count\": 3,\n        \"data\": [\n            {\n                \"id\": \"4be251d7-6e9e-4758-931d-91eec7dc9d17\",\n                \"name\": \"February 2026\",\n                \"status\": \"posted\",\n                \"employees_paid\": 2,\n                \"total_net\": \"3399.99\",\n                \"currency\": \"USD\"\n            },\n            {\n                \"id\": \"b77c4607-2af9-4eb7-b3e5-d3a8d4fb9ced\",\n                \"name\": \"February 2026\",\n                \"status\": \"posted\",\n                \"employees_paid\": 2,\n                \"total_net\": \"3349.99\",\n                \"currency\": \"USD\"\n            },\n            {\n                \"id\": \"176cff95-548d-4df4-90b3-2dbbf38cb430\",\n                \"name\": \"February 2026\",\n                \"status\": \"draft\",\n                \"employees_paid\": 0,\n                \"total_net\": \"0.00\",\n                \"currency\": \"JOD\"\n            }\n        ]\n    }\n}"
+										}
+									]
+								},
+								{
+									"name": "Create period",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"February 2026\",\n  \"period_start\": \"2026-02-01\",\n  \"period_end\": \"2026-02-28\",\n  \"pay_date\": \"2026-02-28\",\n  \"currency\": \"JOD\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/hr/payroll/periods/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"payroll",
+												"periods",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "Create period",
+											"originalRequest": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"name\": \"February 2026\",\n  \"period_start\": \"2026-02-01\",\n  \"period_end\": \"2026-02-28\",\n  \"pay_date\": \"2026-02-28\",\n  \"currency\": \"JOD\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/hr/payroll/periods/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"payroll",
+														"periods",
+														""
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Sun, 19 Apr 2026 07:09:44 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "OPTIONS, POST"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "373"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"id\": \"176cff95-548d-4df4-90b3-2dbbf38cb430\",\n    \"name\": \"February 2026\",\n    \"period_start\": \"2026-02-01\",\n    \"period_end\": \"2026-02-28\",\n    \"pay_date\": \"2026-02-28\",\n    \"status\": \"draft\",\n    \"currency\": \"JOD\",\n    \"total_gross\": \"0.00\",\n    \"total_net\": \"0.00\",\n    \"total_deductions\": \"0.00\",\n    \"employees_paid\": 0,\n    \"journal_entry\": null,\n    \"journal_reference\": \"\",\n    \"base_payroll_net\": \"0.00\",\n    \"total_adjustments\": \"0.00\",\n    \"lines\": []\n}"
+										}
+									]
+								},
+								{
+									"name": "Calculate",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/payroll/periods/19a15f24-1d15-404a-baca-fddbefc7e406/calculate/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"payroll",
+												"periods",
+												"19a15f24-1d15-404a-baca-fddbefc7e406",
+												"calculate",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "Calculate",
+											"originalRequest": {
+												"method": "POST",
+												"header": [],
+												"url": {
+													"raw": "{{url}}/api/hr/payroll/periods/176cff95-548d-4df4-90b3-2dbbf38cb430/calculate/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"payroll",
+														"periods",
+														"176cff95-548d-4df4-90b3-2dbbf38cb430",
+														"calculate",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Sun, 19 Apr 2026 07:14:24 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "OPTIONS, POST"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "1395"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"id\": \"176cff95-548d-4df4-90b3-2dbbf38cb430\",\n    \"name\": \"February 2026\",\n    \"period_start\": \"2026-02-01\",\n    \"period_end\": \"2026-02-28\",\n    \"pay_date\": \"2026-02-28\",\n    \"status\": \"draft\",\n    \"currency\": \"USD\",\n    \"total_gross\": \"5250.00\",\n    \"total_net\": \"3349.99\",\n    \"total_deductions\": \"1900.01\",\n    \"employees_paid\": 2,\n    \"journal_entry\": null,\n    \"journal_reference\": \"\",\n    \"base_payroll_net\": \"3349.99\",\n    \"total_adjustments\": \"0.00\",\n    \"lines\": [\n        {\n            \"id\": \"f5f67dc3-212e-4164-ac65-39ee4eb165d2\",\n            \"employee_id\": \"2eb715a0-1475-4bfc-9ab4-672412fa7c2a\",\n            \"employee_name\": \"Demo Home\",\n            \"department\": \"Engineering\",\n            \"gross_pay\": \"2850.00\",\n            \"deductions\": \"400.01\",\n            \"adjustment_amount\": \"0.00\",\n            \"adjustment_reason\": \"\",\n            \"net_pay\": \"2449.99\",\n            \"earnings_details\": {\n                \"basic_salary\": \"2500.00\",\n                \"housing_allowance\": \"100.00\",\n                \"transportation\": \"100.00\",\n                \"other_allowances\": \"150.00\"\n            },\n            \"deductions_details\": {\n                \"social_security_employee\": \"-250.00\",\n                \"health_insurance\": \"-100.00\",\n                \"income_tax\": \"-50.01\"\n            }\n        },\n        {\n            \"id\": \"8afe50ab-e60c-4f9b-9896-357d6934fd96\",\n            \"employee_id\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n            \"employee_name\": \"John Doe\",\n            \"department\": \"Software\",\n            \"gross_pay\": \"2400.00\",\n            \"deductions\": \"1500.00\",\n            \"adjustment_amount\": \"0.00\",\n            \"adjustment_reason\": \"\",\n            \"net_pay\": \"900.00\",\n            \"earnings_details\": {\n                \"basic_salary\": \"2000.00\",\n                \"housing_allowance\": \"50.00\",\n                \"transportation\": \"50.00\",\n                \"other_allowances\": \"300.00\"\n            },\n            \"deductions_details\": {\n                \"social_security_employee\": \"-900.00\",\n                \"health_insurance\": \"-350.00\",\n                \"income_tax\": \"-250.00\"\n            }\n        }\n    ]\n}"
+										}
+									]
+								},
+								{
+									"name": "Review",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/payroll/periods/19a15f24-1d15-404a-baca-fddbefc7e406/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"payroll",
+												"periods",
+												"19a15f24-1d15-404a-baca-fddbefc7e406",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "Review",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{url}}/api/hr/payroll/periods/176cff95-548d-4df4-90b3-2dbbf38cb430/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"payroll",
+														"periods",
+														"176cff95-548d-4df4-90b3-2dbbf38cb430",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Sun, 19 Apr 2026 07:15:05 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "GET, OPTIONS"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "1395"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"id\": \"176cff95-548d-4df4-90b3-2dbbf38cb430\",\n    \"name\": \"February 2026\",\n    \"period_start\": \"2026-02-01\",\n    \"period_end\": \"2026-02-28\",\n    \"pay_date\": \"2026-02-28\",\n    \"status\": \"draft\",\n    \"currency\": \"USD\",\n    \"total_gross\": \"5250.00\",\n    \"total_net\": \"3349.99\",\n    \"total_deductions\": \"1900.01\",\n    \"employees_paid\": 2,\n    \"journal_entry\": null,\n    \"journal_reference\": \"\",\n    \"base_payroll_net\": \"3349.99\",\n    \"total_adjustments\": \"0.00\",\n    \"lines\": [\n        {\n            \"id\": \"f5f67dc3-212e-4164-ac65-39ee4eb165d2\",\n            \"employee_id\": \"2eb715a0-1475-4bfc-9ab4-672412fa7c2a\",\n            \"employee_name\": \"Demo Home\",\n            \"department\": \"Engineering\",\n            \"gross_pay\": \"2850.00\",\n            \"deductions\": \"400.01\",\n            \"adjustment_amount\": \"0.00\",\n            \"adjustment_reason\": \"\",\n            \"net_pay\": \"2449.99\",\n            \"earnings_details\": {\n                \"basic_salary\": \"2500.00\",\n                \"housing_allowance\": \"100.00\",\n                \"transportation\": \"100.00\",\n                \"other_allowances\": \"150.00\"\n            },\n            \"deductions_details\": {\n                \"social_security_employee\": \"-250.00\",\n                \"health_insurance\": \"-100.00\",\n                \"income_tax\": \"-50.01\"\n            }\n        },\n        {\n            \"id\": \"8afe50ab-e60c-4f9b-9896-357d6934fd96\",\n            \"employee_id\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n            \"employee_name\": \"John Doe\",\n            \"department\": \"Software\",\n            \"gross_pay\": \"2400.00\",\n            \"deductions\": \"1500.00\",\n            \"adjustment_amount\": \"0.00\",\n            \"adjustment_reason\": \"\",\n            \"net_pay\": \"900.00\",\n            \"earnings_details\": {\n                \"basic_salary\": \"2000.00\",\n                \"housing_allowance\": \"50.00\",\n                \"transportation\": \"50.00\",\n                \"other_allowances\": \"300.00\"\n            },\n            \"deductions_details\": {\n                \"social_security_employee\": \"-900.00\",\n                \"health_insurance\": \"-350.00\",\n                \"income_tax\": \"-250.00\"\n            }\n        }\n    ]\n}"
+										}
+									]
+								},
+								{
+									"name": "Adjust",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "PATCH",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"lines\": [\n    {\n      \"id\": \"9e1b1273-99db-47db-8f57-efb443cf7a56\",\n      \"adjustment_amount\": \"100.00\",\n      \"adjustment_reason\": \"Performance bonus\"\n    },\n    {\n      \"id\": \"8a2492e7-7837-4e9e-a896-b9de96f76a5c\",\n      \"adjustment_amount\": \"-50.00\",\n      \"adjustment_reason\": \"Correction\"\n    }\n  ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/hr/payroll/periods/19a15f24-1d15-404a-baca-fddbefc7e406/lines/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"payroll",
+												"periods",
+												"19a15f24-1d15-404a-baca-fddbefc7e406",
+												"lines",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "Adjust",
+											"originalRequest": {
+												"method": "PATCH",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"lines\": [\n    {\n      \"id\": \"9e1b1273-99db-47db-8f57-efb443cf7a56\",\n      \"adjustment_amount\": \"100.00\",\n      \"adjustment_reason\": \"Performance bonus\"\n    },\n    {\n      \"id\": \"8a2492e7-7837-4e9e-a896-b9de96f76a5c\",\n      \"adjustment_amount\": \"-50.00\",\n      \"adjustment_reason\": \"Correction\"\n    }\n  ]\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/hr/payroll/periods/19a15f24-1d15-404a-baca-fddbefc7e406/lines/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"payroll",
+														"periods",
+														"19a15f24-1d15-404a-baca-fddbefc7e406",
+														"lines",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Sun, 19 Apr 2026 07:22:10 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "OPTIONS, PATCH"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "1427"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"id\": \"19a15f24-1d15-404a-baca-fddbefc7e406\",\n    \"name\": \"February 2026\",\n    \"period_start\": \"2026-02-01\",\n    \"period_end\": \"2026-02-28\",\n    \"pay_date\": \"2026-02-28\",\n    \"status\": \"draft\",\n    \"currency\": \"USD\",\n    \"total_gross\": \"5250.00\",\n    \"total_net\": \"3399.99\",\n    \"total_deductions\": \"1900.01\",\n    \"employees_paid\": 2,\n    \"journal_entry\": null,\n    \"journal_reference\": \"\",\n    \"base_payroll_net\": \"3349.99\",\n    \"total_adjustments\": \"50.00\",\n    \"lines\": [\n        {\n            \"id\": \"9e1b1273-99db-47db-8f57-efb443cf7a56\",\n            \"employee_id\": \"2eb715a0-1475-4bfc-9ab4-672412fa7c2a\",\n            \"employee_name\": \"Demo Home\",\n            \"department\": \"Engineering\",\n            \"gross_pay\": \"2850.00\",\n            \"deductions\": \"400.01\",\n            \"adjustment_amount\": \"100.00\",\n            \"adjustment_reason\": \"Performance bonus\",\n            \"net_pay\": \"2549.99\",\n            \"earnings_details\": {\n                \"basic_salary\": \"2500.00\",\n                \"housing_allowance\": \"100.00\",\n                \"transportation\": \"100.00\",\n                \"other_allowances\": \"150.00\"\n            },\n            \"deductions_details\": {\n                \"social_security_employee\": \"-250.00\",\n                \"health_insurance\": \"-100.00\",\n                \"income_tax\": \"-50.01\"\n            }\n        },\n        {\n            \"id\": \"8a2492e7-7837-4e9e-a896-b9de96f76a5c\",\n            \"employee_id\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n            \"employee_name\": \"John Doe\",\n            \"department\": \"Software\",\n            \"gross_pay\": \"2400.00\",\n            \"deductions\": \"1500.00\",\n            \"adjustment_amount\": \"-50.00\",\n            \"adjustment_reason\": \"Correction\",\n            \"net_pay\": \"850.00\",\n            \"earnings_details\": {\n                \"basic_salary\": \"2000.00\",\n                \"housing_allowance\": \"50.00\",\n                \"transportation\": \"50.00\",\n                \"other_allowances\": \"300.00\"\n            },\n            \"deductions_details\": {\n                \"social_security_employee\": \"-900.00\",\n                \"health_insurance\": \"-350.00\",\n                \"income_tax\": \"-250.00\"\n            }\n        }\n    ]\n}"
+										}
+									]
+								},
+								{
+									"name": "finalize",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{url}}/api/hr/payroll/periods/176cff95-548d-4df4-90b3-2dbbf38cb430/finalize-summary/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"payroll",
+												"periods",
+												"176cff95-548d-4df4-90b3-2dbbf38cb430",
+												"finalize-summary",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "finalize",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{url}}/api/hr/payroll/periods/176cff95-548d-4df4-90b3-2dbbf38cb430/finalize-summary/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"payroll",
+														"periods",
+														"176cff95-548d-4df4-90b3-2dbbf38cb430",
+														"finalize-summary",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Sun, 19 Apr 2026 07:15:45 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "GET, OPTIONS"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "190"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"id\": \"176cff95-548d-4df4-90b3-2dbbf38cb430\",\n    \"period_name\": \"February 2026\",\n    \"currency\": \"USD\",\n    \"base_payroll\": \"3349.99\",\n    \"total_adjustments\": \"0.00\",\n    \"final_total_payable\": \"3349.99\",\n    \"employees\": 2\n}"
+										}
+									]
+								},
+								{
+									"name": "Finalize",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"lines\": [\n    {\n      \"id\": \"562a9b61-60ee-4335-b642-725d090032ac\",\n      \"adjustment_amount\": \"100.00\",\n      \"adjustment_reason\": \"Performance bonus\"\n    },\n    {\n      \"id\": \"478f4fd0-86c8-49a7-98e5-fef6249fdbdc\",\n      \"adjustment_amount\": \"-50.00\",\n      \"adjustment_reason\": \"Correction\"\n    }\n  ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{url}}/api/hr/payroll/periods/176cff95-548d-4df4-90b3-2dbbf38cb430/finalize/",
+											"host": [
+												"{{url}}"
+											],
+											"path": [
+												"api",
+												"hr",
+												"payroll",
+												"periods",
+												"176cff95-548d-4df4-90b3-2dbbf38cb430",
+												"finalize",
+												""
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "Finalize",
+											"originalRequest": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"lines\": [\n    {\n      \"id\": \"562a9b61-60ee-4335-b642-725d090032ac\",\n      \"adjustment_amount\": \"100.00\",\n      \"adjustment_reason\": \"Performance bonus\"\n    },\n    {\n      \"id\": \"478f4fd0-86c8-49a7-98e5-fef6249fdbdc\",\n      \"adjustment_amount\": \"-50.00\",\n      \"adjustment_reason\": \"Correction\"\n    }\n  ]\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{url}}/api/hr/payroll/periods/176cff95-548d-4df4-90b3-2dbbf38cb430/finalize/",
+													"host": [
+														"{{url}}"
+													],
+													"path": [
+														"api",
+														"hr",
+														"payroll",
+														"periods",
+														"176cff95-548d-4df4-90b3-2dbbf38cb430",
+														"finalize",
+														""
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Sun, 19 Apr 2026 07:16:52 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.12.3"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "Vary",
+													"value": "Accept, origin"
+												},
+												{
+													"key": "Allow",
+													"value": "OPTIONS, POST"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Content-Length",
+													"value": "1451"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"id\": \"176cff95-548d-4df4-90b3-2dbbf38cb430\",\n    \"name\": \"February 2026\",\n    \"period_start\": \"2026-02-01\",\n    \"period_end\": \"2026-02-28\",\n    \"pay_date\": \"2026-02-28\",\n    \"status\": \"posted\",\n    \"currency\": \"USD\",\n    \"total_gross\": \"5250.00\",\n    \"total_net\": \"3349.99\",\n    \"total_deductions\": \"1900.01\",\n    \"employees_paid\": 2,\n    \"journal_entry\": \"a54a8d6f-a033-4a26-a608-5e00d6b8bb54\",\n    \"journal_reference\": \"PAYROLL - PER-2026-02\",\n    \"base_payroll_net\": \"3349.99\",\n    \"total_adjustments\": \"0.00\",\n    \"lines\": [\n        {\n            \"id\": \"f5f67dc3-212e-4164-ac65-39ee4eb165d2\",\n            \"employee_id\": \"2eb715a0-1475-4bfc-9ab4-672412fa7c2a\",\n            \"employee_name\": \"Demo Home\",\n            \"department\": \"Engineering\",\n            \"gross_pay\": \"2850.00\",\n            \"deductions\": \"400.01\",\n            \"adjustment_amount\": \"0.00\",\n            \"adjustment_reason\": \"\",\n            \"net_pay\": \"2449.99\",\n            \"earnings_details\": {\n                \"basic_salary\": \"2500.00\",\n                \"housing_allowance\": \"100.00\",\n                \"transportation\": \"100.00\",\n                \"other_allowances\": \"150.00\"\n            },\n            \"deductions_details\": {\n                \"social_security_employee\": \"-250.00\",\n                \"health_insurance\": \"-100.00\",\n                \"income_tax\": \"-50.01\"\n            }\n        },\n        {\n            \"id\": \"8afe50ab-e60c-4f9b-9896-357d6934fd96\",\n            \"employee_id\": \"a47ddfbf-2231-4b67-be6d-034f6a7563d7\",\n            \"employee_name\": \"John Doe\",\n            \"department\": \"Software\",\n            \"gross_pay\": \"2400.00\",\n            \"deductions\": \"1500.00\",\n            \"adjustment_amount\": \"0.00\",\n            \"adjustment_reason\": \"\",\n            \"net_pay\": \"900.00\",\n            \"earnings_details\": {\n                \"basic_salary\": \"2000.00\",\n                \"housing_allowance\": \"50.00\",\n                \"transportation\": \"50.00\",\n                \"other_allowances\": \"300.00\"\n            },\n            \"deductions_details\": {\n                \"social_security_employee\": \"-900.00\",\n                \"health_insurance\": \"-350.00\",\n                \"income_tax\": \"-250.00\"\n            }\n        }\n    ]\n}"
 										}
 									]
 								}

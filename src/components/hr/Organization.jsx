@@ -9,13 +9,17 @@ import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import Modal from '@/components/Shared/Modal';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
+import Pagination from '@/core/Pagination';
 import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
 
 const normalizeArrayResponse = (response) => {
     if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.data)) return response.data;
     if (Array.isArray(response?.results)) return response.results;
+    if (Array.isArray(response?.data?.data)) return response.data.data;
+    if (Array.isArray(response?.data?.results)) return response.data.results;
     return [];
 };
 
@@ -39,13 +43,23 @@ const normalizeDepartments = (response) =>
         name: item?.name || '',
     }));
 
-const normalizePositions = (response) =>
-    normalizeArrayResponse(response).map((item) => ({
-        id: item?.id || item?.uuid || '',
-        name: item?.name || '',
-        description: item?.description || '',
-        department: item?.department || item?.department_id || '',
-    }));
+const normalizePositionItem = (item) => ({
+    id: item?.id || item?.uuid || '',
+    name: item?.name || '',
+    description: item?.description || '',
+    department: item?.department || item?.department_id || '',
+    departmentName: item?.department_name || '',
+});
+
+const normalizePaginatedPositions = (response) => {
+    const items = normalizeArrayResponse(response).map(normalizePositionItem);
+    const count = Number(response?.count ?? response?.data?.count);
+
+    return {
+        items,
+        count: Number.isFinite(count) ? count : items.length,
+    };
+};
 
 const Organization = () => {
     const queryClient = useQueryClient();
@@ -54,16 +68,17 @@ const Organization = () => {
     const [isPosModalOpen, setIsPosModalOpen] = useState(false);
     const [editingDept, setEditingDept] = useState(null);
     const [editingPos, setEditingPos] = useState(null);
+    const [positionsPage, setPositionsPage] = useState(1);
     const [deleteState, setDeleteState] = useState({ isOpen: false, type: '', id: '', name: '' });
 
-    const departmentsTreeQuery = useCustomQuery('/api/hr/departments/tree', ['hr-departments-tree'], {
+    const departmentsTreeQuery = useCustomQuery('/api/hr/departments/tree/', ['hr-departments-tree'], {
         select: normalizeDepartmentsTree,
     });
     const departmentsQuery = useCustomQuery('/api/hr/departments/', ['hr-departments'], {
         select: normalizeDepartments,
     });
-    const positionsQuery = useCustomQuery('/api/hr/positions/', ['hr-positions'], {
-        select: normalizePositions,
+    const positionsQuery = useCustomQuery(`/api/hr/positions/?page=${positionsPage}`, ['hr-positions', positionsPage], {
+        select: normalizePaginatedPositions,
     });
 
     const deleteMutation = useMutation({
@@ -94,7 +109,8 @@ const Organization = () => {
 
     const departmentsTree = useMemo(() => departmentsTreeQuery.data ?? [], [departmentsTreeQuery.data]);
     const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
-    const positions = useMemo(() => positionsQuery.data ?? [], [positionsQuery.data]);
+    const positions = useMemo(() => positionsQuery.data?.items ?? [], [positionsQuery.data]);
+    const positionsCount = useMemo(() => positionsQuery.data?.count ?? positions.length, [positions.length, positionsQuery.data]);
 
     const isLoading = departmentsTreeQuery.isLoading || departmentsQuery.isLoading || positionsQuery.isLoading;
     const hasError = departmentsTreeQuery.isError || departmentsQuery.isError || positionsQuery.isError;
@@ -173,6 +189,9 @@ const Organization = () => {
                     ) : (
                         <PositionsView
                             positions={positions}
+                            positionsCount={positionsCount}
+                            currentPage={positionsPage}
+                            onPageChange={setPositionsPage}
                             departments={departments}
                             onAdd={() => handleOpenPosModal(null)}
                             onEdit={handleOpenPosModal}
@@ -306,7 +325,7 @@ const DepartmentNode = ({ dept, level, onEdit, onDelete }) => {
     );
 };
 
-const PositionsView = ({ positions, departments, onAdd, onEdit, onDelete }) => {
+const PositionsView = ({ positions, positionsCount, currentPage, onPageChange, departments, onAdd, onEdit, onDelete }) => {
     const departmentMap = useMemo(() => {
         return new Map(departments.map((department) => [department.id, department.name]));
     }, [departments]);
@@ -343,7 +362,7 @@ const PositionsView = ({ positions, departments, onAdd, onEdit, onDelete }) => {
                                     <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', fontWeight: 500, color: 'var(--color-text-main)' }}>{position.name}</td>
                                     <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>{position.description || '—'}</td>
                                     <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>
-                                        {departmentMap.get(position.department) || 'Unknown'}
+                                        {position.departmentName || departmentMap.get(position.department) || 'Unknown'}
                                     </td>
                                     <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', textAlign: 'right' }}>
                                         <Button variant="ghost" size="sm" icon={<Edit2 size={16} />} onClick={() => onEdit(position)} />
@@ -354,6 +373,10 @@ const PositionsView = ({ positions, departments, onAdd, onEdit, onDelete }) => {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            <div style={{ marginTop: '1rem' }}>
+                <Pagination currentPage={currentPage} count={positionsCount} onPageChange={onPageChange} />
             </div>
         </Card>
     );

@@ -1,44 +1,159 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { CheckCircle, XCircle, FileText, Calendar, User, Search, Filter } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import Input from '@/components/Shared/Input';
+import useCustomQuery from '@/hooks/useQuery';
+import Spinner from '@/core/Spinner';
+import ResourceLoadError from '@/core/ResourceLoadError';
+import Pagination from '@/core/Pagination';
+import { toast } from 'sonner';
+
+const PAGE_SIZE = 15;
+
+const EMPTY_ROWS = [];
+
+const selectRequestsPayload = (payload) => {
+    if (payload == null) return undefined;
+    if (typeof payload !== 'object') {
+        return {
+            summary: { pending: 0, approved_this_month: 0, rejected: 0 },
+            rows: EMPTY_ROWS,
+            count: 0,
+            next: null,
+            previous: null,
+        };
+    }
+    const rows = Array.isArray(payload.data)
+        ? payload.data
+        : Array.isArray(payload.results)
+          ? payload.results
+          : EMPTY_ROWS;
+    const count = typeof payload.count === 'number' ? payload.count : rows.length;
+    return {
+        summary: {
+            pending: payload.summary?.pending ?? 0,
+            approved_this_month: payload.summary?.approved_this_month ?? 0,
+            rejected: payload.summary?.rejected ?? 0,
+        },
+        rows,
+        count,
+        next: payload.next ?? null,
+        previous: payload.previous ?? null,
+    };
+};
+
+const formatRequestedDate = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso);
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const requestTypeLabel = (type) => {
+    if (!type) return '—';
+    const t = String(type).toLowerCase();
+    if (t === 'leave') return 'Leave';
+    if (t === 'document') return 'Document';
+    return type.charAt(0).toUpperCase() + type.slice(1);
+};
 
 const EmployeeRequests = () => {
-    const navigate = useNavigate();
-    const [requests, setRequests] = useState([
-        { id: 1, employee: 'Sarah Connor', type: 'Leave', detail: 'Annual Leave (Feb 20 - Feb 25)', status: 'Pending', date: 'Feb 08, 2026' },
-        { id: 2, employee: 'David Miller', type: 'Document', detail: 'Salary Certificate Request', status: 'Pending', date: 'Feb 08, 2026' },
-        { id: 3, employee: 'John Doe', type: 'Leave', detail: 'Sick Leave (Feb 07)', status: 'Approved', date: 'Feb 07, 2026' },
-        { id: 4, employee: 'Mike Ross', type: 'Document', detail: 'Employment Letter', status: 'Approved', date: 'Feb 06, 2026' },
-        { id: 5, employee: 'Rachel Zane', type: 'Leave', detail: 'Emergency Leave (Feb 05)', status: 'Rejected', date: 'Feb 05, 2026' },
-    ]);
-
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
-    const [filterType, setFilterType] = useState('All');
+    const [filterType, setFilterType] = useState('all');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
-    const filteredRequests = requests.filter(req => {
-        const matchesSearch = req.employee.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            req.detail.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'All' || req.status === filterStatus;
-        const matchesType = filterType === 'All' || req.type === filterType;
+    useEffect(() => {
+        const id = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 350);
+        return () => clearTimeout(id);
+    }, [searchTerm]);
 
-        const reqDate = new Date(req.date);
-        const matchesDateFrom = !dateFrom || reqDate >= new Date(dateFrom);
-        const matchesDateTo = !dateTo || reqDate <= new Date(dateTo);
+    const statusParam = filterStatus === 'All' ? '' : filterStatus.toLowerCase();
+    const typeParam = filterType === 'all' ? '' : filterType;
 
-        return matchesSearch && matchesStatus && matchesType && matchesDateFrom && matchesDateTo;
-    });
+    const requestsUrl = useMemo(() => {
+        const queryParams = new URLSearchParams();
+        if (statusParam) queryParams.set('status', statusParam);
+        if (typeParam) queryParams.set('type', typeParam);
+        if (debouncedSearch) queryParams.set('search', debouncedSearch);
+        if (dateFrom) queryParams.set('date_from', dateFrom);
+        if (dateTo) queryParams.set('date_to', dateTo);
+        queryParams.set('page', String(currentPage));
+        queryParams.set('page_size', String(PAGE_SIZE));
+        return `/api/hr/employees/requests/?${queryParams.toString()}`;
+    }, [statusParam, typeParam, debouncedSearch, dateFrom, dateTo, currentPage]);
 
-    const handleAction = (id, action) => {
-        setRequests(requests.map(req =>
-            req.id === id ? { ...req, status: action === 'approve' ? 'Approved' : 'Rejected' } : req
-        ));
+    const requestsQuery = useCustomQuery(
+        requestsUrl,
+        ['hr-employee-requests', statusParam, typeParam, debouncedSearch, dateFrom, dateTo, currentPage],
+        { select: selectRequestsPayload }
+    );
+
+    const summary = requestsQuery.data?.summary ?? {
+        pending: 0,
+        approved_this_month: 0,
+        rejected: 0,
     };
+
+    const rows = requestsQuery.data?.rows ?? EMPTY_ROWS;
+    const totalCount = requestsQuery.data?.count ?? 0;
+    const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+    const safePage = Math.min(currentPage, totalPages);
+
+    const hasActiveFilters =
+        Boolean(searchTerm) ||
+        filterType !== 'all' ||
+        filterStatus !== 'All' ||
+        Boolean(dateFrom) ||
+        Boolean(dateTo);
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setFilterType('all');
+        setFilterStatus('All');
+        setDateFrom('');
+        setDateTo('');
+        setCurrentPage(1);
+    };
+
+    const statusBadgeStyle = (status) => {
+        const s = String(status || '').toLowerCase();
+        if (s === 'approved') {
+            return {
+                background: 'var(--color-success-dim)',
+                color: 'var(--color-success)',
+            };
+        }
+        if (s === 'rejected') {
+            return {
+                background: 'var(--color-error-dim)',
+                color: 'var(--color-error)',
+            };
+        }
+        return {
+            background: 'var(--color-warning-dim)',
+            color: 'var(--color-warning)',
+        };
+    };
+
+    if (requestsQuery.isLoading && !requestsQuery.data) {
+        return <Spinner />;
+    }
+
+    if (requestsQuery.isError) {
+        return (
+            <ResourceLoadError
+                error={requestsQuery.error}
+                title="Employee requests could not be loaded"
+                onRefresh={() => requestsQuery.refetch()}
+                refreshLabel="Try again"
+            />
+        );
+    }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -50,41 +165,65 @@ const EmployeeRequests = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
                 <Card className="padding-md">
                     <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Pending Requests</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-warning)' }}>
-                        {requests.filter(r => r.status === 'Pending').length}
-                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-warning)' }}>{summary.pending}</div>
                 </Card>
                 <Card className="padding-md">
                     <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Approved This Month</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success)' }}>12</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success)' }}>
+                        {summary.approved_this_month}
+                    </div>
                 </Card>
                 <Card className="padding-md">
                     <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Rejected</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-error)' }}>2</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-error)' }}>{summary.rejected}</div>
                 </Card>
             </div>
 
-            {/* Professional Filter Bar */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', background: 'var(--color-bg-surface)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.25rem',
+                    background: 'var(--color-bg-surface)',
+                    padding: '1.25rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border)',
+                }}
+            >
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ width: '320px' }}>
                         <Input
                             placeholder="Search employee, request details..."
                             startIcon={<Search size={16} />}
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1);
+                            }}
                             style={{ fontSize: '0.875rem' }}
                         />
                     </div>
 
                     <select
-                        style={{ padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', fontSize: '0.875rem', minWidth: '160px', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
+                        style={{
+                            padding: '0.625rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--color-border)',
+                            fontSize: '0.875rem',
+                            minWidth: '160px',
+                            background: 'var(--color-bg-surface)',
+                            color: 'var(--color-text-main)',
+                            cursor: 'pointer',
+                        }}
                         value={filterType}
-                        onChange={(e) => setFilterType(e.target.value)}
+                        onChange={(e) => {
+                            setFilterType(e.target.value);
+                            setCurrentPage(1);
+                        }}
                     >
-                        <option value="All">All Request Types</option>
-                        <option value="Leave">Leave Applications</option>
-                        <option value="Document">Document Requests</option>
+                        <option value="all">All Request Types</option>
+                        <option value="leave">Leave Applications</option>
+                        <option value="document">Document Requests</option>
                     </select>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -92,7 +231,10 @@ const EmployeeRequests = () => {
                         <Input
                             type="date"
                             value={dateFrom}
-                            onChange={e => setDateFrom(e.target.value)}
+                            onChange={(e) => {
+                                setDateFrom(e.target.value);
+                                setCurrentPage(1);
+                            }}
                             style={{ padding: '0.4rem', fontSize: '0.875rem', width: 'auto' }}
                         />
                     </div>
@@ -102,7 +244,10 @@ const EmployeeRequests = () => {
                         <Input
                             type="date"
                             value={dateTo}
-                            onChange={e => setDateTo(e.target.value)}
+                            onChange={(e) => {
+                                setDateTo(e.target.value);
+                                setCurrentPage(1);
+                            }}
                             style={{ padding: '0.4rem', fontSize: '0.875rem', width: 'auto' }}
                         />
                     </div>
@@ -112,19 +257,23 @@ const EmployeeRequests = () => {
                     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                         <Filter size={14} color="var(--color-text-muted)" />
                         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Status:</span>
-                        {['All', 'Pending', 'Approved', 'Rejected'].map(status => (
+                        {['All', 'Pending', 'Approved', 'Rejected'].map((status) => (
                             <button
                                 key={status}
-                                onClick={() => setFilterStatus(status)}
+                                type="button"
+                                onClick={() => {
+                                    setFilterStatus(status);
+                                    setCurrentPage(1);
+                                }}
                                 style={{
                                     padding: '5px 12px',
                                     borderRadius: '6px',
-                                    border: '1px solid ' + (filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-border)'),
+                                    border: `1px solid ${filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-border)'}`,
                                     background: filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-bg-surface)',
                                     color: filterStatus === status ? 'white' : 'var(--color-text-secondary)',
                                     cursor: 'pointer',
                                     fontWeight: 500,
-                                    fontSize: '0.8rem'
+                                    fontSize: '0.8rem',
                                 }}
                             >
                                 {status}
@@ -132,17 +281,11 @@ const EmployeeRequests = () => {
                         ))}
                     </div>
 
-                    {(searchTerm || filterType !== 'All' || filterStatus !== 'All' || dateFrom || dateTo) && (
+                    {hasActiveFilters && (
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                                setSearchTerm('');
-                                setFilterType('All');
-                                setFilterStatus('All');
-                                setDateFrom('');
-                                setDateTo('');
-                            }}
+                            onClick={clearFilters}
                             style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}
                         >
                             Clear All Filters
@@ -151,7 +294,10 @@ const EmployeeRequests = () => {
                 </div>
             </div>
 
-            <Card className="padding-none">
+            <Card className="padding-none" style={{ overflowX: 'auto' }}>
+                {requestsQuery.isFetching && (
+                    <div style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Updating…</div>
+                )}
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: 'var(--color-bg-table-header)', textAlign: 'left', color: 'var(--color-text-secondary)' }}>
@@ -164,61 +310,87 @@ const EmployeeRequests = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredRequests.map((req) => (
-                            <tr key={req.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                <td style={{ padding: '1rem 1.5rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <div style={{ padding: '0.5rem', background: 'var(--color-bg-subtle)', borderRadius: '50%' }}>
-                                            <User size={16} />
+                        {rows.map((req) => {
+                            const typeKey = String(req.request_type || '').toLowerCase();
+                            const isLeave = typeKey === 'leave';
+                            const isPending = String(req.status || '').toLowerCase() === 'pending';
+                            const displayName = req.employee?.full_name || '—';
+
+                            return (
+                                <tr key={req.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                    <td style={{ padding: '1rem 1.5rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            {req.employee?.photo ? (
+                                                <img
+                                                    src={req.employee.photo}
+                                                    alt=""
+                                                    style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
+                                                />
+                                            ) : (
+                                                <div style={{ padding: '0.5rem', background: 'var(--color-bg-subtle)', borderRadius: '50%' }}>
+                                                    <User size={16} />
+                                                </div>
+                                            )}
+                                            <span style={{ fontWeight: 500 }}>{displayName}</span>
                                         </div>
-                                        <span style={{ fontWeight: 500 }}>{req.employee}</span>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '1rem 1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        {req.type === 'Leave' ? <Calendar size={16} color="var(--color-primary-600)" /> : <FileText size={16} color="var(--color-secondary-600)" />}
-                                        {req.type}
-                                    </div>
-                                </td>
-                                <td style={{ padding: '1rem 1rem' }}>{req.detail}</td>
-                                <td style={{ padding: '1rem 1rem' }}>{req.date}</td>
-                                <td style={{ padding: '1rem 1rem' }}>
-                                    <span style={{
-                                        padding: '0.25rem 0.75rem',
-                                        borderRadius: '1rem',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 600,
-                                        background: req.status === 'Approved' ? 'var(--color-success-dim)' : req.status === 'Rejected' ? 'var(--color-error-dim)' : 'var(--color-warning-dim)',
-                                        color: req.status === 'Approved' ? 'var(--color-success)' : req.status === 'Rejected' ? 'var(--color-error)' : 'var(--color-warning)'
-                                    }}>
-                                        {req.status}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
-                                    {req.status === 'Pending' && (
-                                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                            <Button
-                                                variant="outline"
-                                                style={{ padding: '0.25rem', borderColor: 'var(--color-success)', color: 'var(--color-success)' }}
-                                                onClick={() => handleAction(req.id, 'approve')}
-                                                title="Approve"
-                                            >
-                                                <CheckCircle size={18} />
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                style={{ padding: '0.25rem', borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
-                                                onClick={() => handleAction(req.id, 'reject')}
-                                                title="Reject"
-                                            >
-                                                <XCircle size={18} />
-                                            </Button>
+                                    </td>
+                                    <td style={{ padding: '1rem 1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            {isLeave ? (
+                                                <Calendar size={16} color="var(--color-primary-600)" />
+                                            ) : (
+                                                <FileText size={16} color="var(--color-secondary-600)" />
+                                            )}
+                                            {requestTypeLabel(req.request_type)}
                                         </div>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                        {filteredRequests.length === 0 && (
+                                    </td>
+                                    <td style={{ padding: '1rem 1rem' }}>{req.details || '—'}</td>
+                                    <td style={{ padding: '1rem 1rem' }}>{formatRequestedDate(req.requested_at)}</td>
+                                    <td style={{ padding: '1rem 1rem' }}>
+                                        <span
+                                            style={{
+                                                padding: '0.25rem 0.75rem',
+                                                borderRadius: '1rem',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 600,
+                                                ...statusBadgeStyle(req.status),
+                                            }}
+                                        >
+                                            {req.status_display || req.status || '—'}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                        {isPending && (
+                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                                <Button
+                                                    variant="outline"
+                                                    type="button"
+                                                    style={{ padding: '0.25rem', borderColor: 'var(--color-success)', color: 'var(--color-success)' }}
+                                                    onClick={() =>
+                                                        toast.info('Approve this request from the employee profile or the dedicated leave/document workflow.')
+                                                    }
+                                                    title="Approve"
+                                                >
+                                                    <CheckCircle size={18} />
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    type="button"
+                                                    style={{ padding: '0.25rem', borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
+                                                    onClick={() =>
+                                                        toast.info('Reject this request from the employee profile or the dedicated leave/document workflow.')
+                                                    }
+                                                    title="Reject"
+                                                >
+                                                    <XCircle size={18} />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        {rows.length === 0 && (
                             <tr>
                                 <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                                     No requests match your filters.
@@ -227,6 +399,14 @@ const EmployeeRequests = () => {
                         )}
                     </tbody>
                 </table>
+                <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--color-border)' }}>
+                    <Pagination
+                        currentPage={safePage}
+                        count={totalCount}
+                        onPageChange={setCurrentPage}
+                        pageSize={PAGE_SIZE}
+                    />
+                </div>
             </Card>
         </div>
     );
