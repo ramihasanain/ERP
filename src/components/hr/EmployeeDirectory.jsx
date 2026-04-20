@@ -55,17 +55,6 @@ const humanizeStatus = (status) => {
 const humanizeContractType = (value) =>
     !value ? '—' : String(value).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-const PAYROLL_BREAKDOWN = {
-    totalBasic: 17000,
-    totalNet: 16797.5,
-    currency: 'JOD',
-    byDepartment: [
-        { name: 'Executive Management', amount: 8700 },
-        { name: 'Sales & Marketing', amount: 4300 },
-        { name: 'Engineering', amount: 4000 },
-    ],
-};
-
 const formatDateLabel = (value) => {
     if (!value) return '';
     const d = new Date(value);
@@ -104,6 +93,32 @@ const normalizeExpiringContracts = (response) =>
             daysRemaining: typeof item?.days_remaining === 'number' ? item.days_remaining : daysFromEnd,
         };
     });
+
+const normalizePayrollBreakdown = (response) => {
+    const payload = response?.data ?? response ?? {};
+    const departmentsRaw =
+        payload?.by_department ??
+        payload?.department_breakdown ??
+        payload?.departments ??
+        payload?.cost_by_department ??
+        [];
+
+    const byDepartment = Array.isArray(departmentsRaw)
+        ? departmentsRaw.map((item) => ({
+            name: item?.name ?? item?.department_name ?? item?.department ?? 'Unknown',
+            amount: Number(item?.amount ?? item?.total ?? item?.value ?? item?.total_net ?? item?.cost ?? 0) || 0,
+            percentage: Number(item?.percentage_of_total ?? item?.percentage ?? 0) || 0,
+        }))
+        : [];
+
+    return {
+        totalBasic: Number(payload?.total_basic ?? payload?.total_basic_salaries ?? payload?.basic_total ?? 0) || 0,
+        totalNet: Number(payload?.total_net ?? payload?.total_net_payable ?? payload?.net_total ?? 0) || 0,
+        currency: payload?.currency ?? 'USD',
+        subtitle: payload?.subtitle ?? 'Estimated recurring cost (Active Employees).',
+        byDepartment,
+    };
+};
 
 const EmployeeDirectory = () => {
     const navigate = useNavigate();
@@ -146,6 +161,9 @@ const EmployeeDirectory = () => {
     const expiringContractsQuery = useCustomQuery('/api/hr/contracts/expiring-soon/', ['hr-contracts-expiring-soon'], {
         select: normalizeExpiringContracts,
     });
+    const payrollBreakdownQuery = useCustomQuery('/api/hr/payroll/monthly-breakdown/', ['hr-payroll-monthly-breakdown'], {
+        select: normalizePayrollBreakdown,
+    });
 
     const employees = useMemo(() => employeesQuery.data ?? [], [employeesQuery.data]);
     const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
@@ -161,9 +179,20 @@ const EmployeeDirectory = () => {
     );
 
     const expiringContracts = useMemo(() => expiringContractsQuery.data ?? [], [expiringContractsQuery.data]);
+    const payrollBreakdown = useMemo(
+        () =>
+            payrollBreakdownQuery.data ?? {
+                totalBasic: 0,
+                totalNet: 0,
+                currency: 'USD',
+                subtitle: 'Estimated recurring cost (Active Employees).',
+                byDepartment: [],
+            },
+        [payrollBreakdownQuery.data]
+    );
     const maxDeptPayroll = useMemo(
-        () => Math.max(...PAYROLL_BREAKDOWN.byDepartment.map((d) => d.amount), 1),
-        []
+        () => Math.max(...payrollBreakdown.byDepartment.map((d) => d.amount), 1),
+        [payrollBreakdown.byDepartment]
     );
 
     const isLoading = employeesQuery.isLoading || departmentsQuery.isLoading || positionsQuery.isLoading;
@@ -291,7 +320,7 @@ const EmployeeDirectory = () => {
                     <div>
                         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Monthly Payroll Breakdown</h3>
                         <p style={{ margin: '0.35rem 0 0', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                            Estimated recurring cost (Active Employees).
+                            {payrollBreakdown.subtitle}
                         </p>
                     </div>
 
@@ -306,7 +335,7 @@ const EmployeeDirectory = () => {
                         >
                             <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Total Basic Salaries</p>
                             <p style={{ margin: '0.5rem 0 0', fontSize: '1.25rem', fontWeight: 700 }}>
-                                {PAYROLL_BREAKDOWN.totalBasic.toLocaleString()} {PAYROLL_BREAKDOWN.currency}
+                                {payrollBreakdown.totalBasic.toLocaleString()} {payrollBreakdown.currency}
                             </p>
                         </div>
                         <div
@@ -319,33 +348,50 @@ const EmployeeDirectory = () => {
                         >
                             <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Total Net Payable</p>
                             <p style={{ margin: '0.5rem 0 0', fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-success)' }}>
-                                {PAYROLL_BREAKDOWN.totalNet.toLocaleString()} {PAYROLL_BREAKDOWN.currency}
+                                {payrollBreakdown.totalNet.toLocaleString()} {payrollBreakdown.currency}
                             </p>
                         </div>
                     </div>
 
                     <div>
                         <p style={{ margin: '0 0 0.75rem', fontSize: '0.875rem', fontWeight: 600 }}>Cost by Department</p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                            {PAYROLL_BREAKDOWN.byDepartment.map((dept) => (
-                                <div key={dept.name} style={{ display: 'grid', gridTemplateColumns: 'minmax(100px, 1fr) minmax(80px, 2fr) auto', gap: '0.75rem', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{dept.name}</span>
-                                    <div style={{ height: '8px', borderRadius: '999px', background: 'var(--color-bg-subtle)', overflow: 'hidden' }}>
-                                        <div
-                                            style={{
-                                                height: '100%',
-                                                width: `${(dept.amount / maxDeptPayroll) * 100}%`,
-                                                borderRadius: '999px',
-                                                background: 'var(--color-primary-600)',
-                                            }}
-                                        />
+                        {payrollBreakdownQuery.isLoading && (
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem 0' }}>
+                                <Spinner />
+                            </div>
+                        )}
+                        {payrollBreakdownQuery.isError && (
+                            <p style={{ margin: 0, color: 'var(--color-error)', fontSize: '0.875rem' }}>
+                                Could not load payroll breakdown.
+                            </p>
+                        )}
+                        {!payrollBreakdownQuery.isLoading && !payrollBreakdownQuery.isError && payrollBreakdown.byDepartment.length === 0 && (
+                            <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
+                                No department payroll data available.
+                            </p>
+                        )}
+                        {!payrollBreakdownQuery.isLoading && !payrollBreakdownQuery.isError && payrollBreakdown.byDepartment.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                                {payrollBreakdown.byDepartment.map((dept) => (
+                                    <div key={dept.name} style={{ display: 'grid', gridTemplateColumns: 'minmax(100px, 1fr) minmax(80px, 2fr) auto', gap: '0.75rem', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{dept.name}</span>
+                                        <div style={{ height: '8px', borderRadius: '999px', background: 'var(--color-bg-subtle)', overflow: 'hidden' }}>
+                                            <div
+                                                style={{
+                                                    height: '100%',
+                                                    width: `${dept.percentage > 0 ? dept.percentage : (dept.amount / maxDeptPayroll) * 100}%`,
+                                                    borderRadius: '999px',
+                                                    background: 'var(--color-primary-600)',
+                                                }}
+                                            />
+                                        </div>
+                                        <span style={{ fontSize: '0.875rem', fontWeight: 600, textAlign: 'right', minWidth: '3.5rem' }}>
+                                            {dept.amount.toLocaleString()}
+                                        </span>
                                     </div>
-                                    <span style={{ fontSize: '0.875rem', fontWeight: 600, textAlign: 'right', minWidth: '3.5rem' }}>
-                                        {dept.amount.toLocaleString()}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </Card>
             </div>

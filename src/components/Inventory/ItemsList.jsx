@@ -25,6 +25,16 @@ const normalizeCategoryOption = (item) => ({
     name: item?.name || '',
 });
 
+const toDisplayText = (value, fallback = '') => {
+    if (value == null) return fallback;
+    if (typeof value === 'string' || typeof value === 'number') return String(value);
+    if (typeof value === 'object') {
+        if (typeof value.name === 'string') return value.name;
+        if (typeof value.label === 'string') return value.label;
+    }
+    return fallback;
+};
+
 const normalizeProduct = (item) => {
     const typeRaw = String(item?.type ?? '').toLowerCase();
     const isStock = typeRaw.includes('stock') || typeRaw === 'inventory_item' || typeRaw === 'inventory';
@@ -34,9 +44,9 @@ const normalizeProduct = (item) => {
         id: getEntityId(item),
         name: item?.name || '',
         sku: item?.sku || '',
-        categoryLabel: item?.category || '',
+        categoryLabel: toDisplayText(item?.category, ''),
         type: isStock ? 'Stock' : 'Service',
-        uom: item?.unit || item?.uom || 'pcs',
+        uom: toDisplayText(item?.unit ?? item?.uom, 'pcs'),
         purchasePrice: cost,
         sellingPrice: selling,
         reorderLevel: Number(item?.reorder_level ?? item?.reorderLevel ?? 0),

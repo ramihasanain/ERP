@@ -1,50 +1,253 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useHR } from '@/context/HRContext';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
+import Spinner from '@/core/Spinner';
+import useCustomQuery from '@/hooks/useQuery';
+import { get, post, put, remove } from '@/api';
 import { Plus, Trash2, Edit3, Search, Users, FolderOpen, X, Save, UserPlus, UserMinus } from 'lucide-react';
 
+const normalizeProjectStatus = (status) => {
+    const normalized = (status || '').toLowerCase();
+    if (normalized === 'active') return 'Active';
+    if (normalized === 'on_hold' || normalized === 'on hold') return 'On Hold';
+    if (normalized === 'completed') return 'Completed';
+    if (normalized === 'cancelled' || normalized === 'canceled') return 'Cancelled';
+    return status || 'Active';
+};
+
+const normalizeProjects = (response) => {
+    const items = Array.isArray(response?.data) ? response.data : [];
+    return items.map((project) => ({
+        id: project?.id || '',
+        name: project?.name || '',
+        client: project?.client || '',
+        status: normalizeProjectStatus(project?.status),
+        startDate: project?.start_date || '',
+        endDate: project?.end_date || '',
+        description: project?.description || '',
+        assignedEmployees: Array.isArray(project?.members)
+            ? project.members.map((member) => ({
+                memberId: member?.id || '',
+                employeeId: member?.employee || '',
+                employeeName: member?.employee_name || '',
+                role: member?.role || 'Member',
+            }))
+            : [],
+    }));
+};
+
+const normalizeEmployees = (response) => {
+    const items = Array.isArray(response?.data) ? response.data : [];
+    return items.map((employee) => ({
+        id: employee?.id || '',
+        firstName: employee?.first_name || '',
+        lastName: employee?.last_name || '',
+        status: normalizeProjectStatus(employee?.status),
+    }));
+};
+
+const normalizeRoles = (response) => {
+    const items = Array.isArray(response?.data) ? response.data : [];
+    return items.map((role) => ({
+        id: role?.id || '',
+        name: role?.name || '',
+    }));
+};
+
+const mapProjectDetailsToFormData = (project) => ({
+    name: project?.name || '',
+    client: project?.client || '',
+    status: normalizeProjectStatus(project?.status),
+    startDate: project?.start_date || project?.startDate || '',
+    endDate: project?.end_date || project?.endDate || '',
+    description: project?.description || '',
+});
+
+const mapStatusToApi = (status) => {
+    const normalized = (status || '').toLowerCase();
+    if (normalized === 'on hold') return 'on_hold';
+    if (normalized === 'cancelled') return 'cancelled';
+    if (normalized === 'completed') return 'completed';
+    return 'active';
+};
+
+const mapStatusFilterToApi = (status) => {
+    if (status === 'All') return '';
+    return mapStatusToApi(status);
+};
+
+const mapFormToApiPayload = (data) => ({
+    name: data?.name || '',
+    client: data?.client || '',
+    status: mapStatusToApi(data?.status),
+    start_date: data?.startDate || null,
+    end_date: data?.endDate || null,
+    description: data?.description || '',
+});
+
 const ProjectsManagement = () => {
-    const { projects, addProject, updateProject, deleteProject, employees, assignEmployeeToProject, removeEmployeeFromProject } = useHR();
+    const queryClient = useQueryClient();
+    const { employees } = useHR();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
     const [showForm, setShowForm] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
+    const [initialEditFormData, setInitialEditFormData] = useState(null);
+    const [isLoadingEdit, setIsLoadingEdit] = useState(false);
     const [expandedProject, setExpandedProject] = useState(null);
     const [assignModal, setAssignModal] = useState(null); // projectId
     const [assignEmpId, setAssignEmpId] = useState('');
-    const [assignRole, setAssignRole] = useState('Member');
+    const [assignRole, setAssignRole] = useState('');
     const [formData, setFormData] = useState({
         name: '', client: '', status: 'Active', startDate: '', endDate: '', description: ''
     });
+    const apiStatusFilter = useMemo(() => mapStatusFilterToApi(filterStatus), [filterStatus]);
+    const projectsUrl = useMemo(() => {
+        const params = new URLSearchParams();
+        const trimmedSearch = searchTerm.trim();
+        if (trimmedSearch) params.set('search', trimmedSearch);
+        if (apiStatusFilter) params.set('status', apiStatusFilter);
+        const queryString = params.toString();
+        return queryString ? `/api/hr/projects/?${queryString}` : '/api/hr/projects/';
+    }, [apiStatusFilter, searchTerm]);
 
-    const filteredProjects = projects.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.client?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'All' || p.status === filterStatus;
-        return matchesSearch && matchesStatus;
+    const projectsQuery = useCustomQuery(projectsUrl, ['hr-projects', searchTerm, apiStatusFilter], {
+        select: normalizeProjects,
     });
+    const assignEmployeesQuery = useCustomQuery('/api/hr/employees/', ['hr-assign-employees'], {
+        select: normalizeEmployees,
+        enabled: Boolean(assignModal),
+    });
+    const assignRolesQuery = useCustomQuery('/api/roles/', ['hr-assign-roles'], {
+        select: normalizeRoles,
+        enabled: Boolean(assignModal),
+    });
+
+    const apiProjects = useMemo(() => projectsQuery.data ?? [], [projectsQuery.data]);
+    const assignableEmployees = useMemo(
+        () => (assignEmployeesQuery.data ?? []).filter((employee) => employee.status === 'Active'),
+        [assignEmployeesQuery.data]
+    );
+    const assignableRoles = useMemo(() => assignRolesQuery.data ?? [], [assignRolesQuery.data]);
+    const assignMemberMutation = useMutation({
+        mutationFn: ({ projectId, employeeId, role }) =>
+            post(`/api/hr/projects/${projectId}/members/`, {
+                employee: employeeId,
+                role,
+            }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['hr-projects'] });
+            toast.success('Employee assigned successfully.');
+            setAssignModal(null);
+            setAssignEmpId('');
+            setAssignRole('');
+        },
+        onError: (error) => {
+            const message = error?.response?.data?.detail || error?.message || 'Failed to assign employee.';
+            toast.error(message);
+        },
+    });
+    const createProjectMutation = useMutation({
+        mutationFn: (payload) => post('/api/hr/projects/', payload),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['hr-projects'] });
+            toast.success('Project created successfully.');
+            resetForm();
+        },
+        onError: (error) => {
+            const message = error?.response?.data?.detail || error?.message || 'Failed to create project.';
+            toast.error(message);
+        },
+    });
+    const updateProjectMutation = useMutation({
+        mutationFn: ({ projectId, payload }) => put(`/api/hr/projects/${projectId}/`, payload),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['hr-projects'] });
+            toast.success('Project updated successfully.');
+            resetForm();
+        },
+        onError: (error) => {
+            const message = error?.response?.data?.detail || error?.message || 'Failed to update project.';
+            toast.error(message);
+        },
+    });
+    const removeMemberMutation = useMutation({
+        mutationFn: ({ projectId, memberId }) => remove(`/api/hr/projects/${projectId}/members/${memberId}/`),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['hr-projects'] });
+            toast.success('Employee removed from project.');
+        },
+        onError: (error) => {
+            const message = error?.response?.data?.detail || error?.message || 'Failed to remove member.';
+            toast.error(message);
+        },
+    });
+    const deleteProjectMutation = useMutation({
+        mutationFn: (projectId) => remove(`/api/hr/projects/${projectId}/`),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['hr-projects'] });
+            toast.success('Project deleted successfully.');
+        },
+        onError: (error) => {
+            const message = error?.response?.data?.detail || error?.message || 'Failed to delete project.';
+            toast.error(message);
+        },
+    });
+
+    const isEditUnchanged = Boolean(
+        editingProject &&
+        initialEditFormData &&
+        formData.name === initialEditFormData.name &&
+        formData.client === initialEditFormData.client &&
+        formData.status === initialEditFormData.status &&
+        formData.startDate === initialEditFormData.startDate &&
+        formData.endDate === initialEditFormData.endDate &&
+        formData.description === initialEditFormData.description
+    );
 
     const handleSubmit = () => {
         if (!formData.name) return;
+        const payload = mapFormToApiPayload(formData);
         if (editingProject) {
-            updateProject(editingProject.id, formData);
+            updateProjectMutation.mutate({ projectId: editingProject.id, payload });
         } else {
-            addProject(formData);
+            createProjectMutation.mutate(payload);
         }
-        resetForm();
     };
 
-    const handleEdit = (project) => {
+    const handleEdit = async (project) => {
+        setIsLoadingEdit(true);
         setEditingProject(project);
-        setFormData({ name: project.name, client: project.client || '', status: project.status, startDate: project.startDate || '', endDate: project.endDate || '', description: project.description || '' });
-        setShowForm(true);
+        try {
+            const projectDetails = await get(`/api/hr/projects/${project.id}/`);
+            const nextFormData = mapProjectDetailsToFormData(projectDetails);
+            setFormData(nextFormData);
+            setInitialEditFormData(nextFormData);
+        } catch (_error) {
+            const nextFormData = {
+                name: project.name,
+                client: project.client || '',
+                status: project.status,
+                startDate: project.startDate || '',
+                endDate: project.endDate || '',
+                description: project.description || '',
+            };
+            setFormData(nextFormData);
+            setInitialEditFormData(nextFormData);
+        } finally {
+            setIsLoadingEdit(false);
+            setShowForm(true);
+        }
     };
 
     const resetForm = () => {
         setShowForm(false);
         setEditingProject(null);
+        setInitialEditFormData(null);
         setFormData({ name: '', client: '', status: 'Active', startDate: '', endDate: '', description: '' });
     };
 
@@ -103,6 +306,11 @@ const ProjectsManagement = () => {
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{editingProject ? 'Edit Project' : 'New Project'}</h3>
                         <button onClick={resetForm} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}><X size={20} /></button>
                     </div>
+                    {isLoadingEdit && (
+                        <p style={{ marginTop: 0, marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                            Loading project details...
+                        </p>
+                    )}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                         <Input label="Project Name *" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. ERP Development" />
                         <Input label="Client" value={formData.client} onChange={e => setFormData({ ...formData, client: e.target.value })} placeholder="e.g. TechCo Inc." />
@@ -121,7 +329,13 @@ const ProjectsManagement = () => {
                     </div>
                     <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                         <Button variant="ghost" onClick={resetForm}>Cancel</Button>
-                        <Button icon={<Save size={16} />} onClick={handleSubmit}>{editingProject ? 'Update' : 'Create'}</Button>
+                        <Button
+                            icon={<Save size={16} />}
+                            onClick={handleSubmit}
+                            disabled={createProjectMutation.isPending || updateProjectMutation.isPending || isLoadingEdit || (editingProject && isEditUnchanged)}
+                        >
+                            {editingProject ? 'Update' : 'Create'}
+                        </Button>
                     </div>
                 </Card>
             )}
@@ -136,41 +350,53 @@ const ProjectsManagement = () => {
                                 <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Employee</label>
                                 <select style={selectStyle} value={assignEmpId} onChange={e => setAssignEmpId(e.target.value)}>
                                     <option value="">Select employee...</option>
-                                    {employees.filter(e => e.status === 'Active').map(emp => (
+                                    {assignableEmployees.map(emp => (
                                         <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName}</option>
                                     ))}
                                 </select>
+                                {assignEmployeesQuery.isLoading && (
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Loading employees...</span>
+                                )}
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Role in Project</label>
                                 <select style={selectStyle} value={assignRole} onChange={e => setAssignRole(e.target.value)}>
-                                    <option value="Member">Member</option>
-                                    <option value="Project Manager">Project Manager</option>
-                                    <option value="Lead Developer">Lead Developer</option>
-                                    <option value="Developer">Developer</option>
-                                    <option value="Designer">Designer</option>
-                                    <option value="QA Engineer">QA Engineer</option>
-                                    <option value="Consultant">Consultant</option>
+                                    <option value="">Select role...</option>
+                                    {assignableRoles.map(role => (
+                                        <option key={role.id} value={role.name}>{role.name}</option>
+                                    ))}
                                 </select>
+                                {assignRolesQuery.isLoading && (
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Loading roles...</span>
+                                )}
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-                            <Button variant="ghost" onClick={() => { setAssignModal(null); setAssignEmpId(''); }}>Cancel</Button>
+                            <Button variant="ghost" onClick={() => { setAssignModal(null); setAssignEmpId(''); setAssignRole(''); }}>Cancel</Button>
                             <Button icon={<UserPlus size={16} />} onClick={() => {
-                                if (assignEmpId) {
-                                    assignEmployeeToProject(assignModal, assignEmpId, assignRole);
-                                    setAssignModal(null);
-                                    setAssignEmpId('');
-                                    setAssignRole('Member');
+                                if (assignEmpId && assignRole) {
+                                    assignMemberMutation.mutate({
+                                        projectId: assignModal,
+                                        employeeId: assignEmpId,
+                                        role: assignRole,
+                                    });
                                 }
-                            }}>Assign</Button>
+                            }} disabled={assignMemberMutation.isPending}>Assign</Button>
                         </div>
                     </Card>
                 </div>
             )}
 
             {/* Projects List */}
-            {filteredProjects.map(project => (
+            {projectsQuery.isLoading && <Spinner />}
+
+            {projectsQuery.isError && (
+                <Card className="padding-lg" style={{ textAlign: 'center', color: 'var(--color-error)' }}>
+                    Failed to load projects from API.
+                </Card>
+            )}
+
+            {apiProjects.map(project => (
                 <Card key={project.id} className="padding-lg">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -193,9 +419,15 @@ const ProjectsManagement = () => {
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <Button size="sm" variant="outline" icon={<UserPlus size={14} />} onClick={() => setAssignModal(project.id)}>Assign</Button>
+                            <Button size="sm" variant="outline" icon={<UserPlus size={14} />} onClick={() => { setAssignModal(project.id); setAssignEmpId(''); setAssignRole(''); }}>Assign</Button>
                             <button onClick={() => handleEdit(project)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary-600)' }}><Edit3 size={16} /></button>
-                            <button onClick={() => deleteProject(project.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)' }}><Trash2 size={16} /></button>
+                            <button
+                                onClick={() => deleteProjectMutation.mutate(project.id)}
+                                disabled={deleteProjectMutation.isPending}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)' }}
+                            >
+                                <Trash2 size={16} />
+                            </button>
                         </div>
                     </div>
 
@@ -213,15 +445,20 @@ const ProjectsManagement = () => {
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                             {project.assignedEmployees.map(ae => (
-                                <div key={ae.employeeId} style={{
+                                <div key={ae.memberId || ae.employeeId} style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                                     padding: '6px 12px', borderRadius: '20px',
                                     background: 'var(--color-bg-subtle)', fontSize: '0.8rem', border: '1px solid var(--color-border)', color: 'var(--color-text-main)',
                                 }}>
-                                    <span style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{getEmpName(ae.employeeId)}</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{ae.employeeName || getEmpName(ae.employeeId)}</span>
                                     <span style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>({ae.role})</span>
                                     <button
-                                        onClick={() => removeEmployeeFromProject(project.id, ae.employeeId)}
+                                        onClick={() => {
+                                            if (ae.memberId) {
+                                                removeMemberMutation.mutate({ projectId: project.id, memberId: ae.memberId });
+                                            }
+                                        }}
+                                        disabled={!ae.memberId || removeMemberMutation.isPending}
                                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)', padding: 0, display: 'flex' }}
                                     >
                                         <X size={14} />
@@ -236,7 +473,7 @@ const ProjectsManagement = () => {
                 </Card>
             ))}
 
-            {filteredProjects.length === 0 && (
+            {apiProjects.length === 0 && !projectsQuery.isLoading && (
                 <Card className="padding-lg" style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                     No projects found. Create your first project to get started.
                 </Card>

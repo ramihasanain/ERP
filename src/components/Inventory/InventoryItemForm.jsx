@@ -18,7 +18,15 @@ const normalizeArrayResponse = (response) => {
 
 const getCategoryId = (value) => {
     if (typeof value === 'string') return value;
-    if (value && typeof value === 'object') return value.id || value.uuid || '';
+    if (value && typeof value === 'object') return value.id || value.category_id || value.uuid || '';
+    return '';
+};
+
+const getUnitValue = (value) => {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object') {
+        return value.id || value.unit_id || value.uuid || value.name || '';
+    }
     return '';
 };
 
@@ -35,21 +43,21 @@ const defaultFormData = {
 };
 
 const mapProductToForm = (product) => {
-    const typeRaw = String(product?.type ?? '').toLowerCase();
-    const isStock = typeRaw.includes('stock') || typeRaw === 'inventory_item' || typeRaw === 'inventory';
+    const typeRaw = String(product?.type?.name ?? product?.type ?? '').toLowerCase();
+    const isStock =
+        typeRaw.includes('stock') ||
+        typeRaw === 'inventory_item' ||
+        typeRaw === 'inventory' ||
+        typeRaw === 'stock_item';
+
+    const categoryValue = product?.category_id || product?.category;
 
     return {
         name: product?.name || '',
         sku: product?.sku || '',
         type: isStock ? 'Stock' : 'Service',
-        uom:
-            product?.unit_id ||
-            product?.unit?.id ||
-            product?.unit ||
-            product?.uom_id ||
-            product?.uom ||
-            '',
-        categoryId: getCategoryId(product?.category_id || product?.category),
+        uom: getUnitValue(product?.unit_id || product?.unit?.id || product?.unit || product?.uom_id || product?.uom),
+        categoryId: getCategoryId(categoryValue) || (typeof categoryValue === 'string' ? categoryValue : ''),
         purchasePrice: String(product?.cost_price ?? product?.purchasePrice ?? ''),
         sellingPrice: String(product?.selling_price ?? product?.sellingPrice ?? ''),
         reorderLevel: String(product?.reorder_level ?? product?.reorderLevel ?? ''),
@@ -68,10 +76,31 @@ const buildPayload = (formData) => ({
     reorder_level: formData.type === 'Stock' ? parseInt(formData.reorderLevel || '0', 10) : 0,
 });
 
+const resolveUomValue = (value, unitOptions) => {
+    if (!value || !unitOptions?.length) return value || '';
+
+    const matchesById = unitOptions.some((unit) => unit.id === value);
+    if (matchesById) return value;
+
+    const matchedByName = unitOptions.find((unit) => unit.name.toLowerCase() === String(value).toLowerCase());
+    return matchedByName?.id || value;
+};
+
+const resolveCategoryValue = (value, categoryOptions) => {
+    if (!value || !categoryOptions?.length) return value || '';
+
+    const matchesById = categoryOptions.some((category) => category.id === value);
+    if (matchesById) return value;
+
+    const matchedByName = categoryOptions.find((category) => category.name.toLowerCase() === String(value).toLowerCase());
+    return matchedByName?.id || value;
+};
+
 const InventoryItemForm = ({ isEdit = false }) => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [formData, setFormData] = useState(defaultFormData);
+    const [initialPayload, setInitialPayload] = useState(null);
 
     const categoriesQuery = useCustomQuery('/api/inventory/categories/', ['inventory-categories-form'], {
         select: (response) =>
@@ -97,39 +126,54 @@ const InventoryItemForm = ({ isEdit = false }) => {
     const isBusy = createProduct.isPending || updateProduct.isPending;
     const isLoading = categoriesQuery.isPending || unitsQuery.isPending || (isEdit && productQuery.isPending);
     const hasError = categoriesQuery.isError || unitsQuery.isError || (isEdit && productQuery.isError);
-
-    useEffect(() => {
-        if (!isEdit) {
-            setFormData(defaultFormData);
-            return;
-        }
-        if (productQuery.data) {
-            setFormData(mapProductToForm(productQuery.data));
-        }
-    }, [isEdit, productQuery.data]);
-
     const categoryOptions = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
     const unitOptions = useMemo(() => unitsQuery.data ?? [], [unitsQuery.data]);
 
     useEffect(() => {
-        if (!unitOptions.length) return;
+        if (!isEdit) {
+            setFormData(defaultFormData);
+            setInitialPayload(null);
+            return;
+        }
+        if (productQuery.data) {
+            const mappedForm = mapProductToForm(productQuery.data);
+            const normalizedForm = {
+                ...mappedForm,
+                uom: resolveUomValue(mappedForm.uom, unitOptions),
+                categoryId: resolveCategoryValue(mappedForm.categoryId, categoryOptions),
+            };
+            setFormData(normalizedForm);
+            setInitialPayload(buildPayload(normalizedForm));
+        }
+    }, [isEdit, productQuery.data, unitOptions, categoryOptions]);
+
+    useEffect(() => {
+        if (!unitOptions.length && !categoryOptions.length) return;
 
         setFormData((prev) => {
-            if (!prev.uom) {
-                return { ...prev, uom: unitOptions[0].id };
+            let next = prev;
+
+            if (unitOptions.length) {
+                if (!next.uom) {
+                    next = { ...next, uom: unitOptions[0].id };
+                } else {
+                    const resolvedUom = resolveUomValue(next.uom, unitOptions);
+                    if (resolvedUom !== next.uom) {
+                        next = { ...next, uom: resolvedUom };
+                    }
+                }
             }
 
-            const matchesById = unitOptions.some((unit) => unit.id === prev.uom);
-            if (matchesById) return prev;
-
-            const matchedByName = unitOptions.find((unit) => unit.name.toLowerCase() === String(prev.uom).toLowerCase());
-            if (matchedByName) {
-                return { ...prev, uom: matchedByName.id };
+            if (categoryOptions.length && next.categoryId) {
+                const resolvedCategory = resolveCategoryValue(next.categoryId, categoryOptions);
+                if (resolvedCategory !== next.categoryId) {
+                    next = { ...next, categoryId: resolvedCategory };
+                }
             }
 
-            return prev;
+            return next;
         });
-    }, [unitOptions]);
+    }, [unitOptions, categoryOptions]);
 
     const handleChange = (e) => {
         setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -153,6 +197,9 @@ const InventoryItemForm = ({ isEdit = false }) => {
             toast.error(message);
         }
     };
+
+    const isUnchanged =
+        isEdit && initialPayload ? JSON.stringify(buildPayload(formData)) === JSON.stringify(initialPayload) : false;
 
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
@@ -255,7 +302,7 @@ const InventoryItemForm = ({ isEdit = false }) => {
                         </div>
 
                         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
-                            <Button type="submit" variant="primary" icon={<CheckCircle size={18} />} disabled={isBusy}>
+                            <Button type="submit" variant="primary" icon={<CheckCircle size={18} />} disabled={isBusy || isUnchanged}>
                                 {isEdit ? (isBusy ? 'Updating…' : 'Update Item') : isBusy ? 'Creating…' : 'Create Item'}
                             </Button>
                         </div>

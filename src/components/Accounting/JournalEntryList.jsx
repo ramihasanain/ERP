@@ -33,7 +33,7 @@ const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
                 <thead>
                     <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
                         <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Date</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>ID</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Title</th>
                         <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Reference</th>
                         <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Source</th>
                         <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Description</th>
@@ -65,7 +65,7 @@ const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
                                     onClick={() => onViewEntry?.(entry.id)}
                                 >
                                     <td style={{ padding: '1rem 1rem' }}>{entry.date}</td>
-                                    <td style={{ padding: '1rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{entry.id}</td>
+                                    <td style={{ padding: '1rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{entry.title}</td>
                                     <td style={{ padding: '1rem 1rem' }}>{entry.reference || '-'}</td>
                                     <td style={{ padding: '1rem 1rem' }}>
                                         {isAuto ? (
