@@ -29,7 +29,7 @@ const ChartOfAccounts = () => {
             params.set('is_system_account', 'false');
         }
         const queryString = params.toString();
-        return `/accounting/accounts/tree${queryString ? `?${queryString}` : ''}`;
+        return `/accounting/accounts/tree/${queryString ? `?${queryString}` : ''}`;
     }, [filterType, filterSource]);
 
     const treeQueryKey = useMemo(
