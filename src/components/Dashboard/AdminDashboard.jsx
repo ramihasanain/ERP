@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowUpRight, ArrowDownRight,
@@ -7,7 +7,7 @@ import {
     Wallet, FileText, UserCheck, Truck, ChevronRight
 } from 'lucide-react';
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
     PieChart, Pie, Cell, Legend
 } from 'recharts';
 import Card from '@/components/Shared/Card';
@@ -85,6 +85,28 @@ const recentActivity = [
     { id: 5, text: 'Employee Sarah Ahmed promoted', dept: 'HR', time: '1d ago', color: '#3b82f6' },
 ];
 
+const useElementWidth = () => {
+    const elementRef = useRef(null);
+    const [width, setWidth] = useState(0);
+
+    useEffect(() => {
+        const node = elementRef.current;
+        if (!node) return undefined;
+
+        const updateWidth = () => {
+            setWidth(node.getBoundingClientRect().width || 0);
+        };
+
+        updateWidth();
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(node);
+
+        return () => observer.disconnect();
+    }, []);
+
+    return { elementRef, width };
+};
+
 // ── Main Component ─────────────────────────────────────
 
 const AdminDashboard = () => {
@@ -92,6 +114,8 @@ const AdminDashboard = () => {
     const [chartFilter, setChartFilter] = useState('monthly');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const { elementRef: revenueChartRef, width: revenueChartWidth } = useElementWidth();
+    const { elementRef: expenseChartRef, width: expenseChartWidth } = useElementWidth();
 
     const chartData = useMemo(() => {
         let filtered = allDailyData;
@@ -151,9 +175,9 @@ const AdminDashboard = () => {
             </div>
 
             {/* ── Charts Row ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', minWidth: 0 }}>
                 {/* Revenue Trend */}
-                <Card className="padding-lg">
+                <Card className="padding-lg" style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                         <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Revenue vs Expenses</h3>
                         <div style={{ display: 'flex', gap: '0.25rem', background: 'color-mix(in srgb, var(--color-text-main) 8%, var(--color-bg-card))', borderRadius: '0.5rem', padding: '3px' }}>
@@ -190,9 +214,9 @@ const AdminDashboard = () => {
                             </button>
                         )}
                     </div>
-                    <div style={{ width: '100%', height: '250px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
+                    <div ref={revenueChartRef} style={{ width: '100%', minWidth: 0, height: '250px', minHeight: 250 }}>
+                        {revenueChartWidth > 0 && (
+                            <AreaChart width={revenueChartWidth} height={250} data={chartData}>
                                 <defs>
                                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
@@ -211,16 +235,16 @@ const AdminDashboard = () => {
                                 <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#10b981" strokeWidth={2.5} fill="url(#revGrad)" />
                                 <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={2.5} fill="url(#expGrad)" />
                             </AreaChart>
-                        </ResponsiveContainer>
+                        )}
                     </div>
                 </Card>
 
                 {/* Expense Breakdown */}
-                <Card className="padding-lg">
+                <Card className="padding-lg" style={{ minWidth: 0 }}>
                     <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>Expense Breakdown</h3>
-                    <div style={{ width: '100%', height: '250px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
+                    <div ref={expenseChartRef} style={{ width: '100%', minWidth: 0, height: '250px', minHeight: 250 }}>
+                        {expenseChartWidth > 0 && (
+                            <PieChart width={expenseChartWidth} height={250}>
                                 <Pie data={expenseBreakdown} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value">
                                     {expenseBreakdown.map((_, i) => (
                                         <Cell key={i} fill={PIE_COLORS[i]} />
@@ -229,7 +253,7 @@ const AdminDashboard = () => {
                                 <Legend iconType="circle" />
                                 <RechartsTooltip contentStyle={chartTooltipStyle} labelStyle={{ color: 'var(--color-text-main)' }} />
                             </PieChart>
-                        </ResponsiveContainer>
+                        )}
                     </div>
                 </Card>
             </div>

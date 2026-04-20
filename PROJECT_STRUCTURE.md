@@ -70,15 +70,34 @@ Only move components to `Shared` when reused by at least 2 modules.
 
 ## 3) Module Blueprint (Copy this for new ERP domains)
 
-For each new domain module, follow:
+For each new domain module, follow this folder-first pattern:
 
 ```text
 src/components/<Module>/
-  <Module>Manager.tsx          # main page
-  <Module>Modal.tsx            # add/edit modal (optional split)
-  <Module>Types.ts             # types/interfaces
-  <Module>Constants.ts         # static options, enums, labels
+  <FeatureName>/               # feature folder (recommended for large modules)
+    index.jsx                  # orchestrator: state + handlers + composition
+    use<FeatureName>Data.js    # React Query reads/writes and API mutations
+    <FeatureName>Header.jsx    # title/actions + filters/search
+    <FeatureName>Form.jsx      # create/edit form UI
+    <FeatureName>List.jsx      # table/list cards and row actions
+    <FeatureName>Modal.jsx     # focused modal(s) like assign/confirm
+    utils.js                   # mappers, constants, view helpers
 ```
+
+### Real example from this repo
+
+```text
+src/components/hr/ProjectsManagement/
+  index.jsx
+  useProjectsManagementData.js
+  ProjectsHeaderFilters.jsx
+  ProjectFormCard.jsx
+  ProjectsList.jsx
+  AssignEmployeeModal.jsx
+  utils.js
+```
+
+This is now the reference implementation for splitting large ERP feature components.
 
 Example replacements for another ERP:
 

@@ -51,6 +51,7 @@ import AddInventoryItem from '@/components/Inventory/AddInventoryItem';
 import EditInventoryItem from '@/components/Inventory/EditInventoryItem';
 import PurchaseOrderList from '@/components/Procurement/PurchaseOrderList';
 import PurchaseOrderForm from '@/components/Procurement/PurchaseOrderForm';
+import PurchaseOrderEdit from '@/components/Procurement/PurchaseOrderEdit';
 import VendorInvoiceList from '@/components/Procurement/VendorInvoiceList';
 import VendorInvoiceForm from '@/components/Procurement/VendorInvoiceForm';
 import Vendors from '@/components/Inventory/Vendors';
@@ -204,6 +205,7 @@ export default function AppRoutes() {
           <Route path="items/:id/edit" element={<EditInventoryItem />} />
           <Route path="purchase-orders" element={<PurchaseOrderList />} />
           <Route path="purchase-orders/new" element={<PurchaseOrderForm />} />
+          <Route path="purchase-orders/:id/edit" element={<PurchaseOrderEdit />} />
           <Route path="purchase-orders/:id" element={<PurchaseOrderForm />} />
           <Route path="invoices" element={<VendorInvoiceList />} />
           <Route path="invoices/new" element={<VendorInvoiceForm />} />

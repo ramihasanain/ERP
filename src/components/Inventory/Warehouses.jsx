@@ -85,7 +85,7 @@ const Warehouses = () => {
         ['inventory-warehouses', 'inventory-warehouse-detail']
     );
     const deleteWarehouse = useCustomRemove(
-        (id) => `/api/inventory/warehouses/${id}/`,
+        (id) => `/api/inventory/warehouses/${id}/delete/`,
         ['inventory-warehouses', 'inventory-warehouse-detail']
     );
 
