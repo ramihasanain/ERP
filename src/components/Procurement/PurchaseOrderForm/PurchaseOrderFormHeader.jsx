@@ -14,11 +14,18 @@ const PurchaseOrderFormHeader = ({ isEdit, totalValue, onBack }) => (
             Back to List
         </Button>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>{isEdit ? 'Edit Purchase Order' : 'New Purchase Order'}</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div>
+                <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                    {isEdit ? 'Edit Purchase Order' : 'New Purchase Order'}
+                </h1>
+                <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
+                    {isEdit ? 'Purchase Order' : 'Create Purchase Order'}
+                </p>
+            </div>
             <div
                 style={{
-                    padding: '0.5rem 1rem',
+                    padding: '0.45rem 0.9rem',
                     background: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))',
                     borderRadius: '4px',
                     fontWeight: 600,

@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { post } from '@/api';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomRemove } from '@/hooks/useMutation';
 import { normalizePurchaseOrdersResponse, STATUS_UI_TO_API_MAP } from './utils';
 
 const usePurchaseOrderListData = ({ filterStatus, debouncedSearchTerm }) => {
+    const queryClient = useQueryClient();
     const purchaseOrdersUrl = useMemo(() => {
         const queryParams = new URLSearchParams();
         const normalizedSearch = debouncedSearchTerm.trim();
@@ -31,10 +34,18 @@ const usePurchaseOrderListData = ({ filterStatus, debouncedSearchTerm }) => {
         ['purchasing-purchase-orders']
     );
 
+    const setPurchaseOrderStatus = useMutation({
+        mutationFn: ({ id, status }) => post(`/api/purchasing/purchase-orders/${id}/set-status/${status}/`, {}),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['purchasing-purchase-orders'] });
+        },
+    });
+
     return {
         purchaseOrdersQuery,
         purchaseOrders: purchaseOrdersQuery.data ?? [],
         deletePurchaseOrder,
+        setPurchaseOrderStatus,
     };
 };
 

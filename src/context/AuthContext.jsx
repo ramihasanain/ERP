@@ -41,19 +41,40 @@ export const AuthProvider = ({ children }) => {
             responseData?.results?.user ||
             null;
 
+        const resolvedRole =
+            responseUser?.role ||
+            responseData?.role ||
+            (responseData?.is_superuser ? 'admin' : fallbackRole);
+
         const normalizedUser = {
             ...responseUser,
             email: responseUser?.email || responseData?.email || '',
-            role: responseUser?.role || fallbackRole,
+            role: resolvedRole,
             name: responseUser?.name || responseUser?.full_name || responseData?.full_name || responseData?.name || 'User',
         };
 
-        return { tokenPayload, normalizedUser };
+        const normalizedAuthPayload = {
+            access: tokenPayload.access || null,
+            refresh: tokenPayload.refresh || null,
+            domain: responseData?.domain || responseData?.tenant_domain || null,
+            is_superuser: Boolean(responseData?.is_superuser),
+            permissions: responseData?.permissions || responseUser?.permissions || {},
+            role: responseData?.role ?? responseUser?.role ?? null,
+            user: {
+                id: responseUser?.id || responseData?.id || null,
+                full_name: responseUser?.full_name || responseData?.full_name || normalizedUser.name,
+                company_name: responseUser?.company_name || responseData?.company_name || '',
+                email: responseUser?.email || responseData?.email || '',
+                role: resolvedRole,
+            },
+        };
+
+        return { tokenPayload, normalizedUser, normalizedAuthPayload };
     };
 
     const login = async (email, password, role = 'admin') => {
         const response = await loginMutation.mutateAsync({ email, password });
-        const { tokenPayload, normalizedUser } = normalizeAuthResponse(response, role);
+        const { tokenPayload, normalizedUser, normalizedAuthPayload } = normalizeAuthResponse(response, role);
         const tenantDomain = extractTenantDomain(response);
 
         storeTokens(tokenPayload);
@@ -62,14 +83,14 @@ export const AuthProvider = ({ children }) => {
         }
 
         setUser(normalizedUser);
-        storeUser(normalizedUser);
+        storeUser(normalizedAuthPayload);
 
         return normalizedUser;
     };
 
     const register = async (payload = {}) => {
         const response = await registerMutation.mutateAsync(payload);
-        const { tokenPayload, normalizedUser } = normalizeAuthResponse(response, 'admin');
+        const { tokenPayload, normalizedUser, normalizedAuthPayload } = normalizeAuthResponse(response, 'admin');
         const tenantDomain = extractTenantDomain(response);
 
         storeTokens(tokenPayload);
@@ -78,7 +99,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         setUser(normalizedUser);
-        storeUser(normalizedUser);
+        storeUser(normalizedAuthPayload);
 
         return response;
     };

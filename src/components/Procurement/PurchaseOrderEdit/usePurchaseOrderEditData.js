@@ -1,5 +1,5 @@
 import useCustomQuery from '@/hooks/useQuery';
-import { useCustomPut } from '@/hooks/useMutation';
+import { useCustomPatch, useCustomPut } from '@/hooks/useMutation';
 import { normalizeArrayResponse, normalizeOrderDetails, normalizeProduct, normalizeVendor } from './utils';
 
 const usePurchaseOrderEditData = ({ id }) => {
@@ -24,12 +24,17 @@ const usePurchaseOrderEditData = ({ id }) => {
         () => `/api/purchasing/purchase-orders/${id}/`,
         [['purchasing-purchase-orders'], ['purchasing-purchase-order-edit-details', id]]
     );
+    const updatePurchaseOrderStatus = useCustomPatch(
+        `/api/purchasing/purchase-orders/${id}/`,
+        [['purchasing-purchase-orders'], ['purchasing-purchase-order-edit-details', id]]
+    );
 
     return {
         orderQuery,
         vendorsQuery,
         productsQuery,
         updatePurchaseOrder,
+        updatePurchaseOrderStatus,
     };
 };
 

@@ -17,7 +17,7 @@ const PurchaseOrderEdit = () => {
     const [currency, setCurrency] = useState('JOD');
     const [lines, setLines] = useState([emptyLine()]);
 
-    const { orderQuery, vendorsQuery, productsQuery, updatePurchaseOrder } = usePurchaseOrderEditData({ id });
+    const { orderQuery, vendorsQuery, productsQuery, updatePurchaseOrder, updatePurchaseOrderStatus } = usePurchaseOrderEditData({ id });
 
     useEffect(() => {
         if (!orderQuery.data) return;
@@ -99,6 +99,16 @@ const PurchaseOrderEdit = () => {
             toast.error(message);
         }
     };
+    const handleMarkPendingApproval = async () => {
+        try {
+            await updatePurchaseOrderStatus.mutateAsync({ status: 'pending_approval' });
+            toast.success('Purchase order marked as pending approval.');
+            navigate('/admin/inventory/purchase-orders');
+        } catch (error) {
+            const message = error?.response?.data?.detail || 'Failed to update purchase order status.';
+            toast.error(message);
+        }
+    };
 
     const isLoading = orderQuery.isLoading || vendorsQuery.isLoading || productsQuery.isLoading;
     const hasError = orderQuery.isError || vendorsQuery.isError || productsQuery.isError;
@@ -144,6 +154,8 @@ const PurchaseOrderEdit = () => {
                     onRemoveLine={removeLine}
                     onCancel={() => navigate('/admin/inventory/purchase-orders')}
                     onSave={handleSave}
+                    onMarkPendingApproval={handleMarkPendingApproval}
+                    isStatusUpdating={updatePurchaseOrderStatus.isPending}
                 />
             )}
         </div>

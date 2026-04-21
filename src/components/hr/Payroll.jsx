@@ -36,10 +36,14 @@ const normalizeDashboard = (response) => {
     const tableCurrency = periodList[0]?.currency || 'USD';
     return {
         totalPayrollCost: response?.total_payroll_cost ?? '0',
+        totalPayrollCostMeta: response?.total_payroll_cost_meta ?? null,
         costCurrency: tableCurrency,
         activeEmployees: Number(response?.active_employees) || 0,
+        activeEmployeesMeta: response?.active_employees_meta ?? null,
         nextPayDate: response?.next_pay_date ?? null,
+        nextPayDateMeta: response?.next_pay_date_meta ?? null,
         lastRunStatus: response?.last_run_status ?? null,
+        lastRunStatusMeta: response?.last_run_status_meta ?? null,
         periodsCount: Number(response?.periods?.count) || periodList.length,
         periodRows: periodList,
     };
@@ -157,7 +161,9 @@ const Payroll = () => {
                                             <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
                                                 {formatMoneyAmount(dashboard.totalPayrollCost, dashboard.costCurrency)}
                                             </div>
-                                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>Aggregate payroll cost</p>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+                                                {dashboard.totalPayrollCostMeta || 'Aggregate payroll cost'}
+                                            </p>
                                         </div>
                                     </div>
                                 </Card>
@@ -165,14 +171,14 @@ const Payroll = () => {
                                     <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>Active Employees</div>
                                     <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{dashboard.activeEmployees}</div>
                                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
-                                        {dashboard.periodsCount} payroll period{dashboard.periodsCount === 1 ? '' : 's'} on record
+                                        {dashboard.activeEmployeesMeta || `${dashboard.periodsCount} payroll period${dashboard.periodsCount === 1 ? '' : 's'} on record`}
                                     </p>
                                 </Card>
                                 <Card className="padding-md">
                                     <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>Next Pay Date</div>
                                     <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{nextPayLabel ?? '—'}</div>
                                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
-                                        {nextPayLabel ? 'Scheduled pay run' : 'Not scheduled'}
+                                        {dashboard.nextPayDateMeta || (nextPayLabel ? 'Scheduled pay run' : 'Not scheduled')}
                                     </p>
                                 </Card>
                                 <Card className="padding-md">
@@ -181,7 +187,7 @@ const Payroll = () => {
                                         {lastRun?.label ?? '—'}
                                     </div>
                                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
-                                        {[lastRun?.journal_reference, lastRun?.period_name].filter(Boolean).join(' · ') || 'No recent run'}
+                                        {dashboard.lastRunStatusMeta || [lastRun?.journal_reference, lastRun?.period_name].filter(Boolean).join(' · ') || 'No recent run'}
                                     </p>
                                 </Card>
                             </div>

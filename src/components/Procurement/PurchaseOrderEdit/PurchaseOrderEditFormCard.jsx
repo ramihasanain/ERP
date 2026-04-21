@@ -20,6 +20,8 @@ const PurchaseOrderEditFormCard = ({
     onRemoveLine,
     onCancel,
     onSave,
+    onMarkPendingApproval,
+    isStatusUpdating,
 }) => (
     <>
         <Card className="padding-md" style={{ marginBottom: '1.25rem' }}>
@@ -145,6 +147,14 @@ const PurchaseOrderEditFormCard = ({
             <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                 <Button variant="outline" onClick={onCancel} className="font-medium cursor-pointer">
                     Cancel
+                </Button>
+                <Button
+                    variant="outline"
+                    onClick={onMarkPendingApproval}
+                    isLoading={isStatusUpdating}
+                    className="font-medium cursor-pointer"
+                >
+                    Mark Pending Approval
                 </Button>
                 <Button
                     variant="primary"

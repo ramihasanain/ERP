@@ -76,7 +76,22 @@ export const getStoredUser = () => {
   if (!user) return null;
 
   try {
-    return JSON.parse(user);
+    const parsed = JSON.parse(user);
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    // Support new auth payload shape while preserving old consumer expectations.
+    if (parsed.user && typeof parsed.user === 'object') {
+      const resolvedRole = parsed.user.role || parsed.role || (parsed.is_superuser ? 'admin' : null);
+      const resolvedName = parsed.user.name || parsed.user.full_name || 'User';
+
+      return {
+        ...parsed.user,
+        role: resolvedRole,
+        name: resolvedName,
+      };
+    }
+
+    return parsed;
   } catch {
     return null;
   }

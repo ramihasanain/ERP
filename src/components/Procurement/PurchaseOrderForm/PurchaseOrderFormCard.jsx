@@ -22,8 +22,8 @@ const PurchaseOrderFormCard = ({
     onRejection,
 }) => (
     <>
-        <Card className="padding-md" style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+        <Card className="padding-md" style={{ marginBottom: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '1rem' }}>
                 <div>
                     <label style={labelStyle} className="font-medium">Vendor</label>
                     <select
@@ -63,84 +63,88 @@ const PurchaseOrderFormCard = ({
         </Card>
 
         <Card className="padding-md">
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem' }}>
-                <thead>
-                    <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)' }}>
-                        <th style={thStyle}>Item</th>
-                        <th style={thStyle}>Quantity</th>
-                        <th style={thStyle}>Unit Cost</th>
-                        <th style={thStyle}>Total Cost</th>
-                        <th style={thStyle} />
-                    </tr>
-                </thead>
-                <tbody>
-                    {lineItems.map((line, index) => (
-                        <tr key={index} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                            <td style={tdStyle}>
-                                <select
-                                    value={line.itemId}
-                                    onChange={(event) => onLineChange(index, 'itemId', event.target.value)}
-                                    style={{ ...inputStyle, width: '100%' }}
-                                    className="font-normal cursor-pointer"
-                                >
-                                    <option value="">Select Item</option>
-                                    {products
-                                        .filter((item) => item.type === 'stock_item')
-                                        .map((item) => (
-                                            <option key={item.id} value={item.id}>
-                                                {item.name} ({item.sku})
-                                            </option>
-                                        ))}
-                                </select>
-                            </td>
-                            <td style={tdStyle}>
-                                <input
-                                    type="number"
-                                    value={line.quantity}
-                                    onChange={(event) => onLineChange(index, 'quantity', event.target.value)}
-                                    style={{ ...inputStyle, width: '80px' }}
-                                    className="font-normal"
-                                />
-                            </td>
-                            <td style={tdStyle}>
-                                <input
-                                    type="number"
-                                    value={line.unitCost}
-                                    disabled
-                                    style={disabledInputStyle}
-                                    className="font-normal"
-                                />
-                            </td>
-                            <td style={{ ...tdStyle, fontWeight: 600 }}>
-                                {line.totalCost.toFixed(2)}
-                            </td>
-                            <td style={tdStyle}>
-                                <button
-                                    onClick={() => onRemoveLine(index)}
-                                    style={removeButtonStyle}
-                                    className="cursor-pointer"
-                                    type="button"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </td>
+            <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', minWidth: '780px', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)' }}>
+                            <th style={thStyle}>Item</th>
+                            <th style={thStyle}>Quantity</th>
+                            <th style={thStyle}>Unit Cost</th>
+                            <th style={thStyle}>Total Cost</th>
+                            <th style={thStyle} />
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {lineItems.map((line, index) => (
+                            <tr key={index} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                <td style={tdStyle}>
+                                    <select
+                                        value={line.itemId}
+                                        onChange={(event) => onLineChange(index, 'itemId', event.target.value)}
+                                        style={{ ...inputStyle, width: '100%' }}
+                                        className="font-normal cursor-pointer"
+                                    >
+                                        <option value="">Select Item</option>
+                                        {products
+                                            .filter((item) => item.type === 'stock_item')
+                                            .map((item) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {item.name} ({item.sku})
+                                                </option>
+                                            ))}
+                                    </select>
+                                </td>
+                                <td style={tdStyle}>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={line.quantity}
+                                        onChange={(event) => onLineChange(index, 'quantity', event.target.value)}
+                                        style={{ ...inputStyle, width: '88px' }}
+                                        className="font-normal"
+                                    />
+                                </td>
+                                <td style={tdStyle}>
+                                    <input
+                                        type="number"
+                                        value={line.unitCost}
+                                        disabled
+                                        style={disabledInputStyle}
+                                        className="font-normal"
+                                    />
+                                </td>
+                                <td style={{ ...tdStyle, fontWeight: 700 }}>
+                                    {Number(line.totalCost || 0).toLocaleString()} JOD
+                                </td>
+                                <td style={tdStyle}>
+                                    <button
+                                        onClick={() => onRemoveLine(index)}
+                                        style={removeButtonStyle}
+                                        className="cursor-pointer"
+                                        type="button"
+                                        aria-label="Remove line"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
             <Button
                 variant="outline"
                 icon={<Plus size={16} />}
                 onClick={onAddLine}
-                style={{ marginBottom: '2rem' }}
+                style={{ marginTop: '1rem', marginBottom: '1.5rem' }}
                 disabled={isReadOnly}
                 className="font-medium cursor-pointer"
             >
                 Add Line Item
             </Button>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                 <Button variant="outline" onClick={onCancel} className="font-medium cursor-pointer">Cancel</Button>
 
                 {status === 'Draft' && (
@@ -174,12 +178,13 @@ const PurchaseOrderFormCard = ({
 const labelStyle = {
     display: 'block',
     marginBottom: '0.4rem',
-    fontWeight: 500,
-    fontSize: '0.9rem',
+    fontWeight: 600,
+    fontSize: '0.86rem',
     color: 'var(--color-text-main)',
 };
 
 const inputStyle = {
+    width: '100%',
     padding: '0.6rem',
     borderRadius: '4px',
     border: '1px solid var(--color-border)',
@@ -190,19 +195,20 @@ const inputStyle = {
 
 const thStyle = {
     textAlign: 'left',
-    padding: '1rem',
-    fontSize: '0.85rem',
+    padding: '0.9rem',
+    fontSize: '0.83rem',
     color: 'var(--color-text-secondary)',
     fontWeight: 600,
+    whiteSpace: 'nowrap',
 };
 
 const tdStyle = {
-    padding: '1rem',
+    padding: '0.9rem',
     verticalAlign: 'middle',
 };
 
 const disabledInputStyle = {
-    width: '100px',
+    width: '120px',
     border: 'none',
     background: 'transparent',
     padding: 0,
@@ -217,6 +223,9 @@ const removeButtonStyle = {
     border: 'none',
     background: 'none',
     color: 'var(--color-danger)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: 0,
 };
 
 export default PurchaseOrderFormCard;

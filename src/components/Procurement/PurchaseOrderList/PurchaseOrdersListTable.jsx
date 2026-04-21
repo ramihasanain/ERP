@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Eye, Pencil, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle, Eye, Pencil, ThumbsDown, ThumbsUp, Trash2, XCircle } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Spinner from '@/core/Spinner';
@@ -12,6 +12,9 @@ const PurchaseOrdersListTable = ({
     onView,
     onEdit,
     onDelete,
+    onApprove,
+    onReject,
+    isStatusUpdating,
 }) => (
     <Card>
         <div style={{ width: '100%', overflowX: 'auto' }}>
@@ -82,26 +85,55 @@ const PurchaseOrdersListTable = ({
                                     >
                                         View
                                     </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        style={{ paddingInline: '0.45rem' }}
-                                        icon={<Pencil size={14} />}
-                                        onClick={() => onEdit(po.id)}
-                                        className="font-medium cursor-pointer"
-                                    >
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        style={{ paddingInline: '0.45rem' }}
-                                        icon={<Trash2 size={14} />}
-                                        onClick={() => onDelete(po)}
-                                        className="font-medium cursor-pointer"
-                                    >
-                                        Delete
-                                    </Button>
+                                    {po.status === 'Pending Approval' ? (
+                                        <>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                style={{ paddingInline: '0.45rem' }}
+                                                icon={<ThumbsUp size={14} />}
+                                                onClick={() => onApprove(po.id)}
+                                                className="font-medium cursor-pointer"
+                                                disabled={isStatusUpdating}
+                                            >
+                                                Approve
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                style={{ paddingInline: '0.45rem' }}
+                                                icon={<ThumbsDown size={14} />}
+                                                onClick={() => onReject(po.id)}
+                                                className="font-medium cursor-pointer"
+                                                disabled={isStatusUpdating}
+                                            >
+                                                Reject
+                                            </Button>
+                                        </>
+                                    ) : po.status === 'Approved' || po.status === 'Rejected' ? null : (
+                                        <>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                style={{ paddingInline: '0.45rem' }}
+                                                icon={<Pencil size={14} />}
+                                                onClick={() => onEdit(po.id)}
+                                                className="font-medium cursor-pointer"
+                                            >
+                                                Edit
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                style={{ paddingInline: '0.45rem' }}
+                                                icon={<Trash2 size={14} />}
+                                                onClick={() => onDelete(po)}
+                                                className="font-medium cursor-pointer"
+                                            >
+                                                Delete
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
                             </td>
                         </tr>

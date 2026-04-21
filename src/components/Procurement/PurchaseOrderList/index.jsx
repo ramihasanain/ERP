@@ -23,7 +23,7 @@ const PurchaseOrderList = () => {
         return () => clearTimeout(timeoutId);
     }, [searchTerm]);
 
-    const { purchaseOrdersQuery, purchaseOrders, deletePurchaseOrder } = usePurchaseOrderListData({
+    const { purchaseOrdersQuery, purchaseOrders, deletePurchaseOrder, setPurchaseOrderStatus } = usePurchaseOrderListData({
         filterStatus,
         debouncedSearchTerm,
     });
@@ -37,6 +37,18 @@ const PurchaseOrderList = () => {
             setDeletingOrder(null);
         } catch (error) {
             const message = error?.response?.data?.detail || 'Failed to delete purchase order.';
+            toast.error(message);
+        }
+    };
+
+    const handleSetStatus = async (id, status) => {
+        if (!id) return;
+
+        try {
+            await setPurchaseOrderStatus.mutateAsync({ id, status });
+            toast.success(`Purchase order ${status} successfully.`);
+        } catch (error) {
+            const message = error?.response?.data?.detail || `Failed to ${status} purchase order.`;
             toast.error(message);
         }
     };
@@ -58,6 +70,9 @@ const PurchaseOrderList = () => {
                 onView={setViewingOrderId}
                 onEdit={(id) => navigate(`/admin/inventory/purchase-orders/${id}/edit`)}
                 onDelete={setDeletingOrder}
+                onApprove={(id) => handleSetStatus(id, 'approved')}
+                onReject={(id) => handleSetStatus(id, 'rejected')}
+                isStatusUpdating={setPurchaseOrderStatus.isPending}
             />
 
             <PurchaseOrderDetailsModal
