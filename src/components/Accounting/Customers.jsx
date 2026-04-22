@@ -7,7 +7,7 @@ import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPut, useCustomRemove } from '@/hooks/useMutation';
 import { toast } from 'sonner';
 import { Search, Plus, Eye, Edit3, Save, X, Trash2 } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAccounting } from '@/context/AccountingContext';
 
 const normalizeCustomersResponse = (response) => {
@@ -31,53 +31,22 @@ const normalizeCustomersResponse = (response) => {
 
 const Customers = () => {
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
     const { openDrawer } = useAccounting();
 
     // Edit Modal State
     const [editingCustomer, setEditingCustomer] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [deletingCustomer, setDeletingCustomer] = useState(null);
-    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') ?? '');
+    const [searchTerm, setSearchTerm] = useState('');
     const deleteCustomerMutation = useCustomRemove('/api/sales/customers/a0791e6f-455e-4e66-9627-36faf9541df5/delete/', [['sales-customers']]);
-    useEffect(() => {
-        const searchParamValue = searchParams.get('search') ?? '';
-        if (searchParamValue !== searchTerm) {
-            setSearchTerm(searchParamValue);
-        }
-    }, [searchParams, searchTerm]);
-
-    useEffect(() => {
-        const currentSearchParam = searchParams.get('search') ?? '';
-        const normalizedSearchTerm = searchTerm.trim();
-        if (currentSearchParam === normalizedSearchTerm) return;
-
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            if (normalizedSearchTerm) {
-                next.set('search', normalizedSearchTerm);
-            } else {
-                next.delete('search');
-            }
-            return next;
-        }, { replace: true });
-    }, [searchParams, searchTerm, setSearchParams]);
-
-
-    const customersQuery = useCustomQuery('/api/sales/customers/', ['sales-customers'], {
+    const normalizedSearchTerm = searchTerm.trim();
+    const customersEndpoint = normalizedSearchTerm
+        ? `/api/sales/customers/?search=${encodeURIComponent(normalizedSearchTerm)}`
+        : '/api/sales/customers/';
+    const customersQuery = useCustomQuery(customersEndpoint, ['sales-customers', normalizedSearchTerm], {
         select: normalizeCustomersResponse,
     });
-
     const customers = useMemo(() => customersQuery.data ?? [], [customersQuery.data]);
-    const filteredCustomers = useMemo(() => {
-        const normalizedTerm = searchTerm.trim().toLowerCase();
-        if (!normalizedTerm) return customers;
-
-        return customers.filter((customer) =>
-            [customer.name, customer.contact, customer.email, customer.phone]
-                .some((field) => String(field || '').toLowerCase().includes(normalizedTerm))
-        );
-    }, [customers, searchTerm]);
 
     const openEditModal = (customer) => {
         setEditingCustomer(customer);
@@ -143,14 +112,14 @@ const Customers = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredCustomers.length === 0 ? (
+                            {customers.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} style={{ padding: '1rem 1.5rem', color: 'var(--color-text-secondary)' }}>
                                         No customers found.
                                     </td>
                                 </tr>
                             ) : (
-                                filteredCustomers.map((cust) => (
+                                customers.map((cust) => (
                                     <tr key={cust.id} style={{ borderBottom: '1px solid var(--color-border)' }} className="erp-table-row-hover">
                                         <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{cust.name}</td>
                                         <td style={{ padding: '1rem 1rem' }}>{cust.contact}</td>
