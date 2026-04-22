@@ -5,24 +5,53 @@ import Input from '@/components/Shared/Input';
 import { X, Save, CheckCircle2 } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
+import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPost } from '@/hooks/useMutation';
+import { toast } from 'sonner';
 
 const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
-    const { recordBillPayment, accounts } = useAccounting();
+    const { recordBillPayment } = useAccounting();
     const { language } = useLanguage();
+    const billId = bill?.id || '';
+
+    const billDetailsQuery = useCustomQuery(
+        `/api/purchasing/bills/${billId}/`,
+        ['purchasing-bill-details', billId],
+        {
+            enabled: Boolean(billId),
+        }
+    );
+
+    const bankAccountsQuery = useCustomQuery(
+        '/accounting/bank-accounts/',
+        ['accounting-bank-accounts'],
+        {
+            select: (response) => {
+                if (Array.isArray(response?.data)) return response.data;
+                if (Array.isArray(response?.results)) return response.results;
+                if (Array.isArray(response)) return response;
+                return [];
+            },
+        }
+    );
+
+    const submitPaymentMutation = useCustomPost(
+        `/api/purchasing/bills/${billId}/pay/`,
+        [['purchasing-bills'], ['purchasing-bill-details', billId]]
+    );
+
+    const billDetails = billDetailsQuery.data;
+    const payableAmount = Number(billDetails?.remaining_balance ?? billDetails?.total_payable ?? bill?.totalAmount ?? 0);
+    const paymentAccounts = bankAccountsQuery.data ?? [];
 
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
         amount: bill.totalAmount,
-        method: 'Bank Transfer',
+        method: 'bank_transfer',
         accountId: '',
         reference: '',
-        notes: `Payment for Bill ${bill.id}`
+        notes: ''
     });
-
-    const paymentAccounts = accounts.filter(a =>
-        !a.isGroup && a.type === 'Asset' &&
-        (a.code.startsWith('111') || a.code.startsWith('113'))
-    );
 
     useEffect(() => {
         if (paymentAccounts.length > 0 && !formData.accountId) {
@@ -30,16 +59,40 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
         }
     }, [paymentAccounts]);
 
-    const handleSubmit = () => {
+    useEffect(() => {
+        if (!billDetails) return;
+        setFormData((prev) => ({
+            ...prev,
+            date: billDetails.bill_date || prev.date,
+            amount: Number(billDetails.remaining_balance ?? billDetails.total_payable ?? prev.amount),
+            notes: prev.notes || `Payment for PO ${billDetails.po_number || billDetails.number || billDetails.id || bill?.id}`,
+        }));
+    }, [billDetails, bill?.id]);
+
+    const handleSubmit = async () => {
         if (!formData.amount || !formData.accountId) return;
 
-        recordBillPayment(bill.id, {
-            ...formData,
-            vendorId: bill.vendorId
-        });
+        try {
+            await submitPaymentMutation.mutateAsync({
+                payment_date: formData.date,
+                paid_from_account_id: formData.accountId,
+                method: formData.method,
+                reference: formData.reference,
+                notes: formData.notes,
+            });
 
-        if (onPaymentSuccess) onPaymentSuccess(bill.id, formData.amount);
-        onClose();
+            recordBillPayment(bill.id, {
+                ...formData,
+                vendorId: bill.vendorId
+            });
+
+            toast.success('Bill payment recorded successfully.');
+            if (onPaymentSuccess) onPaymentSuccess(bill.id, formData.amount);
+            onClose();
+        } catch (error) {
+            const message = error?.response?.data?.detail || error?.message || 'Failed to record payment.';
+            toast.error(message);
+        }
     };
 
     const isRtl = language === 'ar';
@@ -53,7 +106,7 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
             <Card className="padding-xl" style={{ width: '500px', maxWidth: '95%', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                        {isRtl ? `تسجيل دفع المورد - ${bill.id}` : `Pay Vendor Bill - ${bill.id}`}
+                        {isRtl ? `تسجيل دفع المورد - ${billDetails?.number || bill.id}` : `Pay Vendor Bill - ${billDetails?.number || bill.id}`}
                     </h2>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
                         <X size={20} />
@@ -63,11 +116,11 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
                 <div style={{ background: 'var(--color-bg-secondary)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', border: '1px solid var(--color-border)' }}>
                     <div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '4px' }}>{isRtl ? 'إجمالي الفاتورة' : 'Bill Total'}</div>
-                        <div style={{ fontWeight: 700 }}>{bill.totalAmount.toLocaleString()} JOD</div>
+                        <div style={{ fontWeight: 700 }}>{payableAmount.toLocaleString()} {billDetails?.currency || 'DZD'}</div>
                     </div>
                     <div style={{ textAlign: isRtl ? 'left' : 'right' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '4px' }}>{isRtl ? 'المورد' : 'Vendor'}</div>
-                        <div style={{ fontWeight: 700, color: 'var(--color-primary-600)' }}>{bill.vendorName}</div>
+                        <div style={{ fontWeight: 700, color: 'var(--color-primary-600)' }}>{billDetails?.vendor_name || bill.vendorName}</div>
                     </div>
                 </div>
 
@@ -100,8 +153,9 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
                                 fontSize: '0.9rem', color: 'var(--color-text-main)',
                             }}
                         >
+                            <option value="" disabled>{isRtl ? 'اختر حساباً' : 'Select account'}</option>
                             {paymentAccounts.map(acc => (
-                                <option key={acc.id} value={acc.id}>{acc.code} - {acc.name}</option>
+                                <option key={acc.id} value={acc.id}>{acc.name}</option>
                             ))}
                         </select>
                     </div>
@@ -119,9 +173,9 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
                                     border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', fontSize: '0.9rem', color: 'var(--color-text-main)',
                                 }}
                             >
-                                <option value="Bank Transfer">Bank Transfer</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Check">Check</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="cash">Cash</option>
+                                <option value="check">Check</option>
                             </select>
                         </div>
                         <Input
@@ -140,7 +194,11 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
                         <Button variant="ghost" onClick={onClose}>{isRtl ? 'إلغاء' : 'Cancel'}</Button>
-                        <Button icon={<Save size={16} />} onClick={handleSubmit}>
+                        <Button
+                            icon={<Save size={16} />}
+                            onClick={handleSubmit}
+                            disabled={submitPaymentMutation.isPending || bankAccountsQuery.isPending || billDetailsQuery.isPending}
+                        >
                             {isRtl ? 'تأكيد الدفع' : 'Confirm Payment'}
                         </Button>
                     </div>

@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { keepPreviousData } from '@tanstack/react-query';
-import { useInventory } from '@/context/InventoryContext';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
@@ -50,6 +49,7 @@ const normalizeProduct = (item) => {
         purchasePrice: cost,
         sellingPrice: selling,
         reorderLevel: Number(item?.reorder_level ?? item?.reorderLevel ?? 0),
+        totalStock: Number(item?.total_stock ?? item?.totalStock ?? 0),
         isActive: item?.is_active ?? true,
         raw: item,
     };
@@ -62,7 +62,6 @@ const buildProductsUrl = (categoryId) => {
 };
 
 const ItemsList = () => {
-    const { getStockLevel } = useInventory();
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
@@ -241,8 +240,8 @@ const ItemsList = () => {
                                             <Package size={16} color="var(--color-text-muted)" />
                                             <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Quantity on Hand</span>
                                         </div>
-                                        <span style={{ fontWeight: 700, fontSize: '1.1rem', color: getStockLevel(item.id) <= item.reorderLevel ? 'var(--color-danger)' : 'var(--color-success)' }}>
-                                            {getStockLevel(item.id)} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{item.uom}</span>
+                                        <span style={{ fontWeight: 700, fontSize: '1.1rem', color: item.totalStock <= item.reorderLevel ? 'var(--color-danger)' : 'var(--color-success)' }}>
+                                            {item.totalStock} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{item.uom}</span>
                                         </span>
                                     </div>
                                 )}

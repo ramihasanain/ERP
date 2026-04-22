@@ -1,27 +1,81 @@
-import React, { useState } from 'react';
-import { useAccounting } from '@/context/AccountingContext';
+import React, { useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
-import { CheckCircle, XCircle, Clock, Filter, Search, ArrowLeft } from 'lucide-react';
+import Modal from '@/components/Shared/Modal';
+import { post } from '@/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { CheckCircle, XCircle, Clock, Search, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import useCustomQuery from '@/hooks/useQuery';
+import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import { toast } from 'sonner';
 
 const VendorPaymentsList = () => {
-    const { vendorPayments, approveVendorPayment, rejectVendorPayment } = useAccounting();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedPaymentId, setSelectedPaymentId] = useState('');
+    const statusParam = useMemo(
+        () => (filterStatus === 'All' ? '' : filterStatus.toLowerCase().replace(/\s+/g, '_')),
+        [filterStatus]
+    );
+    const searchParam = useMemo(() => searchTerm.trim(), [searchTerm]);
+    const paymentsListUrl = useMemo(() => {
+        const queryParams = new URLSearchParams();
+        if (searchParam) queryParams.set('search', searchParam);
+        if (statusParam) queryParams.set('status', statusParam);
+        const serialized = queryParams.toString();
+        return serialized ? `/api/purchasing/payments/?${serialized}` : '/api/purchasing/payments/';
+    }, [searchParam, statusParam]);
+    const vendorPaymentsQuery = useCustomQuery(paymentsListUrl, ['purchasing-vendor-payments', searchParam, statusParam]);
+    const selectedPaymentQuery = useCustomQuery(
+        selectedPaymentId ? `/api/purchasing/payments/${selectedPaymentId}/` : '',
+        ['purchasing-vendor-payment-details', selectedPaymentId || 'none'],
+        {
+            enabled: Boolean(selectedPaymentId),
+        }
+    );
 
-    const filteredPayments = vendorPayments.filter(pay => {
-        const matchesStatus = filterStatus === 'All' || pay.status === filterStatus;
-        const matchesSearch = pay.billId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            pay.vendorId.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesStatus && matchesSearch;
+    const approvePaymentMutation = useMutation({
+        mutationFn: (paymentId) => post(`/api/purchasing/payments/${paymentId}/approve/`, {}),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['purchasing-vendor-payments'] });
+            toast.success('Payment approved successfully.');
+        },
+        onError: (error) => {
+            toast.error(getApiErrorMessage(error, 'Failed to approve payment.'));
+        },
     });
+
+    const rejectPaymentMutation = useMutation({
+        mutationFn: (paymentId) => post(`/api/purchasing/payments/${paymentId}/reject/`, {}),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['purchasing-vendor-payments'] });
+            toast.success('Payment rejected successfully.');
+        },
+        onError: (error) => {
+            toast.error(getApiErrorMessage(error, 'Failed to reject payment.'));
+        },
+    });
+
+    const normalizedPayments = useMemo(() => {
+        const response = vendorPaymentsQuery.data;
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.data)) return response.data;
+        if (Array.isArray(response?.results)) return response.results;
+        return [];
+    }, [vendorPaymentsQuery.data]);
+
+    const filteredPayments = normalizedPayments;
 
     const getStatusColor = (status) => {
         switch (status) {
+            case 'approved':
             case 'Approved': return 'var(--color-success)';
+            case 'rejected':
             case 'Rejected': return 'var(--color-error)';
+            case 'pending_approval':
             case 'Pending Approval': return 'var(--color-warning)';
             default: return 'var(--color-text-muted)';
         }
@@ -29,8 +83,11 @@ const VendorPaymentsList = () => {
 
     const getStatusIcon = (status) => {
         switch (status) {
+            case 'approved':
             case 'Approved': return <CheckCircle size={16} />;
+            case 'rejected':
             case 'Rejected': return <XCircle size={16} />;
+            case 'pending_approval':
             case 'Pending Approval': return <Clock size={16} />;
             default: return null;
         }
@@ -48,13 +105,12 @@ const VendorPaymentsList = () => {
                 </div>
             </div>
 
-            <Card className="padding-md" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
-                    <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+            <Card className="padding-md" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '280px', maxWidth: '400px' }}>
                         <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-slate-400)' }} size={18} />
                         <input
                             type="text"
-                            placeholder="Search by Bill ID or Vendor..."
+                            placeholder="Search by bill, payment number, or vendor..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             style={{
@@ -65,24 +121,23 @@ const VendorPaymentsList = () => {
                                 color: 'var(--color-text-main)',
                             }}
                         />
-                    </div>
-                    <div style={{ display: 'flex', background: 'var(--color-bg-toggle-track)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                        {['All', 'Pending Approval', 'Approved', 'Rejected'].map(status => (
-                            <button
-                                key={status}
-                                onClick={() => setFilterStatus(status)}
-                                style={{
-                                    padding: '6px 12px', border: 'none', borderRadius: '6px',
-                                    background: filterStatus === status ? 'var(--color-bg-surface)' : 'transparent',
-                                    boxShadow: filterStatus === status ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                                    color: filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-                                    cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500
-                                }}
-                            >
-                                {status === 'Pending Approval' ? 'Pending' : status}
-                            </button>
-                        ))}
-                    </div>
+                </div>
+                <div style={{ display: 'flex', background: 'var(--color-bg-toggle-track)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                    {['All', 'Pending Approval', 'Approved', 'Rejected'].map(status => (
+                        <button
+                            key={status}
+                            onClick={() => setFilterStatus(status)}
+                            style={{
+                                padding: '6px 12px', border: 'none', borderRadius: '6px',
+                                background: filterStatus === status ? 'var(--color-bg-surface)' : 'transparent',
+                                boxShadow: filterStatus === status ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                                color: filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
+                                cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500
+                            }}
+                        >
+                            {status === 'Pending Approval' ? 'Pending' : status}
+                        </button>
+                    ))}
                 </div>
             </Card>
 
@@ -99,58 +154,86 @@ const VendorPaymentsList = () => {
                         </tr>
                     </thead>
                     <tbody>
+                        {vendorPaymentsQuery.isPending && (
+                            <tr>
+                                <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                                    Loading payment requests...
+                                </td>
+                            </tr>
+                        )}
+                        {vendorPaymentsQuery.isError && (
+                            <tr>
+                                <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-error)' }}>
+                                    Failed to load payment requests.
+                                </td>
+                            </tr>
+                        )}
                         {filteredPayments.map(pay => (
                             <tr key={pay.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                <td style={{ padding: '1rem', fontSize: '0.85rem', fontWeight: 500 }}>{pay.id}</td>
-                                <td style={{ padding: '1rem' }}>{pay.date}</td>
+                                <td style={{ padding: '1rem', fontSize: '0.85rem', fontWeight: 500 }}>{pay.number || pay.id}</td>
+                                <td style={{ padding: '1rem' }}>{pay.payment_date || '-'}</td>
                                 <td style={{ padding: '1rem' }}>
-                                    <div style={{ fontWeight: 600 }}>{pay.billId}</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{pay.vendorId}</div>
+                                    <div style={{ fontWeight: 600 }}>{pay.bill_number || '-'}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                                        {pay.vendor_name || '-'}
+                                    </div>
                                 </td>
-                                <td style={{ padding: '1rem', fontWeight: 700 }}>{pay.amount.toLocaleString()} JOD</td>
+                                <td style={{ padding: '1rem', fontWeight: 700 }}>
+                                    {(Number.parseFloat(pay.amount || 0) || 0).toLocaleString()} JOD
+                                </td>
                                 <td style={{ padding: '1rem' }}>
+                                    {(() => {
+                                        const statusValue = pay.status_display || pay.status || '-';
+                                        const statusKey = pay.status || pay.status_display || '';
+                                        return (
                                     <span style={{
                                         display: 'inline-flex', alignItems: 'center', gap: '4px',
                                         padding: '4px 10px', borderRadius: '20px',
-                                        background: `${getStatusColor(pay.status)}15`,
-                                        color: getStatusColor(pay.status),
+                                        background: `${getStatusColor(statusKey)}15`,
+                                        color: getStatusColor(statusKey),
                                         fontWeight: 600, fontSize: '0.75rem'
                                     }}>
-                                        {getStatusIcon(pay.status)}
-                                        {pay.status}
+                                        {getStatusIcon(statusKey)}
+                                        {statusValue}
                                     </span>
+                                        );
+                                    })()}
                                 </td>
                                 <td style={{ padding: '1rem' }}>
-                                    {pay.status === 'Pending Approval' ? (
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <Button
-                                                size="sm"
-                                                variant="success"
-                                                onClick={() => approveVendorPayment(pay.id)}
-                                            >
-                                                Approve
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                style={{ color: 'var(--color-error)', borderColor: 'var(--color-error)' }}
-                                                onClick={() => {
-                                                    const reason = prompt("Enter rejection reason:");
-                                                    if (reason) rejectVendorPayment(pay.id, reason);
-                                                }}
-                                            >
-                                                Reject
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
-                                            {pay.status === 'Approved' ? `Approved by ${pay.approvedBy}` : `Rejected: ${pay.rejectionReason}`}
-                                        </div>
-                                    )}
+                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setSelectedPaymentId(pay.id)}
+                                        >
+                                            View
+                                        </Button>
+                                        {pay.status === 'pending_approval' && (
+                                            <>
+                                                <Button
+                                                    size="sm"
+                                                    variant="success"
+                                                    onClick={() => approvePaymentMutation.mutate(pay.id)}
+                                                    disabled={approvePaymentMutation.isPending || rejectPaymentMutation.isPending}
+                                                >
+                                                    Approve
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    style={{ color: 'var(--color-error)', borderColor: 'var(--color-error)' }}
+                                                    onClick={() => rejectPaymentMutation.mutate(pay.id)}
+                                                    disabled={approvePaymentMutation.isPending || rejectPaymentMutation.isPending}
+                                                >
+                                                    Reject
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}
-                        {filteredPayments.length === 0 && (
+                        {!vendorPaymentsQuery.isPending && !vendorPaymentsQuery.isError && filteredPayments.length === 0 && (
                             <tr>
                                 <td colSpan={6} style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                                     No payment requests found matching your filters.
@@ -160,6 +243,39 @@ const VendorPaymentsList = () => {
                     </tbody>
                 </table>
             </Card>
+
+            <Modal
+                isOpen={Boolean(selectedPaymentId)}
+                onClose={() => setSelectedPaymentId('')}
+                title="Vendor Payment Details"
+                size="lg"
+            >
+                {selectedPaymentQuery.isLoading && (
+                    <p style={{ color: 'var(--color-text-secondary)' }}>Loading payment details...</p>
+                )}
+
+                {selectedPaymentQuery.isError && (
+                    <p style={{ color: 'var(--color-error)' }}>
+                        {getApiErrorMessage(selectedPaymentQuery.error, 'Failed to load payment details.')}
+                    </p>
+                )}
+
+                {!selectedPaymentQuery.isLoading && !selectedPaymentQuery.isError && selectedPaymentQuery.data && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
+                        <div><strong>Payment Number:</strong> {selectedPaymentQuery.data.number || '-'}</div>
+                        <div><strong>Status:</strong> {selectedPaymentQuery.data.status_display || '-'}</div>
+                        <div><strong>Payment Date:</strong> {selectedPaymentQuery.data.payment_date || '-'}</div>
+                        <div><strong>Amount:</strong> {(Number.parseFloat(selectedPaymentQuery.data.amount || 0) || 0).toLocaleString()} JOD</div>
+                        <div><strong>Bill Number:</strong> {selectedPaymentQuery.data.bill_number || '-'}</div>
+                        <div><strong>Invoice Number:</strong> {selectedPaymentQuery.data.vendor_invoice_number || '-'}</div>
+                        <div><strong>Vendor:</strong> {selectedPaymentQuery.data.vendor_name || '-'}</div>
+                        <div><strong>Method:</strong> {selectedPaymentQuery.data.method_display || '-'}</div>
+                        <div><strong>Paid From:</strong> {selectedPaymentQuery.data.paid_from_name || '-'}</div>
+                        <div><strong>Reference:</strong> {selectedPaymentQuery.data.reference || '-'}</div>
+                        <div style={{ gridColumn: '1 / -1' }}><strong>Notes:</strong> {selectedPaymentQuery.data.notes || '-'}</div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };
