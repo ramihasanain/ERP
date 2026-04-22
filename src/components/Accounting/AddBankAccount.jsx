@@ -1,40 +1,86 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Save, ArrowLeft, Landmark } from 'lucide-react';
-import { useAccounting } from '@/context/AccountingContext';
+import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPost } from '@/hooks/useMutation';
 
 const AddBankAccount = () => {
     const navigate = useNavigate();
-    const { addBankAccount } = useAccounting();
+    const banksQuery = useCustomQuery('/accounting/banks/', ['accounting-banks'], {
+        select: (response) => {
+            if (Array.isArray(response?.data)) return response.data;
+            if (Array.isArray(response?.results)) return response.results;
+            if (Array.isArray(response)) return response;
+            return [];
+        },
+    });
+    const currenciesQuery = useCustomQuery('/api/shared/currencies/', ['shared-currencies'], {
+        select: (response) => {
+            if (Array.isArray(response?.data)) return response.data;
+            if (Array.isArray(response?.results)) return response.results;
+            if (Array.isArray(response)) return response;
+            return [];
+        },
+    });
+    const createBankAccountMutation = useCustomPost('/accounting/bank-accounts/create/', [['accounting-bank-accounts']]);
+
+    const defaultCurrencyId = 'b03ed094-c56f-4d58-b563-2407f4c4977d';
+
     const [formData, setFormData] = useState({
         name: '',
+        customBankName: '',
         accountNumber: '',
-        currency: 'JOD',
+        currency: defaultCurrencyId,
         balance: '',
-        type: 'Bank' // Default
+        type: 'bank',
+        bank: '',
     });
 
-    const handleSubmit = () => {
-        if (!formData.name) {
-            alert("Please provide an account name.");
-            return;
+    const bankOptions = useMemo(
+        () => (banksQuery.data ?? []).filter((bank) => bank?.is_active),
+        [banksQuery.data]
+    );
+    const currencyOptions = useMemo(() => currenciesQuery.data ?? [], [currenciesQuery.data]);
+
+    const isBankType = formData.type === 'bank';
+    const isFormValid = useMemo(() => {
+        const hasCommonRequired = Boolean(formData.name.trim()) && Boolean(formData.currency) && formData.balance !== '';
+        if (!hasCommonRequired) return false;
+        if (!isBankType) return true;
+        const hasBankValue = Boolean(formData.bank) || Boolean(formData.customBankName.trim());
+        return hasBankValue && Boolean(formData.accountNumber.trim());
+    }, [formData, isBankType]);
+
+    const handleSubmit = async () => {
+        if (!isFormValid) return;
+
+        const payload = {
+            account_type: formData.type,
+            name: formData.name.trim(),
+            currency: formData.currency,
+            opening_balance: Number(formData.balance || 0).toFixed(2),
+            is_active: true,
+            ...(isBankType
+                ? {
+                    account_number: formData.accountNumber.trim(),
+                    ...(formData.bank
+                        ? { bank: formData.bank }
+                        : { bank_name: formData.customBankName.trim() }),
+                }
+                : {}),
+        };
+
+        try {
+            await createBankAccountMutation.mutateAsync(payload);
+            toast.success('Bank account created successfully.');
+            navigate(-1);
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Failed to create bank account.');
         }
-
-        if (formData.type === 'Bank' && !formData.accountNumber) {
-            alert("Please provide an account number for bank accounts.");
-            return;
-        }
-
-        addBankAccount({
-            ...formData,
-            accountNumber: formData.type === 'Cash' ? 'N/A' : formData.accountNumber, // Default for Cash
-            balance: Number(formData.balance) || 0
-        });
-
-        navigate(-1);
     };
 
     return (
@@ -59,51 +105,65 @@ const AddBankAccount = () => {
                         <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Account Type</label>
                         <select
                             value={formData.type}
-                            onChange={e => setFormData({ ...formData, type: e.target.value })}
+                            onChange={e =>
+                                setFormData({
+                                    ...formData,
+                                    type: e.target.value,
+                                    bank: e.target.value === 'cash' ? '' : formData.bank,
+                                    customBankName: e.target.value === 'cash' ? '' : formData.customBankName,
+                                    accountNumber: e.target.value === 'cash' ? '' : formData.accountNumber,
+                                })
+                            }
                             style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
                         >
-                            <option value="Bank">Bank Account</option>
-                            <option value="Cash">Cash Account (Safe/Box)</option>
+                            <option value="bank">Bank Account</option>
+                            <option value="cash">Cash Account (Safe/Box)</option>
                         </select>
                     </div>
 
-                    {formData.type === 'Bank' && (
+                    {isBankType && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Select Bank</label>
                             <select
-                                value={formData.presetName}
-                                onChange={e => {
-                                    const val = e.target.value;
+                                value={formData.bank}
+                                onChange={e =>
                                     setFormData({
                                         ...formData,
-                                        presetName: val,
-                                        name: val === 'Other' ? '' : val
-                                    });
-                                }}
+                                        bank: e.target.value,
+                                        customBankName: e.target.value ? '' : formData.customBankName,
+                                    })
+                                }
                                 style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+                                disabled={banksQuery.isPending}
                             >
-                                <option value="">Select Bank...</option>
-                                <option value="Arab Bank">Arab Bank</option>
-                                <option value="The Housing Bank">The Housing Bank</option>
-                                <option value="Jordan Kuwait Bank">Jordan Kuwait Bank</option>
-                                <option value="Etihad Bank">Etihad Bank</option>
-                                <option value="Cairo Amman Bank">Cairo Amman Bank</option>
-                                <option value="Bank al Etihad">Bank al Etihad</option>
-                                <option value="Capital Bank">Capital Bank</option>
-                                <option value="Other">Other / Custom Name</option>
+                                <option value="">
+                                    {banksQuery.isPending ? 'Loading banks...' : 'Select Bank...'}
+                                </option>
+                                {bankOptions.map((bank) => (
+                                    <option key={bank.id} value={bank.id}>
+                                        {bank.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     )}
 
-                    {(formData.presetName === 'Other' || formData.presetName === '' || formData.type === 'Cash' || !formData.presetName) && (
+                    {isBankType && !formData.bank && (
                         <Input
-                            label={formData.type === 'Cash' ? "Cash Box Name" : "Account Name (Custom)"}
-                            placeholder={formData.type === 'Cash' ? "e.g., Main Office Safe" : "e.g., Arab Bank - Corporate"}
-                            value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            label="Custom Bank Name"
+                            placeholder="e.g., Arab Bank"
+                            value={formData.customBankName}
+                            onChange={e => setFormData({ ...formData, customBankName: e.target.value })}
                         />
                     )}
-                    {formData.type === 'Bank' && (
+
+                    <Input
+                        label={formData.type === 'cash' ? 'Cash Box Name' : 'Account Name'}
+                        placeholder={formData.type === 'cash' ? 'e.g., Main Cash Box' : 'e.g., Arab Bank - Corporate'}
+                        value={formData.name}
+                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    />
+                    {isBankType && (
                         <Input
                             label="Account Number / IBAN"
                             placeholder="xxxx-xxxx-xxxx-xxxx"
@@ -119,10 +179,16 @@ const AddBankAccount = () => {
                                 value={formData.currency}
                                 onChange={e => setFormData({ ...formData, currency: e.target.value })}
                                 style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+                                disabled={currenciesQuery.isPending}
                             >
-                                <option value="JOD">JOD</option>
-                                <option value="USD">USD</option>
-                                <option value="EUR">EUR</option>
+                                <option value="">
+                                    {currenciesQuery.isPending ? 'Loading currencies...' : 'Select currency...'}
+                                </option>
+                                {currencyOptions.map((currency) => (
+                                    <option key={currency.id} value={currency.id}>
+                                        {currency.code} - {currency.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <Input
@@ -136,7 +202,13 @@ const AddBankAccount = () => {
 
                     <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                         <Button variant="ghost" onClick={() => navigate(-1)}>Cancel</Button>
-                        <Button icon={<Save size={18} />} onClick={handleSubmit}>Save Account</Button>
+                        <Button
+                            icon={<Save size={18} />}
+                            onClick={handleSubmit}
+                            disabled={!isFormValid || createBankAccountMutation.isPending}
+                        >
+                            {createBankAccountMutation.isPending ? 'Saving...' : 'Save Account'}
+                        </Button>
                     </div>
                 </div>
             </Card>
