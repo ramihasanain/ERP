@@ -16,6 +16,7 @@ const FinancialDrawer = () => {
     const { isOpen, entityType, entityId } = drawerState;
     const [activeTab, setActiveTab] = useState('overview');
     const isCustomerDrawer = entityType === 'Customer' && Boolean(entityId);
+    const isJournalDrawer = entityType === 'Journal' && Boolean(entityId);
 
     const customerDetailsQuery = useCustomQuery(
         isCustomerDrawer ? `/api/sales/customers/${entityId}/` : '/api/sales/customers/',
@@ -32,6 +33,39 @@ const FinancialDrawer = () => {
                 email: payload?.email || '—',
                 billing_address: payload?.billing_address || '—',
                 is_active: Boolean(payload?.is_active),
+            }),
+        }
+    );
+
+    const journalDetailsQuery = useCustomQuery(
+        isJournalDrawer ? `/accounting/journal-entries/${entityId}/` : '/accounting/journal-entries/',
+        ['journal-entry-details', entityId],
+        {
+            enabled: isOpen && isJournalDrawer,
+            select: (payload) => ({
+                id: payload?.id || '',
+                title: payload?.title || '',
+                name: payload?.title || payload?.reference || payload?.id || '—',
+                date: payload?.date || '',
+                reference: payload?.reference || '',
+                description: payload?.description || '',
+                status: payload?.status || '',
+                source: payload?.source || '',
+                sourceType: payload?.source || '',
+                currency: payload?.currency || 'JOD',
+                createdBy: payload?.created_by || '',
+                isAutomatic: payload?.source && payload.source.toLowerCase() !== 'manual',
+                lines: Array.isArray(payload?.lines)
+                    ? payload.lines.map((line) => ({
+                        id: line?.id || '',
+                        account: line?.account || '',
+                        description: line?.description || '',
+                        costCenter: line?.cost_center || null,
+                        debit: Number(line?.debit || 0),
+                        credit: Number(line?.credit || 0),
+                        order: line?.order ?? 0,
+                    }))
+                    : [],
             }),
         }
     );
@@ -99,14 +133,14 @@ const FinancialDrawer = () => {
         if (!entityType || !entityId) return null;
         switch (entityType) {
             case 'Account': return accounts.find(a => a.id === entityId);
-            case 'Journal': return entries.find(e => e.id === entityId);
+            case 'Journal': return journalDetailsQuery.data || entries.find(e => e.id === entityId);
             case 'Customer': return customerDetailsQuery.data || customers.find(c => c.id === entityId);
             case 'Asset': return accounts.find(a => a.id === entityId);
             case 'Bank': return bankAccounts.find(b => b.id === entityId);
             case 'Cost Center': return costCenters.find(cc => cc.id === entityId);
             default: return null;
         }
-    }, [entityType, entityId, accounts, entries, customers, costCenters, bankAccounts, customerDetailsQuery.data]);
+    }, [entityType, entityId, accounts, entries, customers, costCenters, bankAccounts, customerDetailsQuery.data, journalDetailsQuery.data]);
 
     // Transaction History for Entity (Supports Aggregation)
     const transactionHistory = useMemo(() => {

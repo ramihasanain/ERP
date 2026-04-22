@@ -59,7 +59,18 @@ export const patch = async (url, data = {}, config = {}) => {
 };
 
 export const put = async (url, data = {}, config = {}) => {
-  const response = await apiClient.put(url, data, config);
+  const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+  const resolvedConfig = isFormData
+    ? {
+        ...config,
+        headers: {
+          ...(config.headers || {}),
+          'Content-Type': undefined,
+        },
+      }
+    : config;
+
+  const response = await apiClient.put(url, data, resolvedConfig);
   return response.data;
 };
 

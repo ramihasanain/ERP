@@ -33,17 +33,41 @@ const normalizeEntryResponse = (response) => {
 };
 
 const normalizeAccountsResponse = (response) => {
-  const source = Array.isArray(response) ? response : Array.isArray(response?.results) ? response.results : [];
+  const source = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response?.results)
+        ? response.results
+        : [];
   return source
     .map((account) => ({
       id: account?.id || account?.uuid || '',
       code: String(account?.code || ''),
       name: account?.name || '',
       parentCode: account?.parent_code || account?.parentCode || '',
-      type: account?.account_type_name || account?.type || '',
+      type: account?.account_type_name || account?.account_type || account?.type || '',
       isGroup: Boolean(account?.is_group ?? account?.isGroup),
     }))
     .filter((account) => account.id && account.code);
+};
+
+const normalizeCurrenciesResponse = (response) => {
+  const source = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response?.results)
+        ? response.results
+        : [];
+
+  return source
+    .map((currency) => ({
+      id: currency?.id || '',
+      code: String(currency?.code || '').toUpperCase(),
+      name: currency?.name || '',
+    }))
+    .filter((currency) => currency.code);
 };
 
 const NewJournalEntry = () => {
@@ -63,16 +87,23 @@ const NewJournalEntry = () => {
   const accountsQuery = useCustomQuery('/accounting/accounts/', ['accounting-accounts'], {
     select: normalizeAccountsResponse,
   });
+  const currenciesQuery = useCustomQuery('/api/shared/currencies/', ['shared-currencies'], {
+    select: normalizeCurrenciesResponse,
+  });
 
   const createMutation = useCustomPost('/accounting/journal-entries/create/', ['journal-entries']);
   const updateMutation = useCustomPut(`/accounting/journal-entries/${id || 'new'}/`, ['journal-entries', ['journal-entry', id]]);
 
   const allAccounts = useMemo(() => accountsQuery.data ?? [], [accountsQuery.data]);
+  const currencies = useMemo(
+    () => (currenciesQuery.data ?? []).sort((a, b) => a.code.localeCompare(b.code)),
+    [currenciesQuery.data]
+  );
   const sortedAccounts = useMemo(
     () => allAccounts.filter((account) => !account.isGroup).sort((a, b) => a.code.localeCompare(b.code)),
     [allAccounts]
   );
-  const accountByCode = useMemo(() => new Map(allAccounts.map((account) => [account.code, account])), [allAccounts]);
+  const accountById = useMemo(() => new Map(allAccounts.map((account) => [account.id, account])), [allAccounts]);
 
   const formDate = useWatch({ control, name: 'date' });
   const currency = useWatch({ control, name: 'currency' });
@@ -103,6 +134,12 @@ const NewJournalEntry = () => {
   }, [entryDetailQuery.error]);
 
   useEffect(() => {
+    if (currenciesQuery.error) {
+      toast.error('Failed to load currencies list.');
+    }
+  }, [currenciesQuery.error]);
+
+  useEffect(() => {
     if (!id || !entryDetailQuery.data) return;
     const detail = entryDetailQuery.data;
     reset({
@@ -116,16 +153,20 @@ const NewJournalEntry = () => {
       status: detail.status || 'Draft',
       sourceType: detail.source_type || detail.sourceType || 'Manual',
       isAutomatic: Boolean(detail.is_automatic ?? detail.isAutomatic),
-      lines: (detail.lines || []).map((line) => ({
+      lines: (detail.lines || []).map((line) => {
+        const rawAccount = line.account_uuid || line.account_id || line.account || '';
+        const matchedAccount = allAccounts.find((account) => account.id === rawAccount || account.code === rawAccount);
+        return {
         id: line.id,
-        account: line.account || '',
+        account: matchedAccount?.id || rawAccount,
         description: line.description || '',
         debit: Number(line.debit || 0),
         credit: Number(line.credit || 0),
         costCenter: line.cost_center || line.costCenter || '',
-      })),
+        };
+      }),
     });
-  }, [entryDetailQuery.data, id, reset]);
+  }, [allAccounts, entryDetailQuery.data, id, reset]);
 
   useEffect(() => {
     if (id) return;
@@ -143,17 +184,19 @@ const NewJournalEntry = () => {
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
-    setValue('attachedFile', file ? file.name : null);
+    setValue('attachedFile', file || null);
   };
 
   const executeSave = async (finalStatus) => {
     const values = getValues();
-    const payload = {
-      date: values.date,
-      reference: values.reference,
-      description: values.description,
-      currency: values.currency,
-      lines: (values.lines || []).map((line, index) => ({
+    const payload = new FormData();
+    payload.append('date', values.date || '');
+    payload.append('reference', values.reference || '');
+    payload.append('description', values.description || '');
+    payload.append('currency', values.currency || '');
+    payload.append(
+      'lines',
+      JSON.stringify((values.lines || []).map((line, index) => ({
         ...(line.id ? { id: line.id } : {}),
         account: line.account,
         description: line.description || '',
@@ -161,8 +204,11 @@ const NewJournalEntry = () => {
         debit: Number(line.debit || 0).toFixed(2),
         credit: Number(line.credit || 0).toFixed(2),
         order: index,
-      })),
-    };
+      })))
+    );
+    if (values.attachedFile instanceof File) {
+      payload.append('attached_file', values.attachedFile);
+    }
 
     try {
       if (id) {
@@ -210,7 +256,7 @@ const NewJournalEntry = () => {
       values.lines.forEach((line) => {
         const creditAmount = Number(line.credit || 0);
         if (creditAmount <= 0) return;
-        const account = accountByCode.get(line.account);
+        const account = accountById.get(line.account);
         const isCashOrBank = account && (account.parentCode === '1110' || account.parentCode === '1130');
         if (!isCashOrBank) return;
 
@@ -225,7 +271,7 @@ const NewJournalEntry = () => {
       values.lines.forEach((line) => {
         const debitAmount = Number(line.debit || 0);
         if (debitAmount <= 0 || !line.costCenter) return;
-        const account = accountByCode.get(line.account);
+        const account = accountById.get(line.account);
         if (!account || account.type !== 'Expense') return;
         spendingByCC[line.costCenter] = (spendingByCC[line.costCenter] || 0) + (debitAmount * exchangeRate);
       });
@@ -363,7 +409,7 @@ const NewJournalEntry = () => {
                       >
                         <option value="">{accountsQuery.isLoading ? 'Loading accounts...' : 'Select Account'}</option>
                         {sortedAccounts.map((account) => (
-                          <option key={account.id} value={account.code}>
+                          <option key={account.id} value={account.id}>
                             {'\u00A0'.repeat(getDepth(account) * 3)} {account.code} - {account.name}
                           </option>
                         ))}
@@ -465,13 +511,20 @@ const NewJournalEntry = () => {
                     <select
                       value={field.value}
                       onChange={field.onChange}
-                      disabled={isReadOnly}
+                      disabled={isReadOnly || currenciesQuery.isLoading}
                       style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '0.9rem' }}
                     >
-                      <option value="JOD">JOD - Jordanian Dinar</option>
-                      <option value="USD">USD - US Dollar</option>
-                      <option value="EUR">EUR - Euro</option>
-                      <option value="SAR">SAR - Saudi Riyal</option>
+                      <option value="">
+                        {currenciesQuery.isLoading ? 'Loading currencies...' : 'Select currency'}
+                      </option>
+                      {currency && !currencies.some((item) => item.code === currency) && (
+                        <option value={currency}>{currency}</option>
+                      )}
+                      {currencies.map((item) => (
+                        <option key={item.id || item.code} value={item.code}>
+                          {item.code} - {item.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 )}
@@ -499,7 +552,7 @@ const NewJournalEntry = () => {
                   <input type="file" id="file" hidden onChange={handleFileChange} disabled={isReadOnly} />
                   <label htmlFor="file" style={{ cursor: isReadOnly ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)' }}>
                     <Upload size={20} />
-                    <span style={{ fontSize: '0.85rem' }}>{attachedFile || 'Upload Document'}</span>
+                    <span style={{ fontSize: '0.85rem' }}>{attachedFile?.name || attachedFile || 'Upload Document'}</span>
                   </label>
                 </div>
               </div>

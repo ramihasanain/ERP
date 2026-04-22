@@ -63,8 +63,17 @@ const JournalEntries = () => {
     const navigate = useNavigate();
     const [selectedEntryId, setSelectedEntryId] = useState(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const journalEntriesQuery = useCustomQuery('/accounting/journal-entries/', ['journal-entries']);
+    const journalEntriesUrl = useMemo(() => {
+        const trimmedSearch = searchTerm.trim();
+        if (!trimmedSearch) return '/accounting/journal-entries/';
+
+        const params = new URLSearchParams({ search: trimmedSearch });
+        return `/accounting/journal-entries/?${params.toString()}`;
+    }, [searchTerm]);
+
+    const journalEntriesQuery = useCustomQuery(journalEntriesUrl, ['journal-entries', searchTerm.trim()]);
     const entries = useMemo(() => {
         const source = journalEntriesQuery.data;
         if (Array.isArray(source)) return source;
@@ -138,7 +147,15 @@ const JournalEntries = () => {
                     <Card className="padding-none" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{language === 'ar' ? 'كل القيود' : 'All Entries'}</h2>
-                            <div style={{ width: '240px' }}><Input placeholder={language === 'ar' ? 'بحث برقم القيد...' : "Search journal no..."} startIcon={<Search size={16} />} style={{ fontSize: '0.875rem' }} /></div>
+                            <div style={{ width: '240px' }}>
+                                <Input
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder={language === 'ar' ? 'بحث برقم القيد...' : "Search journal no..."}
+                                    startIcon={<Search size={16} />}
+                                    style={{ fontSize: '0.875rem' }}
+                                />
+                            </div>
                         </div>
 
                         {journalEntriesQuery.isLoading ? (
