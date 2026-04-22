@@ -6,10 +6,11 @@ const Button = ({
     children,
     variant = 'primary',
     size = 'md',
+    fullWidth = false,
     className,
     isLoading,
     icon,
-    ...props
+    ...restProps
 }) => {
     return (
         <button
@@ -17,11 +18,12 @@ const Button = ({
                 styles.button,
                 styles[variant],
                 styles[size],
+                { [styles.fullWidth]: fullWidth },
                 { [styles.iconOnly]: !children && icon },
                 className
             )}
-            disabled={isLoading || props.disabled}
-            {...props}
+            disabled={isLoading || restProps.disabled}
+            {...restProps}
         >
             {isLoading && (
                 <span style={{

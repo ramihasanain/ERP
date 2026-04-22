@@ -4,6 +4,7 @@ import Button from '@/components/Shared/Button';
 import { X, Calendar, ArrowRight, ArrowLeft, Filter, Search, Tag, Info, List, Link as LinkIcon, Monitor, User, DollarSign, Target, Activity, FileText, Landmark, Download, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
+import useCustomQuery from '@/hooks/useQuery';
 import { exportToCSV } from '@/utils/exportUtils';
 
 const FinancialDrawer = () => {
@@ -14,6 +15,26 @@ const FinancialDrawer = () => {
     const { language } = useLanguage();
     const { isOpen, entityType, entityId } = drawerState;
     const [activeTab, setActiveTab] = useState('overview');
+    const isCustomerDrawer = entityType === 'Customer' && Boolean(entityId);
+
+    const customerDetailsQuery = useCustomQuery(
+        isCustomerDrawer ? `/api/sales/customers/${entityId}/` : '/api/sales/customers/',
+        ['sales-customer-details', entityId],
+        {
+            enabled: isOpen && isCustomerDrawer,
+            select: (payload) => ({
+                id: payload?.id || '',
+                name: payload?.name || '—',
+                tax_id: payload?.tax_id || '—',
+                currency_code: payload?.currency_code || '—',
+                contact_person: payload?.contact_person || '—',
+                phone: payload?.phone || '—',
+                email: payload?.email || '—',
+                billing_address: payload?.billing_address || '—',
+                is_active: Boolean(payload?.is_active),
+            }),
+        }
+    );
 
     // Handle ESC key
     useEffect(() => {
@@ -79,13 +100,13 @@ const FinancialDrawer = () => {
         switch (entityType) {
             case 'Account': return accounts.find(a => a.id === entityId);
             case 'Journal': return entries.find(e => e.id === entityId);
-            case 'Customer': return customers.find(c => c.id === entityId);
+            case 'Customer': return customerDetailsQuery.data || customers.find(c => c.id === entityId);
             case 'Asset': return accounts.find(a => a.id === entityId);
             case 'Bank': return bankAccounts.find(b => b.id === entityId);
             case 'Cost Center': return costCenters.find(cc => cc.id === entityId);
             default: return null;
         }
-    }, [entityType, entityId, accounts, entries, customers, costCenters, bankAccounts]);
+    }, [entityType, entityId, accounts, entries, customers, costCenters, bankAccounts, customerDetailsQuery.data]);
 
     // Transaction History for Entity (Supports Aggregation)
     const transactionHistory = useMemo(() => {
@@ -174,7 +195,17 @@ const FinancialDrawer = () => {
 
                 {/* Content Area */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', background: 'var(--color-bg-secondary)' }}>
-                    {activeTab === 'overview' && <OverviewTab t={t} entityType={entityType} data={entityData} history={transactionHistory} getAccountBalance={getAccountBalance} />}
+                    {activeTab === 'overview' && (
+                        <OverviewTab
+                            t={t}
+                            entityType={entityType}
+                            data={entityData}
+                            history={transactionHistory}
+                            getAccountBalance={getAccountBalance}
+                            isCustomerDetailsLoading={customerDetailsQuery.isLoading}
+                            isCustomerDetailsError={customerDetailsQuery.isError}
+                        />
+                    )}
                     {activeTab === 'transactions' && <TransactionsTab language={language} t={t} history={transactionHistory} entityName={entityData?.name} entityType={entityType} entityId={entityId} entityData={entityData} accounts={accounts} getAllChildAccountIds={getAllChildAccountIds} />}
                     {activeTab === 'related' && <RelatedTab t={t} entityType={entityType} data={entityData} />}
                 </div>
@@ -227,7 +258,7 @@ const AestheticBadge = ({ status, type }) => {
     );
 };
 
-const OverviewTab = ({ t, entityType, data, history, getAccountBalance }) => {
+const OverviewTab = ({ t, entityType, data, history, getAccountBalance, isCustomerDetailsLoading, isCustomerDetailsError }) => {
     const balance = entityType === 'Account' || entityType === 'Bank' || entityType === 'Asset'
         ? getAccountBalance(entityType === 'Bank' ? data.glAccountId : data.id)
         : (data?.balance || 0);
@@ -271,9 +302,38 @@ const OverviewTab = ({ t, entityType, data, history, getAccountBalance }) => {
                     </p>
                 </div>
             )}
+
+            {entityType === 'Customer' && (
+                <div style={{ background: 'var(--color-bg-surface)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--color-text-main)' }}>Customer Details</h4>
+
+                    {isCustomerDetailsLoading ? (
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: 0 }}>Loading customer details...</p>
+                    ) : isCustomerDetailsError ? (
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-error)', margin: 0 }}>Could not load customer details.</p>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1rem' }}>
+                            <DetailItem label="Contact Person" value={data?.contact_person} />
+                            <DetailItem label="Email" value={data?.email} />
+                            <DetailItem label="Phone" value={data?.phone} />
+                            <DetailItem label="Tax ID" value={data?.tax_id} />
+                            <DetailItem label="Currency" value={data?.currency_code} />
+                            <DetailItem label="Status" value={data?.is_active ? 'Active' : 'Inactive'} />
+                            <DetailItem label="Billing Address" value={data?.billing_address} fullWidth />
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
+
+const DetailItem = ({ label, value, fullWidth = false }) => (
+    <div style={{ gridColumn: fullWidth ? '1 / -1' : 'auto' }}>
+        <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>{label}</p>
+        <p style={{ margin: '0.3rem 0 0', fontSize: '0.88rem', color: 'var(--color-text-main)', fontWeight: 600 }}>{value || '—'}</p>
+    </div>
+);
 
 const TransactionsTab = ({ language, t, history, entityName, entityType, entityId, entityData, accounts, getAllChildAccountIds }) => {
     const [expandedEntry, setExpandedEntry] = useState(null);
