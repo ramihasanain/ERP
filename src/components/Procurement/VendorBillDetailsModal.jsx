@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { X, FileText } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPatch } from '@/hooks/useMutation';
+import { toast } from 'sonner';
 
 const toTitleCase = (value = '') =>
     String(value)
@@ -26,8 +28,10 @@ const normalizeBillDetails = (bill) => {
         lines: Array.isArray(bill.lines)
             ? bill.lines.map((line) => ({
                 id: line.id || '',
-                accountId: line.account_id || '-',
+                accountId: line.account_id || '',
+                accountName: line.account_name || '',
                 description: line.description || '-',
+                amount: Number(line.amount ?? 0),
             }))
             : [],
     };
@@ -43,7 +47,68 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
         }
     );
 
+    const bankAccountsQuery = useCustomQuery(
+        '/accounting/bank-accounts/',
+        ['accounting-bank-accounts'],
+        {
+            enabled: Boolean(isOpen),
+            select: (response) => {
+                if (Array.isArray(response?.data)) return response.data;
+                if (Array.isArray(response?.results)) return response.results;
+                if (Array.isArray(response)) return response;
+                return [];
+            },
+        }
+    );
+    const updateBillAccountMutation = useCustomPatch(
+        billId ? `/api/purchasing/bills/${billId}/` : '/api/purchasing/bills/',
+        [['purchasing-bills'], ['purchasing-bill-details', billId]]
+    );
+
     const bill = useMemo(() => billDetailsQuery.data ?? null, [billDetailsQuery.data]);
+    const accountOptions = useMemo(() => bankAccountsQuery.data ?? [], [bankAccountsQuery.data]);
+    const [editableLines, setEditableLines] = useState([]);
+    const [savingLineId, setSavingLineId] = useState('');
+
+    useEffect(() => {
+        if (!bill?.lines) {
+            setEditableLines([]);
+            return;
+        }
+
+        setEditableLines(
+            bill.lines.map((line) => ({
+                ...line,
+                accountId: line.accountId || '',
+            }))
+        );
+    }, [bill]);
+
+    const handleLineAccountChange = async (lineId, selectedAccountId) => {
+        if (!billId || !selectedAccountId) return;
+
+        const previousLine = editableLines.find((line) => line.id === lineId);
+        const previousAccountId = previousLine?.accountId || '';
+
+        setEditableLines((prev) =>
+            prev.map((line) => (line.id === lineId ? { ...line, accountId: selectedAccountId } : line))
+        );
+
+        setSavingLineId(lineId);
+        try {
+            await updateBillAccountMutation.mutateAsync({
+                paid_from_account_id: selectedAccountId,
+            });
+        } catch (error) {
+            setEditableLines((prev) =>
+                prev.map((line) => (line.id === lineId ? { ...line, accountId: previousAccountId } : line))
+            );
+            const message = error?.response?.data?.detail || error?.message || 'Failed to update account.';
+            toast.error(message);
+        } finally {
+            setSavingLineId('');
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -184,20 +249,44 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
                                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                         <thead>
                                             <tr style={{ background: 'var(--color-bg-table-header)', textAlign: 'left' }}>
-                                                <th style={{ padding: '0.8rem 1rem', color: 'var(--color-text-secondary)' }}>Line ID</th>
-                                                <th style={{ padding: '0.8rem 1rem', color: 'var(--color-text-secondary)' }}>Account ID</th>
                                                 <th style={{ padding: '0.8rem 1rem', color: 'var(--color-text-secondary)' }}>Description</th>
+                                                <th style={{ padding: '0.8rem 1rem', color: 'var(--color-text-secondary)' }}>Account</th>
+                                                <th style={{ padding: '0.8rem 1rem', color: 'var(--color-text-secondary)' }}>Amount</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {bill.lines.map((line) => (
+                                            {editableLines.map((line) => (
                                                 <tr key={line.id} style={{ borderTop: '1px solid var(--color-border)' }}>
-                                                    <td style={{ padding: '0.8rem 1rem', fontFamily: 'monospace', fontSize: '0.8rem' }}>{line.id}</td>
-                                                    <td style={{ padding: '0.8rem 1rem', fontFamily: 'monospace', fontSize: '0.8rem' }}>{line.accountId}</td>
                                                     <td style={{ padding: '0.8rem 1rem' }}>{line.description}</td>
+                                                    <td style={{ padding: '0.8rem 1rem', minWidth: '230px' }}>
+                                                        <select
+                                                            value={line.accountId || ''}
+                                                            onChange={(event) => handleLineAccountChange(line.id, event.target.value)}
+                                                            disabled={savingLineId === line.id || updateBillAccountMutation.isPending}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '2.25rem',
+                                                                padding: '0 0.625rem',
+                                                                borderRadius: '8px',
+                                                                border: '1px solid var(--color-border)',
+                                                                background: 'var(--color-bg-surface)',
+                                                                color: 'var(--color-text-main)',
+                                                            }}
+                                                        >
+                                                            <option value="">Select account</option>
+                                                            {accountOptions.map((account) => (
+                                                                <option key={account.account_id || account.id} value={account.account_id || ''}>
+                                                                    {account.account_name || account.name || 'Unnamed account'}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+                                                    <td style={{ padding: '0.8rem 1rem', whiteSpace: 'nowrap' }}>
+                                                        {Number(line.amount || 0).toLocaleString()} {bill.currency}
+                                                    </td>
                                                 </tr>
                                             ))}
-                                            {bill.lines.length === 0 && (
+                                            {editableLines.length === 0 && (
                                                 <tr>
                                                     <td
                                                         colSpan={3}

@@ -38,7 +38,7 @@ const FinancialDrawer = () => {
     );
 
     const journalDetailsQuery = useCustomQuery(
-        isJournalDrawer ? `/accounting/journal-entries/${entityId}/` : '/accounting/journal-entries/',
+        isJournalDrawer ? `/accounting/journal-entries/${entityId}/logs/` : '/accounting/journal-entries/',
         ['journal-entry-details', entityId],
         {
             enabled: isOpen && isJournalDrawer,
@@ -46,24 +46,58 @@ const FinancialDrawer = () => {
                 id: payload?.id || '',
                 title: payload?.title || '',
                 name: payload?.title || payload?.reference || payload?.id || '—',
-                date: payload?.date || '',
-                reference: payload?.reference || '',
-                description: payload?.description || '',
-                status: payload?.status || '',
-                source: payload?.source || '',
-                sourceType: payload?.source || '',
-                currency: payload?.currency || 'JOD',
-                createdBy: payload?.created_by || '',
-                isAutomatic: payload?.source && payload.source.toLowerCase() !== 'manual',
-                lines: Array.isArray(payload?.lines)
-                    ? payload.lines.map((line) => ({
-                        id: line?.id || '',
-                        account: line?.account || '',
-                        description: line?.description || '',
-                        costCenter: line?.cost_center || null,
-                        debit: Number(line?.debit || 0),
-                        credit: Number(line?.credit || 0),
-                        order: line?.order ?? 0,
+                date: payload?.overview?.last_transaction || '',
+                reference: payload?.transactions?.history_logs?.[0]?.reference || '',
+                description: payload?.overview?.description || '',
+                status: payload?.related?.journal_entry?.status || '',
+                source: payload?.related?.journal_entry?.source || '',
+                sourceType: payload?.related?.journal_entry?.source || '',
+                currency: payload?.overview?.currency || 'JOD',
+                createdBy: payload?.related?.journal_entry?.created_by || '',
+                isAutomatic: payload?.related?.journal_entry?.source
+                    && payload.related.journal_entry.source.toLowerCase() !== 'manual',
+                overview: {
+                    current_balance: Number(payload?.overview?.current_balance || 0),
+                    currency: payload?.overview?.currency || 'JOD',
+                    activity_count: Number(payload?.overview?.activity_count || 0),
+                    last_transaction: payload?.overview?.last_transaction || '',
+                    description: payload?.overview?.description || '',
+                },
+                related: {
+                    journal_entry: {
+                        id: payload?.related?.journal_entry?.id || '',
+                        title: payload?.related?.journal_entry?.title || '',
+                        source: payload?.related?.journal_entry?.source || '',
+                        status: payload?.related?.journal_entry?.status || '',
+                        created_by: payload?.related?.journal_entry?.created_by || '',
+                        attachment: payload?.related?.journal_entry?.attachment || null,
+                    },
+                },
+                history_logs: Array.isArray(payload?.transactions?.history_logs)
+                    ? payload.transactions.history_logs.map((log) => ({
+                        id: log?.journal_entry_id || payload?.id || '',
+                        journal_entry_id: log?.journal_entry_id || payload?.id || '',
+                        reference: log?.reference || '',
+                        date: log?.date || '',
+                        status: log?.status || '',
+                        source: log?.source || '',
+                        sourceType: log?.source || '',
+                        description: log?.description || '',
+                        total: Number(log?.total || 0),
+                        currency: log?.currency || payload?.overview?.currency || 'JOD',
+                        isAutomatic: (log?.source || '').toLowerCase() !== 'manual',
+                        lines: Array.isArray(log?.entry_details)
+                            ? log.entry_details.map((line) => ({
+                                id: line?.id || '',
+                                account: line?.account || '',
+                                account_name: line?.account_name || '',
+                                description: line?.description || '',
+                                costCenter: line?.cost_center || null,
+                                debit: Number(line?.debit || 0),
+                                credit: Number(line?.credit || 0),
+                                order: line?.order ?? 0,
+                            }))
+                            : [],
                     }))
                     : [],
             }),
@@ -152,7 +186,9 @@ const FinancialDrawer = () => {
             const targetIds = entityData.isGroup ? [entityId, ...getAllChildAccountIds(entityId)] : [entityId];
             relatedEntries = entries.filter(e => e.lines.some(l => targetIds.includes(l.account)));
         } else if (entityType === 'Journal') {
-            relatedEntries = [entityData];
+            relatedEntries = Array.isArray(entityData?.history_logs)
+                ? entityData.history_logs
+                : [];
         } else if (entityType === 'Bank') {
             relatedEntries = entries.filter(e => e.lines.some(l => l.account === entityData.glAccountId));
         } else if (entityType === 'Cost Center') {
@@ -295,9 +331,22 @@ const AestheticBadge = ({ status, type }) => {
 const OverviewTab = ({ t, entityType, data, history, getAccountBalance, isCustomerDetailsLoading, isCustomerDetailsError }) => {
     const balance = entityType === 'Account' || entityType === 'Bank' || entityType === 'Asset'
         ? getAccountBalance(entityType === 'Bank' ? data.glAccountId : data.id)
-        : (data?.balance || 0);
+        : entityType === 'Journal'
+            ? Number(data?.overview?.current_balance || data?.balance || 0)
+            : (data?.balance || 0);
 
-    const lastTransaction = history.length > 0 ? history[0].date : 'N/A';
+    const lastTransaction = entityType === 'Journal'
+        ? (data?.overview?.last_transaction || (history.length > 0 ? history[0].date : 'N/A'))
+        : (history.length > 0 ? history[0].date : 'N/A');
+    const activityCount = entityType === 'Journal'
+        ? Number(data?.overview?.activity_count || history.length)
+        : history.length;
+    const currency = entityType === 'Journal'
+        ? (data?.overview?.currency || data?.currency || 'JOD')
+        : 'JOD';
+    const overviewDescription = entityType === 'Journal'
+        ? (data?.overview?.description || data?.description)
+        : data?.description;
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -307,7 +356,7 @@ const OverviewTab = ({ t, entityType, data, history, getAccountBalance, isCustom
             }}>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.5rem' }}>{t.currentBalance}</p>
                 <h2 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--color-text-main)', letterSpacing: '-0.04em' }}>
-                    {balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)' }}>JOD</span>
+                    {balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)' }}>{currency}</span>
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-success)' }}></div>
@@ -320,7 +369,7 @@ const OverviewTab = ({ t, entityType, data, history, getAccountBalance, isCustom
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <Card style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '16px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{t.activityCount}</p>
-                    <p style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--color-primary-600)' }}>{history.length}</p>
+                    <p style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--color-primary-600)' }}>{activityCount}</p>
                 </Card>
                 <Card style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '16px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{t.lastTransaction}</p>
@@ -328,11 +377,11 @@ const OverviewTab = ({ t, entityType, data, history, getAccountBalance, isCustom
                 </Card>
             </div>
 
-            {data?.description && (
+            {overviewDescription && (
                 <div style={{ background: 'var(--color-bg-surface)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
                     <h4 style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>{t.description}</h4>
                     <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
-                        {data.description}
+                        {overviewDescription}
                     </p>
                 </div>
             )}
@@ -424,6 +473,7 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
             {history.map(entry => {
                 const targetIds = (entityType === 'Account' && entityData.isGroup) ? [entityId, ...getAllChildAccountIds(entityId)] : [entityId];
                 const matchingLines = entry.lines.filter(l => {
+                    if (entityType === 'Journal') return true;
                     if (entityType === 'Account' || entityType === 'Asset') return targetIds.includes(l.account);
                     if (entityType === 'Bank') return l.account === entityData.glAccountId;
                     if (entityType === 'Cost Center') return l.costCenter === entityId;
@@ -435,7 +485,12 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
                 const primaryLine = matchingLines[0];
                 const isDebit = primaryLine ? Number(primaryLine.debit) > 0 : false;
                 const isCredit = primaryLine ? Number(primaryLine.credit) > 0 : false;
-                const amount = primaryLine ? (isDebit ? primaryLine.debit : primaryLine.credit) : (entry.lines?.reduce((sum, l) => sum + Number(l.debit), 0) || 0);
+                const amount = entityType === 'Journal'
+                    ? Number(entry.total || 0)
+                    : primaryLine
+                        ? (isDebit ? primaryLine.debit : primaryLine.credit)
+                        : (entry.lines?.reduce((sum, l) => sum + Number(l.debit), 0) || 0);
+                const amountCurrency = entry.currency || entityData?.currency || 'JOD';
 
                 // Aesthetic Emerald/Coral hex codes
                 const emerald = '#059669';
@@ -470,7 +525,7 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
                                 fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.02em',
                                 color: isDebit ? emerald : (isCredit ? coral : 'var(--color-text-main)')
                             }}>
-                                {isDebit ? '+' : (isCredit ? '-' : '')}{amount.toLocaleString()} <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>JOD</span>
+                                {isDebit ? '+' : (isCredit ? '-' : '')}{amount.toLocaleString()} <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{amountCurrency}</span>
                             </span>
                         </div>
 
@@ -486,7 +541,7 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                     {entry.lines.map((l, idx) => {
-                                        const accountName = accounts.find(a => a.id === l.account)?.name || l.account;
+                                        const accountName = l.account_name || accounts.find(a => a.id === l.account)?.name || l.account;
                                         const isHighlight = matchingLines.some(ml => ml.id === l.id);
                                         const lDebit = Number(l.debit);
                                         const lCredit = Number(l.credit);
@@ -542,6 +597,16 @@ const TransactionsTab = ({ language, t, history, entityName, entityType, entityI
 };
 
 const RelatedTab = ({ t, entityType, data }) => {
+    const journalMeta = data?.related?.journal_entry;
+    const normalizeLabel = (value) => {
+        if (!value || typeof value !== 'string') return '—';
+        return value
+            .split(/[\s_-]+/)
+            .filter(Boolean)
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-main)', letterSpacing: '-0.01em' }}>{t.connectedModules}</h4>
@@ -573,6 +638,15 @@ const RelatedTab = ({ t, entityType, data }) => {
                     <>
                         <RelatedItem label="Asset Register" value="Fixed Assets" />
                         <RelatedItem label="Depreciation" value="Valuation Control" />
+                    </>
+                )}
+                {entityType === 'Journal' && (
+                    <>
+                        <RelatedItem label="Journal Entry ID" value={journalMeta?.id || data?.id || '—'} />
+                        <RelatedItem label="Title" value={journalMeta?.title || data?.title || '—'} />
+                        <RelatedItem label="Source" value={normalizeLabel(journalMeta?.source || data?.source)} />
+                        <RelatedItem label="Status" value={normalizeLabel(journalMeta?.status || data?.status)} />
+                        <RelatedItem label="Created By" value={journalMeta?.created_by || data?.createdBy || '—'} />
                     </>
                 )}
             </div>
