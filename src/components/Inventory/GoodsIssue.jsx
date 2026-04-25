@@ -1,193 +1,257 @@
-import React, { useState } from 'react';
-import { useInventory } from '@/context/InventoryContext';
-import { useAccounting } from '@/context/AccountingContext';
+import React, { useEffect, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
-import { ArrowLeft, Plus, CheckCircle, Trash2 } from 'lucide-react';
+import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPost } from '@/hooks/useMutation';
+import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+const normalizeArrayResponse = (response) => {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.results)) return response.results;
+    return [];
+};
+
+const collectNestedMessages = (value) => {
+    if (typeof value === 'string') return [value];
+    if (Array.isArray(value)) return value.flatMap((item) => collectNestedMessages(item));
+    if (value && typeof value === 'object') return Object.values(value).flatMap((item) => collectNestedMessages(item));
+    return [];
+};
 
 const GoodsIssue = () => {
-    const { items, warehouses, addTransaction, getStockLevel } = useInventory();
-    const { addEntry } = useAccounting();
     const navigate = useNavigate();
+    const createTransaction = useCustomPost('/api/inventory/transactions/create/', [['inventory-transactions']]);
+    const warehousesQuery = useCustomQuery('/api/inventory/warehouses/', ['inventory-warehouses-issue'], {
+        select: (response) =>
+            normalizeArrayResponse(response)
+                .map((warehouse) => ({ id: warehouse?.id || '', name: warehouse?.name || 'Unnamed Warehouse' }))
+                .filter((warehouse) => warehouse.id),
+    });
+    const approvedPurchaseOrdersQuery = useCustomQuery(
+        '/api/purchasing/purchase-orders/?status=approved&vendor=&date_from=&date_to=',
+        ['purchasing-approved-purchase-orders-issue'],
+        {
+            select: (response) =>
+                normalizeArrayResponse(response).map((purchaseOrder) => ({
+                    id: purchaseOrder?.id || '',
+                    number:
+                        purchaseOrder?.number ||
+                        purchaseOrder?.reference_number ||
+                        purchaseOrder?.po_number ||
+                        purchaseOrder?.id ||
+                        '',
+                    vendorName: purchaseOrder?.vendor_name || purchaseOrder?.vendor?.name || 'Unknown Vendor',
+                    purchaseOrderId: purchaseOrder?.id || '',
+                })),
+        }
+    );
 
     const [formData, setFormData] = useState({
-        reference: '',
         date: new Date().toISOString().split('T')[0],
         warehouseId: '',
-        notes: ''
+        purchaseOrderId: '',
+        notes: 'Issue for job/consumption',
     });
+    const [lineItems, setLineItems] = useState([]);
 
-    const [lineItems, setLineItems] = useState([
-        { itemId: '', quantity: 1, unitCost: 0, totalCost: 0, currentStock: 0 }
-    ]);
+    const purchaseOrderDetailsQuery = useCustomQuery(
+        `/api/purchasing/purchase-orders/${formData.purchaseOrderId || ''}/`,
+        ['purchasing-purchase-order-details-issue', formData.purchaseOrderId || 'none'],
+        {
+            enabled: Boolean(formData.purchaseOrderId),
+            select: (response) => {
+                const purchaseOrder = response?.data ?? response ?? {};
+                const rawLines =
+                    (Array.isArray(purchaseOrder?.lines) && purchaseOrder.lines) ||
+                    (Array.isArray(purchaseOrder?.items) && purchaseOrder.items) ||
+                    (Array.isArray(purchaseOrder?.line_items) && purchaseOrder.line_items) ||
+                    [];
 
-    const handleLineChange = (index, field, value) => {
-        const lines = [...lineItems];
-        lines[index][field] = value;
+                return rawLines.map((item) => {
+                    const quantity = Number.parseFloat(item?.quantity ?? item?.qty ?? 0) || 0;
+                    const unitCost = Number.parseFloat(item?.unit_price ?? item?.unit_cost ?? item?.unitCost ?? 0) || 0;
+                    return {
+                        productId: item?.product_id || item?.item_id || item?.product?.id || '',
+                        itemName: item?.product_name || item?.item_name || item?.product?.name || 'Unknown Item',
+                        quantity,
+                        unitCost,
+                        totalCost: Number.parseFloat(item?.total_cost ?? quantity * unitCost) || quantity * unitCost,
+                    };
+                });
+            },
+        }
+    );
 
-        if (field === 'itemId') {
-            const item = items.find(i => i.id === value);
-            if (item) {
-                // Use Purchase Cost for COGS
-                lines[index].unitCost = item.purchasePrice;
-                lines[index].currentStock = getStockLevel(value, formData.warehouseId);
-            }
+    const warehouseOptions = warehousesQuery.data ?? [];
+    const approvedPurchaseOrders = approvedPurchaseOrdersQuery.data ?? [];
+
+    useEffect(() => {
+        if (!formData.purchaseOrderId) {
+            setLineItems([]);
+            return;
         }
 
-        if (field === 'quantity' || field === 'unitCost' || field === 'itemId') {
-            lines[index].totalCost = lines[index].quantity * lines[index].unitCost;
+        if (purchaseOrderDetailsQuery.data) {
+            setLineItems(purchaseOrderDetailsQuery.data);
+        }
+    }, [formData.purchaseOrderId, purchaseOrderDetailsQuery.data]);
+
+    const handleSubmit = async () => {
+        if (!isIssueReady) {
+            toast.error('Please complete all required fields before posting the issue.');
+            return;
         }
 
-        setLineItems(lines);
-    };
-
-    const addLine = () => {
-        setLineItems([...lineItems, { itemId: '', quantity: 1, unitCost: 0, totalCost: 0, currentStock: 0 }]);
-    };
-
-    const removeLine = (index) => {
-        setLineItems(lineItems.filter((_, i) => i !== index));
-    };
-
-    const handleSubmit = () => {
-        if (!formData.warehouseId || !formData.reference) return alert('Please fill required fields');
-
-        // Validation: Check Stock
-        for (let line of lineItems) {
-            const stock = getStockLevel(line.itemId, formData.warehouseId);
-            if (line.quantity > stock) {
-                alert(`Insufficient stock for item ID: ${line.itemId}. Available: ${stock}`);
-                return;
-            }
-        }
-
-        // 1. Create Inventory Transaction
-        const transaction = {
-            ...formData,
-            type: 'OUT',
-            status: 'Posted',
-            items: lineItems
+        const payload = {
+            type: 'goods_issue',
+            warehouse_id: formData.warehouseId,
+            notes: formData.notes,
+            lines: lineItems
+                .filter((line) => line.productId && Number.parseFloat(line.quantity) > 0)
+                .map((line) => ({
+                    product_id: line.productId,
+                    description: line.itemName || 'Issue line',
+                    quantity: String(line.quantity),
+                })),
         };
 
-        addTransaction(transaction);
-
-        // 2. Create Journal Entry
-        // Debit COGS (5000), Credit Inventory Asset (1200)
-        const totalValue = lineItems.reduce((acc, item) => acc + item.totalCost, 0);
-
-        addEntry({
-            date: formData.date,
-            reference: formData.reference,
-            description: `Goods Issue - ${formData.reference}`,
-            status: 'Posted',
-            sourceType: 'Inventory',
-            isAutomatic: true,
-            lines: [
-                { id: 1, account: '5000', description: 'Cost of Goods Sold', debit: totalValue, credit: 0 },
-                { id: 2, account: '1200', description: 'Inventory Asset', debit: 0, credit: totalValue }
-            ]
-        });
-
-        navigate('/admin/inventory/transactions');
+        try {
+            await createTransaction.mutateAsync(payload);
+            toast.success('Goods issue transaction created successfully.');
+            navigate('/admin/inventory/transactions');
+        } catch (error) {
+            const errorData = error?.response?.data;
+            const lineMessages = collectNestedMessages(errorData?.lines);
+            if (lineMessages.length > 0) {
+                toast.error(lineMessages.join('\n'));
+                return;
+            }
+            const message = getApiErrorMessage(error, 'Failed to create goods issue transaction.');
+            toast.error(message);
+        }
     };
+
+    const hasValidLines =
+        lineItems.length > 0 &&
+        lineItems.every((line) => line.productId && Number.parseFloat(line.quantity) > 0);
+    const isIssueReady = Boolean(formData.warehouseId && formData.purchaseOrderId && hasValidLines);
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
-            <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={() => navigate('/admin/inventory/transactions')} style={{ marginBottom: '1rem' }}>
-                Back to Transactions
-            </Button>
-
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '1.5rem' }}>Goods Issue (Delivery)</h1>
+            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '1.5rem' }}>Goods Issue</h1>
 
             <Card className="padding-md" style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
-                    <div>
-                        <label style={labelStyle}>Reference (e.g. Invoice #)</label>
-                        <input value={formData.reference} onChange={e => setFormData({ ...formData, reference: e.target.value })} style={inputStyle} placeholder="INV-2024-001" required />
-                    </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                     <div>
                         <label style={labelStyle}>Date</label>
-                        <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} style={inputStyle} required />
+                        <input
+                            type="date"
+                            value={formData.date}
+                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                            style={{ ...inputStyle, width: '100%' }}
+                        />
                     </div>
                     <div>
                         <label style={labelStyle}>Issuing Warehouse</label>
-                        <select value={formData.warehouseId} onChange={e => setFormData({ ...formData, warehouseId: e.target.value })} style={inputStyle} required>
+                        <select
+                            value={formData.warehouseId}
+                            onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
+                            style={compactSelectStyle}
+                        >
                             <option value="">Select Warehouse</option>
-                            {warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.name}</option>)}
+                            {warehouseOptions.map((warehouse) => (
+                                <option key={warehouse.id} value={warehouse.id}>
+                                    {warehouse.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
+
+                <div>
+                    <label style={labelStyle}>Purchase Order</label>
+                    <select
+                        value={formData.purchaseOrderId}
+                        onChange={(e) => setFormData({ ...formData, purchaseOrderId: e.target.value })}
+                        style={compactSelectStyle}
+                    >
+                        <option value="">Select Approved PO...</option>
+                        {approvedPurchaseOrders.map((purchaseOrder) => (
+                            <option key={purchaseOrder.id || purchaseOrder.purchaseOrderId} value={purchaseOrder.purchaseOrderId}>
+                                {`${purchaseOrder.number} - ${purchaseOrder.vendorName}`}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div style={{ marginTop: '1rem' }}>
+                    <label style={labelStyle}>Notes</label>
+                    <textarea
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        style={{ ...inputStyle, width: '100%', minHeight: '60px' }}
+                        placeholder="Issue for job/consumption"
+                    />
+                </div>
             </Card>
 
-            <Card className="padding-md">
+            <Card className="padding-md" style={{ marginBottom: '2rem' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem' }}>
                     <thead>
                         <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)' }}>
                             <th style={thStyle}>Item</th>
-                            <th style={thStyle}>Stock On Hand</th>
                             <th style={thStyle}>Quantity</th>
-                            <th style={thStyle}>Unit Cost (Avg)</th>
+                            <th style={thStyle}>Unit Cost</th>
                             <th style={thStyle}>Total Cost</th>
-                            <th style={thStyle}></th>
                         </tr>
                     </thead>
                     <tbody>
-                        {lineItems.map((line, index) => (
-                            <tr key={index} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                <td style={tdStyle}>
-                                    <select
-                                        value={line.itemId}
-                                        onChange={(e) => handleLineChange(index, 'itemId', e.target.value)}
-                                        style={{ ...inputStyle, width: '100%' }}
-                                        disabled={!formData.warehouseId}
-                                    >
-                                        <option value="">Select Item</option>
-                                        {items.filter(i => i.type === 'Stock').map(item => (
-                                            <option key={item.id} value={item.id}>{item.name} ({item.sku})</option>
-                                        ))}
-                                    </select>
-                                    {!formData.warehouseId && <div style={{ fontSize: '0.75rem', color: 'var(--color-danger)' }}>Select Warehouse first</div>}
-                                </td>
-                                <td style={tdStyle}>
-                                    {line.itemId && (
-                                        <span style={{ fontWeight: 600, color: getStockLevel(line.itemId, formData.warehouseId) < line.quantity ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
-                                            {getStockLevel(line.itemId, formData.warehouseId)}
-                                        </span>
-                                    )}
-                                </td>
-                                <td style={tdStyle}>
-                                    <input
-                                        type="number"
-                                        value={line.quantity}
-                                        onChange={(e) => handleLineChange(index, 'quantity', e.target.value)}
-                                        style={{ ...inputStyle, width: '80px' }}
-                                    />
-                                </td>
-                                <td style={tdStyle}>
-                                    {line.unitCost.toFixed(2)}
-                                </td>
-                                <td style={{ ...tdStyle, fontWeight: 600 }}>
-                                    {line.totalCost.toFixed(2)}
-                                </td>
-                                <td style={tdStyle}>
-                                    <button onClick={() => removeLine(index)} style={{ border: 'none', background: 'none', color: 'var(--color-danger)', cursor: 'pointer' }}>
-                                        <Trash2 size={16} />
-                                    </button>
-                                </td>
+                        {!formData.purchaseOrderId ? (
+                            <tr>
+                                <td style={tdStyle} colSpan={4}>Select a purchase order to load items.</td>
                             </tr>
-                        ))}
+                        ) : purchaseOrderDetailsQuery.isPending ? (
+                            <tr>
+                                <td style={tdStyle} colSpan={4}>Loading purchase-order items...</td>
+                            </tr>
+                        ) : lineItems.length === 0 ? (
+                            <tr>
+                                <td style={tdStyle} colSpan={4}>No items found in this purchase order.</td>
+                            </tr>
+                        ) : (
+                            lineItems.map((line, index) => (
+                                <tr key={line.productId || index} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                    <td style={tdStyle}>{line.itemName || line.productId}</td>
+                                    <td style={tdStyle}>{line.quantity}</td>
+                                    <td style={tdStyle}>{Number(line.unitCost || 0).toFixed(2)}</td>
+                                    <td style={{ ...tdStyle, fontWeight: 600 }}>{Number(line.totalCost || 0).toFixed(2)}</td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
+            </Card>
 
-                <Button variant="outline" icon={<Plus size={16} />} onClick={addLine} style={{ marginBottom: '2rem' }}>
-                    Add Line Item
-                </Button>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-                    <Button variant="outline" onClick={() => navigate('/admin/inventory/transactions')}>Cancel</Button>
-                    <Button variant="primary" icon={<CheckCircle size={16} />} onClick={handleSubmit}>
-                        Post Issue
+            <Card className="padding-md">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                        This action will create an inventory transaction using the selected purchase order.
+                    </p>
+                    <Button
+                        variant="primary"
+                        icon={<Save size={16} />}
+                        onClick={handleSubmit}
+                        disabled={!isIssueReady || createTransaction.isPending}
+                    >
+                        {createTransaction.isPending ? 'Processing...' : 'Post Issue'}
+                    </Button>
+                </div>
+                <div style={{ marginTop: '0.75rem' }}>
+                    <Button variant="outline" onClick={() => navigate('/admin/inventory/transactions')}>
+                        Cancel
                     </Button>
                 </div>
             </Card>
@@ -196,7 +260,8 @@ const GoodsIssue = () => {
 };
 
 const labelStyle = { display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-text-primary)' };
-const inputStyle = { padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' };
+const inputStyle = { width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' };
+const compactSelectStyle = { ...inputStyle, padding: '0.42rem 0.6rem' };
 const thStyle = { textAlign: 'left', padding: '1rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: 600 };
 const tdStyle = { padding: '1rem', verticalAlign: 'middle' };
 

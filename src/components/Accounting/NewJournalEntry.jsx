@@ -11,7 +11,7 @@ import Input from '@/components/Shared/Input';
 import { Save, Plus, Trash2, ArrowLeft, Upload, FileText, CheckCircle, AlertTriangle, XCircle, Monitor, Lock } from 'lucide-react';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
 
-const defaultLine = { account: '', description: '', debit: 0, credit: 0, costCenter: '' };
+const defaultLine = { account: '', accountLabel: '', description: '', debit: 0, credit: 0, costCenter: '' };
 
 const defaultValues = {
   date: new Date().toISOString().split('T')[0],
@@ -153,12 +153,16 @@ const NewJournalEntry = () => {
       status: detail.status || 'Draft',
       sourceType: detail.source_type || detail.sourceType || 'Manual',
       isAutomatic: Boolean(detail.is_automatic ?? detail.isAutomatic),
-      lines: (detail.lines || []).map((line) => {
-        const rawAccount = line.account_uuid || line.account_id || line.account || '';
+      lines: (detail.lines || [])
+        .slice()
+        .sort((a, b) => Number(a?.order ?? 0) - Number(b?.order ?? 0))
+        .map((line) => {
+        const rawAccount = line.account_uuid || line.account_id || line.account || line.account_code || '';
         const matchedAccount = allAccounts.find((account) => account.id === rawAccount || account.code === rawAccount);
         return {
         id: line.id,
         account: matchedAccount?.id || rawAccount,
+        accountLabel: line.account_name || line.accountName || matchedAccount?.name || '',
         description: line.description || '',
         debit: Number(line.debit || 0),
         credit: Number(line.credit || 0),
@@ -408,6 +412,13 @@ const NewJournalEntry = () => {
                         style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '0.9rem', height: '38px' }}
                       >
                         <option value="">{accountsQuery.isLoading ? 'Loading accounts...' : 'Select Account'}</option>
+                        {lineField.value && !sortedAccounts.some((account) => account.id === lineField.value) && (
+                          <option value={lineField.value}>
+                            {lines[index]?.accountLabel
+                              ? `${lines[index].accountLabel} (${lineField.value})`
+                              : `Existing Account (${lineField.value})`}
+                          </option>
+                        )}
                         {sortedAccounts.map((account) => (
                           <option key={account.id} value={account.id}>
                             {'\u00A0'.repeat(getDepth(account) * 3)} {account.code} - {account.name}

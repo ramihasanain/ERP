@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Plus, Eye, Search, Filter, CreditCard } from 'lucide-react';
@@ -42,6 +42,7 @@ const buildBillsUrl = ({ name, status }) => {
 
 const VendorInvoiceList = () => {
     const navigate = useNavigate();
+    const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [payingBill, setPayingBill] = useState(null);
@@ -81,14 +82,20 @@ const VendorInvoiceList = () => {
         }
     };
 
+    useEffect(() => {
+        const onResize = () => setIsNarrowScreen(window.innerWidth < 1100);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
     return (
         <div style={{ padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', marginBottom: '2rem', gap: '1rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>Vendor Invoices (Bills)</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Manage supplier bills and payments</p>
                 </div>
-                <Button variant="primary" icon={<Plus size={16} />} onClick={() => navigate('/admin/inventory/invoices/new')}>
+                <Button variant="primary" icon={<Plus size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/invoices/new')} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
                     Record New Bill
                 </Button>
             </div>

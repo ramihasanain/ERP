@@ -18,14 +18,28 @@ const getEntryTotalAmount = (entry) => {
 
 const isSystemSourceEntry = (entry) => {
     if (entry.isAutomatic) return true;
+    const normalizedSource = (entry.sourceType || entry.source || '').toString().trim().toLowerCase();
+    if (normalizedSource && normalizedSource !== 'manual') return true;
     return /\bPAYROLL\b/i.test(entry.reference || '');
+};
+
+const formatSourceLabel = (entry) => {
+    const rawSource = (entry.sourceType || entry.source || '').toString().trim();
+    if (!rawSource) {
+        return isSystemSourceEntry(entry) ? 'System' : 'Manual';
+    }
+
+    return rawSource
+        .split(/[\s_-]+/)
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
 };
 
 const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
     const { openDrawer } = useAccounting();
-    // Sort entries by date desc (newest first)
-    const sortedEntries = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
-    const displayEntries = limit ? sortedEntries.slice(0, limit) : sortedEntries;
+    // Keep backend order exactly as received.
+    const displayEntries = limit ? entries.slice(0, limit) : entries;
 
     return (
         <div style={{ overflowX: 'auto' }}>
@@ -54,6 +68,7 @@ const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
                             const totalAmount = getEntryTotalAmount(entry);
                             const currency = entry.currency || 'JOD';
                             const isAuto = isSystemSourceEntry(entry);
+                            const sourceLabel = formatSourceLabel(entry);
                             const statusKey = (entry.status || '').toLowerCase();
                             const statusLabel = formatStatusLabel(entry.status);
 
@@ -74,10 +89,10 @@ const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
                                                 fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-primary-600)',
                                                 background: 'color-mix(in srgb, var(--color-primary-600) 16%, var(--color-bg-card))', padding: '0.25rem 0.5rem', borderRadius: '4px'
                                             }}>
-                                                <Monitor size={12} /> {entry.sourceType || 'Payroll'}
+                                                <Monitor size={12} /> {sourceLabel}
                                             </span>
                                         ) : (
-                                            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Manual</span>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{sourceLabel}</span>
                                         )}
                                     </td>
                                     <td style={{ padding: '1rem 1rem', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

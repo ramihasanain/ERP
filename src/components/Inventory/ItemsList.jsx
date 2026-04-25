@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { keepPreviousData } from '@tanstack/react-query';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -63,6 +63,7 @@ const buildProductsUrl = (categoryId) => {
 
 const ItemsList = () => {
     const navigate = useNavigate();
+    const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [deleteTarget, setDeleteTarget] = useState(null);
@@ -123,14 +124,20 @@ const ItemsList = () => {
         }
     };
 
+    useEffect(() => {
+        const onResize = () => setIsNarrowScreen(window.innerWidth < 1100);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', gap: '1rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>Items & Services</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Manage your product master data and services.</p>
                 </div>
-                <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate('/admin/inventory/items/new')}>
+                <Button variant="primary" icon={<Plus size={18} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/items/new')} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
                     Add New Item
                 </Button>
             </div>

@@ -76,7 +76,7 @@ const JournalEntryDetailModal = ({ isOpen, entryId, onClose }) => {
               <tbody>
                 {lines.map((line, index) => (
                   <tr key={line.id || index} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <td style={{ padding: '0.75rem' }}>{line.account || '-'}</td>
+                    <td style={{ padding: '0.75rem' }}>{line.account_name || line.accountName || line.account || '-'}</td>
                     <td style={{ padding: '0.75rem' }}>{line.description || '-'}</td>
                     <td style={{ padding: '0.75rem' }}>{line.cost_center || line.costCenter || '-'}</td>
                     <td style={{ padding: '0.75rem', textAlign: 'right' }}>{line.debit || '0.00'}</td>

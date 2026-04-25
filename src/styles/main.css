@@ -89,3 +89,11 @@ textarea::placeholder {
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
     background: var(--color-slate-600);
 }
+
+.inventory-tabs-scroll {
+    scrollbar-width: thin;
+}
+
+.inventory-tabs-scroll::-webkit-scrollbar {
+    height: 4px;
+}

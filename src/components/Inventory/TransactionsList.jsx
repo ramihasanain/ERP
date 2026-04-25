@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import useCustomQuery from '@/hooks/useQuery';
 import Spinner from '@/core/Spinner';
 import Pagination from '@/core/Pagination';
@@ -56,6 +56,7 @@ const buildTransactionsUrl = ({
 const TransactionsList = () => {
     const { warehouses } = useInventory();
     const navigate = useNavigate();
+    const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
     const [typeFilter, setTypeFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [warehouseFilter, setWarehouseFilter] = useState('');
@@ -93,21 +94,27 @@ const TransactionsList = () => {
 
     const resetPagination = () => setPage(1);
 
+    useEffect(() => {
+        const onResize = () => setIsNarrowScreen(window.innerWidth < 1100);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', gap: '1rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>Inventory Transactions</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Track all stock movements.</p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="outline" icon={<ArrowRight size={16} />} onClick={() => navigate('/admin/inventory/transactions/issue')}>
+                <div style={{ display: 'flex', gap: '1rem', alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
+                    <Button variant="outline" icon={<ArrowRight size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/transactions/issue')}>
                         Goods Issue
                     </Button>
-                    <Button variant="outline" icon={<ArrowLeft size={16} />} onClick={() => navigate('/admin/inventory/transactions/receipt')}>
+                    <Button variant="outline" icon={<ArrowLeft size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/transactions/receipt')}>
                         Goods Receipt
                     </Button>
-                    <Button variant="outline" icon={<ArrowRight size={16} />} onClick={() => navigate('/admin/inventory/transactions/transfer')}>
+                    <Button variant="outline" icon={<ArrowRight size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/transactions/transfer')}>
                         Transfer
                     </Button>
                 </div>
@@ -251,7 +258,7 @@ const TransactionsList = () => {
                                                 <td style={tdStyle}>{trans.date || '--'}</td>
                                                 <td style={{ ...tdStyle, fontWeight: 600 }}>{trans.reference || '--'}</td>
                                                 <td style={tdStyle}>
-                                                    <span style={getTypeBadgeStyle(trans.type)}>
+                                                    <span style={{ ...getTypeBadgeStyle(trans.type), whiteSpace: 'nowrap' }}>
                                                         {trans.type_display || trans.type || '--'}
                                                     </span>
                                                 </td>
@@ -293,6 +300,8 @@ const TransactionsList = () => {
 
 const inputStyle = {
     width: '100%',
+    height: '42px',
+    boxSizing: 'border-box',
     padding: '0.6rem',
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--color-border)',

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Modal from '@/components/Shared/Modal';
@@ -56,6 +56,7 @@ const normalizeEmployee = (item) => {
 const normalizeEmployees = (response) => normalizeArrayResponse(response).map(normalizeEmployee);
 
 const Warehouses = () => {
+    const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [editingWarehouse, setEditingWarehouse] = useState(null);
@@ -219,14 +220,20 @@ const Warehouses = () => {
         }
     };
 
+    useEffect(() => {
+        const onResize = () => setIsNarrowScreen(window.innerWidth < 1100);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', gap: '1rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>Warehouses</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Manage physical storage locations.</p>
                 </div>
-                <Button variant="primary" icon={<Plus size={18} />} onClick={handleAdd}>
+                <Button variant="primary" icon={<Plus size={18} />} size={isNarrowScreen ? 'sm' : undefined} onClick={handleAdd} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
                     Add Warehouse
                 </Button>
             </div>

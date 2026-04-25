@@ -259,7 +259,7 @@ const PeriodDetails = () => {
                                                         variant="ghost"
                                                         size="sm"
                                                         className="cursor-pointer"
-                                                        onClick={() => navigate(`/admin/hr/payroll/payslip/${line.employee_id}`)}
+                                                        onClick={() => navigate(`/admin/hr/payroll/payslip/${line.employee_id}?periodId=${id}&lineId=${line.id}`)}
                                                     >
                                                         View Payslip
                                                     </Button>

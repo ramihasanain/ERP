@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -10,9 +10,18 @@ const PurchaseOrderHeaderFilters = ({
     onSearchTermChange,
     onFilterStatusChange,
     onCreatePurchaseOrder,
-}) => (
-    <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+}) => {
+    const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
+
+    useEffect(() => {
+        const onResize = () => setIsNarrowScreen(window.innerWidth < 1100);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
+    return (
+        <>
+            <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', marginBottom: '2rem', gap: '1rem' }}>
             <div>
                 <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>Purchase Orders</h1>
                 <p style={{ color: 'var(--color-text-secondary)' }}>Manage procurement and vendor orders</p>
@@ -20,8 +29,10 @@ const PurchaseOrderHeaderFilters = ({
             <Button
                 variant="primary"
                 icon={<Plus size={16} />}
+                size={isNarrowScreen ? 'sm' : undefined}
                 onClick={onCreatePurchaseOrder}
                 className="font-medium cursor-pointer"
+                style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}
             >
                 New Purchase Order
             </Button>
@@ -84,7 +95,8 @@ const PurchaseOrderHeaderFilters = ({
                 ))}
             </div>
         </Card>
-    </>
-);
+        </>
+    );
+};
 
 export default PurchaseOrderHeaderFilters;

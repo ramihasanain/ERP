@@ -1,25 +1,72 @@
-import React, { useState } from 'react';
-import { useInventory } from '@/context/InventoryContext';
+import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
-import { ArrowLeft, Plus, CheckCircle, Trash2, ArrowRight } from 'lucide-react';
+import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPost } from '@/hooks/useMutation';
+import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+const normalizeArrayResponse = (response) => {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.results)) return response.results;
+    return [];
+};
 
 const WarehouseTransfer = () => {
-    const { items, warehouses, addTransaction, getStockLevel } = useInventory();
     const navigate = useNavigate();
-
+    const createTransaction = useCustomPost('/api/inventory/transactions/create/', [['inventory-transactions']]);
     const [formData, setFormData] = useState({
-        reference: '',
         date: new Date().toISOString().split('T')[0],
         fromWarehouseId: '',
         toWarehouseId: '',
-        notes: ''
+        notes: '',
     });
+    const warehousesQuery = useCustomQuery('/api/inventory/warehouses/', ['inventory-warehouses-transfer'], {
+        select: (response) =>
+            normalizeArrayResponse(response)
+                .map((warehouse) => ({ id: warehouse?.id || '', name: warehouse?.name || 'Unnamed Warehouse' }))
+                .filter((warehouse) => warehouse.id),
+    });
+    const warehouseProductsQuery = useCustomQuery(
+        `/api/inventory/warehouses/${formData.fromWarehouseId || ''}/products/`,
+        ['inventory-warehouse-products-transfer', formData.fromWarehouseId || 'none'],
+        {
+            enabled: Boolean(formData.fromWarehouseId),
+            select: (response) =>
+                normalizeArrayResponse(response)
+                    .map((product) => ({
+                        productId: product?.id || '',
+                        itemName: product?.name || product?.item_name || 'Unnamed Product',
+                        description: product?.name || product?.item_name || 'Transfer line',
+                        availableQuantity:
+                            Number.parseFloat(product?.stock_in_warehouse ?? product?.quantity ?? 0) || 0,
+                        quantity: '',
+                    }))
+                    .filter((product) => product.productId),
+        }
+    );
 
-    const [lineItems, setLineItems] = useState([
-        { itemId: '', quantity: 1 }
-    ]);
+    const [lineItems, setLineItems] = useState([]);
+    const warehouseOptions = warehousesQuery.data ?? [];
+
+    useEffect(() => {
+        if (!formData.fromWarehouseId) {
+            setLineItems([]);
+            return;
+        }
+
+        if (warehouseProductsQuery.data) {
+            setLineItems(warehouseProductsQuery.data);
+        }
+    }, [formData.fromWarehouseId, warehouseProductsQuery.data]);
+
+    const sourceWarehouseLabel = useMemo(
+        () => warehouseOptions.find((warehouse) => warehouse.id === formData.fromWarehouseId)?.name || 'Source Warehouse',
+        [warehouseOptions, formData.fromWarehouseId]
+    );
 
     const handleLineChange = (index, field, value) => {
         const lines = [...lineItems];
@@ -27,91 +74,125 @@ const WarehouseTransfer = () => {
         setLineItems(lines);
     };
 
-    const addLine = () => {
-        setLineItems([...lineItems, { itemId: '', quantity: 1 }]);
-    };
-
-    const removeLine = (index) => {
-        setLineItems(lineItems.filter((_, i) => i !== index));
-    };
-
-    const handleSubmit = () => {
-        if (!formData.fromWarehouseId || !formData.toWarehouseId || !formData.reference) return alert('Please fill required fields');
-        if (formData.fromWarehouseId === formData.toWarehouseId) return alert('Source and Destination warehouses cannot be the same.');
-
-        // Validation: Check Stock in Source Warehouse
-        for (let line of lineItems) {
-            const stock = getStockLevel(line.itemId, formData.fromWarehouseId);
-            if (line.quantity > stock) {
-                alert(`Insufficient stock in source warehouse for item ID: ${line.itemId}. Available: ${stock}`);
-                return;
-            }
+    const handleSubmit = async () => {
+        if (!isTransferReady) {
+            toast.error('Please complete all required fields before posting the transfer.');
+            return;
         }
 
-        // 1. Create OUT Transaction from Source
-        addTransaction({
-            ...formData,
-            warehouseId: formData.fromWarehouseId,
-            type: 'OUT', // Transfer Out
-            status: 'Posted',
-            reference: `${formData.reference}-OUT`,
-            items: lineItems.map(l => ({ ...l, unitCost: 0, totalCost: 0 })) // Transfer doesn't necessarily have new cost, keeps existing value
-        });
+        if (formData.fromWarehouseId === formData.toWarehouseId) {
+            toast.error('Source and destination warehouses cannot be the same.');
+            return;
+        }
+        if (hasInvalidLines) {
+            toast.error('Transfer quantity cannot exceed available stock in the source warehouse.');
+            return;
+        }
 
-        // 2. Create IN Transaction to Destination
-        addTransaction({
-            ...formData,
-            warehouseId: formData.toWarehouseId,
-            type: 'IN', // Transfer In
-            status: 'Posted',
-            reference: `${formData.reference}-IN`,
-            items: lineItems.map(l => ({ ...l, unitCost: 0, totalCost: 0 }))
-        });
+        const payload = {
+            date: formData.date,
+            type: 'transfer',
+            warehouse_id: formData.fromWarehouseId,
+            destination_warehouse_id: formData.toWarehouseId,
+            notes: formData.notes,
+            lines: lineItems
+                .filter((line) => {
+                    const qty = Number.parseFloat(line.quantity);
+                    return line.productId && qty > 0 && qty <= Number(line.availableQuantity || 0);
+                })
+                .map((line) => ({
+                    product_id: line.productId,
+                    description: line.description || 'Transfer line',
+                    quantity: String(line.quantity),
+                })),
+        };
 
-        navigate('/admin/inventory/transactions');
+        try {
+            await createTransaction.mutateAsync(payload);
+            toast.success('Warehouse transfer transaction created successfully.');
+            navigate('/admin/inventory/transactions');
+        } catch (error) {
+            const message = getApiErrorMessage(error, 'Failed to create warehouse transfer transaction.');
+            toast.error(message);
+        }
     };
+
+    const hasValidLines =
+        lineItems.length > 0 &&
+        lineItems.some((line) => {
+            const qty = Number.parseFloat(line.quantity);
+            return line.productId && qty > 0 && qty <= Number(line.availableQuantity || 0);
+        });
+    const hasInvalidLines = lineItems.some((line) => {
+        const qty = Number.parseFloat(line.quantity);
+        if (!Number.isFinite(qty) || qty <= 0) return false;
+        return qty > Number(line.availableQuantity || 0);
+    });
+    const isTransferReady = Boolean(
+        formData.date &&
+            formData.fromWarehouseId &&
+            formData.toWarehouseId &&
+            formData.fromWarehouseId !== formData.toWarehouseId &&
+            hasValidLines &&
+            !hasInvalidLines
+    );
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
-            <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={() => navigate('/admin/inventory/transactions')} style={{ marginBottom: '1rem' }}>
-                Back to Transactions
-            </Button>
-
             <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '1.5rem' }}>Warehouse Transfer</h1>
 
             <Card className="padding-md" style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
-
-                    <div style={{ gridColumn: 'span 2' }}>
-                        <label style={labelStyle}>Reference</label>
-                        <input value={formData.reference} onChange={e => setFormData({ ...formData, reference: e.target.value })} style={inputStyle} placeholder="TRF-2024-001" required />
-                    </div>
-                    <div style={{ gridColumn: 'span 2' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1rem' }}>
+                    <div>
                         <label style={labelStyle}>Date</label>
-                        <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} style={inputStyle} required />
+                        <input
+                            type="date"
+                            value={formData.date}
+                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                            style={{ ...inputStyle, width: '100%' }}
+                        />
                     </div>
-
                     <div>
                         <label style={labelStyle}>From Warehouse</label>
-                        <select value={formData.fromWarehouseId} onChange={e => setFormData({ ...formData, fromWarehouseId: e.target.value })} style={inputStyle} required>
+                        <select
+                            value={formData.fromWarehouseId}
+                            onChange={(e) => setFormData({ ...formData, fromWarehouseId: e.target.value })}
+                            style={compactSelectStyle}
+                        >
                             <option value="">Select Source</option>
-                            {warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.name}</option>)}
+                            {warehouseOptions.map((warehouse) => (
+                                <option key={warehouse.id} value={warehouse.id}>
+                                    {warehouse.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <ArrowRight size={24} color="var(--color-primary-500)" />
-                    </div>
-
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                     <div>
                         <label style={labelStyle}>To Warehouse</label>
-                        <select value={formData.toWarehouseId} onChange={e => setFormData({ ...formData, toWarehouseId: e.target.value })} style={inputStyle} required>
+                        <select
+                            value={formData.toWarehouseId}
+                            onChange={(e) => setFormData({ ...formData, toWarehouseId: e.target.value })}
+                            style={compactSelectStyle}
+                        >
                             <option value="">Select Destination</option>
-                            {warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.name}</option>)}
+                            {warehouseOptions.map((warehouse) => (
+                                <option key={warehouse.id} value={warehouse.id}>
+                                    {warehouse.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
-
-
+                    <div>
+                        <label style={labelStyle}>Notes</label>
+                        <textarea
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            style={{ ...inputStyle, width: '100%', minHeight: '40px' }}
+                            placeholder="Move stock to branch"
+                        />
+                    </div>
                 </div>
             </Card>
 
@@ -120,61 +201,71 @@ const WarehouseTransfer = () => {
                     <thead>
                         <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)' }}>
                             <th style={thStyle}>Item</th>
-                            <th style={thStyle}>Available at Source</th>
+                            <th style={thStyle}>Description</th>
+                            <th style={thStyle}>Available Qty</th>
                             <th style={thStyle}>Transfer Quantity</th>
-                            <th style={thStyle}></th>
                         </tr>
                     </thead>
                     <tbody>
-                        {lineItems.map((line, index) => (
-                            <tr key={index} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                        {!formData.fromWarehouseId ? (
+                            <tr>
+                                <td style={tdStyle} colSpan={4}>Select a source warehouse to load available products.</td>
+                            </tr>
+                        ) : warehouseProductsQuery.isPending ? (
+                            <tr>
+                                <td style={tdStyle} colSpan={4}>Loading warehouse products...</td>
+                            </tr>
+                        ) : lineItems.length === 0 ? (
+                            <tr>
+                                <td style={tdStyle} colSpan={4}>No products found in this warehouse.</td>
+                            </tr>
+                        ) : (
+                        lineItems.map((line, index) => (
+                            <tr key={line.productId || index} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                <td style={tdStyle}>{line.itemName || line.productId}</td>
                                 <td style={tdStyle}>
-                                    <select
-                                        value={line.itemId}
-                                        onChange={(e) => handleLineChange(index, 'itemId', e.target.value)}
+                                    <input
+                                        type="text"
+                                        value={line.description}
+                                        onChange={(e) => handleLineChange(index, 'description', e.target.value)}
                                         style={{ ...inputStyle, width: '100%' }}
-                                        disabled={!formData.fromWarehouseId}
-                                    >
-                                        <option value="">Select Item</option>
-                                        {items.filter(i => i.type === 'Stock').map(item => (
-                                            <option key={item.id} value={item.id}>{item.name} ({item.sku})</option>
-                                        ))}
-                                    </select>
-                                    {!formData.fromWarehouseId && <div style={{ fontSize: '0.75rem', color: 'var(--color-danger)' }}>Select Source Warehouse first</div>}
+                                        placeholder="Line description"
+                                    />
                                 </td>
-                                <td style={tdStyle}>
-                                    {line.itemId && (
-                                        <span style={{ fontWeight: 600 }}>
-                                            {getStockLevel(line.itemId, formData.fromWarehouseId)}
-                                        </span>
-                                    )}
-                                </td>
+                                <td style={tdStyle}>{line.availableQuantity}</td>
                                 <td style={tdStyle}>
                                     <input
                                         type="number"
                                         value={line.quantity}
                                         onChange={(e) => handleLineChange(index, 'quantity', e.target.value)}
-                                        style={{ ...inputStyle, width: '100px' }}
+                                        style={{ ...inputStyle, width: '120px' }}
+                                        min="0.01"
+                                        step="0.01"
+                                        max={line.availableQuantity}
                                     />
                                 </td>
-                                <td style={tdStyle}>
-                                    <button onClick={() => removeLine(index)} style={{ border: 'none', background: 'none', color: 'var(--color-danger)', cursor: 'pointer' }}>
-                                        <Trash2 size={16} />
-                                    </button>
-                                </td>
                             </tr>
-                        ))}
+                        ))
+                        )}
                     </tbody>
                 </table>
 
-                <Button variant="outline" icon={<Plus size={16} />} onClick={addLine} style={{ marginBottom: '2rem' }}>
-                    Add Line Item
-                </Button>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-                    <Button variant="outline" onClick={() => navigate('/admin/inventory/transactions')}>Cancel</Button>
-                    <Button variant="primary" icon={<CheckCircle size={16} />} onClick={handleSubmit}>
-                        Transfer Stock
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                        Transfer from {sourceWarehouseLabel}
+                    </p>
+                    <Button
+                        variant="primary"
+                        icon={<Save size={16} />}
+                        onClick={handleSubmit}
+                        disabled={!isTransferReady || createTransaction.isPending}
+                    >
+                        {createTransaction.isPending ? 'Processing...' : 'Transfer Stock'}
+                    </Button>
+                </div>
+                <div style={{ marginTop: '0.75rem' }}>
+                    <Button variant="outline" onClick={() => navigate('/admin/inventory/transactions')}>
+                        Cancel
                     </Button>
                 </div>
             </Card>
@@ -183,7 +274,8 @@ const WarehouseTransfer = () => {
 };
 
 const labelStyle = { display: 'block', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-text-primary)' };
-const inputStyle = { padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' };
+const inputStyle = { width: '100%', padding: '0.6rem', borderRadius: '4px', border: '1px solid var(--color-border)', fontSize: '0.9rem', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' };
+const compactSelectStyle = { ...inputStyle, padding: '0.42rem 0.6rem' };
 const thStyle = { textAlign: 'left', padding: '1rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: 600 };
 const tdStyle = { padding: '1rem', verticalAlign: 'middle' };
 

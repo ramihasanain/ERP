@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Search, Plus, Filter } from 'lucide-react';
@@ -12,6 +12,14 @@ const VendorsHeaderFilters = ({
     onClearFilters,
     onAddVendor,
 }) => {
+    const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
+
+    useEffect(() => {
+        const onResize = () => setIsNarrowScreen(window.innerWidth < 1100);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
     return (
         <div
             style={{
@@ -22,14 +30,14 @@ const VendorsHeaderFilters = ({
                 gap: '1.5rem',
             }}
         >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', gap: '1rem' }}>
                 <div>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Vendors & Suppliers</h2>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
                         {filteredCount} partners connected
                     </p>
                 </div>
-                <Button icon={<Plus size={16} />} onClick={onAddVendor}>
+                <Button icon={<Plus size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={onAddVendor} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
                     Add Vendor
                 </Button>
             </div>
