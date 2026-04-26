@@ -49,10 +49,18 @@ const normalizeDashboard = (response) => {
     };
 };
 
+
+// TODO: Add back the overview tab
 const Payroll = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [activeTab, setActiveTab] = useState(() => (location.state?.activeTab === 'settlements' ? 'settlements' : 'overview'));
+    const [activeTab, setActiveTab] = useState('settlements'
+    //     () => (
+    //     location.state?.activeTab === 'settlements' ? 'settlements' : 
+    //     'overview'
+    // )
+
+);
 
     useEffect(() => {
         if (location.state?.activeTab === 'settlements') {

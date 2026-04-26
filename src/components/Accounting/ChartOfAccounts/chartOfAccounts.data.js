@@ -13,8 +13,14 @@ export const normalizeTreeResponse = (response) => {
 const normalizeNode = (node, parent, level) => {
     const rawType = node?.account_type;
     const accountTypeId = typeof rawType === 'string' ? rawType : rawType?.id || '';
+    const childSource = Array.isArray(node?.children)
+        ? node.children
+        : Array.isArray(node?.accounts)
+            ? node.accounts
+            : [];
     const accountTypeLabel =
         (typeof rawType === 'object' && (rawType?.name || rawType?.title)) ||
+        (typeof rawType === 'string' ? rawType : '') ||
         node?.account_type_name ||
         node?.type ||
         'Unknown';
@@ -24,7 +30,7 @@ const normalizeNode = (node, parent, level) => {
         code: String(node?.code || ''),
         name: node?.name || '',
         description: node?.description || '',
-        isGroup: Boolean(node?.is_group ?? node?.isGroup),
+        isGroup: Boolean(node?.is_group ?? node?.isGroup ?? childSource.length > 0),
         isSystem: Boolean(node?.is_system_account ?? node?.isSystem ?? false),
         accountTypeId,
         accountTypeLabel,
@@ -33,12 +39,6 @@ const normalizeNode = (node, parent, level) => {
         children: [],
         level,
     };
-
-    const childSource = Array.isArray(node?.children)
-        ? node.children
-        : Array.isArray(node?.accounts)
-            ? node.accounts
-            : [];
 
     normalized.children = childSource.map((child) =>
         normalizeNode(child, normalized, level + 1)

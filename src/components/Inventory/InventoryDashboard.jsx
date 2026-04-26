@@ -22,6 +22,7 @@ const InventoryDashboard = () => {
         ? dashboardQuery.data.recent_movements.data.slice(0, 5)
         : [];
     const totalInventoryValue = Number(summary.total_inventory_value ?? 0);
+    const totalInventoryCurrency = String(summary.currency || 'JOD');
     const totalItems = Number(summary.total_items ?? 0);
     const lowStockAlerts = Number(summary.low_stock_alerts ?? lowStockItems.length ?? 0);
     const movementsToday = Number(summary.movements_today ?? 0);
@@ -31,7 +32,12 @@ const InventoryDashboard = () => {
             {/* KPI Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                 <div onClick={() => navigate('/admin/inventory/reports/valuation')} style={{ cursor: 'pointer' }}>
-                    <KPICard title="Total Inventory Value" value={`${totalInventoryValue.toLocaleString()} JOD`} icon={<DollarSign size={24} />} color="primary" />
+                    <KPICard
+                        title="Total Inventory Value"
+                        value={`${totalInventoryValue.toLocaleString()} ${totalInventoryCurrency}`}
+                        icon={<DollarSign size={24} />}
+                        color="primary"
+                    />
                 </div>
                 <div onClick={() => navigate('/admin/inventory/items')} style={{ cursor: 'pointer' }}>
                     <KPICard title="Total Items" value={totalItems} icon={<Package size={24} />} color="primary" />

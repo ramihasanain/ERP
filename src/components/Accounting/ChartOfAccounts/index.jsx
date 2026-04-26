@@ -124,7 +124,10 @@ const ChartOfAccounts = () => {
     }, [accountById, allAccounts, searchTerm]);
 
     const allGroupIds = useMemo(
-        () => allAccounts.filter((account) => account.isGroup).map((account) => account.id),
+        () =>
+            allAccounts
+                .filter((account) => account.isGroup || (Array.isArray(account.children) && account.children.length > 0))
+                .map((account) => account.id),
         [allAccounts]
     );
 

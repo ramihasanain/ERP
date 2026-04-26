@@ -69,8 +69,14 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
         }));
     }, [billDetails, bill?.id]);
 
+    const isAmountValid = Number(formData.amount) > 0;
+    const isDateValid = Boolean(formData.date);
+    const isMethodValid = Boolean(formData.method);
+    const isAccountValid = Boolean(formData.accountId);
+    const hasRequiredPaymentData = isAmountValid && isDateValid && isMethodValid && isAccountValid;
+
     const handleSubmit = async () => {
-        if (!formData.amount || !formData.accountId) return;
+        if (!hasRequiredPaymentData) return;
 
         try {
             await submitPaymentMutation.mutateAsync({
@@ -197,7 +203,12 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
                         <Button
                             icon={<Save size={16} />}
                             onClick={handleSubmit}
-                            disabled={submitPaymentMutation.isPending || bankAccountsQuery.isPending || billDetailsQuery.isPending}
+                            disabled={
+                                submitPaymentMutation.isPending ||
+                                bankAccountsQuery.isPending ||
+                                billDetailsQuery.isPending ||
+                                !hasRequiredPaymentData
+                            }
                         >
                             {isRtl ? 'تأكيد الدفع' : 'Confirm Payment'}
                         </Button>

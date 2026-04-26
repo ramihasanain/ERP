@@ -22,6 +22,8 @@ const normalizeBillDetails = (bill) => {
         billDate: bill.bill_date || '-',
         dueDate: bill.due_date || '-',
         poNumber: bill.po_number || '-',
+        description: bill.description || '',
+        rawStatus: String(bill.status || '').toLowerCase(),
         currency: bill.currency || 'DZD',
         status: bill.status_display || toTitleCase(bill.status || '-'),
         totalPayable: Number(bill.total_payable ?? 0),
@@ -48,8 +50,8 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
     );
 
     const bankAccountsQuery = useCustomQuery(
-        '/accounting/bank-accounts/',
-        ['accounting-bank-accounts'],
+        '/accounting/accounts/',
+        ['accounting-accounts'],
         {
             enabled: Boolean(isOpen),
             select: (response) => {
@@ -68,7 +70,8 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
     const bill = useMemo(() => billDetailsQuery.data ?? null, [billDetailsQuery.data]);
     const accountOptions = useMemo(() => bankAccountsQuery.data ?? [], [bankAccountsQuery.data]);
     const [editableLines, setEditableLines] = useState([]);
-    const [savingLineId, setSavingLineId] = useState('');
+    const [isPostedLocked, setIsPostedLocked] = useState(false);
+    const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
     useEffect(() => {
         if (!bill?.lines) {
@@ -84,29 +87,92 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
         );
     }, [bill]);
 
-    const handleLineAccountChange = async (lineId, selectedAccountId) => {
-        if (!billId || !selectedAccountId) return;
+    useEffect(() => {
+        setIsPostedLocked(Boolean(bill?.rawStatus === 'posted'));
+    }, [bill?.rawStatus]);
 
-        const previousLine = editableLines.find((line) => line.id === lineId);
-        const previousAccountId = previousLine?.accountId || '';
+    const isBillPosted = isPostedLocked || bill?.rawStatus === 'posted';
+    const allLinesHaveAccount = editableLines.length > 0 && editableLines.every((line) => Boolean(line.accountId));
+    const changedLines = useMemo(() => {
+        if (!bill?.lines?.length) return [];
 
+        const originalLineById = new Map(
+            bill.lines.map((line) => [
+                line.id,
+                {
+                    accountId: line.accountId || '',
+                    description: line.description || '',
+                },
+            ])
+        );
+
+        return editableLines
+            .filter((line) => {
+                const originalLine = originalLineById.get(line.id) || { accountId: '', description: '' };
+                const isAccountChanged = Boolean(line.accountId) && line.accountId !== originalLine.accountId;
+                const isDescriptionChanged = (line.description || '') !== originalLine.description;
+                return isAccountChanged || isDescriptionChanged;
+            })
+            .map((line) => {
+                const originalLine = originalLineById.get(line.id) || { accountId: '', description: '' };
+                const nextLine = { id: line.id };
+
+                if (Boolean(line.accountId) && line.accountId !== originalLine.accountId) {
+                    nextLine.account_id = line.accountId;
+                }
+
+                if ((line.description || '') !== originalLine.description) {
+                    nextLine.description = line.description || '';
+                }
+
+                return nextLine;
+            });
+    }, [bill?.lines, editableLines]);
+
+    const hasChangesToSubmit = changedLines.length > 0;
+    const canPatchBill = !isBillPosted && allLinesHaveAccount && hasChangesToSubmit;
+
+    const handleLineAccountChange = (lineId, selectedAccountId) => {
+        if (isBillPosted) return;
         setEditableLines((prev) =>
             prev.map((line) => (line.id === lineId ? { ...line, accountId: selectedAccountId } : line))
         );
+    };
 
-        setSavingLineId(lineId);
+    const handleLineDescriptionChange = (lineId, nextDescription) => {
+        if (isBillPosted) return;
+        setEditableLines((prev) =>
+            prev.map((line) => (line.id === lineId ? { ...line, description: nextDescription } : line))
+        );
+    };
+
+    const getAccountLabel = (accountId) => {
+        const selected = accountOptions.find((account) => (account.account_id || account.id) === accountId);
+        return selected?.account_name || selected?.name || 'Unassigned';
+    };
+
+    const handlePatchBill = async () => {
+        if (!billId || !canPatchBill || isSubmittingPost || updateBillAccountMutation.isPending) return;
+
+        const payload = {
+            status: 'posted',
+        };
+
+        if (changedLines.length > 0) {
+            payload.lines = changedLines;
+        }
+
         try {
-            await updateBillAccountMutation.mutateAsync({
-                paid_from_account_id: selectedAccountId,
-            });
+            setIsSubmittingPost(true);
+            await updateBillAccountMutation.mutateAsync(payload);
+            setIsPostedLocked(true);
+            toast.success('Bill posted successfully.');
+            onClose();
         } catch (error) {
-            setEditableLines((prev) =>
-                prev.map((line) => (line.id === lineId ? { ...line, accountId: previousAccountId } : line))
-            );
-            const message = error?.response?.data?.detail || error?.message || 'Failed to update account.';
+            const message = error?.response?.data?.detail || error?.message || 'Failed to post bill.';
             toast.error(message);
         } finally {
-            setSavingLineId('');
+            setIsSubmittingPost(false);
         }
     };
 
@@ -238,12 +304,44 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
                                         borderBottom: '1px solid var(--color-border)',
                                         display: 'flex',
                                         alignItems: 'center',
+                                        justifyContent: 'space-between',
                                         gap: '0.5rem',
                                         color: 'var(--color-text-main)',
                                     }}
                                 >
-                                    <FileText size={16} />
-                                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Bill Lines</h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <FileText size={16} />
+                                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Bill Lines</h3>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handlePatchBill}
+                                        disabled={!canPatchBill || updateBillAccountMutation.isPending || isSubmittingPost}
+                                        style={{
+                                            border: '1px solid',
+                                            borderColor: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost
+                                                ? 'var(--color-primary)'
+                                                : 'var(--color-border)',
+                                            borderRadius: '8px',
+                                            height: '2.4rem',
+                                            padding: '0 1rem',
+                                            background: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost
+                                                ? 'var(--color-primary)'
+                                                : 'var(--color-bg-table-header)',
+                                            color: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost
+                                                ? 'var(--color-white)'
+                                                : 'var(--color-text-secondary)',
+                                            boxShadow: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost
+                                                ? '0 6px 14px rgba(37, 99, 235, 0.25)'
+                                                : 'none',
+                                            fontWeight: 700,
+                                            letterSpacing: '0.2px',
+                                            cursor: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost ? 'pointer' : 'not-allowed',
+                                            transition: 'all 0.2s ease',
+                                        }}
+                                    >
+                                        {updateBillAccountMutation.isPending || isSubmittingPost ? 'Posting...' : isBillPosted ? 'Posted' : 'Post Bill'}
+                                    </button>
                                 </div>
                                 <div style={{ overflowX: 'auto' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -257,29 +355,60 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
                                         <tbody>
                                             {editableLines.map((line) => (
                                                 <tr key={line.id} style={{ borderTop: '1px solid var(--color-border)' }}>
-                                                    <td style={{ padding: '0.8rem 1rem' }}>{line.description}</td>
+                                                    <td style={{ padding: '0.8rem 1rem', minWidth: '260px' }}>
+                                                        {isBillPosted ? (
+                                                            <p style={{ margin: 0, color: 'var(--color-text-main)' }}>
+                                                                {line.description || '-'}
+                                                            </p>
+                                                        ) : (
+                                                            <textarea
+                                                                value={line.description || ''}
+                                                                onChange={(event) => handleLineDescriptionChange(line.id, event.target.value)}
+                                                                disabled={updateBillAccountMutation.isPending}
+                                                                placeholder="Line description"
+                                                                style={{
+                                                                    width: '100%',
+                                                                    minHeight: '64px',
+                                                                    resize: 'vertical',
+                                                                    padding: '0.5rem 0.625rem',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid var(--color-border)',
+                                                                    background: 'var(--color-bg-surface)',
+                                                                    color: 'var(--color-text-main)',
+                                                                    fontFamily: 'inherit',
+                                                                    fontSize: '0.9rem',
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </td>
                                                     <td style={{ padding: '0.8rem 1rem', minWidth: '230px' }}>
-                                                        <select
-                                                            value={line.accountId || ''}
-                                                            onChange={(event) => handleLineAccountChange(line.id, event.target.value)}
-                                                            disabled={savingLineId === line.id || updateBillAccountMutation.isPending}
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '2.25rem',
-                                                                padding: '0 0.625rem',
-                                                                borderRadius: '8px',
-                                                                border: '1px solid var(--color-border)',
-                                                                background: 'var(--color-bg-surface)',
-                                                                color: 'var(--color-text-main)',
-                                                            }}
-                                                        >
-                                                            <option value="">Select account</option>
-                                                            {accountOptions.map((account) => (
-                                                                <option key={account.account_id || account.id} value={account.account_id || ''}>
-                                                                    {account.account_name || account.name || 'Unnamed account'}
-                                                                </option>
-                                                            ))}
-                                                        </select>
+                                                        {isBillPosted ? (
+                                                            <p style={{ margin: 0, color: 'var(--color-text-main)', fontWeight: 500 }}>
+                                                                {getAccountLabel(line.accountId)}
+                                                            </p>
+                                                        ) : (
+                                                            <select
+                                                                value={line.accountId || ''}
+                                                                onChange={(event) => handleLineAccountChange(line.id, event.target.value)}
+                                                                disabled={updateBillAccountMutation.isPending}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    height: '2.25rem',
+                                                                    padding: '0 0.625rem',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid var(--color-border)',
+                                                                    background: 'var(--color-bg-surface)',
+                                                                    color: 'var(--color-text-main)',
+                                                                }}
+                                                            >
+                                                                <option value="">Select account</option>
+                                                                {accountOptions.map((account) => (
+                                                                    <option key={account.id || account.account_id} value={account.id || account.account_id || ''}>
+                                                                        {account.account_name || account.name || 'Unnamed account'}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        )}
                                                     </td>
                                                     <td style={{ padding: '0.8rem 1rem', whiteSpace: 'nowrap' }}>
                                                         {Number(line.amount || 0).toLocaleString()} {bill.currency}
