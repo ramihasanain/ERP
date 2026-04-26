@@ -535,79 +535,84 @@ const ContractTemplates = () => {
                                 background: template.isDefault
                                     ? 'linear-gradient(to bottom right, var(--color-bg-card), color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card)))'
                                     : undefined,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
                             }}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                                    <div
-                                        style={{
-                                            width: '3rem',
-                                            height: '3rem',
-                                            borderRadius: '12px',
-                                            background: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))',
-                                            color: 'var(--color-primary-600)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                        }}
-                                    >
-                                        <FileText size={22} />
-                                    </div>
-                                    <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>{template.name}</h3>
-                                            {template.isDefault && <Star size={14} style={{ color: 'var(--color-warning)' }} fill="var(--color-warning)" />}
-                                        </div>
-                                        <span
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                        <div
                                             style={{
-                                                fontSize: '0.7rem',
-                                                padding: '2px 8px',
-                                                borderRadius: '10px',
-                                                background: 'var(--color-bg-subtle)',
-                                                color: 'var(--color-text-secondary)',
-                                                fontWeight: 500,
+                                                width: '3rem',
+                                                height: '3rem',
+                                                borderRadius: '12px',
+                                                background: 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))',
+                                                color: 'var(--color-primary-600)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
                                             }}
                                         >
-                                            {template.type}
-                                        </span>
+                                            <FileText size={22} />
+                                        </div>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>{template.name}</h3>
+                                                {template.isDefault && <Star size={14} style={{ color: 'var(--color-warning)' }} fill="var(--color-warning)" />}
+                                            </div>
+                                            <span
+                                                style={{
+                                                    fontSize: '0.7rem',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '10px',
+                                                    background: 'var(--color-bg-subtle)',
+                                                    color: 'var(--color-text-secondary)',
+                                                    fontWeight: 500,
+                                                }}
+                                            >
+                                                {template.type}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-                                Last modified:{' '}
-                                <span dir="ltr" style={{ unicodeBidi: 'isolate', display: 'inline-block', textAlign: 'left' }}>
-                                    {template.lastModified}
-                                </span>
-                            </div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+                                    Last modified:{' '}
+                                    <span dir="ltr" style={{ unicodeBidi: 'isolate', display: 'inline-block', textAlign: 'left' }}>
+                                        {template.lastModified}
+                                    </span>
+                                </div>
 
-                            <div
-                                style={{
-                                    padding: '0.75rem',
-                                    borderRadius: '8px',
-                                    background: 'var(--color-bg-secondary)',
-                                    fontSize: '0.75rem',
-                                    fontFamily: 'monospace',
-                                    maxHeight: '100px',
-                                    overflow: 'hidden',
-                                    color: 'var(--color-text-secondary)',
-                                    lineHeight: 1.5,
-                                    marginBottom: '1rem',
-                                    position: 'relative',
-                                    border: '1px solid var(--color-border)',
-                                }}
-                            >
-                                {(template.content || '').substring(0, 200)}...
                                 <div
                                     style={{
-                                        position: 'absolute',
-                                        bottom: 0,
-                                        left: 0,
-                                        right: 0,
-                                        height: '40px',
-                                        background: 'linear-gradient(transparent, var(--color-bg-secondary))',
+                                        padding: '0.75rem',
+                                        borderRadius: '8px',
+                                        background: 'var(--color-bg-secondary)',
+                                        fontSize: '0.75rem',
+                                        fontFamily: 'monospace',
+                                        maxHeight: '100px',
+                                        overflow: 'hidden',
+                                        color: 'var(--color-text-secondary)',
+                                        lineHeight: 1.5,
+                                        marginBottom: '1rem',
+                                        position: 'relative',
+                                        border: '1px solid var(--color-border)',
                                     }}
-                                />
+                                >
+                                    {(template.content || '').substring(0, 200)}...
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: 0,
+                                            left: 0,
+                                            right: 0,
+                                            height: '40px',
+                                            background: 'linear-gradient(transparent, var(--color-bg-secondary))',
+                                        }}
+                                    />
+                                </div>
                             </div>
 
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
