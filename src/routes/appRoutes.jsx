@@ -44,7 +44,7 @@ import Attendance from '@/components/hr/Attendance';
 import LeaveRequests from '@/components/hr/LeaveRequests';
 import EmployeeRequests from '@/components/hr/EmployeeRequests';
 import ProjectsManagement from '@/components/hr/ProjectsManagement';
-import ContractTemplates from '@/components/hr/ContractTemplates';
+import ContractTemplates from '@/components/hr/ContractTemplates/index.jsx';
 import InventoryDashboard from '@/components/Inventory/InventoryDashboard';
 import ItemsList from '@/components/Inventory/ItemsList';
 import AddInventoryItem from '@/components/Inventory/AddInventoryItem';
@@ -195,6 +195,9 @@ export default function AppRoutes() {
           <Route path="requests" element={<EmployeeRequests />} />
           <Route path="projects" element={<ProjectsManagement />} />
           <Route path="contract-templates" element={<ContractTemplates />} />
+          <Route path="contract-templates/new" element={<ContractTemplates />} />
+          <Route path="contract-templates/:templateId/edit" element={<ContractTemplates />} />
+          <Route path="contract-templates/:templateId/preview" element={<ContractTemplates />} />
         </Route>
 
         <Route path="inventory" element={<InventoryLayout />}>

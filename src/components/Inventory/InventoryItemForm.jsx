@@ -248,7 +248,7 @@ const InventoryItemForm = ({ isEdit = false }) => {
                             <div>
                                 <label style={labelStyle}>Item Type</label>
                                 <select name="type" value={formData.type} onChange={handleChange} style={inputStyle}>
-                                    <option value="Stock">Stock Item</option>
+                                    <option value="Stock_item">Stock Item</option>
                                     <option value="Service">Service (Non-stock)</option>
                                 </select>
                             </div>
