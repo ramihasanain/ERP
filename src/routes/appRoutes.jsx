@@ -35,7 +35,7 @@ import SalaryComponents from '@/components/hr/payroll/SalaryComponents';
 import SalaryStructures from '@/components/hr/payroll/SalaryStructures';
 import RunPayroll from '@/components/hr/payroll/RunPayroll';
 import RunPayrollWorkflow from '@/components/hr/payroll/RunPayrollWorkflow';
-import TaxSlabs from '@/components/hr/payroll/TaxSlabs';
+import TaxSlabs from '@/components/hr/payroll/TaxSlabs/index.jsx';
 import SocialSecuritySettings from '@/components/hr/payroll/SocialSecuritySettings';
 import PeriodDetails from '@/components/hr/payroll/PeriodDetails';
 import FinalizePayrollPage from '@/components/hr/payroll/FinalizePayrollPage';
