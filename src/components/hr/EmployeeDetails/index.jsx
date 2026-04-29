@@ -12,6 +12,7 @@ import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
 import ContractSalaryTab from '@/components/hr/ContractSalaryTab';
 import TerminationModal from '@/components/hr/TerminationModal';
 import { useAuth } from '@/context/AuthContext';
+import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 
 const defaultValues = {
     user: '',
@@ -237,7 +238,7 @@ const EmployeeDetails = () => {
             await updateEmployeeMutation.mutateAsync(payload);
             toast.success('Employee updated successfully.');
         } catch (error) {
-            const message = error?.response?.data?.detail || error?.message || 'Employee request failed.';
+            const message = getApiErrorMessage(error, 'Employee request failed.');
             toast.error(message);
         }
     };
@@ -362,19 +363,19 @@ const EmployeeDetails = () => {
                             name="first_name"
                             control={control}
                             rules={{ required: true }}
-                            render={({ field }) => <Input label="First Name" {...field} required />}
+                            render={({ field }) => <Input label="First Name *" {...field} required />}
                         />
                         <Controller
                             name="last_name"
                             control={control}
                             rules={{ required: true }}
-                            render={({ field }) => <Input label="Last Name" {...field} required />}
+                            render={({ field }) => <Input label="Last Name *" {...field} required />}
                         />
                         <Controller
                             name="email"
                             control={control}
                             rules={{ required: true }}
-                            render={({ field }) => <Input label="Email Address" type="email" {...field} required />}
+                            render={({ field }) => <Input label="Email Address *" type="email" {...field} required />}
                         />
                         <Controller name="phone_number" control={control} render={({ field }) => <Input label="Phone Number" {...field} />} />
                         <Controller name="date_of_birth" control={control} render={({ field }) => <Input label="Date of Birth" type="date" {...field} />} />

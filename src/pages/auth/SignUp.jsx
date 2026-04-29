@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '@/components/app-layout/AuthLayout';
 import Input from '@/components/Shared/Input';
 import Button from '@/components/Shared/Button';
-import { User, Mail, Lock, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ import { successToastOptions } from '@/utils/toastOptions';
 const SignUp = () => {
     const navigate = useNavigate();
     const { isLoading } = useAuth();
+    const [showPassword, setShowPassword] = useState(false);
     const {
         control,
         handleSubmit,
@@ -102,9 +103,29 @@ const SignUp = () => {
                         <Input
                             {...field}
                             label="Password"
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             placeholder="Create a strong password"
                             startIcon={<Lock size={18} />}
+                            endIcon={(
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword((current) => !current)}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    style={{
+                                        border: 'none',
+                                        background: 'transparent',
+                                        padding: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'var(--color-text-muted)',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            )}
+                            endIconInteractive
                             error={errors.password?.message}
                             required
                         />

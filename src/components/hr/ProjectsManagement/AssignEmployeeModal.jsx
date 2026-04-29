@@ -36,7 +36,7 @@ const AssignEmployeeModal = ({
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.5rem' }}>Assign Employee</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Employee</label>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Employee *</label>
                         <select style={selectStyle} value={assignEmpId} onChange={(event) => onEmpChange(event.target.value)}>
                             <option value="">Select employee...</option>
                             {assignableEmployees.map((employee) => (
@@ -51,7 +51,7 @@ const AssignEmployeeModal = ({
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Role in Project</label>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Role in Project *</label>
                         <select style={selectStyle} value={assignRole} onChange={(event) => onRoleChange(event.target.value)}>
                             <option value="">Select role...</option>
                             {assignableRoles.map((role) => (
@@ -68,7 +68,7 @@ const AssignEmployeeModal = ({
                     <Button variant="ghost" onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button icon={<UserPlus size={16} />} onClick={onAssign} disabled={isAssigning}>
+                    <Button icon={<UserPlus size={16} />} onClick={onAssign} disabled={isAssigning || !assignEmpId || !assignRole}>
                         Assign
                     </Button>
                 </div>

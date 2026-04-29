@@ -7,6 +7,7 @@ const Input = ({
     error,
     startIcon,
     endIcon,
+    endIconInteractive = false,
     className,
     containerClassName,
     ...props
@@ -31,7 +32,15 @@ const Input = ({
                     {...props}
                 />
 
-                {endIcon && <span className={clsx(styles.icon, styles.endIcon)}>{endIcon}</span>}
+                {endIcon && (
+                    <span
+                        className={clsx(styles.icon, styles.endIcon, {
+                            [styles.interactiveIcon]: endIconInteractive,
+                        })}
+                    >
+                        {endIcon}
+                    </span>
+                )}
             </div>
 
             {error && <span className={styles.errorText}>{error}</span>}

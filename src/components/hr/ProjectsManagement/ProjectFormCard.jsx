@@ -18,6 +18,11 @@ const ProjectFormCard = ({
 }) => {
     if (!showForm) return null;
 
+    const hasRequiredFields = Boolean(formData.name.trim() && formData.startDate && formData.endDate);
+    const hasInvalidDateRange = Boolean(formData.startDate && formData.endDate && formData.startDate >= formData.endDate);
+    const isSubmitDisabled =
+        isSubmitting || isLoadingEdit || (editingProject && isEditUnchanged) || !hasRequiredFields;
+
     return (
         <Card
             className="padding-lg"
@@ -62,15 +67,16 @@ const ProjectFormCard = ({
                     </select>
                 </div>
                 <Input
-                    label="Start Date"
+                    label="Start Date *"
                     type="date"
                     value={formData.startDate}
                     onChange={(event) => onFormChange({ startDate: event.target.value })}
                 />
                 <Input
-                    label="End Date"
+                    label="End Date *"
                     type="date"
                     value={formData.endDate}
+                    error={hasInvalidDateRange ? 'End date must be after the start date.' : ''}
                     onChange={(event) => onFormChange({ endDate: event.target.value })}
                 />
                 <Input
@@ -88,7 +94,7 @@ const ProjectFormCard = ({
                 <Button
                     icon={<Save size={16} />}
                     onClick={onSubmit}
-                    disabled={isSubmitting || isLoadingEdit || (editingProject && isEditUnchanged)}
+                    disabled={isSubmitDisabled}
                 >
                     {editingProject ? 'Update' : 'Create'}
                 </Button>

@@ -127,7 +127,7 @@ const CategoryManagement = () => {
         ['inventory-categories', 'inventory-category-detail']
     );
     const deleteCategory = useCustomRemove(
-        (id) => `/api/inventory/categories/${id}/`,
+        (id) => `/api/inventory/categories/${id}/delete/`,
         ['inventory-categories', 'inventory-category-detail']
     );
 
@@ -136,6 +136,7 @@ const CategoryManagement = () => {
         handleSubmit,
         reset,
         control,
+        watch,
         formState: { errors },
     } = useForm({
         defaultValues: {
@@ -148,6 +149,9 @@ const CategoryManagement = () => {
 
     const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
     const categoryTypes = useMemo(() => categoryTypesQuery.data ?? [], [categoryTypesQuery.data]);
+    const watchedName = watch('name');
+    const watchedType = watch('type');
+    const isCreateDisabled = !editingCategory && (!watchedName?.trim() || !watchedType);
 
     const categoriesByTypeId = useMemo(
         () => buildCategoriesByTypeMap(categories, categoryTypes),
@@ -192,7 +196,7 @@ const CategoryManagement = () => {
     const onSubmit = async (values) => {
         const payload = {
             name: values.name.trim(),
-            type: values.type,
+            group: values.type,
             description: values.description.trim(),
             is_active: Boolean(values.is_active),
         };
@@ -494,7 +498,7 @@ const CategoryManagement = () => {
             <Modal isOpen={isFormOpen} onClose={closeForm} title={editingCategory ? 'Edit Category' : 'Add Category'} size="md">
                 <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
-                        <label style={labelStyle}>Category Name</label>
+                        <label style={labelStyle}>Category Name *</label>
                         <input
                             {...register('name', { required: 'Category name is required.' })}
                             style={inputStyle}
@@ -504,13 +508,13 @@ const CategoryManagement = () => {
                     </div>
 
                     <div>
-                        <label style={labelStyle}>Category Type</label>
+                        <label style={labelStyle}>Category Type *</label>
                         <Controller
                             name="type"
                             control={control}
                             rules={{ required: 'Category type is required.' }}
                             render={({ field }) => (
-                                <select {...field} style={inputStyle} disabled={Boolean(lockedTypeId && !editingCategory)}>
+                                <select {...field} style={inputStyle}>
                                     <option value="">Select category type</option>
                                     {categoryTypes.map((t) => (
                                         <option key={t.id} value={t.id}>
@@ -552,7 +556,12 @@ const CategoryManagement = () => {
                         <Button type="button" variant="outline" onClick={closeForm}>
                             Cancel
                         </Button>
-                        <Button type="submit" variant="primary" isLoading={createCategory.isPending || updateCategory.isPending}>
+                        <Button
+                            type="submit"
+                            variant="primary"
+                            isLoading={createCategory.isPending || updateCategory.isPending}
+                            disabled={isCreateDisabled}
+                        >
                             {editingCategory ? 'Update' : 'Create'}
                         </Button>
                     </div>

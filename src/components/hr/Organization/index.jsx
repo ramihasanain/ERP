@@ -43,6 +43,17 @@ const normalizeDepartments = (response) =>
         name: item?.name || '',
     }));
 
+const normalizeDepartmentDetails = (response) => {
+    const item = response?.data ?? response;
+
+    return {
+        id: item?.id || item?.uuid || '',
+        name: item?.name || '',
+        parent: item?.parent || '',
+        head: item?.head != null ? String(item.head) : '',
+    };
+};
+
 const normalizePositionItem = (item) => ({
     id: item?.id || item?.uuid || '',
     name: item?.name || '',
@@ -59,6 +70,24 @@ const normalizePaginatedPositions = (response) => {
         items,
         count: Number.isFinite(count) ? count : items.length,
     };
+};
+
+const flattenErrorValues = (value) => {
+    if (typeof value === 'string') return [value];
+    if (Array.isArray(value)) return value.flatMap(flattenErrorValues);
+    if (value && typeof value === 'object') return Object.values(value).flatMap(flattenErrorValues);
+    return [];
+};
+
+const getErrorMessage = (error, fallbackMessage) => {
+    const responseData = error?.response?.data;
+    const responseMessages = flattenErrorValues(responseData).filter(Boolean);
+
+    if (responseMessages.length > 0) {
+        return responseMessages.join(' ');
+    }
+
+    return error?.message || fallbackMessage;
 };
 
 const Organization = () => {
@@ -102,7 +131,7 @@ const Organization = () => {
             setDeleteState({ isOpen: false, type: '', id: '', name: '' });
         },
         onError: (error) => {
-            const message = error?.response?.data?.detail || error?.message || 'Delete request failed.';
+            const message = getErrorMessage(error, 'Delete request failed.');
             toast.error(message);
         },
     });
@@ -278,22 +307,23 @@ const DepartmentNode = ({ dept, level, onEdit, onDelete }) => {
                     marginBottom: '0.5rem',
                 }}
             >
-                <button
-                    type="button"
-                    onClick={() => hasChildren && setExpanded((prev) => !prev)}
-                    style={{
-                        cursor: hasChildren ? 'pointer' : 'default',
-                        opacity: hasChildren ? 1 : 0.3,
-                        border: 'none',
-                        background: 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                    aria-label={hasChildren ? 'Toggle sub departments' : 'No sub departments'}
-                >
-                    <ChevronRight size={18} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
-                </button>
+                {hasChildren && (
+                    <button
+                        type="button"
+                        onClick={() => setExpanded((prev) => !prev)}
+                        style={{
+                            cursor: 'pointer',
+                            border: 'none',
+                            background: 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                        aria-label="Toggle sub departments"
+                    >
+                        <ChevronRight size={18} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                    </button>
+                )}
                 <div
                     style={{
                         padding: '0.5rem',
@@ -383,7 +413,13 @@ const PositionsView = ({ positions, positionsCount, currentPage, onPageChange, d
 };
 
 const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
-    const { control, handleSubmit, reset } = useForm({
+    const {
+        control,
+        handleSubmit,
+        reset,
+        watch,
+        formState: { isDirty: isDepartmentDirty },
+    } = useForm({
         defaultValues: {
             name: '',
             parent: '',
@@ -393,15 +429,29 @@ const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
 
     const createDepartmentMutation = useCustomPost('/api/hr/departments/create/', [['hr-departments-tree'], ['hr-departments']]);
     const updateDepartmentMutation = useCustomPut(`/api/hr/departments/${department?.id || 'new'}/`, [['hr-departments-tree'], ['hr-departments']]);
+    const departmentDetailsQuery = useCustomQuery(`/api/hr/departments/${department?.id || ''}/`, ['hr-department-details', department?.id], {
+        enabled: Boolean(isOpen && department?.id),
+        select: normalizeDepartmentDetails,
+    });
 
     useEffect(() => {
         if (!isOpen) return;
+
+        if (department?.id && departmentDetailsQuery.data) {
+            reset({
+                name: departmentDetailsQuery.data.name || '',
+                parent: departmentDetailsQuery.data.parent || '',
+                head: departmentDetailsQuery.data.head || '',
+            });
+            return;
+        }
+
         reset({
             name: department?.name || '',
             parent: department?.parent || '',
             head: String(department?.head || ''),
         });
-    }, [department, isOpen, reset]);
+    }, [department, departmentDetailsQuery.data, isOpen, reset]);
 
     const onSubmit = async (values) => {
         const payload = {
@@ -420,16 +470,22 @@ const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
             }
             onClose();
         } catch (error) {
-            const message = error?.response?.data?.detail || error?.message || 'Department request failed.';
+            const message = getErrorMessage(error, 'Department request failed.');
             toast.error(message);
         }
     };
 
     const isSubmitting = createDepartmentMutation.isPending || updateDepartmentMutation.isPending;
+    const isDetailsLoading = Boolean(department?.id) && departmentDetailsQuery.isLoading;
+    const departmentNameValue = watch('name');
+    const isDepartmentFormValid = Boolean(departmentNameValue?.trim());
+    const isDepartmentSubmitDisabled = isDetailsLoading || !isDepartmentFormValid || (Boolean(department) && !isDepartmentDirty);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={department ? 'Edit Department' : 'Add Department'}>
             <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {isDetailsLoading && <Spinner />}
+
                 <Controller
                     name="name"
                     control={control}
@@ -478,7 +534,7 @@ const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
                     <Button variant="outline" onClick={onClose} type="button">
                         Cancel
                     </Button>
-                    <Button type="submit" isLoading={isSubmitting}>
+                    <Button type="submit" isLoading={isSubmitting} disabled={isDepartmentSubmitDisabled}>
                         {department ? 'Save Changes' : 'Create Department'}
                     </Button>
                 </div>
@@ -488,7 +544,13 @@ const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
 };
 
 const PositionModal = ({ isOpen, onClose, position, departments }) => {
-    const { control, handleSubmit, reset } = useForm({
+    const {
+        control,
+        handleSubmit,
+        reset,
+        watch,
+        formState: { isDirty: isPositionDirty },
+    } = useForm({
         defaultValues: {
             name: '',
             description: '',
@@ -525,12 +587,17 @@ const PositionModal = ({ isOpen, onClose, position, departments }) => {
             }
             onClose();
         } catch (error) {
-            const message = error?.response?.data?.detail || error?.message || 'Position request failed.';
+            const message = getErrorMessage(error, 'Position request failed.');
             toast.error(message);
         }
     };
 
     const isSubmitting = createPositionMutation.isPending || updatePositionMutation.isPending;
+    const positionNameValue = watch('name');
+    const positionDescriptionValue = watch('description');
+    const positionDepartmentValue = watch('department');
+    const isPositionFormValid = Boolean(positionNameValue?.trim() && positionDescriptionValue?.trim() && positionDepartmentValue);
+    const isPositionSubmitDisabled = !isPositionFormValid || (Boolean(position) && !isPositionDirty);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={position ? 'Edit Position' : 'Add Position'}>
@@ -539,11 +606,11 @@ const PositionModal = ({ isOpen, onClose, position, departments }) => {
                     name="name"
                     control={control}
                     rules={{ required: true }}
-                    render={({ field }) => <Input label="Position Name" placeholder="Enter position name" {...field} required />}
+                    render={({ field }) => <Input label="Position Name *" placeholder="Enter position name" {...field} required />}
                 />
 
                 <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Description</label>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Description *</label>
                     <Controller
                         name="description"
                         control={control}
@@ -568,7 +635,7 @@ const PositionModal = ({ isOpen, onClose, position, departments }) => {
                 </div>
 
                 <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Department</label>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Department *</label>
                     <Controller
                         name="department"
                         control={control}
@@ -602,7 +669,7 @@ const PositionModal = ({ isOpen, onClose, position, departments }) => {
                     <Button variant="outline" onClick={onClose} type="button">
                         Cancel
                     </Button>
-                    <Button type="submit" isLoading={isSubmitting}>
+                    <Button type="submit" isLoading={isSubmitting} disabled={isPositionSubmitDisabled}>
                         {position ? 'Save Changes' : 'Create Position'}
                     </Button>
                 </div>

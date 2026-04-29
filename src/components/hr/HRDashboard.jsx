@@ -41,7 +41,7 @@ const HRDashboard = () => {
                         <Users size={24} />
                     </div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Employee Directory</h3>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>View all 124 active employees.</p>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>View all active employees.</p>
                 </Card>
 
                 <Card

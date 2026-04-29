@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { useHR } from '@/context/HRContext';
 import { get } from '@/api';
 import AssignEmployeeModal from './AssignEmployeeModal';
@@ -75,7 +76,16 @@ const ProjectsManagement = () => {
     );
 
     const handleSubmit = () => {
-        if (!formData.name) return;
+        if (!formData.name.trim() || !formData.startDate || !formData.endDate) {
+            toast.error('Please fill in all required project fields.');
+            return;
+        }
+
+        if (formData.startDate >= formData.endDate) {
+            toast.error('Start date must be before end date.');
+            return;
+        }
+
         const payload = mapFormToApiPayload(formData);
         if (editingProject) {
             updateProjectMutation.mutate({ projectId: editingProject.id, payload });

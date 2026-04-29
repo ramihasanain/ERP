@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { Shield, LogIn, ArrowLeft, Building2 } from 'lucide-react';
+import { Shield, LogIn, ArrowLeft, Building2, Eye, EyeOff } from 'lucide-react';
 import { useAudit } from '@/context/AuditContext';
 
 const AuditorLogin = () => {
@@ -12,6 +12,7 @@ const AuditorLogin = () => {
     const [mode, setMode] = useState('login'); // login | register
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
 
     // Registration
@@ -96,10 +97,30 @@ const AuditorLogin = () => {
                             />
                             <Input
                                 label="Password"
-                                type="password"
+                                type={showPassword ? 'text' : 'password'}
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
                                 placeholder="Enter your password"
+                                endIcon={(
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((current) => !current)}
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        style={{
+                                            border: 'none',
+                                            background: 'transparent',
+                                            padding: 0,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: 'var(--color-text-muted)',
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                )}
+                                endIconInteractive
                             />
 
                             <Button onClick={handleLogin} icon={<LogIn size={18} />} style={{ width: '100%', marginTop: '0.5rem' }}>

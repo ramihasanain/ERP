@@ -269,7 +269,7 @@ const EmployeeDirectory = () => {
                                 <span>Employee</span>
                                 <span>Type</span>
                                 <span>Expires In</span>
-                                <span aria-hidden style={{ width: '4.5rem' }} />
+                                <span>Action</span>
                             </div>
                             {expiringContracts.map((row) => (
                                 <div
