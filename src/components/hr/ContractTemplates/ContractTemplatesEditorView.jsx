@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
+import { useQuill } from 'react-quilljs';
+import 'quill/dist/quill.snow.css';
 import Button from '@/components/Shared/Button';
 import Card from '@/components/Shared/Card';
 import Input from '@/components/Shared/Input';
@@ -24,6 +26,47 @@ const ContractTemplatesEditorView = ({
     availableVariables,
     onInsertVariable,
 }) => {
+    const { quill, quillRef } = useQuill({
+        theme: 'snow',
+        placeholder: 'Write your contract template here... Use {{variable_name}} for dynamic fields.',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                [{ align: [] }],
+                ['link', 'blockquote'],
+                ['clean'],
+            ],
+        },
+    });
+    const isSyncingFromStateRef = useRef(false);
+
+    useEffect(() => {
+        if (!quill) return;
+        const currentHtml = quill.root.innerHTML;
+        const desiredHtml = formData.body || '';
+        if (currentHtml !== desiredHtml) {
+            isSyncingFromStateRef.current = true;
+            quill.clipboard.dangerouslyPasteHTML(desiredHtml);
+            isSyncingFromStateRef.current = false;
+        }
+    }, [quill, formData.body]);
+
+    useEffect(() => {
+        if (!quill) return;
+        const handleTextChange = () => {
+            if (isSyncingFromStateRef.current) return;
+            const nextBody = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
+            setFormData((prev) => ({ ...prev, body: nextBody }));
+        };
+
+        quill.on('text-change', handleTextChange);
+        return () => {
+            quill.off('text-change', handleTextChange);
+        };
+    }, [quill, setFormData]);
+
     if (isEditPage && templateDetailsQuery.isLoading) return <Spinner />;
     if (isEditPage && templateDetailsQuery.isError) {
         return (
@@ -153,25 +196,24 @@ const ContractTemplatesEditorView = ({
 
                     <Card className="padding-md" style={{ display: 'flex', flexDirection: 'column', height: '575px' }}>
                         <label style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', display: 'block' }}>Contract Body</label>
-                        <textarea
-                            id="template-editor"
-                            value={formData.body}
-                            onChange={(event) => setFormData({ ...formData, body: event.target.value })}
-                            placeholder="Write your contract template here... Use {{variable_name}} for dynamic fields."
+                        <div
                             style={{
                                 width: '100%',
                                 height: '100%',
-                                padding: '1rem',
                                 borderRadius: '8px',
+                                overflow: 'hidden',
                                 border: '1px solid var(--color-border)',
-                                fontSize: '0.9rem',
-                                fontFamily: "'Courier New', monospace",
-                                lineHeight: 1.6,
-                                resize: 'vertical',
                                 background: 'var(--color-bg-secondary)',
                                 color: 'var(--color-text-main)',
                             }}
-                        />
+                        >
+                            <div
+                                id="template-editor"
+                                ref={quillRef}
+                                style={{ height: '100%' }}
+                                aria-label="Contract Body Editor"
+                            />
+                        </div>
                     </Card>
                 </div>
 

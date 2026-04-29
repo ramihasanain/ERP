@@ -106,6 +106,7 @@ const buildCategoriesByTypeMap = (categories, categoryTypes) => {
 /** Top border accents — match reference: orange, blue, rose, green */
 const GROUP_ACCENTS = ['#f97316', '#3b82f6', '#e11d48', '#22c55e'];
 const GROUP_ICONS = [Package, Monitor, Briefcase, FolderOpen];
+const CATEGORY_LIST_MAX_HEIGHT = '27.5rem';
 
 const CategoryManagement = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -113,11 +114,11 @@ const CategoryManagement = () => {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [lockedTypeId, setLockedTypeId] = useState(null);
 
-    const categoriesQuery = useCustomQuery('/api/inventory/categories/', ['inventory-categories'], {
+    const categoriesQuery = useCustomQuery('/api/inventory/categories/?page_size=999', ['inventory-categories'], {
         select: (response) => normalizeArrayResponse(response).map(normalizeCategory),
     });
 
-    const categoryTypesQuery = useCustomQuery('/api/inventory/category-types/', ['inventory-category-types'], {
+    const categoryTypesQuery = useCustomQuery('/api/inventory/category-types/?page_size=999', ['inventory-category-types'], {
         select: (response) => normalizeArrayResponse(response).map(normalizeCategoryType),
     });
 
@@ -151,7 +152,8 @@ const CategoryManagement = () => {
     const categoryTypes = useMemo(() => categoryTypesQuery.data ?? [], [categoryTypesQuery.data]);
     const watchedName = watch('name');
     const watchedType = watch('type');
-    const isCreateDisabled = !editingCategory && (!watchedName?.trim() || !watchedType);
+    const isSaving = createCategory.isPending || updateCategory.isPending;
+    const isCreateDisabled = isSaving || (!editingCategory && (!watchedName?.trim() || !watchedType));
 
     const categoriesByTypeId = useMemo(
         () => buildCategoriesByTypeMap(categories, categoryTypes),
@@ -357,7 +359,14 @@ const CategoryManagement = () => {
                                     </div>
                                 </div>
 
-                                <div style={{ flex: 1, padding: '0 0.25rem 0.75rem' }}>
+                                <div
+                                    style={{
+                                        flex: 1,
+                                        padding: '0 0.25rem 0.75rem',
+                                        maxHeight: CATEGORY_LIST_MAX_HEIGHT,
+                                        overflowY: 'auto',
+                                    }}
+                                >
                                     {list.length === 0 ? (
                                         <p
                                             style={{
@@ -457,7 +466,15 @@ const CategoryManagement = () => {
                                     </div>
                                 </div>
                             </div>
-                            <ul style={{ listStyle: 'none', margin: 0, padding: '0 0.25rem 0.75rem' }}>
+                            <ul
+                                style={{
+                                    listStyle: 'none',
+                                    margin: 0,
+                                    padding: '0 0.25rem 0.75rem',
+                                    maxHeight: CATEGORY_LIST_MAX_HEIGHT,
+                                    overflowY: 'auto',
+                                }}
+                            >
                                 {uncategorized.map((category) => (
                                     <li
                                         key={category.id}
@@ -559,7 +576,7 @@ const CategoryManagement = () => {
                         <Button
                             type="submit"
                             variant="primary"
-                            isLoading={createCategory.isPending || updateCategory.isPending}
+                            isLoading={isSaving}
                             disabled={isCreateDisabled}
                         >
                             {editingCategory ? 'Update' : 'Create'}

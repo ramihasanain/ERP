@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { post } from '@/api';
 import { useAccounting } from '@/context/AccountingContext';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
@@ -70,13 +72,50 @@ const normalizeCurrenciesResponse = (response) => {
     .filter((currency) => currency.code);
 };
 
+const getEntryIdFromResponse = (response) => (
+  response?.id
+  || response?.uuid
+  || response?.data?.id
+  || response?.data?.uuid
+  || null
+);
+
+const getAttachmentLabel = (attachment) => {
+  if (!attachment) return '';
+  if (attachment instanceof File) return attachment.name;
+
+  const attachmentValue = String(attachment);
+
+  try {
+    const fileName = decodeURIComponent(attachmentValue.split('/').pop() || '');
+    return fileName || attachmentValue;
+  } catch {
+    return attachmentValue.split('/').pop() || attachmentValue;
+  }
+};
+
+const useWindowWidth = () => {
+  const [width, setWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return width;
+};
+
 const NewJournalEntry = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { id } = useParams();
   const { costCenters, budgetUsage, getAccountBalance, getPeriodStatus } = useAccounting();
   const [warningModal, setWarningModal] = useState({ isOpen: false, messages: [] });
   const [blockingErrors, setBlockingErrors] = useState([]);
   const [pendingStatus, setPendingStatus] = useState(null);
+  const windowWidth = useWindowWidth();
+  const isCompactLayout = windowWidth < 1400;
 
   const { control, handleSubmit, reset, setValue, getValues } = useForm({ defaultValues });
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
@@ -93,6 +132,28 @@ const NewJournalEntry = () => {
 
   const createMutation = useCustomPost('/accounting/journal-entries/create/', ['journal-entries']);
   const updateMutation = useCustomPut(`/accounting/journal-entries/${id || 'new'}/`, ['journal-entries', ['journal-entry', id]]);
+  const postEntryMutation = useMutation({
+    mutationFn: ({ entryId, payload }) => post(`/accounting/journal-entries/${entryId}/post/`, payload),
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['journal-entries'] }),
+        queryClient.invalidateQueries({ queryKey: ['journal-entry', variables.entryId] }),
+      ]);
+    },
+  });
+  const uploadAttachmentMutation = useMutation({
+    mutationFn: ({ entryId, file }) => {
+      const payload = new FormData();
+      payload.append('attachment', file);
+      return post(`/accounting/journal-entries/${entryId}/attachment/`, payload);
+    },
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['journal-entries'] }),
+        queryClient.invalidateQueries({ queryKey: ['journal-entry', variables.entryId] }),
+      ]);
+    },
+  });
 
   const allAccounts = useMemo(() => accountsQuery.data ?? [], [accountsQuery.data]);
   const currencies = useMemo(
@@ -148,7 +209,7 @@ const NewJournalEntry = () => {
       description: detail.description || '',
       currency: detail.currency || 'JOD',
       exchangeRate: Number(detail.exchange_rate || detail.exchangeRate || 1),
-      attachedFile: detail.attached_file || detail.attachedFile || null,
+      attachedFile: detail.attachment || detail.attached_file || detail.attachedFile || null,
       createdBy: detail.created_by || detail.createdBy || 'Admin User',
       status: detail.status || 'Draft',
       sourceType: detail.source_type || detail.sourceType || 'Manual',
@@ -191,37 +252,65 @@ const NewJournalEntry = () => {
     setValue('attachedFile', file || null);
   };
 
+  const attachmentLabel = getAttachmentLabel(attachedFile);
+  const hasExistingAttachment = Boolean(attachedFile);
+  const isReplacementAttachment = attachedFile instanceof File;
+
+  const buildEntryPayload = (values) => ({
+    date: values.date || '',
+    reference: values.reference || '',
+    description: values.description || '',
+    currency: values.currency || '',
+    lines: (values.lines || []).map((line, index) => ({
+      ...(line.id ? { id: line.id } : {}),
+      account: line.account,
+      description: line.description || '',
+      cost_center: line.costCenter || null,
+      debit: Number(line.debit || 0).toFixed(2),
+      credit: Number(line.credit || 0).toFixed(2),
+      order: index,
+    })),
+  });
+
   const executeSave = async (finalStatus) => {
     const values = getValues();
-    const payload = new FormData();
-    payload.append('date', values.date || '');
-    payload.append('reference', values.reference || '');
-    payload.append('description', values.description || '');
-    payload.append('currency', values.currency || '');
-    payload.append(
-      'lines',
-      JSON.stringify((values.lines || []).map((line, index) => ({
-        ...(line.id ? { id: line.id } : {}),
-        account: line.account,
-        description: line.description || '',
-        cost_center: line.costCenter || null,
-        debit: Number(line.debit || 0).toFixed(2),
-        credit: Number(line.credit || 0).toFixed(2),
-        order: index,
-      })))
-    );
-    if (values.attachedFile instanceof File) {
-      payload.append('attached_file', values.attachedFile);
-    }
+    const payload = buildEntryPayload(values);
 
     try {
-      if (id) {
-        await updateMutation.mutateAsync(payload);
-        toast.success('Journal entry updated successfully.');
+      let savedEntryId = id || null;
+      let successMessage = 'Journal entry saved successfully.';
+
+      if (finalStatus === 'Draft') {
+        if (id) {
+          await updateMutation.mutateAsync(payload);
+          successMessage = 'Journal entry updated successfully.';
+        } else {
+          const response = await createMutation.mutateAsync(payload);
+          savedEntryId = getEntryIdFromResponse(response);
+          successMessage = 'Journal entry created as draft successfully.';
+        }
+      } else if (id) {
+        await postEntryMutation.mutateAsync({ entryId: id, payload });
+        successMessage = 'Journal entry posted successfully.';
       } else {
-        await createMutation.mutateAsync(payload);
-        toast.success('Journal entry created successfully.');
+        const response = await createMutation.mutateAsync(payload);
+        savedEntryId = getEntryIdFromResponse(response);
+        if (!savedEntryId) {
+          throw new Error('Created journal entry id was not returned.');
+        }
+        await postEntryMutation.mutateAsync({ entryId: savedEntryId, payload });
+        successMessage = 'Journal entry created and posted successfully.';
       }
+
+      if (values.attachedFile instanceof File) {
+        if (!savedEntryId) {
+          throw new Error('Attachment upload requires a journal entry id.');
+        }
+        await uploadAttachmentMutation.mutateAsync({ entryId: savedEntryId, file: values.attachedFile });
+        successMessage = `${successMessage} Attachment uploaded successfully.`;
+      }
+
+      toast.success(successMessage);
       navigate('/admin/accounting/journal');
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed to save journal entry.');
@@ -304,7 +393,7 @@ const NewJournalEntry = () => {
   const onSaveDraft = handleSubmit((values) => validateAndSave(values, 'Draft'));
   const onPostEntry = handleSubmit((values) => validateAndSave(values, 'Posted'));
 
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const isSubmitting = createMutation.isPending || updateMutation.isPending || postEntryMutation.isPending || uploadAttachmentMutation.isPending;
 
   return (
     <div>
@@ -354,7 +443,7 @@ const NewJournalEntry = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isCompactLayout ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) 350px', gap: '1.5rem', alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <Card style={{ padding: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -381,6 +470,174 @@ const NewJournalEntry = () => {
             </div>
           </Card>
 
+          {isCompactLayout && (
+            <Card style={{ padding: '1.5rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>Entry Settings</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <Controller
+                  name="currency"
+                  control={control}
+                  render={({ field }) => (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Currency</label>
+                      <select
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={isReadOnly || currenciesQuery.isLoading}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '0.9rem' }}
+                      >
+                        <option value="">
+                          {currenciesQuery.isLoading ? 'Loading currencies...' : 'Select currency'}
+                        </option>
+                        {currency && !currencies.some((item) => item.code === currency) && (
+                          <option value={currency}>{currency}</option>
+                        )}
+                        {currencies.map((item) => (
+                          <option key={item.id || item.code} value={item.code}>
+                            {item.code} - {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                />
+
+                {currency !== 'JOD' && (
+                  <Controller
+                    name="exchangeRate"
+                    control={control}
+                    render={({ field }) => (
+                      <Input label="Exchange Rate" type="number" step="0.01" value={String(field.value)} onChange={field.onChange} disabled={isReadOnly} />
+                    )}
+                  />
+                )}
+
+                <Controller
+                  name="createdBy"
+                  control={control}
+                  render={({ field }) => <Input label="Created By" value={field.value || 'Admin User'} disabled />}
+                />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Attachment</label>
+                  <div
+                    style={{
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '0.875rem',
+                      background: 'var(--color-bg-secondary)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    {hasExistingAttachment ? (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '0.75rem',
+                          padding: '0.75rem',
+                          borderRadius: 'var(--radius-sm)',
+                          background: 'var(--color-bg-primary)',
+                          border: '1px solid var(--color-border)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0 }}>
+                          <div
+                            style={{
+                              width: '2rem',
+                              height: '2rem',
+                              borderRadius: '999px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: 'var(--color-primary-50)',
+                              color: 'var(--color-primary-600)',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <FileText size={16} />
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)' }}>
+                              {isReplacementAttachment ? 'New attachment selected' : 'Current attachment'}
+                            </div>
+                            <div
+                              title={attachmentLabel}
+                              style={{
+                                fontSize: '0.9rem',
+                                fontWeight: 500,
+                                color: 'var(--color-text-primary)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {attachmentLabel}
+                            </div>
+                          </div>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: isReplacementAttachment ? 'var(--color-success-700)' : 'var(--color-text-secondary)',
+                            background: isReplacementAttachment ? 'var(--color-success-50)' : 'var(--color-bg-tertiary)',
+                            borderRadius: '999px',
+                            padding: '0.25rem 0.55rem',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {isReplacementAttachment ? 'Replace' : 'Attached'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.625rem',
+                          padding: '0.75rem',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px dashed var(--color-border)',
+                          color: 'var(--color-text-secondary)',
+                        }}
+                      >
+                        <FileText size={16} />
+                        <span style={{ fontSize: '0.85rem' }}>No attachment selected</span>
+                      </div>
+                    )}
+
+                    <input type="file" id="file" hidden onChange={handleFileChange} disabled={isReadOnly} />
+                    <label
+                      htmlFor="file"
+                      style={{
+                        cursor: isReadOnly ? 'not-allowed' : 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        alignSelf: 'flex-start',
+                        padding: '0.625rem 0.875rem',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px dashed var(--color-border)',
+                        color: 'var(--color-text-secondary)',
+                        background: 'var(--color-bg-primary)',
+                      }}
+                    >
+                      <Upload size={16} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                        {hasExistingAttachment ? 'Change attachment' : 'Upload attachment'}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Journal Lines</h3>
@@ -394,13 +651,13 @@ const NewJournalEntry = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 40px', gap: '0.75rem', padding: '0.5rem', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowX: 'auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 40px', gap: '0.75rem', minWidth: '900px', padding: '0.5rem', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
                 <div>Account</div><div>Line Description</div><div>Cost Center</div><div style={{ textAlign: 'right' }}>Debit</div><div style={{ textAlign: 'right' }}>Credit</div><div></div>
               </div>
 
               {fields.map((field, index) => (
-                <div key={field.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 40px', gap: '0.75rem', alignItems: 'start' }}>
+                <div key={field.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 40px', gap: '0.75rem', minWidth: '900px', alignItems: 'start' }}>
                   <Controller
                     name={`lines.${index}.account`}
                     control={control}
@@ -449,7 +706,7 @@ const NewJournalEntry = () => {
                         value={lineField.value || ''}
                         onChange={lineField.onChange}
                         disabled={isReadOnly}
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '0.9rem', height: '38px' }}
+                        style={{ width: '100%', padding: '0 0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '0.9rem', height: '36px', boxSizing: 'border-box', lineHeight: 1.2 }}
                       >
                         <option value="">None</option>
                         {costCenters.map((cc) => <option key={cc.id} value={cc.id}>{cc.name} ({cc.code})</option>)}
@@ -510,6 +767,7 @@ const NewJournalEntry = () => {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {!isCompactLayout && (
           <Card style={{ padding: '1.5rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>Entry Settings</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -559,16 +817,123 @@ const NewJournalEntry = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Attachment</label>
-                <div style={{ border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '1rem', textAlign: 'center', cursor: isReadOnly ? 'not-allowed' : 'pointer', background: 'var(--color-bg-secondary)' }}>
+                <div
+                  style={{
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '0.875rem',
+                    background: 'var(--color-bg-secondary)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                  }}
+                >
+                  {hasExistingAttachment ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.75rem',
+                        padding: '0.75rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'var(--color-bg-primary)',
+                        border: '1px solid var(--color-border)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0 }}>
+                        <div
+                          style={{
+                            width: '2rem',
+                            height: '2rem',
+                            borderRadius: '999px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'var(--color-primary-50)',
+                            color: 'var(--color-primary-600)',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <FileText size={16} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)' }}>
+                            {isReplacementAttachment ? 'New attachment selected' : 'Current attachment'}
+                          </div>
+                          <div
+                            title={attachmentLabel}
+                            style={{
+                              fontSize: '0.9rem',
+                              fontWeight: 500,
+                              color: 'var(--color-text-primary)',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {attachmentLabel}
+                          </div>
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: isReplacementAttachment ? 'var(--color-success-700)' : 'var(--color-text-secondary)',
+                          background: isReplacementAttachment ? 'var(--color-success-50)' : 'var(--color-bg-tertiary)',
+                          borderRadius: '999px',
+                          padding: '0.25rem 0.55rem',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isReplacementAttachment ? 'Replace' : 'Attached'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.625rem',
+                        padding: '0.75rem',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px dashed var(--color-border)',
+                        color: 'var(--color-text-secondary)',
+                      }}
+                    >
+                      <FileText size={16} />
+                      <span style={{ fontSize: '0.85rem' }}>No attachment selected</span>
+                    </div>
+                  )}
+
                   <input type="file" id="file" hidden onChange={handleFileChange} disabled={isReadOnly} />
-                  <label htmlFor="file" style={{ cursor: isReadOnly ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)' }}>
-                    <Upload size={20} />
-                    <span style={{ fontSize: '0.85rem' }}>{attachedFile?.name || attachedFile || 'Upload Document'}</span>
+                  <label
+                    htmlFor="file"
+                    style={{
+                      cursor: isReadOnly ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      alignSelf: 'flex-start',
+                      padding: '0.625rem 0.875rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px dashed var(--color-border)',
+                      color: 'var(--color-text-secondary)',
+                      background: 'var(--color-bg-primary)',
+                    }}
+                  >
+                    <Upload size={16} />
+                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                      {hasExistingAttachment ? 'Change attachment' : 'Upload attachment'}
+                    </span>
                   </label>
                 </div>
               </div>
             </div>
           </Card>
+          )}
 
           <Card style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
