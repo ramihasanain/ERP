@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
-import { useQuill } from 'react-quilljs';
+import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import Button from '@/components/Shared/Button';
 import Card from '@/components/Shared/Card';
@@ -26,23 +26,32 @@ const ContractTemplatesEditorView = ({
     availableVariables,
     onInsertVariable,
 }) => {
-    const { quill, quillRef } = useQuill({
-        theme: 'snow',
-        placeholder: 'Write your contract template here... Use {{variable_name}} for dynamic fields.',
-        modules: {
-            toolbar: [
-                [{ header: [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ list: 'ordered' }, { list: 'bullet' }],
-                [{ align: [] }],
-                ['link', 'blockquote'],
-                ['clean'],
-            ],
-        },
-    });
+    const quillContainerRef = useRef(null);
+    const quillInstanceRef = useRef(null);
     const isSyncingFromStateRef = useRef(false);
 
     useEffect(() => {
+        if (!quillContainerRef.current || quillInstanceRef.current) return;
+
+        const instance = new Quill(quillContainerRef.current, {
+            theme: 'snow',
+            placeholder: 'Write your contract template here... Use {{variable_name}} for dynamic fields.',
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    [{ align: [] }],
+                    ['link', 'blockquote'],
+                    ['clean'],
+                ],
+            },
+        });
+        quillInstanceRef.current = instance;
+    }, []);
+
+    useEffect(() => {
+        const quill = quillInstanceRef.current;
         if (!quill) return;
         const currentHtml = quill.root.innerHTML;
         const desiredHtml = formData.body || '';
@@ -51,9 +60,10 @@ const ContractTemplatesEditorView = ({
             quill.clipboard.dangerouslyPasteHTML(desiredHtml);
             isSyncingFromStateRef.current = false;
         }
-    }, [quill, formData.body]);
+    }, [formData.body]);
 
     useEffect(() => {
+        const quill = quillInstanceRef.current;
         if (!quill) return;
         const handleTextChange = () => {
             if (isSyncingFromStateRef.current) return;
@@ -65,7 +75,7 @@ const ContractTemplatesEditorView = ({
         return () => {
             quill.off('text-change', handleTextChange);
         };
-    }, [quill, setFormData]);
+    }, [setFormData]);
 
     if (isEditPage && templateDetailsQuery.isLoading) return <Spinner />;
     if (isEditPage && templateDetailsQuery.isError) {
@@ -209,7 +219,7 @@ const ContractTemplatesEditorView = ({
                         >
                             <div
                                 id="template-editor"
-                                ref={quillRef}
+                                ref={quillContainerRef}
                                 style={{ height: '100%' }}
                                 aria-label="Contract Body Editor"
                             />
