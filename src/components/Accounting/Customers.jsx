@@ -38,7 +38,10 @@ const Customers = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [deletingCustomer, setDeletingCustomer] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const deleteCustomerMutation = useCustomRemove('/api/sales/customers/a0791e6f-455e-4e66-9627-36faf9541df5/delete/', [['sales-customers']]);
+    const deleteCustomerMutation = useCustomRemove(
+        (customerId) => `/api/sales/customers/${customerId}/delete/`,
+        [['sales-customers']],
+    );
     const normalizedSearchTerm = searchTerm.trim();
     const customersEndpoint = normalizedSearchTerm
         ? `/api/sales/customers/?search=${encodeURIComponent(normalizedSearchTerm)}`
@@ -54,8 +57,13 @@ const Customers = () => {
     };
 
     const handleDeleteCustomer = async () => {
+        const id = deletingCustomer?.id;
+        if (!id) {
+            toast.error('No customer selected.');
+            return;
+        }
         try {
-            await deleteCustomerMutation.mutateAsync();
+            await deleteCustomerMutation.mutateAsync(id);
             toast.success('Customer deleted successfully.');
             setDeletingCustomer(null);
         } catch (error) {
