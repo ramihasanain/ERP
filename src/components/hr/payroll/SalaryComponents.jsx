@@ -1,13 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { usePayroll } from '@/context/PayrollContext';
 import useCustomQuery from '@/hooks/useQuery';
-import { useCustomPost, useCustomRemove } from '@/hooks/useMutation';
+import { useCustomPost, useCustomPut, useCustomRemove } from '@/hooks/useMutation';
 import Spinner from '@/core/Spinner';
 import ResourceLoadError from '@/core/ResourceLoadError';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 import { Plus, Edit2, Trash2, DollarSign, TrendingDown } from 'lucide-react';
 import FormulaBuilder from '@/components/hr/payroll/FormulaBuilder';
 
@@ -46,16 +46,6 @@ const mapApiCalculationToForm = (calculation) => {
     return 'Fixed';
 };
 
-const mapApiComponentToForm = (component = {}) => ({
-    code: component.code || '',
-    name: component.name || '',
-    type: mapApiTypeToForm(component.component_type_display || component.component_type),
-    calculationType: mapApiCalculationToForm(component.calculation_display || component.calculation),
-    isTaxable: Boolean(component.is_taxable),
-    glCode: component.gl_code || '',
-    formula: component.formula || '',
-});
-
 const INITIAL_FORM_DATA = {
     code: '',
     name: '',
@@ -66,19 +56,28 @@ const INITIAL_FORM_DATA = {
     formula: '',
 };
 
+const normalizeFormForCompare = (data) => ({
+    name: (data.name || '').trim(),
+    code: (data.code || '').trim(),
+    type: data.type,
+    calculationType: data.calculationType,
+    isTaxable: Boolean(data.isTaxable),
+    glCode: (data.glCode || '').trim(),
+    formula: (data.formula || '').trim(),
+});
+
 const SalaryComponents = () => {
-    const { updateSalaryComponent } = usePayroll();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [componentToDelete, setComponentToDelete] = useState(null);
     const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+    const [editFormBaseline, setEditFormBaseline] = useState(null);
     const salaryComponentsQuery = useCustomQuery('/api/hr/salary-components/', ['hr-salary-components']);
-    const salaryComponentDetailsQuery = useCustomQuery(
-        editingId ? `/api/hr/salary-components/${editingId}/` : '/api/hr/salary-components/',
-        ['hr-salary-component-details', editingId],
-        { enabled: Boolean(editingId) }
-    );
     const createSalaryComponentMutation = useCustomPost('/api/hr/salary-components/', [['hr-salary-components']]);
+    const updateSalaryComponentMutation = useCustomPut(
+        editingId ? `/api/hr/salary-components/${editingId}/` : '/api/hr/salary-components/',
+        [['hr-salary-components']]
+    );
     const deleteSalaryComponentMutation = useCustomRemove(
         (componentId) => `/api/hr/salary-components/${componentId}/`,
         [['hr-salary-components']]
@@ -104,23 +103,27 @@ const SalaryComponents = () => {
         }));
     }, [salaryComponentsQuery.data]);
 
-    useEffect(() => {
-        if (!editingId || !salaryComponentDetailsQuery.data) return;
-        setFormData(mapApiComponentToForm(salaryComponentDetailsQuery.data));
-    }, [editingId, salaryComponentDetailsQuery.data]);
+    const isEditFormDirty = useMemo(() => {
+        if (!editingId || editFormBaseline === null) return true;
+        return (
+            JSON.stringify(normalizeFormForCompare(formData)) !== JSON.stringify(editFormBaseline)
+        );
+    }, [editingId, formData, editFormBaseline]);
 
-    useEffect(() => {
-        if (!editingId || !salaryComponentDetailsQuery.isError) return;
-        const message =
-            salaryComponentDetailsQuery.error?.response?.data?.detail ||
-            salaryComponentDetailsQuery.error?.response?.data?.message ||
-            salaryComponentDetailsQuery.error?.message ||
-            'Could not load salary component details.';
-        toast.error(typeof message === 'string' ? message : 'Could not load salary component details.');
-    }, [editingId, salaryComponentDetailsQuery.isError, salaryComponentDetailsQuery.error]);
+    const isCreateFormValid = useMemo(() => {
+        if (editingId) return true;
+        const nameOk = (formData.name || '').trim().length > 0;
+        const codeOk = (formData.code || '').trim().length > 0;
+        if (!nameOk || !codeOk) return false;
+        if (formData.calculationType === 'Formula') {
+            return (formData.formula || '').trim().length > 0;
+        }
+        return true;
+    }, [editingId, formData.name, formData.code, formData.calculationType, formData.formula]);
 
     const resetFormState = () => {
         setEditingId(null);
+        setEditFormBaseline(null);
         setFormData(INITIAL_FORM_DATA);
     };
 
@@ -129,24 +132,34 @@ const SalaryComponents = () => {
         setIsModalOpen(true);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (editingId) {
-            updateSalaryComponent(editingId, formData);
-            setIsModalOpen(false);
-            resetFormState();
-            return;
-        }
-
-        const payload = {
+    const buildSalaryComponentPayload = () => {
+        const calculation = mapCalculationToApi(formData.calculationType);
+        return {
             name: formData.name.trim(),
             code: formData.code.trim(),
             component_type: mapComponentTypeToApi(formData.type),
-            calculation: mapCalculationToApi(formData.calculationType),
-            formula: mapCalculationToApi(formData.calculationType) === 'formula' ? (formData.formula || '').trim() : '',
+            calculation,
+            formula: calculation === 'formula' ? (formData.formula || '').trim() : '',
             gl_code: (formData.glCode || '').trim(),
             is_taxable: Boolean(formData.isTaxable),
         };
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const payload = buildSalaryComponentPayload();
+
+        if (editingId) {
+            try {
+                await updateSalaryComponentMutation.mutateAsync(payload);
+                toast.success('Salary component updated successfully.');
+                setIsModalOpen(false);
+                resetFormState();
+            } catch (error) {
+                toast.error(getApiErrorMessage(error, 'Could not update salary component.'));
+            }
+            return;
+        }
 
         try {
             await createSalaryComponentMutation.mutateAsync(payload);
@@ -154,26 +167,23 @@ const SalaryComponents = () => {
             setIsModalOpen(false);
             resetFormState();
         } catch (error) {
-            const message =
-                error?.response?.data?.detail ||
-                error?.response?.data?.message ||
-                error?.message ||
-                'Could not create salary component.';
-            toast.error(typeof message === 'string' ? message : 'Could not create salary component.');
+            toast.error(getApiErrorMessage(error, 'Could not create salary component.'));
         }
     };
 
     const openEdit = (comp) => {
-        setEditingId(comp.id);
-        setFormData({
+        const nextForm = {
             code: comp.code || '',
             name: comp.name || '',
-            type: comp.type || 'Earning',
-            calculationType: comp.calculationType || 'Fixed',
+            type: mapApiTypeToForm(comp.type) || 'Earning',
+            calculationType: mapApiCalculationToForm(comp.calculationType) || 'Fixed',
             isTaxable: Boolean(comp.isTaxable),
             glCode: comp.glCode || '',
             formula: comp.formula || '',
-        });
+        };
+        setEditingId(comp.id);
+        setFormData(nextForm);
+        setEditFormBaseline(normalizeFormForCompare(nextForm));
         setIsModalOpen(true);
     };
 
@@ -192,12 +202,7 @@ const SalaryComponents = () => {
             toast.success('Salary component deleted successfully.');
             closeDeleteModal();
         } catch (error) {
-            const message =
-                error?.response?.data?.error ||
-                error?.response?.data?.detail ||
-                error?.message ||
-                'Could not delete salary component.';
-            toast.error(typeof message === 'string' ? message : 'Could not delete salary component.');
+            toast.error(getApiErrorMessage(error, 'Could not delete salary component.'));
         }
     };
 
@@ -268,8 +273,8 @@ const SalaryComponents = () => {
 
             {/* Simple Modal Implementation */}
             {isModalOpen && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                    <Card style={{ width: '500px', padding: '2rem' }}>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem', overflowY: 'auto' }}>
+                    <Card style={{ width: 'min(640px, 100%)', maxWidth: '100%', padding: '2rem' }}>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>{editingId ? 'Edit Component' : 'New Component'}</h2>
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -332,8 +337,22 @@ const SalaryComponents = () => {
                                 >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={createSalaryComponentMutation.isPending}>
-                                    {createSalaryComponentMutation.isPending ? 'Creating...' : editingId ? 'Update' : 'Create'}
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        createSalaryComponentMutation.isPending ||
+                                        updateSalaryComponentMutation.isPending ||
+                                        (Boolean(editingId) && !isEditFormDirty) ||
+                                        (!editingId && !isCreateFormValid)
+                                    }
+                                >
+                                    {editingId
+                                        ? updateSalaryComponentMutation.isPending
+                                            ? 'Updating...'
+                                            : 'Update'
+                                        : createSalaryComponentMutation.isPending
+                                            ? 'Creating...'
+                                            : 'Create'}
                                 </Button>
                             </div>
                         </form>

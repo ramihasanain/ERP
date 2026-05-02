@@ -7,10 +7,10 @@ import {
     extractTenantDomain,
     getStoredUser,
     isAuthenticated as hasAccessToken,
+    migrateLegacyTokenStorage,
+    persistAuthSession,
     removeTokens,
     storeTenantDomain,
-    storeTokens,
-    storeUser,
 } from '@/services/auth';
 import { successToastOptions } from '@/utils/toastOptions';
 
@@ -25,7 +25,10 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(getStoredUser());
+    const [user, setUser] = useState(() => {
+        migrateLegacyTokenStorage();
+        return getStoredUser();
+    });
     const loginMutation = useCustomPost('/login/');
     const registerMutation = useCustomPost('/register/');
 
@@ -53,9 +56,8 @@ export const AuthProvider = ({ children }) => {
             name: responseUser?.name || responseUser?.full_name || responseData?.full_name || responseData?.name || 'User',
         };
 
+        // Tokens are persisted with the same `auth_user` blob (see persistAuthSession).
         const normalizedAuthPayload = {
-            access: tokenPayload.access || null,
-            refresh: tokenPayload.refresh || null,
             domain: responseData?.domain || responseData?.tenant_domain || null,
             is_superuser: Boolean(responseData?.is_superuser),
             permissions: responseData?.permissions || responseUser?.permissions || {},
@@ -77,13 +79,17 @@ export const AuthProvider = ({ children }) => {
         const { tokenPayload, normalizedUser, normalizedAuthPayload } = normalizeAuthResponse(response, role);
         const tenantDomain = extractTenantDomain(response);
 
-        storeTokens(tokenPayload);
         if (tenantDomain) {
             storeTenantDomain(tenantDomain);
         }
 
+        persistAuthSession({
+            ...normalizedAuthPayload,
+            access: tokenPayload.access,
+            refresh: tokenPayload.refresh,
+        });
+
         setUser(normalizedUser);
-        storeUser(normalizedAuthPayload);
 
         return normalizedUser;
     };
@@ -93,13 +99,17 @@ export const AuthProvider = ({ children }) => {
         const { tokenPayload, normalizedUser, normalizedAuthPayload } = normalizeAuthResponse(response, 'admin');
         const tenantDomain = extractTenantDomain(response);
 
-        storeTokens(tokenPayload);
         if (tenantDomain) {
             storeTenantDomain(tenantDomain);
         }
 
+        persistAuthSession({
+            ...normalizedAuthPayload,
+            access: tokenPayload.access,
+            refresh: tokenPayload.refresh,
+        });
+
         setUser(normalizedUser);
-        storeUser(normalizedAuthPayload);
 
         return response;
     };

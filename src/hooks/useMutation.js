@@ -27,7 +27,13 @@ export const useCustomPatch = (url, invalidateKeys = []) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data) => patch(url, data),
+    mutationFn: (data) => {
+      if (typeof url === 'function') {
+        const { id, ...body } = data || {};
+        return patch(url(id), body);
+      }
+      return patch(url, data);
+    },
     onSuccess: async (...args) => {
       await invalidateQueryKeys(queryClient, invalidateKeys);
       return args;

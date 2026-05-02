@@ -1,262 +1,315 @@
-import React from 'react';
-import { Variable, Calculator, Delete, X } from 'lucide-react';
+import React, { useRef, useLayoutEffect, useCallback, useState, useMemo } from 'react';
+
+const buildSortedVariableCodes = (variables) =>
+    [...(variables || [])]
+        .map((v) => v.code)
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length);
+
+/**
+ * Identifier ending at cursor (exclusive end index).
+ */
+const findTrailingIdentifierBounds = (text, endExclusive) => {
+    if (endExclusive <= 0) return null;
+    let i = endExclusive - 1;
+    while (i >= 0 && /[A-Za-z0-9_]/.test(text[i])) {
+        i -= 1;
+    }
+    const start = i + 1;
+    if (start >= endExclusive) return null;
+    return { start, end: endExclusive };
+};
+
+const tryDeleteWholeVariableBeforeCursor = (text, cursorPos, sortedCodes) => {
+    const bounds = findTrailingIdentifierBounds(text, cursorPos);
+    if (!bounds) return null;
+    const token = text.slice(bounds.start, bounds.end);
+    if (!sortedCodes.includes(token)) return null;
+    const nextValue = text.slice(0, bounds.start) + text.slice(cursorPos);
+    return { nextValue, cursor: bounds.start };
+};
+
+const insertWithSpacing = (before, after, term) => {
+    const needSpaceBefore = before.length > 0 && !/\s$/.test(before);
+    const needSpaceAfter = after.length > 0 && !/^\s/.test(after);
+    const insertion =
+        (needSpaceBefore ? ' ' : '') + term + (needSpaceAfter ? ' ' : '');
+    return { next: before + insertion + after, cursor: before.length + insertion.length };
+};
+
+const ALLOWED_NAV_KEYS = new Set([
+    'Tab',
+    'Shift',
+    'Alt',
+    'Control',
+    'Meta',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown',
+    'Escape',
+    'Home',
+    'End',
+    'Delete',
+]);
 
 const FormulaBuilder = ({ value, onChange, variables = [] }) => {
     const operators = ['+', '-', '*', '/', '(', ')'];
-    const numberButtons = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0'];
+    const textareaRef = useRef(null);
+    const pendingCursorRef = useRef(null);
+    const [editorFocused, setEditorFocused] = useState(false);
 
-    const insertTerm = (term) => {
-        onChange(value ? `${value} ${term}` : term);
+    const sortedVariableCodes = useMemo(() => buildSortedVariableCodes(variables), [variables]);
+
+    useLayoutEffect(() => {
+        const el = textareaRef.current;
+        const pos = pendingCursorRef.current;
+        if (el == null || pos == null) return;
+        el.selectionStart = el.selectionEnd = pos;
+        pendingCursorRef.current = null;
+    }, [value]);
+
+    const insertTerm = useCallback(
+        (term) => {
+            const el = textareaRef.current;
+            const v = value ?? '';
+            let start = v.length;
+            let end = v.length;
+            if (el) {
+                start = el.selectionStart;
+                end = el.selectionEnd;
+            }
+            const before = v.slice(0, start);
+            const after = v.slice(end);
+            const { next, cursor } = insertWithSpacing(before, after, term);
+            pendingCursorRef.current = cursor;
+            onChange(next);
+            queueMicrotask(() => {
+                el?.focus();
+            });
+        },
+        [value, onChange]
+    );
+
+    const handlePaste = useCallback(
+        (e) => {
+            e.preventDefault();
+            const el = textareaRef.current;
+            const raw = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+            const filtered = raw.replace(/[^\d.\s]/g, '');
+            if (!filtered) return;
+            const v = value ?? '';
+            const start = el ? el.selectionStart : v.length;
+            const end = el ? el.selectionEnd : v.length;
+            const next = v.slice(0, start) + filtered + v.slice(end);
+            pendingCursorRef.current = start + filtered.length;
+            onChange(next);
+        },
+        [value, onChange]
+    );
+
+    const handleKeyDown = useCallback(
+        (e) => {
+            if (e.nativeEvent.isComposing || e.key === 'Process') return;
+
+            if (e.ctrlKey || e.metaKey) {
+                const k = e.key.toLowerCase();
+                if (['c', 'v', 'x', 'a', 'z', 'y'].includes(k)) return;
+            }
+
+            const el = e.target;
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+
+            if (e.key === 'Backspace') {
+                if (start !== end) return;
+                const res = tryDeleteWholeVariableBeforeCursor(
+                    value ?? '',
+                    start,
+                    sortedVariableCodes
+                );
+                if (res) {
+                    e.preventDefault();
+                    pendingCursorRef.current = res.cursor;
+                    onChange(res.nextValue);
+                }
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                return;
+            }
+
+            if (ALLOWED_NAV_KEYS.has(e.key)) return;
+
+            if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                if (/^[0-9.]$/.test(e.key) || e.key === ' ') return;
+                e.preventDefault();
+            }
+        },
+        [value, onChange, sortedVariableCodes]
+    );
+
+    const chip = {
+        padding: '0.2rem 0.45rem',
+        borderRadius: '0.25rem',
+        border: '1px solid var(--color-border)',
+        background: 'var(--color-bg-card)',
+        fontSize: '0.75rem',
+        fontWeight: 500,
+        color: 'var(--color-text-main)',
+        cursor: 'pointer',
     };
 
-    const appendText = (text) => {
-        onChange(`${value || ''}${text}`);
+    const opBtn = {
+        ...chip,
+        minWidth: '1.75rem',
+        height: '1.75rem',
+        padding: '0',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'ui-monospace, monospace',
+        fontSize: '0.8125rem',
     };
 
-    const removeLastChar = () => {
-        if (!value) return;
-        onChange(String(value).slice(0, -1));
-    };
-
-    const removeLastTerm = () => {
-        const tokens = String(value || '').trim().split(/\s+/).filter(Boolean);
-        if (!tokens.length) return;
-        tokens.pop();
-        onChange(tokens.join(' '));
-    };
-
-    const clearFormula = () => onChange('');
-
-    const handleEditorKeyDown = (e) => {
-        if (/^\d$/.test(e.key)) {
-            e.preventDefault();
-            appendText(e.key);
-            return;
-        }
-
-        if (e.key === ' ') {
-            e.preventDefault();
-            appendText(' ');
-            return;
-        }
-
-        if (e.key === 'Backspace') {
-            e.preventDefault();
-            removeLastChar();
-            return;
-        }
-
-        if (e.key === 'Delete') {
-            e.preventDefault();
-            clearFormula();
-            return;
-        }
-
-        if (['Tab', 'Shift', 'Alt', 'Control', 'Meta', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape'].includes(e.key)) {
-            return;
-        }
-
-        e.preventDefault();
+    const labelStyle = {
+        fontSize: '0.6875rem',
+        fontWeight: 600,
+        color: 'var(--color-text-muted)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+        marginRight: '0.15rem',
     };
 
     return (
-        <div style={{
-            border: '1px solid var(--color-border)',
-            borderRadius: '0.5rem',
-            overflow: 'hidden',
-            background: 'var(--color-slate-50)'
-        }}>
-            {/* Editor Area */}
-            <div style={{ padding: '1rem', background: 'white', borderBottom: '1px solid var(--color-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
-                        Formula Editor
-                    </label>
+        <div
+            style={{
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                overflow: 'hidden',
+                background: 'var(--color-slate-50)',
+            }}
+        >
+            <div style={{ padding: '0.75rem', background: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <span className="font-medium" style={labelStyle}>
+                        Formula
+                    </span>
                     <button
                         type="button"
-                        onClick={clearFormula}
-                        style={{ background: 'none', border: 'none', color: 'var(--color-error-600)', cursor: 'pointer', fontSize: '0.75rem' }}
+                        onClick={() => {
+                            pendingCursorRef.current = 0;
+                            onChange('');
+                            queueMicrotask(() => textareaRef.current?.focus());
+                        }}
+                        disabled={!String(value || '').trim()}
+                        className="font-medium cursor-pointer"
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--color-error-600)',
+                            fontSize: '0.75rem',
+                            opacity: String(value || '').trim() ? 1 : 0.45,
+                            cursor: String(value || '').trim() ? 'pointer' : 'not-allowed',
+                        }}
                     >
-                        Clear All
+                        Clear
                     </button>
                 </div>
-                <div style={{
-                    minHeight: '60px',
-                    padding: '0.75rem',
-                    background: 'var(--color-slate-50)',
-                    borderRadius: '0.25rem',
-                    fontFamily: 'monospace',
-                    fontSize: '1rem',
-                    color: 'var(--color-primary-700)',
-                    wordBreak: 'break-all',
-                    outline: 'none',
-                    cursor: 'text'
+                <textarea
+                    ref={textareaRef}
+                    value={value ?? ''}
+                    onChange={(e) => onChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
+                    onFocus={() => setEditorFocused(true)}
+                    onBlur={() => setEditorFocused(false)}
+                    spellCheck={false}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    rows={3}
+                    className="font-normal"
+                    placeholder="Click to move the caret — type 0–9, ., space; Backspace removes a whole variable when the caret is right after its code"
+                    aria-label="Formula"
+                    style={{
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        resize: 'vertical',
+                        minHeight: '56px',
+                        padding: '0.5rem 0.65rem',
+                        background: 'var(--color-slate-50)',
+                        borderRadius: '0.25rem',
+                        border: editorFocused
+                            ? '1px solid var(--color-primary-400)'
+                            : '1px solid var(--color-border)',
+                        boxShadow: editorFocused ? '0 0 0 2px var(--color-primary-100)' : 'none',
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                        fontSize: '0.8125rem',
+                        color: 'var(--color-primary-800)',
+                        wordBreak: 'break-all',
+                        outline: 'none',
+                        cursor: 'text',
+                        whiteSpace: 'pre-wrap',
+                        caretColor: 'var(--color-primary-600)',
+                        lineHeight: 1.45,
+                    }}
+                />
+            </div>
+
+            <div
+                style={{
+                    padding: '0.5rem 0.65rem',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: '0.35rem 0.5rem',
+                    rowGap: '0.35rem',
                 }}
-                tabIndex={0}
-                onKeyDown={handleEditorKeyDown}
-                title="Use keyboard: numbers and space only"
-                >
-                    {value || <span style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Build your formula using buttons below...</span>}
-                </div>
-            </div>
-
-            {/* Toolbar */}
-            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            >
+                <span className="font-medium" style={labelStyle}>
+                    Variables
+                </span>
+                {variables.map((v) => (
                     <button
+                        key={v.code}
                         type="button"
-                        onClick={removeLastTerm}
-                        disabled={!String(value || '').trim()}
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '0.4rem 0.7rem',
-                            borderRadius: '0.4rem',
-                            background: 'white',
-                            border: '1px solid var(--color-border)',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            opacity: String(value || '').trim() ? 1 : 0.6,
-                        }}
+                        title={v.name}
+                        onClick={() => insertTerm(v.code)}
+                        className="font-medium cursor-pointer"
+                        style={chip}
                     >
-                        <Delete size={14} /> Backspace
+                        {v.code}
                     </button>
+                ))}
+
+                <span
+                    aria-hidden
+                    style={{
+                        width: '1px',
+                        height: '1.25rem',
+                        background: 'var(--color-border)',
+                        margin: '0 0.15rem',
+                        flexShrink: 0,
+                    }}
+                />
+
+                <span className="font-medium" style={labelStyle}>
+                    Operators
+                </span>
+                {operators.map((op) => (
                     <button
+                        key={op}
                         type="button"
-                        onClick={clearFormula}
-                        disabled={!String(value || '').trim()}
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '0.4rem 0.7rem',
-                            borderRadius: '0.4rem',
-                            background: 'white',
-                            border: '1px solid var(--color-border)',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            opacity: String(value || '').trim() ? 1 : 0.6,
-                        }}
+                        onClick={() => insertTerm(op)}
+                        className="font-medium cursor-pointer"
+                        style={opBtn}
                     >
-                        <X size={14} /> Clear
+                        {op}
                     </button>
-                </div>
-
-                {/* Number Pad */}
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                <div style={{ minWidth: '170px' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
-                        Numbers
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 40px)', gap: '0.5rem', alignItems: 'center' }}>
-                        {numberButtons.map((num) => (
-                            <button
-                                key={num}
-                                type="button"
-                                onClick={() => appendText(num)}
-                                style={{
-                                    width: '40px',
-                                    height: '34px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderRadius: '0.25rem',
-                                    background: 'white',
-                                    border: '1px solid var(--color-border)',
-                                    fontSize: '0.9rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                {num}
-                            </button>
-                        ))}
-                        <button
-                            type="button"
-                            onClick={() => appendText(' ')}
-                            style={{
-                                gridColumn: 'span 3',
-                                height: '34px',
-                                borderRadius: '0.25rem',
-                                background: 'white',
-                                border: '1px solid var(--color-border)',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                            }}
-                        >
-                            Space
-                        </button>
-                    </div>
-                </div>
-
-                {/* Variables */}
-                <div style={{ flex: '1 1 280px', minWidth: '260px' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Variable size={12} /> Variables
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        {variables.map(v => (
-                            <button
-                                key={v.code}
-                                type="button"
-                                onClick={() => insertTerm(v.code)}
-                                style={{
-                                    padding: '0.25rem 0.75rem',
-                                    borderRadius: '1rem',
-                                    background: 'white',
-                                    border: '1px solid var(--color-border)',
-                                    fontSize: '0.75rem',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                                onMouseOver={e => e.currentTarget.style.borderColor = 'var(--color-primary-500)'}
-                                onMouseOut={e => e.currentTarget.style.borderColor = 'var(--color-border)'}
-                            >
-                                {v.name} ({v.code})
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Operators */}
-                <div style={{ minWidth: '220px' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Calculator size={12} /> Math Operators
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        {operators.map(op => (
-                            <button
-                                key={op}
-                                type="button"
-                                onClick={() => insertTerm(op)}
-                                style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderRadius: '0.25rem',
-                                    background: 'white',
-                                    border: '1px solid var(--color-border)',
-                                    fontSize: '1rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                }}
-                                onMouseOver={e => e.currentTarget.style.background = 'var(--color-slate-100)'}
-                                onMouseOut={e => e.currentTarget.style.background = 'white'}
-                            >
-                                {op}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                </div>
-            </div>
-
-            <div style={{ padding: '0.75rem 1rem', background: 'var(--color-primary-50)', borderTop: '1px solid var(--color-border)', fontSize: '0.75rem', color: 'var(--color-primary-800)' }}>
-                <b>Example:</b> (BASIC / 30 / 8) * 1.5 * OT_HOURS
+                ))}
             </div>
         </div>
     );

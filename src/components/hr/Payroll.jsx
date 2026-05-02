@@ -15,6 +15,7 @@ import FinalSettlementsList from "@/components/hr/payroll/FinalSettlementsList";
 import Spinner from "@/core/Spinner";
 import ResourceLoadError from "@/core/ResourceLoadError";
 import useCustomQuery from "@/hooks/useQuery";
+import styles from "@/components/hr/Payroll.module.css";
 
 const formatMoneyAmount = (value, currency = "USD") => {
   const num = Number(value);
@@ -69,6 +70,18 @@ const Payroll = () => {
   const [activeTab, setActiveTab] = useState(() =>
     location.state?.activeTab === "settlements" ? "settlements" : "overview",
   );
+  const [compactActions, setCompactActions] = useState(() =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 950px)").matches,
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 950px)");
+    const onChange = () => setCompactActions(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     if (location.state?.activeTab === "settlements") {
@@ -107,15 +120,12 @@ const Payroll = () => {
       ? "var(--color-warning)"
       : "var(--color-success)";
 
+  const actionIconSize = compactActions ? 16 : 18;
+  const actionButtonSize = compactActions ? "sm" : "md";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div className={styles.pageHeader}>
         <div>
           <h2 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
             Payroll Dashboard
@@ -124,10 +134,11 @@ const Payroll = () => {
             Manage salary components, structures, and process monthly runs.
           </p>
         </div>
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div className={styles.pageHeaderActions}>
           <Button
             variant="outline"
-            icon={<Settings size={18} />}
+            size={actionButtonSize}
+            icon={<Settings size={actionIconSize} />}
             onClick={() => navigate("/admin/hr/payroll/components")}
             className="cursor-pointer"
           >
@@ -135,7 +146,8 @@ const Payroll = () => {
           </Button>
           <Button
             variant="outline"
-            icon={<Layout size={18} />}
+            size={actionButtonSize}
+            icon={<Layout size={actionIconSize} />}
             onClick={() => navigate("/admin/hr/payroll/structures")}
             className="cursor-pointer"
           >
@@ -143,7 +155,8 @@ const Payroll = () => {
           </Button>
           <Button
             variant="outline"
-            icon={<Percent size={18} />}
+            size={actionButtonSize}
+            icon={<Percent size={actionIconSize} />}
             onClick={() => navigate("/admin/hr/payroll/tax-slabs")}
             className="cursor-pointer"
           >
@@ -151,7 +164,8 @@ const Payroll = () => {
           </Button>
           <Button
             variant="primary"
-            icon={<PlayCircle size={18} />}
+            size={actionButtonSize}
+            icon={<PlayCircle size={actionIconSize} />}
             onClick={() => navigate("/admin/hr/payroll/run")}
             className="cursor-pointer"
           >
@@ -235,13 +249,7 @@ const Payroll = () => {
 
           {!overviewLoading && !overviewError && dashboard && (
             <>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gap: "1.5rem",
-                }}
-              >
+              <div className={styles.dashboardKpis}>
                 <Card className="padding-md">
                   <div
                     style={{
