@@ -49,26 +49,12 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
         }
     );
 
-    const bankAccountsQuery = useCustomQuery(
-        '/accounting/accounts/',
-        ['accounting-accounts'],
-        {
-            enabled: Boolean(isOpen),
-            select: (response) => {
-                if (Array.isArray(response?.data)) return response.data;
-                if (Array.isArray(response?.results)) return response.results;
-                if (Array.isArray(response)) return response;
-                return [];
-            },
-        }
-    );
     const updateBillAccountMutation = useCustomPatch(
         billId ? `/api/purchasing/bills/${billId}/` : '/api/purchasing/bills/',
         [['purchasing-bills'], ['purchasing-bill-details', billId]]
     );
 
     const bill = useMemo(() => billDetailsQuery.data ?? null, [billDetailsQuery.data]);
-    const accountOptions = useMemo(() => bankAccountsQuery.data ?? [], [bankAccountsQuery.data]);
     const [editableLines, setEditableLines] = useState([]);
     const [isPostedLocked, setIsPostedLocked] = useState(false);
     const [isSubmittingPost, setIsSubmittingPost] = useState(false);
@@ -93,7 +79,6 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
     }, [bill?.rawStatus]);
 
     const isBillPosted = isPostedLocked || bill?.rawStatus === 'posted';
-    const allLinesHaveAccount = editableLines.length > 0 && editableLines.every((line) => Boolean(line.accountId));
     const changedLines = useMemo(() => {
         if (!bill?.lines?.length) return [];
 
@@ -101,7 +86,6 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
             bill.lines.map((line) => [
                 line.id,
                 {
-                    accountId: line.accountId || '',
                     description: line.description || '',
                 },
             ])
@@ -109,12 +93,12 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
 
         return editableLines
             .filter((line) => {
-                const originalLine = originalLineById.get(line.id) || { accountId: '', description: '' };
+                const originalLine = originalLineById.get(line.id) || { description: '' };
                 const isDescriptionChanged = (line.description || '') !== originalLine.description;
                 return isDescriptionChanged;
             })
             .map((line) => {
-                const originalLine = originalLineById.get(line.id) || { accountId: '', description: '' };
+                const originalLine = originalLineById.get(line.id) || { description: '' };
                 const nextLine = { id: line.id };
 
                 if ((line.description || '') !== originalLine.description) {
@@ -125,7 +109,7 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
             });
     }, [bill?.lines, editableLines]);
 
-    const canPatchBill = !isBillPosted && allLinesHaveAccount;
+    const isSendBusy = updateBillAccountMutation.isPending || isSubmittingPost;
 
     const handleLineDescriptionChange = (lineId, nextDescription) => {
         if (isBillPosted) return;
@@ -134,16 +118,8 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
         );
     };
 
-    const getAccountLabel = (accountId) => {
-        const selected = accountOptions.find((account) => (account.account_id || account.id) === accountId);
-        return selected?.account_name || selected?.name || '';
-    };
-
-    const getLineAccountDisplay = (line) =>
-        line.accountName || getAccountLabel(line.accountId) || '—';
-
     const handlePatchBill = async () => {
-        if (!billId || !canPatchBill || isSubmittingPost || updateBillAccountMutation.isPending) return;
+        if (!billId || isSendBusy) return;
 
         const payload = {
             status: 'posted',
@@ -304,39 +280,30 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
                                         <FileText size={16} />
                                         <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Bill Lines</h3>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={handlePatchBill}
-                                        disabled={!canPatchBill || updateBillAccountMutation.isPending || isSubmittingPost}
-                                        style={{
-                                            border: '1px solid',
-                                            borderColor: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost
-                                                ? 'var(--color-primary)'
-                                                : 'var(--color-border)',
-                                            borderRadius: '8px',
-                                            height: '2.4rem',
-                                            padding: '0 1rem',
-                                            background: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost
-                                                ? 'var(--color-primary)'
-                                                : 'var(--color-bg-table-header)',
-                                            color: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost
-                                                ? 'var(--color-white)'
-                                                : 'var(--color-text-secondary)',
-                                            boxShadow: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost
-                                                ? '0 6px 14px rgba(37, 99, 235, 0.25)'
-                                                : 'none',
-                                            fontWeight: 700,
-                                            letterSpacing: '0.2px',
-                                            cursor: canPatchBill && !updateBillAccountMutation.isPending && !isSubmittingPost ? 'pointer' : 'not-allowed',
-                                            transition: 'all 0.2s ease',
-                                        }}
-                                    >
-                                        {updateBillAccountMutation.isPending || isSubmittingPost
-                                            ? 'Sending...'
-                                            : isBillPosted
-                                              ? 'Sent to finance'
-                                              : 'Send to finance'}
-                                    </button>
+                                    {bill?.rawStatus !== 'posted' && (
+                                        <button
+                                            type="button"
+                                            onClick={handlePatchBill}
+                                            disabled={isSendBusy}
+                                            className="cursor-pointer font-medium"
+                                            style={{
+                                                border: '1px solid',
+                                                borderColor: !isSendBusy ? 'var(--color-primary)' : 'var(--color-border)',
+                                                borderRadius: '8px',
+                                                height: '2.4rem',
+                                                padding: '0 1rem',
+                                                background: !isSendBusy ? 'var(--color-primary)' : 'var(--color-bg-table-header)',
+                                                color: !isSendBusy ? 'var(--color-white)' : 'var(--color-text-secondary)',
+                                                boxShadow: !isSendBusy ? '0 6px 14px rgba(37, 99, 235, 0.25)' : 'none',
+                                                fontWeight: 700,
+                                                letterSpacing: '0.2px',
+                                                cursor: !isSendBusy ? 'pointer' : 'not-allowed',
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                        >
+                                            {isSendBusy ? 'Sending...' : 'Send to finance'}
+                                        </button>
+                                    )}
                                 </div>
                                 <div style={{ overflowX: 'auto' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -378,7 +345,7 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
                                                     </td>
                                                     <td style={{ padding: '0.8rem 1rem', minWidth: '230px' }}>
                                                         <p style={{ margin: 0, color: 'var(--color-text-main)', fontWeight: 500 }}>
-                                                            {getLineAccountDisplay(line)}
+                                                            {line.accountName?.trim() ? line.accountName : '—'}
                                                         </p>
                                                     </td>
                                                     <td style={{ padding: '0.8rem 1rem', whiteSpace: 'nowrap' }}>
