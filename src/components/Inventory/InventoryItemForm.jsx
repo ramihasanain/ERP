@@ -33,7 +33,7 @@ const getUnitValue = (value) => {
 const defaultFormData = {
     name: '',
     sku: '',
-    type: 'Stock',
+    type: 'stock_item',
     uom: '',
     categoryId: '',
     purchasePrice: '',
@@ -55,7 +55,7 @@ const mapProductToForm = (product) => {
     return {
         name: product?.name || '',
         sku: product?.sku || '',
-        type: isStock ? 'Stock' : 'Service',
+        type: isStock ? 'stock_item' : 'service',
         uom: getUnitValue(product?.unit_id || product?.unit?.id || product?.unit || product?.uom_id || product?.uom),
         categoryId: getCategoryId(categoryValue) || (typeof categoryValue === 'string' ? categoryValue : ''),
         purchasePrice: String(product?.cost_price ?? product?.purchasePrice ?? ''),
@@ -68,12 +68,12 @@ const mapProductToForm = (product) => {
 const buildPayload = (formData) => ({
     name: formData.name.trim(),
     sku: formData.sku.trim(),
-    type: formData.type === 'Stock' ? 'stock' : 'service',
+    type: formData.type === 'stock_item' ? 'stock_item' : 'service',
     unit: formData.uom,
     category: formData.categoryId || null,
     cost_price: parseFloat(formData.purchasePrice) || 0,
     selling_price: parseFloat(formData.sellingPrice) || 0,
-    reorder_level: formData.type === 'Stock' ? parseInt(formData.reorderLevel || '0', 10) : 0,
+    reorder_level: formData.type === 'stock_item' ? parseInt(formData.reorderLevel || '0', 10) : 0,
 });
 
 const resolveUomValue = (value, unitOptions) => {
@@ -248,8 +248,8 @@ const InventoryItemForm = ({ isEdit = false }) => {
                             <div>
                                 <label style={labelStyle}>Item Type</label>
                                 <select name="type" value={formData.type} onChange={handleChange} style={inputStyle}>
-                                    <option value="Stock_item">Stock Item</option>
-                                    <option value="Service">Service (Non-stock)</option>
+                                    <option value="stock_item">Stock Item</option>
+                                    <option value="service">Service (Non-stock)</option>
                                 </select>
                             </div>
 
@@ -279,7 +279,7 @@ const InventoryItemForm = ({ isEdit = false }) => {
                                 <input name="sellingPrice" type="number" step="0.01" value={formData.sellingPrice} onChange={handleChange} required style={inputStyle} />
                             </div>
 
-                            {formData.type === 'Stock' && (
+                            {formData.type === 'stock_item' && (
                                 <>
                                     <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--color-border)', margin: '1rem 0' }} />
 

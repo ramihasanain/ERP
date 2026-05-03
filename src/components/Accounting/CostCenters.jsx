@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { toast } from 'sonner';
 import { useAccounting } from '@/context/AccountingContext';
+import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPost, useCustomPatch } from '@/hooks/useMutation';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -9,30 +12,142 @@ import {
 } from 'lucide-react';
 
 const CostCenters = () => {
-    const { costCenters, budgetUsage, addCostCenter, updateCostCenter, deleteCostCenter, openDrawer } = useAccounting();
+    const { addCostCenter, updateCostCenter, deleteCostCenter, openDrawer } = useAccounting();
     const [viewMode, setViewMode] = useState('list'); // list, add, edit
     const [formData, setFormData] = useState({ name: '', code: '', budget: '' });
     const [editingId, setEditingId] = useState(null);
+    const [editBaseline, setEditBaseline] = useState(null);
 
-    const handleSave = () => {
-        if (!formData.name || !formData.code || !formData.budget) return;
+    const createCostCenterMutation = useCustomPost('/accounting/cost-centers/create/', [
+        'accounting-cost-centers-summary',
+        'accounting-cost-centers',
+    ]);
+
+    const updateCostCenterMutation = useCustomPatch(
+        (id) => `/accounting/cost-centers/${id}/`,
+        ['accounting-cost-centers-summary', 'accounting-cost-centers']
+    );
+
+    const costCentersQuery = useCustomQuery(
+        '/accounting/cost-centers/',
+        ['accounting-cost-centers'],
+        {
+            select: (res) => (Array.isArray(res?.data) ? res.data : []),
+        }
+    );
+
+    const apiCostCenters = costCentersQuery.data ?? [];
+    const listLoading = costCentersQuery.isPending;
+    const listError = costCentersQuery.isError;
+
+    const annualBudgetPayload = useMemo(() => {
+        const trimmed = String(formData.budget ?? '').trim();
+        if (!trimmed) return null;
+        const n = Number(trimmed);
+        if (!Number.isFinite(n)) return null;
+        return n.toFixed(2);
+    }, [formData.budget]);
+
+    const isCreateFormComplete =
+        Boolean(formData.name.trim()) &&
+        Boolean(formData.code.trim()) &&
+        annualBudgetPayload !== null;
+
+    const isEditDirty =
+        viewMode === 'edit' &&
+        Boolean(editingId) &&
+        Boolean(editBaseline) &&
+        (formData.name.trim() !== editBaseline.name ||
+            formData.code.trim() !== editBaseline.code ||
+            (annualBudgetPayload ?? '') !== editBaseline.annual_budget);
+
+    const saveDisabled =
+        createCostCenterMutation.isPending ||
+        updateCostCenterMutation.isPending ||
+        (viewMode === 'add' && !isCreateFormComplete) ||
+        (viewMode === 'edit' && (!isEditDirty || annualBudgetPayload === null));
+
+    const handleSave = async () => {
+        if (!formData.name.trim() || !formData.code.trim() || !annualBudgetPayload) return;
 
         const data = {
-            name: formData.name,
-            code: formData.code,
-            budget: Number(formData.budget)
+            name: formData.name.trim(),
+            code: formData.code.trim(),
+            budget: Number(formData.budget),
         };
 
         if (viewMode === 'edit' && editingId) {
-            updateCostCenter(editingId, data);
-        } else {
-            addCostCenter(data);
+            if (!isEditDirty) return;
+            const patchBody = {
+                id: editingId,
+                name: data.name,
+                code: data.code,
+                annual_budget: annualBudgetPayload,
+            };
+            try {
+                const updated = await updateCostCenterMutation.mutateAsync(patchBody);
+                updateCostCenter(editingId, {
+                    name: updated?.name ?? data.name,
+                    code: updated?.code ?? data.code,
+                    budget: Number(updated?.annual_budget ?? updated?.budget ?? annualBudgetPayload),
+                });
+                toast.success('Cost center updated successfully.');
+                resetForm();
+            } catch (error) {
+                toast.error(
+                    error?.response?.data?.message ||
+                        error?.response?.data?.detail ||
+                        'Failed to update cost center.'
+                );
+            }
+            return;
         }
-        resetForm();
+
+        const payload = {
+            name: data.name,
+            code: data.code,
+            annual_budget: annualBudgetPayload,
+        };
+
+        try {
+            const created = await createCostCenterMutation.mutateAsync(payload);
+            const budgetValue = Number(
+                created?.annual_budget ?? created?.budget ?? formData.budget
+            );
+            addCostCenter({
+                id: created?.id,
+                name: created?.name ?? data.name,
+                code: created?.code ?? data.code,
+                budget: budgetValue,
+            });
+            toast.success('Cost center created successfully.');
+            resetForm();
+        } catch (error) {
+            toast.error(
+                error?.response?.data?.message ||
+                    error?.response?.data?.detail ||
+                    'Failed to create cost center.'
+            );
+        }
     };
 
     const handleEdit = (cc) => {
-        setFormData({ name: cc.name, code: cc.code, budget: cc.budget });
+        const budgetRaw = cc.annual_budget ?? cc.budget;
+        const budgetStr =
+            budgetRaw !== undefined && budgetRaw !== null && budgetRaw !== ''
+                ? String(budgetRaw)
+                : '';
+        const budgetNum = Number(budgetRaw);
+        const baselineBudget =
+            budgetRaw !== undefined && budgetRaw !== null && budgetRaw !== '' && Number.isFinite(budgetNum)
+                ? budgetNum.toFixed(2)
+                : '';
+        setEditBaseline({
+            name: (cc.name || '').trim(),
+            code: (cc.code || '').trim(),
+            annual_budget: baselineBudget,
+        });
+        setFormData({ name: cc.name, code: cc.code, budget: budgetStr });
         setEditingId(cc.id);
         setViewMode('edit');
     };
@@ -44,14 +159,33 @@ const CostCenters = () => {
     };
 
     const resetForm = () => {
+        setEditBaseline(null);
         setFormData({ name: '', code: '', budget: '' });
         setEditingId(null);
         setViewMode('list');
     };
 
-    // Calculate totals
-    const totalBudget = costCenters.reduce((sum, cc) => sum + Number(cc.budget || 0), 0);
-    const totalActual = costCenters.reduce((sum, cc) => sum + (budgetUsage[cc.id] || 0), 0);
+    const summaryQuery = useCustomQuery(
+        '/accounting/cost-centers/summary/',
+        ['accounting-cost-centers-summary'],
+        {
+            select: (data) => ({
+                totalBudget: Number(data?.total_budget ?? 0),
+                totalSpent: Number(data?.total_spent ?? 0),
+                remaining: Number(data?.remaining ?? 0),
+            }),
+        }
+    );
+
+    const summaryLoading = summaryQuery.isPending;
+    const summaryError = summaryQuery.isError;
+    const summary = summaryQuery.data;
+
+    const formatSummaryValue = (amount) => {
+        if (summaryLoading) return '…';
+        if (summaryError) return '—';
+        return `$${Number(amount).toLocaleString()}`;
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -73,12 +207,12 @@ const CostCenters = () => {
 
             {/* Form Mode */}
             {viewMode !== 'list' && (
-                <Card className="padding-lg" style={{ maxWidth: '600px' }}>
+                <Card className="padding-lg" style={{ width: '100%' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.5rem' }}>
                         {viewMode === 'add' ? 'Add New Cost Center' : 'Edit Cost Center'}
                     </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', width: '100%' }}>
                             <Input
                                 label="Cost Center Name"
                                 placeholder="e.g. Marketing"
@@ -100,8 +234,16 @@ const CostCenters = () => {
                             onChange={e => setFormData({ ...formData, budget: e.target.value })}
                         />
                         <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
-                            <Button variant="ghost" onClick={resetForm}>Cancel</Button>
-                            <Button icon={<Save size={18} />} onClick={handleSave}>Save Cost Center</Button>
+                            <Button variant="ghost" onClick={resetForm}>
+                                Cancel
+                            </Button>
+                            <Button
+                                icon={<Save size={18} />}
+                                onClick={handleSave}
+                                disabled={saveDisabled}
+                            >
+                                Save Cost Center
+                            </Button>
                         </div>
                     </div>
                 </Card>
@@ -112,19 +254,19 @@ const CostCenters = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
                     <SummaryCard
                         title="Total Budget"
-                        value={`$${totalBudget.toLocaleString()}`}
+                        value={formatSummaryValue(summary?.totalBudget)}
                         icon={<Target size={20} />}
                         color="var(--color-primary-600)"
                     />
                     <SummaryCard
                         title="Total Spent"
-                        value={`$${totalActual.toLocaleString()}`}
+                        value={formatSummaryValue(summary?.totalSpent)}
                         icon={<AlertTriangle size={20} />}
                         color="var(--color-warning)"
                     />
                     <SummaryCard
                         title="Remaining"
-                        value={`$${(totalBudget - totalActual).toLocaleString()}`}
+                        value={formatSummaryValue(summary?.remaining)}
                         icon={<CheckCircle size={20} />}
                         color="var(--color-success)"
                     />
@@ -146,10 +288,27 @@ const CostCenters = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {costCenters.map(cc => {
-                                const actual = budgetUsage[cc.id] || 0;
-                                const budget = Number(cc.budget) || 0;
-                                const percent = budget > 0 ? (actual / budget) * 100 : 0;
+                            {listLoading && (
+                                <tr>
+                                    <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                                        Loading cost centers…
+                                    </td>
+                                </tr>
+                            )}
+                            {!listLoading && listError && (
+                                <tr>
+                                    <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-error)' }}>
+                                        Could not load cost centers. Try again later.
+                                    </td>
+                                </tr>
+                            )}
+                            {!listLoading && !listError && apiCostCenters.map((cc) => {
+                                const budget = Number(cc.annual_budget) || 0;
+                                const actual = Number(cc.actual_spent) || 0;
+                                const pctFromApi = Number(cc.budget_utilization_pct);
+                                const percent = Number.isFinite(pctFromApi)
+                                    ? pctFromApi
+                                    : (budget > 0 ? (actual / budget) * 100 : 0);
                                 const isOver = actual > budget;
 
                                 return (
@@ -164,7 +323,7 @@ const CostCenters = () => {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8rem' }}>
                                                 <div style={{ flex: 1, height: '8px', background: 'var(--color-bg-subtle)', borderRadius: '4px', overflow: 'hidden' }}>
                                                     <div style={{
-                                                        width: `${Math.min(percent, 100)}%`,
+                                                        width: `${Math.min(Math.max(percent, 0), 100)}%`,
                                                         height: '100%',
                                                         background: isOver ? 'var(--color-error)' : percent > 80 ? 'var(--color-warning)' : 'var(--color-success)'
                                                     }}></div>
@@ -184,23 +343,25 @@ const CostCenters = () => {
                                         <td style={{ padding: '1rem' }}>
                                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                                 <button
+                                                    type="button"
                                                     onClick={() => openDrawer('Cost Center', cc.id)}
                                                     style={{ ...iconBtnStyle, color: 'var(--color-primary-600)' }}
                                                     title="View Activity"
+                                                    className="cursor-pointer"
                                                 >
                                                     <Eye size={16} />
                                                 </button>
-                                                <button onClick={() => handleEdit(cc)} style={iconBtnStyle} title="Edit"><Edit3 size={16} /></button>
-                                                <button onClick={() => handleDelete(cc.id)} style={{ ...iconBtnStyle, color: 'var(--color-error)' }} title="Delete"><Trash2 size={16} /></button>
+                                                <button type="button" onClick={() => handleEdit(cc)} style={iconBtnStyle} title="Edit" className="cursor-pointer"><Edit3 size={16} /></button>
+                                                <button type="button" onClick={() => handleDelete(cc.id)} style={{ ...iconBtnStyle, color: 'var(--color-error)' }} title="Delete" className="cursor-pointer"><Trash2 size={16} /></button>
                                             </div>
                                         </td>
                                     </tr>
                                 );
                             })}
-                            {costCenters.length === 0 && (
+                            {!listLoading && !listError && apiCostCenters.length === 0 && (
                                 <tr>
                                     <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                                        No cost centers defined. Click "New Cost Center" to add one.
+                                        No cost centers defined. Click &quot;New Cost Center&quot; to add one.
                                     </td>
                                 </tr>
                             )}

@@ -525,7 +525,7 @@ export const AccountingProvider = ({ children }) => {
     }, [entries, costCenters]);
 
     const addCostCenter = (center) => {
-        setCostCenters(prev => [...prev, { ...center, id: `CC-${Date.now()}` }]);
+        setCostCenters(prev => [...prev, { ...center, id: center.id ?? `CC-${Date.now()}` }]);
     };
 
     const updateCostCenter = (id, updated) => {
