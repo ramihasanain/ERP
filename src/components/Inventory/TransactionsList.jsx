@@ -108,9 +108,6 @@ const TransactionsList = () => {
                     <p style={{ color: 'var(--color-text-secondary)' }}>Track all stock movements.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
-                    <Button variant="outline" icon={<ArrowRight size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/transactions/issue')}>
-                        Goods Issue
-                    </Button>
                     <Button variant="outline" icon={<ArrowLeft size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/transactions/receipt')}>
                         Goods Receipt
                     </Button>

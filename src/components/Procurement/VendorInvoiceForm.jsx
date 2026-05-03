@@ -10,9 +10,11 @@ import { useNavigate } from 'react-router-dom';
 let dropdownDataPromise = null;
 let dropdownDataCache = null;
 
+const VENDORS_ENDPOINT = '/api/purchasing/vendors/';
+const APPROVED_PURCHASE_ORDERS_ENDPOINT =
+    '/api/purchasing/purchase-orders/?status=approved&vendor=&date_from=&date_to=';
+
 const VendorInvoiceForm = () => {
-    const VENDORS_ENDPOINT = 'https://zeyad.erp-api.site/api/purchasing/vendors/';
-    const APPROVED_PURCHASE_ORDERS_ENDPOINT = 'https://zeyad.erp-api.site/api/purchasing/purchase-orders/?status=approved&vendor=&date_from=&date_to=';
 
     const { addVendorInvoice, purchaseOrders: contextPurchaseOrders } = useProcurement();
     const { vendors: contextVendors, addEntry } = useAccounting();
@@ -154,7 +156,7 @@ const VendorInvoiceForm = () => {
 
         setIsLoadingPoLines(true);
         try {
-            const poDetails = await get(`https://zeyad.erp-api.site/api/purchasing/purchase-orders/${poId}/`);
+            const poDetails = await get(`/api/purchasing/purchase-orders/${poId}/`);
             const poLines = Array.isArray(poDetails?.lines) ? poDetails.lines : [];
 
             const newItems = poLines.map((line) => {

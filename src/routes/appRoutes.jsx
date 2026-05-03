@@ -217,7 +217,8 @@ export default function AppRoutes() {
           <Route path="warehouses" element={<Warehouses />} />
           <Route path="transactions" element={<TransactionsList />} />
           <Route path="transactions/receipt" element={<GoodsReceipt />} />
-          <Route path="transactions/issue" element={<GoodsIssue />} />
+          {/* TODO: Confirm Deletion of this route and it's corresponding component */}
+          {/* <Route path="transactions/issue" element={<GoodsIssue />} /> */}
           <Route path="transactions/transfer" element={<WarehouseTransfer />} />
         </Route>
 

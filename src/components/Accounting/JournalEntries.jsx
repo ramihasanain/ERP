@@ -94,7 +94,7 @@ const JournalEntries = () => {
 
                 fullLedger.push({
                     'Date': entry.date,
-                    'JournalID': entry.id,
+                    'Reference': entry.reference || entry.id,
                     'Entry Description': entry.description,
                     'Account Code': line.account,
                     'Account Name': account?.name || 'Unknown',

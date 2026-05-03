@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
-import { Plus, Eye, Search, Filter, CreditCard } from 'lucide-react';
+import { Plus, Eye, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import BillPaymentModal from '@/components/Procurement/BillPaymentModal';
 import VendorBillDetailsModal from '@/components/Procurement/VendorBillDetailsModal';
 import useCustomQuery from '@/hooks/useQuery';
 import Spinner from '@/core/Spinner';
@@ -45,13 +44,7 @@ const VendorInvoiceList = () => {
     const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
-    const [payingBill, setPayingBill] = useState(null);
     const [viewingBillId, setViewingBillId] = useState('');
-    const [statusOverrides, setStatusOverrides] = useState({});
-
-    const handlePaymentSuccess = (billId) => {
-        setStatusOverrides((prev) => ({ ...prev, [billId]: 'Paid' }));
-    };
 
     const billsUrl = useMemo(
         () => buildBillsUrl({ name: searchTerm, status: filterStatus }),
@@ -62,16 +55,7 @@ const VendorInvoiceList = () => {
         select: (response) => normalizeArrayResponse(response).map(normalizeBill),
     });
 
-    const invoices = useMemo(
-        () =>
-            (billsQuery.data ?? []).map((inv) => ({
-                ...inv,
-                status: statusOverrides[inv.id] || inv.status,
-            })),
-        [billsQuery.data, statusOverrides]
-    );
-
-    const filteredInvoices = invoices;
+    const filteredInvoices = billsQuery.data ?? [];
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -183,17 +167,6 @@ const VendorInvoiceList = () => {
                                 </td>
                                 <td style={{ padding: '1rem' }}>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        {inv.status !== 'Paid' && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                icon={<CreditCard size={14} />}
-                                                onClick={() => setPayingBill(inv)}
-                                                style={{ color: 'var(--color-primary-600)', borderColor: 'var(--color-primary-200)' }}
-                                            >
-                                                Pay
-                                            </Button>
-                                        )}
                                         <Button
                                             variant="ghost"
                                             size="sm"
@@ -218,13 +191,6 @@ const VendorInvoiceList = () => {
                 )}
             </Card>
 
-            {payingBill && (
-                <BillPaymentModal
-                    bill={payingBill}
-                    onClose={() => setPayingBill(null)}
-                    onPaymentSuccess={handlePaymentSuccess}
-                />
-            )}
             <VendorBillDetailsModal
                 billId={viewingBillId}
                 isOpen={Boolean(viewingBillId)}

@@ -2,13 +2,14 @@ import React, { useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Modal from '@/components/Shared/Modal';
-import { post } from '@/api';
+import { get, post } from '@/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, XCircle, Clock, Search, ArrowLeft } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Search, ArrowLeft, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useCustomQuery from '@/hooks/useQuery';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 import { toast } from 'sonner';
+import BillPaymentModal from '@/components/Procurement/BillPaymentModal';
 
 const VendorPaymentsList = () => {
     const navigate = useNavigate();
@@ -16,6 +17,8 @@ const VendorPaymentsList = () => {
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPaymentId, setSelectedPaymentId] = useState('');
+    const [payingBill, setPayingBill] = useState(null);
+    const [resolvingPaymentId, setResolvingPaymentId] = useState('');
     const statusParam = useMemo(
         () => (filterStatus === 'All' ? '' : filterStatus.toLowerCase().replace(/\s+/g, '_')),
         [filterStatus]
@@ -36,17 +39,6 @@ const VendorPaymentsList = () => {
             enabled: Boolean(selectedPaymentId),
         }
     );
-
-    const approvePaymentMutation = useMutation({
-        mutationFn: (paymentId) => post(`/api/purchasing/payments/${paymentId}/approve/`, {}),
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['purchasing-vendor-payments'] });
-            toast.success('Payment approved successfully.');
-        },
-        onError: (error) => {
-            toast.error(getApiErrorMessage(error, 'Failed to approve payment.'));
-        },
-    });
 
     const rejectPaymentMutation = useMutation({
         mutationFn: (paymentId) => post(`/api/purchasing/payments/${paymentId}/reject/`, {}),
@@ -93,6 +85,47 @@ const VendorPaymentsList = () => {
         }
     };
 
+    const resolveBillIdFromPayload = (payload) => {
+        if (!payload) return '';
+        if (payload.bill_id != null && payload.bill_id !== '') return String(payload.bill_id);
+        const nested = payload.bill;
+        if (nested && typeof nested === 'object' && nested.id != null) return String(nested.id);
+        if (typeof nested === 'string' && nested) return nested;
+        return '';
+    };
+
+    const buildBillStubFromPaymentPayload = (payload, payFallback) => ({
+        id: resolveBillIdFromPayload(payload),
+        totalAmount: Number.parseFloat(payload?.amount ?? payFallback?.amount ?? 0) || 0,
+        vendorName: payload?.vendor_name || payFallback?.vendor_name || '-',
+        vendorId: payload?.vendor_id ?? payFallback?.vendor_id,
+    });
+
+    const openBillPayment = async (pay) => {
+        let billStub = buildBillStubFromPaymentPayload(pay, pay);
+        if (!billStub.id) {
+            setResolvingPaymentId(String(pay.id));
+            try {
+                const detail = await get(`/api/purchasing/payments/${pay.id}/`);
+                billStub = buildBillStubFromPaymentPayload(detail, pay);
+            } catch (error) {
+                toast.error(getApiErrorMessage(error, 'Failed to load payment for pay action.'));
+                return;
+            } finally {
+                setResolvingPaymentId('');
+            }
+        }
+        if (!billStub.id) {
+            toast.error('Could not find the linked bill for this payment.');
+            return;
+        }
+        setPayingBill(billStub);
+    };
+
+    const handleBillPaymentSuccess = async () => {
+        await queryClient.invalidateQueries({ queryKey: ['purchasing-vendor-payments'] });
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -100,7 +133,7 @@ const VendorPaymentsList = () => {
                     <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/accounting')} />
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Vendor Payment Clearances</h1>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Approve or reject bill payment requests from Procurement.</p>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Pay or reject bill payment requests from Procurement.</p>
                     </div>
                 </div>
             </div>
@@ -211,19 +244,21 @@ const VendorPaymentsList = () => {
                                         {pay.status === 'pending_approval' && (
                                             <>
                                                 <Button
+                                                    variant="outline"
                                                     size="sm"
-                                                    variant="success"
-                                                    onClick={() => approvePaymentMutation.mutate(pay.id)}
-                                                    disabled={approvePaymentMutation.isPending || rejectPaymentMutation.isPending}
+                                                    icon={<CreditCard size={14} />}
+                                                    onClick={() => openBillPayment(pay)}
+                                                    disabled={resolvingPaymentId === String(pay.id) || rejectPaymentMutation.isPending}
+                                                    style={{ color: 'var(--color-primary-600)', borderColor: 'var(--color-primary-200)' }}
                                                 >
-                                                    Approve
+                                                    Pay
                                                 </Button>
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
                                                     style={{ color: 'var(--color-error)', borderColor: 'var(--color-error)' }}
                                                     onClick={() => rejectPaymentMutation.mutate(pay.id)}
-                                                    disabled={approvePaymentMutation.isPending || rejectPaymentMutation.isPending}
+                                                    disabled={resolvingPaymentId === String(pay.id) || rejectPaymentMutation.isPending}
                                                 >
                                                     Reject
                                                 </Button>
@@ -276,6 +311,14 @@ const VendorPaymentsList = () => {
                     </div>
                 )}
             </Modal>
+
+            {payingBill && (
+                <BillPaymentModal
+                    bill={payingBill}
+                    onClose={() => setPayingBill(null)}
+                    onPaymentSuccess={handleBillPaymentSuccess}
+                />
+            )}
         </div>
     );
 };

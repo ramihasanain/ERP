@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useAccounting } from '@/context/AccountingContext';
 import useCustomQuery from '@/hooks/useQuery';
-import { useCustomPost, useCustomPatch } from '@/hooks/useMutation';
+import { useCustomPost, useCustomPatch, useCustomRemove } from '@/hooks/useMutation';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -17,6 +17,12 @@ const CostCenters = () => {
     const [formData, setFormData] = useState({ name: '', code: '', budget: '' });
     const [editingId, setEditingId] = useState(null);
     const [editBaseline, setEditBaseline] = useState(null);
+    const [deletingCostCenter, setDeletingCostCenter] = useState(null);
+
+    const deleteCostCenterMutation = useCustomRemove(
+        (id) => `/accounting/cost-centers/${id}/`,
+        ['accounting-cost-centers-summary', 'accounting-cost-centers']
+    );
 
     const createCostCenterMutation = useCustomPost('/accounting/cost-centers/create/', [
         'accounting-cost-centers-summary',
@@ -152,9 +158,31 @@ const CostCenters = () => {
         setViewMode('edit');
     };
 
-    const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this cost center?')) {
+    const handleRequestDelete = (cc) => {
+        setDeletingCostCenter({
+            id: cc.id,
+            name: cc.name || '',
+            code: cc.code || '',
+        });
+    };
+
+    const handleConfirmDelete = async () => {
+        const id = deletingCostCenter?.id;
+        if (!id) {
+            toast.error('No cost center selected.');
+            return;
+        }
+        try {
+            await deleteCostCenterMutation.mutateAsync(id);
             deleteCostCenter(id);
+            toast.success('Cost center deleted successfully.');
+            setDeletingCostCenter(null);
+        } catch (error) {
+            toast.error(
+                error?.response?.data?.message ||
+                    error?.response?.data?.detail ||
+                    'Failed to delete cost center.'
+            );
         }
     };
 
@@ -352,7 +380,7 @@ const CostCenters = () => {
                                                     <Eye size={16} />
                                                 </button>
                                                 <button type="button" onClick={() => handleEdit(cc)} style={iconBtnStyle} title="Edit" className="cursor-pointer"><Edit3 size={16} /></button>
-                                                <button type="button" onClick={() => handleDelete(cc.id)} style={{ ...iconBtnStyle, color: 'var(--color-error)' }} title="Delete" className="cursor-pointer"><Trash2 size={16} /></button>
+                                                <button type="button" onClick={() => handleRequestDelete(cc)} style={{ ...iconBtnStyle, color: 'var(--color-error)' }} title="Delete" className="cursor-pointer"><Trash2 size={16} /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -369,9 +397,75 @@ const CostCenters = () => {
                     </table>
                 </Card>
             )}
+
+            {deletingCostCenter && (
+                <DeleteCostCenterModal
+                    costCenter={deletingCostCenter}
+                    isDeleting={deleteCostCenterMutation.isPending}
+                    onCancel={() => {
+                        if (!deleteCostCenterMutation.isPending) {
+                            setDeletingCostCenter(null);
+                        }
+                    }}
+                    onConfirm={handleConfirmDelete}
+                />
+            )}
         </div>
     );
 };
+
+const DeleteCostCenterModal = ({ costCenter, isDeleting, onCancel, onConfirm }) => (
+    <div
+        role="presentation"
+        style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            backdropFilter: 'blur(4px)',
+        }}
+    >
+        <Card
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-cost-center-title"
+            className="padding-xl"
+            style={{ width: '480px', maxWidth: '95%', borderRadius: '16px' }}
+            onClick={(e) => e.stopPropagation()}
+        >
+            <div style={{ marginBottom: '1rem' }}>
+                <h3 id="delete-cost-center-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
+                    Delete cost center
+                </h3>
+            </div>
+            <p style={{ margin: 0, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+                Are you sure you want to delete{' '}
+                <strong>{costCenter?.name || 'this cost center'}</strong>
+                {costCenter?.code ? (
+                    <>
+                        {' '}
+                        (<span style={{ fontFamily: 'var(--font-mono)' }}>{costCenter.code}</span>)
+                    </>
+                ) : null}
+                ? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+                <Button variant="ghost" onClick={onCancel} disabled={isDeleting} className="cursor-pointer">
+                    Cancel
+                </Button>
+                <Button variant="danger" onClick={onConfirm} disabled={isDeleting} className="cursor-pointer">
+                    {isDeleting ? 'Deleting…' : 'Delete'}
+                </Button>
+            </div>
+        </Card>
+    </div>
+);
 
 const SummaryCard = ({ title, value, icon, color }) => (
     <Card className="padding-md" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

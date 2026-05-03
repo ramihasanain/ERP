@@ -83,6 +83,7 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
             bill.lines.map((line) => ({
                 ...line,
                 accountId: line.accountId || '',
+                accountName: line.accountName || '',
             }))
         );
     }, [bill]);
@@ -109,17 +110,12 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
         return editableLines
             .filter((line) => {
                 const originalLine = originalLineById.get(line.id) || { accountId: '', description: '' };
-                const isAccountChanged = Boolean(line.accountId) && line.accountId !== originalLine.accountId;
                 const isDescriptionChanged = (line.description || '') !== originalLine.description;
-                return isAccountChanged || isDescriptionChanged;
+                return isDescriptionChanged;
             })
             .map((line) => {
                 const originalLine = originalLineById.get(line.id) || { accountId: '', description: '' };
                 const nextLine = { id: line.id };
-
-                if (Boolean(line.accountId) && line.accountId !== originalLine.accountId) {
-                    nextLine.account_id = line.accountId;
-                }
 
                 if ((line.description || '') !== originalLine.description) {
                     nextLine.description = line.description || '';
@@ -129,15 +125,7 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
             });
     }, [bill?.lines, editableLines]);
 
-    const hasChangesToSubmit = changedLines.length > 0;
-    const canPatchBill = !isBillPosted && allLinesHaveAccount && hasChangesToSubmit;
-
-    const handleLineAccountChange = (lineId, selectedAccountId) => {
-        if (isBillPosted) return;
-        setEditableLines((prev) =>
-            prev.map((line) => (line.id === lineId ? { ...line, accountId: selectedAccountId } : line))
-        );
-    };
+    const canPatchBill = !isBillPosted && allLinesHaveAccount;
 
     const handleLineDescriptionChange = (lineId, nextDescription) => {
         if (isBillPosted) return;
@@ -148,8 +136,11 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
 
     const getAccountLabel = (accountId) => {
         const selected = accountOptions.find((account) => (account.account_id || account.id) === accountId);
-        return selected?.account_name || selected?.name || 'Unassigned';
+        return selected?.account_name || selected?.name || '';
     };
+
+    const getLineAccountDisplay = (line) =>
+        line.accountName || getAccountLabel(line.accountId) || '—';
 
     const handlePatchBill = async () => {
         if (!billId || !canPatchBill || isSubmittingPost || updateBillAccountMutation.isPending) return;
@@ -166,10 +157,10 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
             setIsSubmittingPost(true);
             await updateBillAccountMutation.mutateAsync(payload);
             setIsPostedLocked(true);
-            toast.success('Bill posted successfully.');
+            toast.success('Bill sent to finance successfully.');
             onClose();
         } catch (error) {
-            const message = error?.response?.data?.detail || error?.message || 'Failed to post bill.';
+            const message = error?.response?.data?.detail || error?.message || 'Failed to send bill to finance.';
             toast.error(message);
         } finally {
             setIsSubmittingPost(false);
@@ -340,7 +331,11 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
                                             transition: 'all 0.2s ease',
                                         }}
                                     >
-                                        {updateBillAccountMutation.isPending || isSubmittingPost ? 'Posting...' : isBillPosted ? 'Posted' : 'Post Bill'}
+                                        {updateBillAccountMutation.isPending || isSubmittingPost
+                                            ? 'Sending...'
+                                            : isBillPosted
+                                              ? 'Sent to finance'
+                                              : 'Send to finance'}
                                     </button>
                                 </div>
                                 <div style={{ overflowX: 'auto' }}>
@@ -382,33 +377,9 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
                                                         )}
                                                     </td>
                                                     <td style={{ padding: '0.8rem 1rem', minWidth: '230px' }}>
-                                                        {isBillPosted ? (
-                                                            <p style={{ margin: 0, color: 'var(--color-text-main)', fontWeight: 500 }}>
-                                                                {getAccountLabel(line.accountId)}
-                                                            </p>
-                                                        ) : (
-                                                            <select
-                                                                value={line.accountId || ''}
-                                                                onChange={(event) => handleLineAccountChange(line.id, event.target.value)}
-                                                                disabled={updateBillAccountMutation.isPending}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    height: '2.25rem',
-                                                                    padding: '0 0.625rem',
-                                                                    borderRadius: '8px',
-                                                                    border: '1px solid var(--color-border)',
-                                                                    background: 'var(--color-bg-surface)',
-                                                                    color: 'var(--color-text-main)',
-                                                                }}
-                                                            >
-                                                                <option value="">Select account</option>
-                                                                {accountOptions.map((account) => (
-                                                                    <option key={account.id || account.account_id} value={account.id || account.account_id || ''}>
-                                                                        {account.account_name || account.name || 'Unnamed account'}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        )}
+                                                        <p style={{ margin: 0, color: 'var(--color-text-main)', fontWeight: 500 }}>
+                                                            {getLineAccountDisplay(line)}
+                                                        </p>
                                                     </td>
                                                     <td style={{ padding: '0.8rem 1rem', whiteSpace: 'nowrap' }}>
                                                         {Number(line.amount || 0).toLocaleString()} {bill.currency}
