@@ -18,6 +18,7 @@ const FinancialDrawer = () => {
     const isCustomerDrawer = entityType === 'Customer' && Boolean(entityId);
     const isJournalDrawer = entityType === 'Journal' && Boolean(entityId);
     const isCostCenterDrawer = entityType === 'Cost Center' && Boolean(entityId);
+    const isAssetDrawer = entityType === 'Asset' && Boolean(entityId);
 
     // Keep Overview as default when the drawer closes, opens, or the entity changes (avoids stale tab e.g. Transactions on reopen).
     /* eslint-disable react-hooks/set-state-in-effect -- deliberate drawer tab reset */
@@ -35,7 +36,7 @@ const FinancialDrawer = () => {
         source: log?.source || '',
         sourceType: log?.source || '',
         description: log?.description || '',
-        total: Number(log?.total || 0),
+        total: Number(log?.total ?? log?.asset_amount_debit ?? log?.amount ?? 0),
         currency: log?.currency || fallbackCurrency,
         isAutomatic: (log?.source || '').toLowerCase() !== 'manual',
         lines: Array.isArray(log?.entry_details)
@@ -157,6 +158,66 @@ const FinancialDrawer = () => {
         { enabled: isOpen && isCostCenterDrawer && activeTab === 'related' }
     );
 
+    const assetDetailQuery = useCustomQuery(
+        isAssetDrawer ? `/api/assets/${entityId}/` : '/api/assets/',
+        ['asset-drawer-detail', entityId],
+        {
+            enabled: isOpen && isAssetDrawer,
+            select: (payload) => ({
+                id: payload?.id || '',
+                name: payload?.name || '',
+                description: payload?.description || '',
+                depreciation_rate: payload?.depreciation_rate || '',
+                icon: payload?.icon || '',
+                purchase_cost: Number(payload?.purchase_cost || 0),
+                purchase_date: payload?.purchase_date || '',
+                source_account: payload?.source_account ?? null,
+                account_id: payload?.account_id || '',
+                account_code: payload?.account_code || '',
+                original_cost: Number(payload?.original_cost || 0),
+                net_book_value: Number(payload?.net_book_value || 0),
+                is_active: Boolean(payload?.is_active),
+                created_at: payload?.created_at || '',
+                updated_at: payload?.updated_at || '',
+            }),
+        }
+    );
+
+    const assetOverviewQuery = useCustomQuery(
+        isAssetDrawer ? `/api/assets/${entityId}/overview/` : '/api/assets/',
+        ['asset-drawer-overview', entityId],
+        {
+            enabled: isOpen && isAssetDrawer && activeTab === 'overview',
+            select: (payload) => ({
+                current_balance: Number(payload?.current_balance ?? 0),
+                currency: payload?.currency || 'JOD',
+                activity_count: Number(payload?.activity_count ?? 0),
+                last_transaction: payload?.last_transaction ?? null,
+                ledger_sync_note: payload?.ledger_sync_note || 'Real-time Ledger Sync Complete',
+            }),
+        }
+    );
+
+    const assetTransactionsQuery = useCustomQuery(
+        isAssetDrawer ? `/api/assets/${entityId}/transactions/` : '/api/assets/',
+        ['asset-drawer-transactions', entityId],
+        {
+            enabled: isOpen && isAssetDrawer && activeTab === 'transactions',
+            select: (payload) => {
+                if (Array.isArray(payload?.data)) return payload.data;
+                if (Array.isArray(payload?.results)) return payload.results;
+                if (Array.isArray(payload)) return payload;
+                return [];
+            },
+        }
+    );
+
+    const assetRelatedQuery = useCustomQuery(
+        isAssetDrawer ? `/api/assets/${entityId}/related/` : '/api/assets/',
+        ['asset-drawer-related', entityId],
+        { enabled: isOpen && isAssetDrawer && activeTab === 'related' }
+    );
+
     // Handle ESC key
     useEffect(() => {
         const handleEsc = (e) => {
@@ -224,7 +285,42 @@ const FinancialDrawer = () => {
             case 'Account': return accounts.find(a => a.id === entityId);
             case 'Journal': return journalDetailsQuery.data || entries.find(e => e.id === entityId);
             case 'Customer': return customerDetailsQuery.data || customers.find(c => c.id === entityId);
-            case 'Asset': return accounts.find(a => a.id === entityId);
+            case 'Asset': {
+                const fromContext = accounts.find(a => a.id === entityId);
+                const detail = assetDetailQuery.data;
+                const overview = assetOverviewQuery.data;
+                const txRows = assetTransactionsQuery.data;
+                const related = assetRelatedQuery.data;
+                const currency = overview?.currency || 'JOD';
+                const history_logs = Array.isArray(txRows)
+                    ? txRows.map((log) => mapHistoryLogRow(log, currency))
+                    : [];
+
+                return {
+                    id: entityId,
+                    ...(fromContext || {}),
+                    ...(detail?.id
+                        ? {
+                            ...detail,
+                            id: detail.id,
+                            name: detail.name || fromContext?.name || '—',
+                            description: detail.description || fromContext?.description || '',
+                            code: detail.account_code || fromContext?.code || '',
+                        }
+                        : {}),
+                    overview: overview
+                        ? {
+                            current_balance: Number(overview?.current_balance ?? 0),
+                            currency,
+                            activity_count: Number(overview?.activity_count ?? 0),
+                            last_transaction: overview?.last_transaction ?? null,
+                            ledger_sync_note: overview?.ledger_sync_note || 'Real-time Ledger Sync Complete',
+                        }
+                        : undefined,
+                    history_logs,
+                    assetRelated: related || null,
+                };
+            }
             case 'Bank': return bankAccounts.find(b => b.id === entityId);
             case 'Cost Center': {
                 const fromContext = costCenters.find(cc => cc.id === entityId);
@@ -265,7 +361,7 @@ const FinancialDrawer = () => {
             }
             default: return null;
         }
-    }, [entityType, entityId, accounts, entries, customers, costCenters, bankAccounts, customerDetailsQuery.data, journalDetailsQuery.data, costCenterDetailQuery.data, costCenterOverviewQuery.data, costCenterTransactionsQuery.data, costCenterRelatedQuery.data]);
+    }, [entityType, entityId, accounts, entries, customers, costCenters, bankAccounts, customerDetailsQuery.data, journalDetailsQuery.data, costCenterDetailQuery.data, costCenterOverviewQuery.data, costCenterTransactionsQuery.data, costCenterRelatedQuery.data, assetDetailQuery.data, assetOverviewQuery.data, assetTransactionsQuery.data, assetRelatedQuery.data]);
 
     // Transaction History for Entity (Supports Aggregation)
     const transactionHistory = useMemo(() => {
@@ -273,7 +369,11 @@ const FinancialDrawer = () => {
 
         let relatedEntries = [];
 
-        if (entityType === 'Account' || entityType === 'Asset') {
+        if (entityType === 'Asset') {
+            relatedEntries = Array.isArray(entityData?.history_logs)
+                ? entityData.history_logs
+                : [];
+        } else if (entityType === 'Account') {
             const targetIds = entityData.isGroup ? [entityId, ...getAllChildAccountIds(entityId)] : [entityId];
             relatedEntries = entries.filter(e => e.lines.some(l => targetIds.includes(l.account)));
         } else if (entityType === 'Journal') {
@@ -375,6 +475,10 @@ const FinancialDrawer = () => {
                             isCostCenterOverviewError={isCostCenterDrawer && costCenterOverviewQuery.isError}
                             isCostCenterDetailLoading={isCostCenterDrawer && costCenterDetailQuery.isPending}
                             isCostCenterDetailError={isCostCenterDrawer && costCenterDetailQuery.isError}
+                            isAssetOverviewLoading={isAssetDrawer && assetOverviewQuery.isPending}
+                            isAssetOverviewError={isAssetDrawer && assetOverviewQuery.isError}
+                            isAssetDetailLoading={isAssetDrawer && assetDetailQuery.isPending}
+                            isAssetDetailError={isAssetDrawer && assetDetailQuery.isError}
                         />
                     )}
                     {activeTab === 'transactions' && (
@@ -389,6 +493,7 @@ const FinancialDrawer = () => {
                             accounts={accounts}
                             getAllChildAccountIds={getAllChildAccountIds}
                             isCostCenterTransactionsLoading={isCostCenterDrawer && costCenterTransactionsQuery.isPending}
+                            isAssetTransactionsLoading={isAssetDrawer && assetTransactionsQuery.isPending}
                         />
                     )}
                     {activeTab === 'related' && (
@@ -398,6 +503,8 @@ const FinancialDrawer = () => {
                             data={entityData}
                             isCostCenterRelatedLoading={isCostCenterDrawer && costCenterRelatedQuery.isPending}
                             isCostCenterRelatedError={isCostCenterDrawer && costCenterRelatedQuery.isError}
+                            isAssetRelatedLoading={isAssetDrawer && assetRelatedQuery.isPending}
+                            isAssetRelatedError={isAssetDrawer && assetRelatedQuery.isError}
                         />
                     )}
                 </div>
@@ -457,24 +564,30 @@ const OverviewTab = ({
     isCustomerDetailsLoading, isCustomerDetailsError,
     isCostCenterOverviewLoading, isCostCenterOverviewError,
     isCostCenterDetailLoading, isCostCenterDetailError,
+    isAssetOverviewLoading, isAssetOverviewError,
+    isAssetDetailLoading, isAssetDetailError,
 }) => {
-    const usesApiOverview = entityType === 'Journal' || entityType === 'Cost Center';
+    const usesApiOverview = entityType === 'Journal' || entityType === 'Cost Center' || entityType === 'Asset';
     const ccOverview = entityType === 'Cost Center' ? data?.overview : null;
+    const assetOverview = entityType === 'Asset' ? data?.overview : null;
+    const balanceAccountId = entityType === 'Bank' ? data?.glAccountId : data?.id;
     const balance = entityType === 'Account' || entityType === 'Bank' || entityType === 'Asset'
-        ? getAccountBalance(entityType === 'Bank' ? data.glAccountId : data.id)
+        ? (usesApiOverview
+            ? Number((entityType === 'Cost Center' ? ccOverview?.current_balance : entityType === 'Asset' ? assetOverview?.current_balance : data?.overview?.current_balance) ?? data?.balance ?? 0)
+            : (balanceAccountId ? getAccountBalance(balanceAccountId) : 0))
         : usesApiOverview
-            ? Number((entityType === 'Cost Center' ? ccOverview?.current_balance : data?.overview?.current_balance) ?? data?.balance ?? 0)
+            ? Number((entityType === 'Cost Center' ? ccOverview?.current_balance : entityType === 'Asset' ? assetOverview?.current_balance : data?.overview?.current_balance) ?? data?.balance ?? 0)
             : (data?.balance || 0);
 
     const lastTransaction = usesApiOverview
-        ? ((entityType === 'Cost Center' ? ccOverview?.last_transaction : data?.overview?.last_transaction)
+        ? ((entityType === 'Cost Center' ? ccOverview?.last_transaction : entityType === 'Asset' ? assetOverview?.last_transaction : data?.overview?.last_transaction)
             || (history.length > 0 ? history[0].date : null) || 'N/A')
         : (history.length > 0 ? history[0].date : 'N/A');
     const activityCount = usesApiOverview
-        ? Number((entityType === 'Cost Center' ? ccOverview?.activity_count : data?.overview?.activity_count) ?? history.length)
+        ? Number((entityType === 'Cost Center' ? ccOverview?.activity_count : entityType === 'Asset' ? assetOverview?.activity_count : data?.overview?.activity_count) ?? history.length)
         : history.length;
     const currency = usesApiOverview
-        ? ((entityType === 'Cost Center' ? ccOverview?.currency : data?.overview?.currency) || data?.currency || 'JOD')
+        ? ((entityType === 'Cost Center' ? ccOverview?.currency : entityType === 'Asset' ? assetOverview?.currency : data?.overview?.currency) || data?.currency || 'JOD')
         : 'JOD';
     const overviewDescription = entityType === 'Journal'
         ? (data?.overview?.description || data?.description)
@@ -482,11 +595,15 @@ const OverviewTab = ({
     const ledgerSyncNote = entityType === 'Cost Center' && !ccOverview
         ? ''
         : (usesApiOverview
-            ? (data?.overview?.ledger_sync_note || ccOverview?.ledger_sync_note || 'Real-time Ledger Sync Complete')
+            ? (data?.overview?.ledger_sync_note || ccOverview?.ledger_sync_note || assetOverview?.ledger_sync_note || 'Real-time Ledger Sync Complete')
             : 'Real-time Ledger Sync Complete');
 
     const showCostCenterOverviewLoading = entityType === 'Cost Center' && isCostCenterOverviewLoading;
     const showCostCenterOverviewError = entityType === 'Cost Center' && isCostCenterOverviewError;
+    const showAssetOverviewLoading = entityType === 'Asset' && isAssetOverviewLoading;
+    const showAssetOverviewError = entityType === 'Asset' && isAssetOverviewError;
+    const showOverviewLoading = showCostCenterOverviewLoading || showAssetOverviewLoading;
+    const showOverviewError = showCostCenterOverviewError || showAssetOverviewError;
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -495,10 +612,12 @@ const OverviewTab = ({
                 border: '1px solid var(--color-border)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
             }}>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: 600, marginBottom: '0.5rem' }}>{t.currentBalance}</p>
-                {showCostCenterOverviewLoading ? (
+                {showOverviewLoading ? (
                     <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', margin: 0 }}>Loading overview…</p>
-                ) : showCostCenterOverviewError ? (
-                    <p style={{ fontSize: '0.9rem', color: 'var(--color-error)', margin: 0 }}>Could not load cost center overview.</p>
+                ) : showOverviewError ? (
+                    <p style={{ fontSize: '0.9rem', color: 'var(--color-error)', margin: 0 }}>
+                        {entityType === 'Asset' ? 'Could not load asset overview.' : 'Could not load cost center overview.'}
+                    </p>
                 ) : (
                     <h2 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--color-text-main)', letterSpacing: '-0.04em' }}>
                         {balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)' }}>{currency}</span>
@@ -518,13 +637,13 @@ const OverviewTab = ({
                 <Card style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '16px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{t.activityCount}</p>
                     <p style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--color-primary-600)' }}>
-                        {showCostCenterOverviewLoading ? '…' : activityCount}
+                        {showOverviewLoading ? '…' : activityCount}
                     </p>
                 </Card>
                 <Card style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '16px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{t.lastTransaction}</p>
                     <p style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--color-text-main)' }}>
-                        {showCostCenterOverviewLoading ? '…' : lastTransaction}
+                        {showOverviewLoading ? '…' : lastTransaction}
                     </p>
                 </Card>
             </div>
@@ -553,6 +672,26 @@ const OverviewTab = ({
                             <DetailItem label="Remaining" value={data?.remaining_budget != null && Number.isFinite(data.remaining_budget) ? Number(data.remaining_budget).toLocaleString(undefined, { minimumFractionDigits: 2 }) : '—'} />
                             <DetailItem label="Budget utilization" value={`${Number(data?.budget_utilization_pct || 0).toFixed(1)}%`} />
                             <DetailItem label="Updated" value={data?.updated_at ? String(data.updated_at).slice(0, 10) : '—'} />
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {entityType === 'Asset' && (
+                <div style={{ background: 'var(--color-bg-surface)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--color-text-main)' }}>Asset Details</h4>
+                    {isAssetDetailError ? (
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-error)', margin: 0 }}>Could not load asset details.</p>
+                    ) : isAssetDetailLoading ? (
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: 0 }}>Loading asset details…</p>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1rem' }}>
+                            <DetailItem label="Account code" value={data?.account_code || data?.code} />
+                            <DetailItem label="Depreciation rate" value={data?.depreciation_rate != null && data?.depreciation_rate !== '' ? `${data.depreciation_rate}%` : '—'} />
+                            <DetailItem label="Purchase date" value={data?.purchase_date || '—'} />
+                            <DetailItem label="Original cost" value={Number.isFinite(data?.original_cost) ? Number(data.original_cost).toLocaleString(undefined, { minimumFractionDigits: 2 }) : '—'} />
+                            <DetailItem label="Net book value" value={Number.isFinite(data?.net_book_value) ? Number(data.net_book_value).toLocaleString(undefined, { minimumFractionDigits: 2 }) : '—'} />
+                            <DetailItem label="Status" value={data?.is_active ? 'Active' : 'Inactive'} />
                         </div>
                     )}
                 </div>
@@ -593,11 +732,31 @@ const DetailItem = ({ label, value, fullWidth = false }) => (
 const TransactionsTab = ({
     language, t, history, entityName, entityType, entityId, entityData, accounts, getAllChildAccountIds,
     isCostCenterTransactionsLoading,
+    isAssetTransactionsLoading,
 }) => {
     const [expandedEntry, setExpandedEntry] = useState(null);
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidInTextRegex = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
+    const sanitizeForDisplay = (value) => {
+        if (!value) return '';
+        const normalizedValue = String(value).trim();
+        if (uuidRegex.test(normalizedValue)) return '';
+
+        return normalizedValue
+            .replace(uuidInTextRegex, '')
+            .replace(/--+/g, '-')
+            .replace(/-\s*$/g, '')
+            .trim();
+    };
 
     const entryRowKey = (entry) => entry.journal_entry_id || entry.id;
-    const entryDisplayRef = (entry) => (entry.reference && String(entry.reference).trim()) || entryRowKey(entry) || '—';
+    const entryDisplayRef = (entry) => {
+        const reference = sanitizeForDisplay(entry.reference);
+        const source = sanitizeForDisplay(entry.sourceType || entry.source);
+        if (reference) return reference;
+        if (source) return source.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+        return 'Entry';
+    };
 
     const handleDetailedExport = () => {
         const fullLedger = [];
@@ -624,7 +783,7 @@ const TransactionsTab = ({
         exportToCSV(fullLedger, `Detailed_Ledger_${entityName}`);
     };
 
-    if (isCostCenterTransactionsLoading && history.length === 0) {
+    if ((isCostCenterTransactionsLoading || isAssetTransactionsLoading) && history.length === 0) {
         return (
             <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--color-text-muted)' }}>
                 <Activity size={48} style={{ opacity: 0.1, marginBottom: '1.5rem' }} />
@@ -783,9 +942,13 @@ const TransactionsTab = ({
     );
 };
 
-const RelatedTab = ({ t, entityType, data, isCostCenterRelatedLoading, isCostCenterRelatedError }) => {
+const RelatedTab = ({
+    t, entityType, data, isCostCenterRelatedLoading, isCostCenterRelatedError,
+    isAssetRelatedLoading, isAssetRelatedError,
+}) => {
     const journalMeta = data?.related?.journal_entry;
     const costRel = data?.costCenterRelated;
+    const assetRel = data?.assetRelated;
     const normalizeLabel = (value) => {
         if (!value || typeof value !== 'string') return '—';
         return value
@@ -804,6 +967,8 @@ const RelatedTab = ({ t, entityType, data, isCostCenterRelatedLoading, isCostCen
             <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
                 {entityType === 'Cost Center' && costRel?.connected_modules_description
                     ? costRel.connected_modules_description
+                    : entityType === 'Asset' && assetRel?.connected_modules_description
+                        ? assetRel.connected_modules_description
                     : defaultRelatedIntro}
             </p>
 
@@ -828,8 +993,27 @@ const RelatedTab = ({ t, entityType, data, isCostCenterRelatedLoading, isCostCen
                 )}
                 {entityType === 'Asset' && (
                     <>
-                        <RelatedItem label="Asset Register" value="Fixed Assets" />
-                        <RelatedItem label="Depreciation" value="Valuation Control" />
+                        {isAssetRelatedLoading && (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: 0 }}>Loading related data…</p>
+                        )}
+                        {isAssetRelatedError && (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--color-error)', margin: 0 }}>Could not load related dimensions.</p>
+                        )}
+                        {!isAssetRelatedLoading && !isAssetRelatedError && (
+                            <>
+                                {(assetRel?.mappings || []).length === 0 ? (
+                                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', margin: 0 }}>No linked modules.</p>
+                                ) : (
+                                    (assetRel?.mappings || []).map((mapping, idx) => (
+                                        <RelatedItem
+                                            key={`${mapping?.module || 'module'}-${idx}`}
+                                            label={mapping?.module || 'Module'}
+                                            value={mapping?.dimension || '—'}
+                                        />
+                                    ))
+                                )}
+                            </>
+                        )}
                     </>
                 )}
                 {entityType === 'Journal' && (
