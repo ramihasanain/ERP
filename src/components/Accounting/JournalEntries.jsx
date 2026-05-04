@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { Search, Plus, Download, Lock, Unlock, ShieldAlert } from 'lucide-react';
+import { Search, Plus, Download, Lock, Unlock, ShieldAlert, ArrowLeft } from 'lucide-react';
 import JournalEntryList from '@/components/Accounting/JournalEntryList';
 import JournalEntryDetailModal from '@/components/Accounting/JournalEntryDetailModal';
 import { useAccounting } from '@/context/AccountingContext';
@@ -119,16 +119,24 @@ const JournalEntries = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{language === 'ar' ? 'القيود اليومية' : 'Journal Entries'}</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>{language === 'ar' ? 'مراجعة وإدارة قيود اليومية اليدوية والآلية.' : 'Review and manage manual and system journal entries.'}</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+                    <Button
+                        variant="ghost"
+                        icon={<ArrowLeft size={18} />}
+                        onClick={() => navigate('/admin/accounting')}
+                        className="cursor-pointer shrink-0"
+                    />
+                    <div>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{language === 'ar' ? 'القيود اليومية' : 'Journal Entries'}</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{language === 'ar' ? 'مراجعة وإدارة قيود اليومية اليدوية والآلية.' : 'Review and manage manual and system journal entries.'}</p>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="outline" icon={<Download size={16} />} onClick={handleDetailedExport}>
+                <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
+                    <Button variant="outline" icon={<Download size={16} />} onClick={handleDetailedExport} className="cursor-pointer">
                         {language === 'ar' ? 'تصدير تفصيلي' : 'Detailed Export'}
                     </Button>
-                    <Button icon={<Plus size={16} />} onClick={() => navigate('new')}>
+                    <Button icon={<Plus size={16} />} onClick={() => navigate('new')} className="cursor-pointer">
                         {language === 'ar' ? 'قيد جديد' : 'New Entry'}
                     </Button>
                 </div>
@@ -138,7 +146,7 @@ const JournalEntries = () => {
                 <ResourceLoadError
                     error={journalEntriesQuery.error}
                     title={language === 'ar' ? 'تعذر تحميل قيود اليومية' : 'Could not load journal entries'}
-                    onGoBack={() => navigate(-1)}
+                    onGoBack={() => navigate('/admin/accounting')}
                 />
             ) : (
                 <>

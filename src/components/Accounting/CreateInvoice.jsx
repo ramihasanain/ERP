@@ -66,7 +66,12 @@ const CreateInvoice = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)}>Back</Button>
+                <Button
+                    variant="ghost"
+                    icon={<ArrowLeft size={18} />}
+                    onClick={() => navigate('/admin/accounting')}
+                    className="cursor-pointer shrink-0"
+                />
                 <div>
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Create Invoice</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Issue a new sales invoice to a client.</p>

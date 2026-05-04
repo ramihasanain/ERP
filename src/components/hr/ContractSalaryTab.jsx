@@ -546,8 +546,8 @@ const ContractSalaryTab = ({ employeeId }) => {
                   color: "var(--color-text-secondary)",
                 }}
               >
-                {currentContract?.status[0].toUpperCase() +
-                  currentContract?.status.slice(1) ||
+                {currentContract?.status?.[0]?.toUpperCase() +
+                  currentContract?.status?.slice(1) ||
                   (hasCurrentContract ? "Active" : "No Contract")}
               </span>
               {hasCurrentContract ? (

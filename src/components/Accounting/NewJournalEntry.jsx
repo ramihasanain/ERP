@@ -399,7 +399,12 @@ const NewJournalEntry = () => {
     <div>
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <Button variant="ghost" onClick={() => navigate('/admin/accounting/journal')}><ArrowLeft size={18} /> Back</Button>
+          <Button
+            variant="ghost"
+            icon={<ArrowLeft size={18} />}
+            onClick={() => navigate('/admin/accounting/journal')}
+            className="cursor-pointer shrink-0"
+          />
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{id ? 'Edit Journal Entry' : 'New Journal Entry'}</h1>
         </div>
       </div>

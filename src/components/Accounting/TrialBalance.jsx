@@ -1,18 +1,29 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
-import { Download, Filter, CheckCircle } from 'lucide-react';
+import { Download, CheckCircle, ArrowLeft } from 'lucide-react';
 
 const TrialBalance = () => {
+    const navigate = useNavigate();
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Trial Balance</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>As of Feb 08, 2026</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+                    <Button
+                        variant="ghost"
+                        icon={<ArrowLeft size={18} />}
+                        onClick={() => navigate('/admin/accounting')}
+                        className="cursor-pointer shrink-0"
+                    />
+                    <div>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Trial Balance</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>As of Feb 08, 2026</p>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="outline" icon={<Download size={18} />}>Export Excel</Button>
+                <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
+                    <Button variant="outline" icon={<Download size={18} />} className="cursor-pointer">Export Excel</Button>
                 </div>
             </div>
 

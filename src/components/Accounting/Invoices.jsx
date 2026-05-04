@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { Search, Plus, Filter, FileText, MoreVertical, CreditCard } from 'lucide-react';
+import { Search, Plus, Filter, FileText, MoreVertical, CreditCard, ArrowLeft } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
 import InvoicePaymentModal from '@/components/Accounting/InvoicePaymentModal';
@@ -67,13 +67,21 @@ const Invoices = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{isRtl ? 'فواتير المبيعات' : 'Sales Invoices'}</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>{isRtl ? 'إدارة الفواتير والتحصيلات.' : 'Manage billing and revenue.'}</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+                    <Button
+                        variant="ghost"
+                        icon={<ArrowLeft size={18} />}
+                        onClick={() => navigate('/admin/accounting')}
+                        className="cursor-pointer shrink-0"
+                    />
+                    <div>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{isRtl ? 'فواتير المبيعات' : 'Sales Invoices'}</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{isRtl ? 'إدارة الفواتير والتحصيلات.' : 'Manage billing and revenue.'}</p>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button icon={<Plus size={18} />} onClick={() => navigate('new')}>{isRtl ? 'إنشاء فاتورة' : 'Create Invoice'}</Button>
+                <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
+                    <Button icon={<Plus size={18} />} onClick={() => navigate('new')} className="cursor-pointer">{isRtl ? 'إنشاء فاتورة' : 'Create Invoice'}</Button>
                 </div>
             </div>
 

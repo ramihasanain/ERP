@@ -2,20 +2,28 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
-import { FileText, List, Plus, Landmark, Monitor, Percent, Users, ArrowUpRight, DollarSign, ShoppingCart, Package, Target, CheckCircle, Upload, Shield } from 'lucide-react';
+import { FileText, List, Plus, Landmark, Monitor, Percent, Users, ArrowUpRight, DollarSign, ShoppingCart, Package, Target, CheckCircle, Upload, Shield, ArrowLeft } from 'lucide-react';
 
 const AccountingDashboard = () => {
     const navigate = useNavigate();
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Accounting</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Manage your general ledger, accounts, and transactions.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+                    <Button
+                        variant="ghost"
+                        icon={<ArrowLeft size={18} />}
+                        onClick={() => navigate('/admin/dashboard')}
+                        className="cursor-pointer shrink-0"
+                    />
+                    <div>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Accounting</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>Manage your general ledger, accounts, and transactions.</p>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button icon={<Plus size={18} />} onClick={() => navigate('journal/new')}>New Journal Entry</Button>
+                <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
+                    <Button icon={<Plus size={18} />} onClick={() => navigate('journal/new')} className="cursor-pointer">New Journal Entry</Button>
                 </div>
             </div>
 

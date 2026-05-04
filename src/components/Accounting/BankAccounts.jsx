@@ -7,7 +7,7 @@ import { post } from '@/api';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { Plus, Landmark, ArrowRightLeft, X, ArrowRight, Eye, Edit3, Save } from 'lucide-react';
+import { Plus, Landmark, ArrowRightLeft, X, ArrowRight, Eye, Edit3, Save, ArrowLeft } from 'lucide-react';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 import { toast } from 'sonner';
 
@@ -129,17 +129,25 @@ const BankAccounts = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Bank & Cash</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Treasury management and reconciliation.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+                    <Button
+                        variant="ghost"
+                        icon={<ArrowLeft size={18} />}
+                        onClick={() => navigate('/admin/accounting')}
+                        className="cursor-pointer shrink-0"
+                    />
+                    <div>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Bank & Cash</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>Treasury management and reconciliation.</p>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
                     <Button icon={<ArrowRightLeft size={18} />} onClick={() => {
                         resetTransferForm();
                         setShowTransferModal(true);
-                    }}>Transfer Funds</Button>
-                    <Button icon={<Plus size={18} />} onClick={() => navigate('new')}>Add Account</Button>
+                    }} className="cursor-pointer">Transfer Funds</Button>
+                    <Button icon={<Plus size={18} />} onClick={() => navigate('new')} className="cursor-pointer">Add Account</Button>
                 </div>
             </div>
 

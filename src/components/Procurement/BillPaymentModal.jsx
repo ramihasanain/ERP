@@ -2,12 +2,71 @@ import React, { useState, useEffect } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { X, Save, CheckCircle2 } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost } from '@/hooks/useMutation';
 import { toast } from 'sonner';
+
+/**
+ * Collect user-facing strings from typical API error bodies:
+ * { detail: "..." }, { field: ["..."] }, nested arrays, non_field_errors.
+ */
+function flattenApiErrorMessages(data) {
+    if (data == null) return [];
+    if (typeof data === 'string') return [data];
+    if (typeof data !== 'object' || Array.isArray(data)) return [];
+
+    const lines = [];
+
+    if (typeof data.detail === 'string') {
+        return [data.detail];
+    }
+    if (Array.isArray(data.detail)) {
+        for (const item of data.detail) {
+            if (typeof item === 'string') lines.push(item);
+            else if (item && typeof item === 'object') {
+                const msg = item.msg ?? item.message ?? item.detail;
+                if (typeof msg === 'string') lines.push(msg);
+            }
+        }
+        if (lines.length) return lines;
+    }
+
+    const appendMessages = (v) => {
+        if (v == null) return;
+        if (typeof v === 'string') {
+            lines.push(v);
+            return;
+        }
+        if (Array.isArray(v)) {
+            v.forEach((item) => appendMessages(item));
+            return;
+        }
+        if (typeof v === 'object') {
+            if (typeof v.message === 'string') lines.push(v.message);
+            else if (typeof v.msg === 'string') lines.push(v.msg);
+            else {
+                const nested = flattenApiErrorMessages(v);
+                nested.forEach((m) => lines.push(m));
+            }
+        }
+    };
+
+    for (const [key, value] of Object.entries(data)) {
+        if (key === 'detail') continue;
+        appendMessages(value);
+    }
+
+    // De-duplicate while preserving order
+    const seen = new Set();
+    return lines.filter((line) => {
+        if (seen.has(line)) return false;
+        seen.add(line);
+        return true;
+    });
+}
 
 const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
     const { recordBillPayment } = useAccounting();
@@ -37,7 +96,7 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
 
     const submitPaymentMutation = useCustomPost(
         `/api/purchasing/bills/${billId}/pay/`,
-        [['purchasing-bills'], ['purchasing-bill-details', billId]]
+        [['purchasing-bills']]
     );
 
     const billDetails = billDetailsQuery.data;
@@ -96,8 +155,35 @@ const BillPaymentModal = ({ bill, onClose, onPaymentSuccess }) => {
             if (onPaymentSuccess) onPaymentSuccess(bill.id, formData.amount);
             onClose();
         } catch (error) {
-            const message = error?.response?.data?.detail || error?.message || 'Failed to record payment.';
-            toast.error(message);
+            const data = error?.response?.data;
+            const lines = flattenApiErrorMessages(data);
+            const fallback =
+                (typeof data?.detail === 'string' ? data.detail : null) ||
+                error?.message ||
+                (language === 'ar' ? 'تعذر تسجيل الدفع.' : 'Failed to record payment.');
+
+            if (lines.length > 0) {
+                const title = language === 'ar' ? 'تعذر تسجيل الدفع' : 'Could not record payment';
+                toast.error(title, {
+                    description: (
+                        <div
+                            dir={language === 'ar' ? 'rtl' : 'ltr'}
+                            className="flex flex-col gap-1.5 text-start"
+                            style={{
+                                fontSize: '0.8125rem',
+                                lineHeight: 1.45,
+                                color: 'var(--color-text-secondary)',
+                            }}
+                        >
+                            {lines.map((line, i) => (
+                                <div key={i}>{line}</div>
+                            ))}
+                        </div>
+                    ),
+                });
+            } else {
+                toast.error(fallback);
+            }
         }
     };
 

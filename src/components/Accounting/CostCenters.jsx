@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAccounting } from '@/context/AccountingContext';
 import useCustomQuery from '@/hooks/useQuery';
@@ -8,10 +9,11 @@ import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import {
     Plus, Edit3, Trash2, Target,
-    AlertTriangle, CheckCircle, X, Save, Eye
+    AlertTriangle, CheckCircle, X, Save, Eye, ArrowLeft
 } from 'lucide-react';
 
 const CostCenters = () => {
+    const navigate = useNavigate();
     const { addCostCenter, updateCostCenter, deleteCostCenter, openDrawer } = useAccounting();
     const [viewMode, setViewMode] = useState('list'); // list, add, edit
     const [formData, setFormData] = useState({ name: '', code: '', budget: '' });
@@ -218,18 +220,26 @@ const CostCenters = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Target size={28} color="var(--color-primary-600)" />
-                        Cost Centers & Budgets
-                    </h1>
-                    <p style={{ color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
-                        Manage departmental budgets and track actual spending.
-                    </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+                    <Button
+                        variant="ghost"
+                        icon={<ArrowLeft size={18} />}
+                        onClick={() => navigate('/admin/accounting')}
+                        className="cursor-pointer shrink-0"
+                    />
+                    <div>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <Target size={28} color="var(--color-primary-600)" />
+                            Cost Centers & Budgets
+                        </h1>
+                        <p style={{ color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
+                            Manage departmental budgets and track actual spending.
+                        </p>
+                    </div>
                 </div>
                 {viewMode === 'list' && (
-                    <Button icon={<Plus size={18} />} onClick={() => setViewMode('add')}>New Cost Center</Button>
+                    <Button icon={<Plus size={18} />} onClick={() => setViewMode('add')} className="cursor-pointer shrink-0">New Cost Center</Button>
                 )}
             </div>
 

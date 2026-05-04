@@ -6,7 +6,7 @@ import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPut, useCustomRemove } from '@/hooks/useMutation';
 import { toast } from 'sonner';
-import { Search, Plus, Eye, Edit3, Save, X, Trash2 } from 'lucide-react';
+import { Search, Plus, Eye, Edit3, Save, X, Trash2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAccounting } from '@/context/AccountingContext';
 
@@ -73,10 +73,18 @@ const Customers = () => {
 
     return (
         <Card className="padding-none" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Customers & Clients</h2>
-                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Manage your client base.</p>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+                    <Button
+                        variant="ghost"
+                        icon={<ArrowLeft size={18} />}
+                        onClick={() => navigate('/admin/accounting')}
+                        className="cursor-pointer shrink-0"
+                    />
+                    <div>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Customers & Clients</h2>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Manage your client base.</p>
+                    </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div style={{ width: '240px' }}>

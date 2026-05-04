@@ -11,8 +11,23 @@ const toTitleCase = (value = '') =>
         .toLowerCase()
         .replace(/\b\w/g, (char) => char.toUpperCase());
 
+const toDateInputValue = (value) => {
+    if (value == null || value === '') return '';
+    const s = String(value).trim();
+    if (s === '-') return '';
+    const ymd = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (ymd) return ymd[1];
+    const parsed = new Date(s);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toISOString().split('T')[0];
+};
+
+const financeLockedStatuses = new Set(['posted', 'paid']);
+
 const normalizeBillDetails = (bill) => {
     if (!bill) return null;
+
+    const dueDateIso = toDateInputValue(bill.due_date);
 
     return {
         id: bill.id || '',
@@ -20,7 +35,8 @@ const normalizeBillDetails = (bill) => {
         vendorInvoiceNumber: bill.vendor_invoice_number || '-',
         vendorName: bill.vendor_name || '-',
         billDate: bill.bill_date || '-',
-        dueDate: bill.due_date || '-',
+        dueDate: dueDateIso || bill.due_date || '-',
+        dueDateIso,
         poNumber: bill.po_number || '-',
         description: bill.description || '',
         rawStatus: String(bill.status || '').toLowerCase(),
@@ -56,6 +72,7 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
 
     const bill = useMemo(() => billDetailsQuery.data ?? null, [billDetailsQuery.data]);
     const [editableLines, setEditableLines] = useState([]);
+    const [editableDueDate, setEditableDueDate] = useState('');
     const [isPostedLocked, setIsPostedLocked] = useState(false);
     const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
@@ -75,10 +92,18 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
     }, [bill]);
 
     useEffect(() => {
-        setIsPostedLocked(Boolean(bill?.rawStatus === 'posted'));
+        if (!bill) {
+            setEditableDueDate('');
+            return;
+        }
+        setEditableDueDate(bill.dueDateIso || '');
+    }, [bill]);
+
+    useEffect(() => {
+        setIsPostedLocked(financeLockedStatuses.has(bill?.rawStatus));
     }, [bill?.rawStatus]);
 
-    const isBillPosted = isPostedLocked || bill?.rawStatus === 'posted';
+    const isBillPosted = isPostedLocked || financeLockedStatuses.has(bill?.rawStatus);
     const changedLines = useMemo(() => {
         if (!bill?.lines?.length) return [];
 
@@ -111,6 +136,10 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
 
     const isSendBusy = updateBillAccountMutation.isPending || isSubmittingPost;
 
+    const isDueDateChanged =
+        bill &&
+        (editableDueDate || '') !== (bill.dueDateIso || '');
+
     const handleLineDescriptionChange = (lineId, nextDescription) => {
         if (isBillPosted) return;
         setEditableLines((prev) =>
@@ -127,6 +156,10 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
 
         if (changedLines.length > 0) {
             payload.lines = changedLines;
+        }
+
+        if (isDueDateChanged) {
+            payload.due_date = editableDueDate || null;
         }
 
         try {
@@ -245,7 +278,29 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
                                     </div>
                                     <div>
                                         <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>Due Date</p>
-                                        <p style={{ margin: '0.2rem 0 0', fontWeight: 600 }}>{bill.dueDate}</p>
+                                        {isBillPosted ? (
+                                            <p style={{ margin: '0.2rem 0 0', fontWeight: 600 }}>{bill.dueDate}</p>
+                                        ) : (
+                                            <input
+                                                type="date"
+                                                value={editableDueDate}
+                                                onChange={(event) => setEditableDueDate(event.target.value)}
+                                                disabled={updateBillAccountMutation.isPending}
+                                                className="font-normal cursor-pointer"
+                                                style={{
+                                                    marginTop: '0.2rem',
+                                                    width: '100%',
+                                                    maxWidth: '220px',
+                                                    padding: '0.45rem 0.625rem',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid var(--color-border)',
+                                                    background: 'var(--color-bg-surface)',
+                                                    color: 'var(--color-text-main)',
+                                                    fontFamily: 'inherit',
+                                                    fontSize: '0.9rem',
+                                                }}
+                                            />
+                                        )}
                                     </div>
                                     <div>
                                         <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>PO Number</p>
@@ -280,7 +335,7 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
                                         <FileText size={16} />
                                         <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Bill Lines</h3>
                                     </div>
-                                    {bill?.rawStatus !== 'posted' && (
+                                    {!financeLockedStatuses.has(bill?.rawStatus) && (
                                         <button
                                             type="button"
                                             onClick={handlePatchBill}

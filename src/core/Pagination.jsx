@@ -28,11 +28,18 @@ const buttonBaseStyle = {
   padding: '0 0.5rem',
 };
 
-const Pagination = ({ currentPage = 1, count = 0, onPageChange, pageSize = 15 }) => {
+const Pagination = ({
+  currentPage = 1,
+  count = 0,
+  onPageChange,
+  pageSize = 15,
+  /** When true, renders even when all results fit on one page. Default preserves existing behavior site-wide. */
+  alwaysVisible = false,
+}) => {
   const totalPages = Math.max(1, Math.ceil(count / pageSize));
   const pages = getVisiblePages(totalPages, currentPage);
 
-  if (count <= pageSize) return null;
+  if (!alwaysVisible && count <= pageSize) return null;
 
   return (
     <div

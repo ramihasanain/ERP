@@ -40,7 +40,12 @@ const InvoicePreview = () => {
         <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* Action Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)}>Back</Button>
+                <Button
+                    variant="ghost"
+                    icon={<ArrowLeft size={18} />}
+                    onClick={() => navigate('/admin/accounting')}
+                    className="cursor-pointer shrink-0"
+                />
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <Button variant="outline" icon={<Printer size={16} />}>Print</Button>
                     <Button variant="outline" icon={<Download size={16} />}>Download</Button>

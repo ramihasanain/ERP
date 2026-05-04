@@ -58,7 +58,7 @@ const ProductsServices = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/accounting')} />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/accounting')} className="cursor-pointer shrink-0" />
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Products & Services</h1>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Manage your catalog of billable items.</p>

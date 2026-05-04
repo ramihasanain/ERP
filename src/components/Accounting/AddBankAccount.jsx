@@ -86,7 +86,12 @@ const AddBankAccount = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '600px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)}>Back</Button>
+                <Button
+                    variant="ghost"
+                    icon={<ArrowLeft size={18} />}
+                    onClick={() => navigate('/admin/accounting')}
+                    className="cursor-pointer shrink-0"
+                />
                 <div>
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Add Bank Account</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Connect a new bank or cash account.</p>

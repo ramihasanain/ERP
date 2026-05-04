@@ -5,7 +5,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import IconPicker from '@/components/Shared/IconPicker';
-import { Plus, X, Monitor, Wrench, Calendar, Percent, DollarSign, CreditCard, Eye } from 'lucide-react';
+import { Plus, X, Monitor, Wrench, Calendar, Percent, DollarSign, CreditCard, Eye, ArrowLeft } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 const DynamicIcon = ({ name, size = 24 }) => {
@@ -196,13 +196,21 @@ const FixedAssets = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Fixed Assets</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Track assets, depreciation, and book value.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+                    <Button
+                        variant="ghost"
+                        icon={<ArrowLeft size={18} />}
+                        onClick={() => navigate('/admin/accounting')}
+                        className="cursor-pointer shrink-0"
+                    />
+                    <div>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Fixed Assets</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>Track assets, depreciation, and book value.</p>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button icon={<Plus size={18} />} onClick={openCreateModal}>New Asset Category</Button>
+                <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
+                    <Button icon={<Plus size={18} />} onClick={openCreateModal} className="cursor-pointer">New Asset Category</Button>
                 </div>
             </div>
 
