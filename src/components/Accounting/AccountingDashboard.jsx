@@ -1,11 +1,100 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
-import { FileText, List, Plus, Landmark, Monitor, Percent, Users, ArrowUpRight, DollarSign, ShoppingCart, Package, Target, CheckCircle, Upload, Shield, ArrowLeft } from 'lucide-react';
+import Spinner from '@/core/Spinner';
+import useCustomQuery from '@/hooks/useQuery';
+import { FileText, List, Plus, Landmark, Monitor, Percent, Users, ArrowUpRight, DollarSign, ShoppingCart, Package, Target, CheckCircle, Upload, Shield, ArrowLeft, Hammer, Map, Box, Building2, Banknote, X } from 'lucide-react';
+
+const normalizeRecentTransactionsResponse = (response) => ({
+    title: response?.title || 'Recent Transactions',
+    items: Array.isArray(response?.items) ? response.items : [],
+});
+
+const getTransactionIcon = (iconName) => {
+    const normalizedIcon = String(iconName || '').toLowerCase();
+    const icons = {
+        bank: <Banknote size={18} />,
+        building: <Building2 size={18} />,
+        cart: <ShoppingCart size={18} />,
+        cube: <Box size={18} />,
+        hammer: <Hammer size={18} />,
+        map: <Map size={18} />,
+    };
+
+    return icons[normalizedIcon] || <DollarSign size={18} />;
+};
+
+const getTransactionColors = (transaction) => {
+    const amount = Number(transaction?.amount ?? 0);
+    const icon = String(transaction?.icon || '').toLowerCase();
+
+    if (amount > 0) {
+        return {
+            amountColor: 'var(--color-success)',
+            bg: 'var(--color-success-dim)',
+            iconColor: 'var(--color-success)',
+        };
+    }
+
+    if (icon === 'bank') {
+        return {
+            amountColor: 'var(--color-text-main)',
+            bg: 'var(--color-warning-dim)',
+            iconColor: 'var(--color-warning)',
+        };
+    }
+
+    if (transaction?.kind === 'fixed_asset') {
+        return {
+            amountColor: 'var(--color-text-main)',
+            bg: 'color-mix(in srgb, var(--color-primary-600) 18%, var(--color-bg-card))',
+            iconColor: 'var(--color-primary-500)',
+        };
+    }
+
+    return {
+        amountColor: 'var(--color-text-main)',
+        bg: 'color-mix(in srgb, var(--color-text-main) 12%, var(--color-bg-card))',
+        iconColor: 'var(--color-text-secondary)',
+    };
+};
+
+const formatTransactionAmount = (amount, currency) => {
+    const numericAmount = Number(amount ?? 0);
+    const absoluteAmount = Math.abs(numericAmount).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+    const sign = numericAmount > 0 ? '+' : numericAmount < 0 ? '-' : '';
+    const currencySuffix = currency ? ` ${currency}` : '';
+
+    return `${sign}${absoluteAmount}${currencySuffix}`;
+};
 
 const AccountingDashboard = () => {
     const navigate = useNavigate();
+    const [isRecentTransactionsOpen, setIsRecentTransactionsOpen] = useState(false);
+    const recentTransactionsQuery = useCustomQuery(
+        '/api/shared/dashboard/recent-transactions/',
+        ['shared-dashboard-recent-transactions'],
+        { select: normalizeRecentTransactionsResponse }
+    );
+
+    const recentTransactionsTitle = recentTransactionsQuery.data?.title || 'Recent Transactions';
+    const recentTransactions = recentTransactionsQuery.data?.items ?? [];
+    const previewTransactions = recentTransactions.slice(0, 4);
+
+    useEffect(() => {
+        if (!isRecentTransactionsOpen) return undefined;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isRecentTransactionsOpen]);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -146,19 +235,6 @@ const AccountingDashboard = () => {
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Reports Center</h3>
                     <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>P&L, Balance Sheet.</p>
                 </Card>
-
-                <Card
-                    className="padding-md hoverable"
-                    style={{ width: '240px', cursor: 'pointer' }}
-                    onClick={() => navigate('cost-centers')}
-                >
-                    <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
-                        <Target size={24} />
-                    </div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Cost Centers</h3>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Budgets & Allocation.</p>
-                </Card>
-
                 <Card
                     className="padding-md hoverable"
                     style={{
@@ -219,58 +295,146 @@ const AccountingDashboard = () => {
             {/* Recent Transactions Section */}
             <Card className="padding-lg">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Recent Transactions</h3>
-                    <Button variant="ghost" size="sm" icon={<ArrowUpRight size={16} />}>View All</Button>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>{recentTransactionsTitle}</h3>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<ArrowUpRight size={16} />}
+                        onClick={() => setIsRecentTransactionsOpen(true)}
+                        disabled={recentTransactions.length === 0}
+                        className="cursor-pointer"
+                    >
+                        View All
+                    </Button>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                    <TransactionItem
-                        icon={<DollarSign size={18} />}
-                        title="Payment from Global Corp"
-                        subtitle="Inv #INV-2025-001 - Sales Revenue"
-                        date="Today, 10:30 AM"
-                        amount="+$12,500.00"
-                        amountColor="var(--color-success)"
-                        bg="var(--color-success-dim)"
-                        iconColor="var(--color-success)"
-                    />
-                    <TransactionItem
-                        icon={<ShoppingCart size={18} />}
-                        title="Office Supplies Purchase"
-                        subtitle="Vendor: Staples Inc. - Stationary"
-                        date="Yesterday, 2:15 PM"
-                        amount="-$342.50"
-                        amountColor="var(--color-text-main)"
-                        bg="color-mix(in srgb, var(--color-text-main) 12%, var(--color-bg-card))"
-                        iconColor="var(--color-text-secondary)"
-                    />
-                    <TransactionItem
-                        icon={<Monitor size={18} />}
-                        title="New Asset: Server Rack"
-                        subtitle="Fixed Assets - IT Equipment"
-                        date="Feb 05, 09:00 AM"
-                        amount="-$4,200.00"
-                        amountColor="var(--color-text-main)"
-                        bg="color-mix(in srgb, var(--color-primary-600) 18%, var(--color-bg-card))"
-                        iconColor="var(--color-primary-500)"
-                    />
-                    <TransactionItem
-                        icon={<Landmark size={18} />}
-                        title="Bank Fee Charge"
-                        subtitle="Monthly Service Fee"
-                        date="Feb 01, 12:00 AM"
-                        amount="-$25.00"
-                        amountColor="var(--color-text-main)"
-                        bg="var(--color-warning-dim)"
-                        iconColor="var(--color-warning)"
-                    />
+                    {recentTransactionsQuery.isPending && <Spinner />}
+
+                    {recentTransactionsQuery.isError && (
+                        <div style={{ padding: '1rem 0', color: 'var(--color-error)' }}>
+                            Could not load recent transactions.
+                        </div>
+                    )}
+
+                    {!recentTransactionsQuery.isPending && !recentTransactionsQuery.isError && recentTransactions.length === 0 && (
+                        <div style={{ padding: '1rem 0', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                            No recent transactions.
+                        </div>
+                    )}
+
+                    {!recentTransactionsQuery.isPending && !recentTransactionsQuery.isError && previewTransactions.map((transaction) => {
+                        const colors = getTransactionColors(transaction);
+
+                        return (
+                            <TransactionItem
+                                key={transaction.id}
+                                icon={getTransactionIcon(transaction.icon)}
+                                title={transaction.title}
+                                subtitle={transaction.subtitle}
+                                amount={formatTransactionAmount(transaction.amount, transaction.currency)}
+                                status={transaction.status}
+                                {...colors}
+                            />
+                        );
+                    })}
                 </div>
             </Card>
+
+            {isRecentTransactionsOpen && (
+                <RecentTransactionsModal
+                    title={recentTransactionsTitle}
+                    transactions={recentTransactions}
+                    onClose={() => setIsRecentTransactionsOpen(false)}
+                />
+            )}
         </div>
     );
 };
 
-const TransactionItem = ({ icon, title, subtitle, date, amount, amountColor, bg, iconColor }) => (
+const RecentTransactionsModal = ({ title, transactions, onClose }) => (
+    <div
+        role="presentation"
+        onClick={onClose}
+        style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            background: 'rgba(0, 0, 0, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+        }}
+    >
+        <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="recent-transactions-modal-title"
+            onClick={(event) => event.stopPropagation()}
+            style={{
+                width: 'min(720px, 100%)',
+                maxHeight: '85vh',
+                background: 'var(--color-bg-card)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '1rem',
+                boxShadow: '0 24px 80px rgba(0, 0, 0, 0.25)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+            }}
+        >
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid var(--color-border)',
+            }}>
+                <div>
+                    <h3 id="recent-transactions-modal-title" style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
+                        {title}
+                    </h3>
+                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                        Showing {transactions.length} transactions
+                    </p>
+                </div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={<X size={18} />}
+                    onClick={onClose}
+                    className="cursor-pointer"
+                />
+            </div>
+
+            <div style={{
+                padding: '0 1.5rem',
+                overflowY: 'auto',
+                maxHeight: 'calc(85vh - 100px)',
+            }}>
+                {transactions.map((transaction) => {
+                    const colors = getTransactionColors(transaction);
+
+                    return (
+                        <TransactionItem
+                            key={transaction.id}
+                            icon={getTransactionIcon(transaction.icon)}
+                            title={transaction.title}
+                            subtitle={transaction.subtitle}
+                            amount={formatTransactionAmount(transaction.amount, transaction.currency)}
+                            status={transaction.status}
+                            {...colors}
+                        />
+                    );
+                })}
+            </div>
+        </div>
+    </div>
+);
+
+const TransactionItem = ({ icon, title, subtitle, amount, amountColor, bg, iconColor, status }) => (
     <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '1rem 0', borderBottom: '1px solid var(--color-border)'
@@ -287,15 +451,13 @@ const TransactionItem = ({ icon, title, subtitle, date, amount, amountColor, bg,
                 <p style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--color-text-main)' }}>{title}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{subtitle}</span>
-                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-border)' }}></span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{date}</span>
                 </div>
             </div>
         </div>
         <div style={{ textAlign: 'right' }}>
             <span style={{ display: 'block', fontWeight: 700, fontSize: '1rem', color: amountColor }}>{amount}</span>
             <span style={{ fontSize: '0.75rem', color: 'var(--color-success)', background: 'var(--color-success-dim)', padding: '0.1rem 0.5rem', borderRadius: '1rem', fontWeight: 600 }}>
-                Posted
+                {status || 'Posted'}
             </span>
         </div>
     </div>

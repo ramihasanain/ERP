@@ -20,7 +20,7 @@ const SYSTEM_MODULES = [
     { id: 'bank', label: 'Bank & Cash', group: 'Finance' },
     { id: 'bank-import', label: 'Bank Import', group: 'Finance' },
     { id: 'assets', label: 'Fixed Assets', group: 'Finance' },
-    { id: 'cost-centers', label: 'Cost Centers', group: 'Finance' },
+    // { id: 'cost-centers', label: 'Cost Centers', group: 'Finance' },
     { id: 'customers', label: 'Customers', group: 'Finance' },
     { id: 'products-services', label: 'Products & Services', group: 'Finance' },
     { id: 'vendor-payments', label: 'Vendor Payments', group: 'Finance' },
