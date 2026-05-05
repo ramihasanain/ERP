@@ -95,7 +95,7 @@ const AccountLedgerTable = ({ account }) => {
         account.currentBalance > 0
             ? 'var(--color-success)'
             : account.currentBalance < 0
-                ? 'var(--color-danger-600)'
+                ? 'var(--color-danger-500)'
                 : 'var(--color-text-main)';
 
     const scrollMaxHeight = LINES_VISIBLE_LIMIT * LINE_ROW_HEIGHT + 8;

@@ -981,7 +981,7 @@ const RelatedTab = ({
                 )}
                 {entityType === 'Bank' && (
                     <>
-                        <RelatedItem label="GL Mapping" value={data.glAccountId} />
+                        <RelatedItem label="GL Mapping" value={data?.glAccountId || '—'} />
                         <RelatedItem label="Treasury" value="Cash Management" />
                     </>
                 )}

@@ -78,7 +78,11 @@ const PayslipPDF = () => {
     const grossPay = totals?.gross_pay ?? payload?.total_payroll_cost ?? currentPeriod?.total_gross ?? '0.00';
     const totalDeductions = totals?.total_deductions ?? currentPeriod?.total_deductions ?? '0.00';
     const adjustmentAmount = totals?.adjustment_amount ?? '0.00';
-    const employeesPaid = currentPeriod?.employees_paid ?? payload?.active_employees ?? 0;
+    const employeesPaid = payload?.active_employees_in_run
+        ?? payload?.active_empolyees_in_run
+        ?? currentPeriod?.employees_paid
+        ?? payload?.active_employees
+        ?? 0;
     const payslipRef = payload?.payslip_number || payload?.last_run_status?.journal_reference || `PS-${lineId || id || 'N/A'}`;
     const periodLabel = detailedPeriod?.name || currentPeriod?.name || payload?.last_run_status?.period_name || 'Payroll Period';
     const statusLabel = detailedPeriod?.status || currentPeriod?.status || payload?.last_run_status?.label || '—';
@@ -130,7 +134,7 @@ const PayslipPDF = () => {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{detailedCompany?.name || 'Antigravity Tech'}</h2>
-                        <p style={{ color: '#666' }}>Amman, Jordan</p>
+                        <p style={{ color: '#666' }}>{payload?.company_location || detailedCompany?.location || '—'}</p>
                         <p style={{ color: '#666' }}>{toTitleCase(statusLabel)}</p>
                     </div>
                 </div>

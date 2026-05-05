@@ -150,7 +150,6 @@ const FinalSettlement = () => {
 
     const calculation = isViewMode ? viewCalculation : termination ? mapTerminationApiToCalculation(termination) : null;
     const finalNetPayable = isViewMode ? viewFinalAmount : num(termination?.total_net_payable);
-
     const handleFinalize = async () => {
         if (!empId || !termination || isViewMode) return;
         try {
