@@ -1,34 +1,54 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { Search, Plus, Filter, FileText, MoreVertical, CreditCard, ArrowLeft } from 'lucide-react';
-import { useAccounting } from '@/context/AccountingContext';
+import { Search, Plus, Filter, CreditCard, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import InvoicePaymentModal from '@/components/Accounting/InvoicePaymentModal';
+import Pagination from '@/core/Pagination';
+import Spinner from '@/core/Spinner';
+import useCustomQuery from '@/hooks/useQuery';
 
 const Invoices = () => {
     const navigate = useNavigate();
-    const { invoices, customers } = useAccounting();
     const { language } = useLanguage();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [customerFilter, setCustomerFilter] = useState('All');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Payment Modal State
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
 
-    const getCustomerName = (id) => {
-        const cust = customers.find(c => c.id === id);
-        return cust ? cust.name : id;
+    const invoicesUrl = useMemo(() => {
+        const params = new URLSearchParams({
+            page: String(currentPage),
+            page_size: '15',
+        });
+
+        return `/api/sales/invoices/?${params.toString()}`;
+    }, [currentPage]);
+
+    const invoicesQuery = useCustomQuery(
+        invoicesUrl,
+        ['sales-invoices', currentPage],
+        {
+            keepPreviousData: true,
+        }
+    );
+
+    const getStatusLabel = (status) => {
+        if (!status) return 'Draft';
+        const value = String(status).toLowerCase();
+        return value.charAt(0).toUpperCase() + value.slice(1);
     };
 
-    const getStatusStyle = (status) => {
-        switch (status) {
+    const getStatusStyle = (statusLabel) => {
+        switch (statusLabel) {
             case 'Paid':
                 return { bg: 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))', color: 'var(--color-success)' };
             case 'Partial':
@@ -44,9 +64,44 @@ const Invoices = () => {
         }
     };
 
-    const filteredInvoices = invoices.filter(inv => {
-        const matchesSearch = inv.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            getCustomerName(inv.customerId).toLowerCase().includes(searchTerm.toLowerCase());
+    const apiInvoices = invoicesQuery.data?.data ?? [];
+    const invoicesCount = invoicesQuery.data?.count ?? 0;
+
+    const normalizedInvoices = useMemo(() => {
+        return apiInvoices.map((invoice) => {
+            const status = getStatusLabel(invoice.status);
+            const total = Number(invoice.grand_total ?? 0);
+            const remainingBalance = Number(invoice.remaining_balance ?? 0);
+
+            return {
+                ...invoice,
+                number: invoice.number || invoice.id,
+                customerId: invoice.customer,
+                customerDisplayName: invoice.customer_name || invoice.customer,
+                date: invoice.invoice_date,
+                dueDate: invoice.due_date,
+                status,
+                total,
+                remainingBalance,
+                payments: [],
+            };
+        });
+    }, [apiInvoices]);
+
+    const customerOptions = useMemo(() => {
+        const map = new Map();
+        normalizedInvoices.forEach((invoice) => {
+            if (invoice.customerId) {
+                map.set(invoice.customerId, invoice.customerDisplayName);
+            }
+        });
+        return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+    }, [normalizedInvoices]);
+
+    const filteredInvoices = normalizedInvoices.filter(inv => {
+        const matchesSearch =
+            (inv.number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (inv.customerDisplayName || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All' || inv.status === statusFilter;
         const matchesCustomer = customerFilter === 'All' || inv.customerId === customerFilter;
 
@@ -103,7 +158,7 @@ const Invoices = () => {
                             onChange={e => setCustomerFilter(e.target.value)}
                         >
                             <option value="All">{isRtl ? 'كل العملاء' : 'All Customers'}</option>
-                            {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            {customerOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -170,54 +225,85 @@ const Invoices = () => {
                     </div>
                 </div>
 
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                    <thead>
-                        <tr style={{ background: 'var(--color-bg-table-header)', textAlign: isRtl ? 'right' : 'left', color: 'var(--color-text-secondary)' }}>
-                            <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'رقم الفاتورة' : 'Invoice #'}</th>
-                            <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'العميل' : 'Client'}</th>
-                            <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'التاريخ' : 'Date'}</th>
-                            <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'استحقاق' : 'Due Date'}</th>
-                            <th style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right' }}>{isRtl ? 'القيمة' : 'Amount'}</th>
-                            <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'الحالة' : 'Status'}</th>
-                            <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'إجراءات' : 'Actions'}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredInvoices.map(inv => {
-                            const statusStyle = getStatusStyle(inv.status);
-                            return (
-                                <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }} className="erp-table-row-hover" onClick={() => navigate(inv.id)}>
-                                    <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{inv.id}</td>
-                                    <td style={{ padding: '1rem 1rem' }}>{getCustomerName(inv.customerId)}</td>
-                                    <td style={{ padding: '1rem 1rem' }}>{inv.date}</td>
-                                    <td style={{ padding: '1rem 1rem' }}>{inv.dueDate}</td>
-                                    <td style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right', fontWeight: 600 }}>{inv.total.toLocaleString()} JOD</td>
-                                    <td style={{ padding: '1rem 1.5rem' }}>
-                                        <span style={{
-                                            padding: '0.25rem 0.75rem', borderRadius: '1rem',
-                                            background: statusStyle.bg, color: statusStyle.color,
-                                            fontSize: '0.75rem', fontWeight: 600
-                                        }}>
-                                            {inv.status}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '1rem 1rem' }}>
-                                        {(inv.status === 'Posted' || inv.status === 'Partial') && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                icon={<CreditCard size={14} />}
-                                                onClick={(e) => handleRecordPayment(e, inv)}
-                                            >
-                                                {isRtl ? 'سداد' : 'Pay'}
-                                            </Button>
-                                        )}
-                                    </td>
+                {invoicesQuery.isLoading && (
+                    <div style={{ minHeight: '220px', display: 'grid', placeItems: 'center' }}>
+                        <Spinner />
+                    </div>
+                )}
+                {invoicesQuery.isError && (
+                    <div style={{ padding: '1.25rem 1.5rem', color: 'var(--color-error)' }}>
+                        {isRtl ? 'تعذر تحميل الفواتير.' : 'Failed to load invoices.'}
+                    </div>
+                )}
+                {!invoicesQuery.isLoading && !invoicesQuery.isError && (
+                    <>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                            <thead>
+                                <tr style={{ background: 'var(--color-bg-table-header)', textAlign: isRtl ? 'right' : 'left', color: 'var(--color-text-secondary)' }}>
+                                    <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'رقم الفاتورة' : 'Invoice #'}</th>
+                                    <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'العميل' : 'Client'}</th>
+                                    <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'التاريخ' : 'Date'}</th>
+                                    <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'استحقاق' : 'Due Date'}</th>
+                                    <th style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right' }}>{isRtl ? 'القيمة' : 'Amount'}</th>
+                                    <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'الحالة' : 'Status'}</th>
+                                    <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'إجراءات' : 'Actions'}</th>
                                 </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                            </thead>
+                            <tbody>
+                                {filteredInvoices.map(inv => {
+                                    const statusStyle = getStatusStyle(inv.status);
+                                    return (
+                                        <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }} className="erp-table-row-hover" onClick={() => navigate(inv.id)}>
+                                            <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{inv.number}</td>
+                                            <td style={{ padding: '1rem 1rem' }}>{inv.customerDisplayName}</td>
+                                            <td style={{ padding: '1rem 1rem' }}>{inv.date}</td>
+                                            <td style={{ padding: '1rem 1rem' }}>{inv.dueDate}</td>
+                                            <td style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right', fontWeight: 600 }}>
+                                                {inv.currency} {inv.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                            <td style={{ padding: '1rem 1.5rem' }}>
+                                                <span style={{
+                                                    padding: '0.25rem 0.75rem', borderRadius: '1rem',
+                                                    background: statusStyle.bg, color: statusStyle.color,
+                                                    fontSize: '0.75rem', fontWeight: 600
+                                                }}>
+                                                    {inv.status}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '1rem 1rem' }}>
+                                                {(inv.status === 'Posted' || inv.status === 'Partial') && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        icon={<CreditCard size={14} />}
+                                                        onClick={(e) => handleRecordPayment(e, inv)}
+                                                    >
+                                                        {isRtl ? 'سداد' : 'Pay'}
+                                                    </Button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {filteredInvoices.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                                            {isRtl ? 'لا توجد فواتير مطابقة.' : 'No invoices found.'}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--color-border)' }}>
+                            <Pagination
+                                currentPage={currentPage}
+                                count={invoicesCount}
+                                onPageChange={setCurrentPage}
+                                pageSize={15}
+                            />
+                        </div>
+                    </>
+                )}
             </Card>
 
             {paymentModalOpen && selectedInvoice && (

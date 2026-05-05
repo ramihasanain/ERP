@@ -133,7 +133,7 @@ const TrialBalance = () => {
     asOf: "2026-02-08",
     isActive: "true",
     accountType: "",
-    includeZeroAccounts: "true",
+    includeZeroAccounts: "false",
   });
   const [currentPage, setCurrentPage] = useState(1);
 

@@ -37,6 +37,14 @@ const getTransactionColors = (transaction) => {
         };
     }
 
+    if (amount < 0) {
+        return {
+            amountColor: 'var(--color-error)',
+            bg: 'var(--color-error-dim)',
+            iconColor: 'var(--color-error)',
+        };
+    }
+
     if (icon === 'bank') {
         return {
             amountColor: 'var(--color-text-main)',

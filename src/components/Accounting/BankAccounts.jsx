@@ -123,7 +123,8 @@ const BankAccounts = () => {
         type: account.account_type === 'cash' ? 'Cash' : 'Bank',
         accountNumber: account.account_number || '',
         currency: account.currency_code || '',
-        balance: Number(account.opening_balance ?? 0),
+        currentBalance: Number(account.current_balance ?? 0),
+        openingBalance: Number(account.opening_balance ?? 0),
         isActive: Boolean(account.is_active),
     }));
 
@@ -198,8 +199,11 @@ const BankAccounts = () => {
                                 </div>
                             </div>
                         </div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                            {account.currency} {account.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                            {account.currency} {account.currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
+                            Opening: {account.currency} {account.openingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: account.isActive ? 'var(--color-success)' : 'var(--color-danger-600)' }}></span>
