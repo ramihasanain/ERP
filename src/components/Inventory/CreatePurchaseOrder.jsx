@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAccounting } from '@/context/AccountingContext';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -8,13 +7,12 @@ import { Save, Plus, Trash2, ArrowLeft } from 'lucide-react';
 
 const CreatePurchaseOrder = () => {
     const navigate = useNavigate();
-    const { costCenters } = useAccounting();
     const [items, setItems] = useState([
-        { id: 1, item: '', qty: 1, unitCost: 0, costCenter: '' }
+        { id: 1, item: '', qty: 1, unitCost: 0 }
     ]);
 
     const addItem = () => {
-        setItems([...items, { id: items.length + 1, item: '', qty: 1, unitCost: 0, costCenter: '' }]);
+        setItems([...items, { id: items.length + 1, item: '', qty: 1, unitCost: 0 }]);
     };
 
     // ... (rest of handlers same as before)
@@ -67,8 +65,7 @@ const CreatePurchaseOrder = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
-                                <th style={{ padding: '0.5rem', width: '30%' }}>Item Description</th>
-                                <th style={{ padding: '0.5rem', width: '15%' }}>Cost Center</th>
+                                <th style={{ padding: '0.5rem', width: '45%' }}>Item Description</th>
                                 <th style={{ padding: '0.5rem', width: '10%', textAlign: 'center' }}>Qty</th>
                                 <th style={{ padding: '0.5rem', width: '15%', textAlign: 'right' }}>Unit Cost</th>
                                 <th style={{ padding: '0.5rem', width: '15%', textAlign: 'right' }}>Line Total</th>
@@ -84,18 +81,6 @@ const CreatePurchaseOrder = () => {
                                             onChange={(e) => updateItem(item.id, 'item', e.target.value)}
                                             placeholder="Select item..."
                                         />
-                                    </td>
-                                    <td style={{ padding: '0.5rem' }}>
-                                        <select
-                                            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)' }}
-                                            value={item.costCenter}
-                                            onChange={(e) => updateItem(item.id, 'costCenter', e.target.value)}
-                                        >
-                                            <option value="">None</option>
-                                            {costCenters.map(cc => (
-                                                <option key={cc.id} value={cc.id}>{cc.name}</option>
-                                            ))}
-                                        </select>
                                     </td>
                                     <td style={{ padding: '0.5rem' }}>
                                         <Input

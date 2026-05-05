@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const AccountingContext = createContext();
 
@@ -13,65 +13,65 @@ const initialEntries = [
     {
         id: 'JE-2025-001', date: '2025-01-01', reference: 'OPEN-2025', description: 'Annual Opening Balance', status: 'Posted', isAutomatic: true, sourceType: 'System',
         lines: [
-            { id: 1, account: '1111', description: 'Initial Cash', debit: 50000, credit: 0, costCenter: '' },
-            { id: 2, account: '1131', description: 'Arab Bank Opening', debit: 150000, credit: 0, costCenter: '' },
-            { id: 3, account: '3110', description: 'Capital Account', debit: 0, credit: 200000, costCenter: '' },
+            { id: 1, account: '1111', description: 'Initial Cash', debit: 50000, credit: 0 },
+            { id: 2, account: '1131', description: 'Arab Bank Opening', debit: 150000, credit: 0 },
+            { id: 3, account: '3110', description: 'Capital Account', debit: 0, credit: 200000 },
         ]
     },
     {
         id: 'JE-2025-002', date: '2025-02-01', reference: 'RENT-FEB', description: 'Monthly Office Rent - Feb 2025', status: 'Posted',
         lines: [
-            { id: 1, account: '6120', description: 'February Rent', debit: 2500, credit: 0, costCenter: 'CC-001' },
-            { id: 2, account: '1131', description: 'Payment via Arab Bank', debit: 0, credit: 2500, costCenter: '' },
+            { id: 1, account: '6120', description: 'February Rent', debit: 2500, credit: 0 },
+            { id: 2, account: '1131', description: 'Payment via Arab Bank', debit: 0, credit: 2500 },
         ]
     },
     {
         id: 'JE-2025-003', date: '2025-02-03', reference: 'INV-TS-001', description: 'Software Consulting - Tech Solutions Ltd.', status: 'Posted',
         lines: [
-            { id: 1, account: '1140', description: 'Receivable from Tech Solutions', debit: 4500, credit: 0, costCenter: 'CC-002' },
-            { id: 2, account: '4110', description: 'Sales Revenue', debit: 0, credit: 4500, costCenter: '' },
+            { id: 1, account: '1140', description: 'Receivable from Tech Solutions', debit: 4500, credit: 0 },
+            { id: 2, account: '4110', description: 'Sales Revenue', debit: 0, credit: 4500 },
         ]
     },
     {
         id: 'JE-2025-004', date: '2025-02-05', reference: 'ASSET-PURCH', description: 'MacBook Pro M3 Max - IT Dept', status: 'Posted',
         lines: [
-            { id: 1, account: '1250', description: 'IT Equipment Asset', debit: 3500, credit: 0, costCenter: 'CC-003' },
-            { id: 2, account: '1131', description: 'Arab Bank Payment', debit: 0, credit: 3500, costCenter: '' },
+            { id: 1, account: '1250', description: 'IT Equipment Asset', debit: 3500, credit: 0 },
+            { id: 2, account: '1131', description: 'Arab Bank Payment', debit: 0, credit: 3500 },
         ]
     },
     {
         id: 'JE-2025-005', date: '2025-02-06', reference: 'DEPR-FEB', description: 'Monthly Depreciation - IT Equipment', status: 'Posted', isAutomatic: true, sourceType: 'Asset System',
         lines: [
-            { id: 1, account: '6610', description: 'Depreciation Expense', debit: 150, credit: 0, costCenter: 'CC-003' },
-            { id: 2, account: '1320', description: 'Acc. Depr. - IT', debit: 0, credit: 150, costCenter: '' },
+            { id: 1, account: '6610', description: 'Depreciation Expense', debit: 150, credit: 0 },
+            { id: 2, account: '1320', description: 'Acc. Depr. - IT', debit: 0, credit: 150 },
         ]
     },
     {
         id: 'JE-2025-006', date: '2025-02-08', reference: 'INV-GT-550', description: 'Global Trading Co. Service Maintenance', status: 'Posted',
         lines: [
-            { id: 1, account: '1140', description: 'Receivable from Global Trading', debit: 1200, credit: 0, costCenter: 'CC-004' },
-            { id: 2, account: '4120', description: 'Service Revenue', debit: 0, credit: 1200, costCenter: '' },
+            { id: 1, account: '1140', description: 'Receivable from Global Trading', debit: 1200, credit: 0 },
+            { id: 2, account: '4120', description: 'Service Revenue', debit: 0, credit: 1200 },
         ]
     },
     {
         id: 'JE-2025-007', date: '2025-02-10', reference: 'MARK-ADS', description: 'Google Ads - Q1 Campaign', status: 'Posted',
         lines: [
-            { id: 1, account: '6230', description: 'Social Media Ads', debit: 800, credit: 0, costCenter: 'CC-002' },
-            { id: 2, account: '1131', description: 'Arab Bank Payment', debit: 0, credit: 800, costCenter: '' },
+            { id: 1, account: '6230', description: 'Social Media Ads', debit: 800, credit: 0 },
+            { id: 2, account: '1131', description: 'Arab Bank Payment', debit: 0, credit: 800 },
         ]
     },
     {
         id: 'JE-2025-008', date: '2025-02-12', reference: 'UTIL-HQ', description: 'Electricity & Water HQ', status: 'Posted',
         lines: [
-            { id: 1, account: '6130', description: 'Utilities Expense', debit: 450, credit: 0, costCenter: 'CC-001' },
-            { id: 2, account: '1111', description: 'Petty Cash Payment', debit: 0, credit: 450, costCenter: '' },
+            { id: 1, account: '6130', description: 'Utilities Expense', debit: 450, credit: 0 },
+            { id: 2, account: '1111', description: 'Petty Cash Payment', debit: 0, credit: 450 },
         ]
     },
     {
         id: 'JE-2025-009', date: '2025-02-13', reference: 'SAL-FEB-PARTIAL', description: 'Employee Advances - Feb', status: 'Posted',
         lines: [
-            { id: 1, account: '1190', description: 'Staff Advance', debit: 1500, credit: 0, costCenter: 'CC-001' },
-            { id: 2, account: '1132', description: 'Housing Bank Payment', debit: 0, credit: 1500, costCenter: '' },
+            { id: 1, account: '1190', description: 'Staff Advance', debit: 1500, credit: 0 },
+            { id: 2, account: '1132', description: 'Housing Bank Payment', debit: 0, credit: 1500 },
         ]
     }
 ];
@@ -359,9 +359,6 @@ export const AccountingProvider = ({ children }) => {
 
     // Ensure initial GL accounts exist for these defaults if not already present
     // (In a real app, strict database seeding is better. Here we just ensure we don't break logic)
-
-    // ... (budgetUsage logic remains here) ...
-
     // ── Bank Management Logic ──
     const addBankAccount = (data) => {
         // 1. Create GL Account
@@ -391,8 +388,8 @@ export const AccountingProvider = ({ children }) => {
                 reference: 'OP-BAL',
                 description: `Opening Balance - ${data.name}`,
                 lines: [
-                    { id: 1, account: newGLAccount.id, description: 'Opening Balance', debit: data.balance, credit: 0, costCenter: '' },
-                    { id: 2, account: '3000', description: 'Opening Balance Equity', debit: 0, credit: data.balance, costCenter: '' }
+                    { id: 1, account: newGLAccount.id, description: 'Opening Balance', debit: data.balance, credit: 0 },
+                    { id: 2, account: '3000', description: 'Opening Balance Equity', debit: 0, credit: data.balance }
                 ]
             });
         }
@@ -506,23 +503,6 @@ export const AccountingProvider = ({ children }) => {
         }
         setAccounts(prev => prev.filter(a => a.id !== id));
     };
-
-    // Calculate actual spending per cost center
-    // Logic: Sum of DEBITS to lines with that cost center
-    // (In a real system, we'd filter for Expense/Asset accounts, but for now sum all debits tagged)
-    const budgetUsage = useMemo(() => {
-        const usage = {};
-        costCenters.forEach(cc => usage[cc.id] = 0);
-
-        entries.forEach(entry => {
-            entry.lines.forEach(line => {
-                if (line.costCenter && usage[line.costCenter] !== undefined) {
-                    usage[line.costCenter] += Number(line.debit);
-                }
-            });
-        });
-        return usage;
-    }, [entries, costCenters]);
 
     const addCostCenter = (center) => {
         setCostCenters(prev => [...prev, { ...center, id: center.id ?? `CC-${Date.now()}` }]);
@@ -749,8 +729,8 @@ export const AccountingProvider = ({ children }) => {
             isAutomatic: true,
             sourceType: 'Procurement',
             lines: [
-                { id: 1, account: '2110', description: `Accounts Payable - Bill #${payment.billId}`, debit: Number(payment.amount), credit: 0, costCenter: '' },
-                { id: 2, account: payment.accountId, description: `Payment via ${depositAccount?.name || 'Bank/Cash'}`, debit: 0, credit: Number(payment.amount), costCenter: '' }
+                { id: 1, account: '2110', description: `Accounts Payable - Bill #${payment.billId}`, debit: Number(payment.amount), credit: 0 },
+                { id: 2, account: payment.accountId, description: `Payment via ${depositAccount?.name || 'Bank/Cash'}`, debit: 0, credit: Number(payment.amount) }
             ]
         });
 
@@ -766,7 +746,6 @@ export const AccountingProvider = ({ children }) => {
         <AccountingContext.Provider value={{
             costCenters,
             entries,
-            budgetUsage,
             addCostCenter,
             updateCostCenter,
             deleteCostCenter,

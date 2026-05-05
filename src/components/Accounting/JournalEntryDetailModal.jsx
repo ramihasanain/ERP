@@ -68,7 +68,6 @@ const JournalEntryDetailModal = ({ isOpen, entryId, onClose }) => {
                 <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)' }}>
                   <th style={{ padding: '0.75rem', textAlign: 'left' }}>Account</th>
                   <th style={{ padding: '0.75rem', textAlign: 'left' }}>Description</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'left' }}>Cost Center</th>
                   <th style={{ padding: '0.75rem', textAlign: 'right' }}>Debit</th>
                   <th style={{ padding: '0.75rem', textAlign: 'right' }}>Credit</th>
                 </tr>
@@ -78,7 +77,6 @@ const JournalEntryDetailModal = ({ isOpen, entryId, onClose }) => {
                   <tr key={line.id || index} style={{ borderBottom: '1px solid var(--color-border)' }}>
                     <td style={{ padding: '0.75rem' }}>{line.account_name || line.accountName || line.account || '-'}</td>
                     <td style={{ padding: '0.75rem' }}>{line.description || '-'}</td>
-                    <td style={{ padding: '0.75rem' }}>{line.cost_center || line.costCenter || '-'}</td>
                     <td style={{ padding: '0.75rem', textAlign: 'right' }}>{line.debit || '0.00'}</td>
                     <td style={{ padding: '0.75rem', textAlign: 'right' }}>{line.credit || '0.00'}</td>
                   </tr>

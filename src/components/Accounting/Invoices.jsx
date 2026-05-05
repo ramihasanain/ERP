@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { Search, Plus, Filter, CreditCard, ArrowLeft } from 'lucide-react';
+import { Search, Plus, Filter, CreditCard, ArrowLeft, Edit } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import InvoicePaymentModal from '@/components/Accounting/InvoicePaymentModal';
 import Pagination from '@/core/Pagination';
@@ -29,13 +29,20 @@ const Invoices = () => {
             page: String(currentPage),
             page_size: '15',
         });
+        const trimmedSearch = searchTerm.trim();
+
+        if (trimmedSearch) params.set('search', trimmedSearch);
+        if (statusFilter !== 'All') params.set('status', statusFilter.toLowerCase());
+        if (customerFilter !== 'All') params.set('customer', customerFilter);
+        if (dateFrom) params.set('date_from', dateFrom);
+        if (dateTo) params.set('date_to', dateTo);
 
         return `/api/sales/invoices/?${params.toString()}`;
-    }, [currentPage]);
+    }, [currentPage, searchTerm, statusFilter, customerFilter, dateFrom, dateTo]);
 
     const invoicesQuery = useCustomQuery(
         invoicesUrl,
-        ['sales-invoices', currentPage],
+        ['sales-invoices', currentPage, searchTerm, statusFilter, customerFilter, dateFrom, dateTo],
         {
             keepPreviousData: true,
         }
@@ -64,10 +71,11 @@ const Invoices = () => {
         }
     };
 
-    const apiInvoices = invoicesQuery.data?.data ?? [];
     const invoicesCount = invoicesQuery.data?.count ?? 0;
 
     const normalizedInvoices = useMemo(() => {
+        const apiInvoices = invoicesQuery.data?.data ?? [];
+
         return apiInvoices.map((invoice) => {
             const status = getStatusLabel(invoice.status);
             const total = Number(invoice.grand_total ?? 0);
@@ -86,36 +94,59 @@ const Invoices = () => {
                 payments: [],
             };
         });
-    }, [apiInvoices]);
+    }, [invoicesQuery.data]);
 
     const customerOptions = useMemo(() => {
         const map = new Map();
         normalizedInvoices.forEach((invoice) => {
             if (invoice.customerId) {
-                map.set(invoice.customerId, invoice.customerDisplayName);
+                map.set(String(invoice.customerId), invoice.customerDisplayName);
             }
         });
         return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
     }, [normalizedInvoices]);
 
-    const filteredInvoices = normalizedInvoices.filter(inv => {
-        const matchesSearch =
-            (inv.number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (inv.customerDisplayName || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'All' || inv.status === statusFilter;
-        const matchesCustomer = customerFilter === 'All' || inv.customerId === customerFilter;
+    const filteredInvoices = useMemo(() => {
+        const normalizedSearch = searchTerm.trim().toLowerCase();
+        const getDateValue = (value) => {
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? null : date.getTime();
+        };
+        const fromTime = dateFrom ? getDateValue(dateFrom) : null;
+        const toTime = dateTo ? getDateValue(dateTo) : null;
 
-        const invDate = new Date(inv.date);
-        const matchesDateFrom = !dateFrom || invDate >= new Date(dateFrom);
-        const matchesDateTo = !dateTo || invDate <= new Date(dateTo);
+        return normalizedInvoices.filter(inv => {
+            const invoiceNumber = String(inv.number || '').toLowerCase();
+            const customerName = String(inv.customerDisplayName || '').toLowerCase();
+            const matchesSearch =
+                !normalizedSearch ||
+                invoiceNumber.includes(normalizedSearch) ||
+                customerName.includes(normalizedSearch);
+            const matchesStatus = statusFilter === 'All' || inv.status === statusFilter;
+            const matchesCustomer = customerFilter === 'All' || String(inv.customerId) === customerFilter;
 
-        return matchesSearch && matchesStatus && matchesCustomer && matchesDateFrom && matchesDateTo;
-    });
+            const invoiceTime = getDateValue(inv.date);
+            const matchesDateFrom = !fromTime || (invoiceTime !== null && invoiceTime >= fromTime);
+            const matchesDateTo = !toTime || (invoiceTime !== null && invoiceTime <= toTime);
+
+            return matchesSearch && matchesStatus && matchesCustomer && matchesDateFrom && matchesDateTo;
+        });
+    }, [normalizedInvoices, searchTerm, statusFilter, customerFilter, dateFrom, dateTo]);
 
     const handleRecordPayment = (e, invoice) => {
         e.stopPropagation(); // Prevent row click
         setSelectedInvoice(invoice);
         setPaymentModalOpen(true);
+    };
+
+    const handleEditInvoice = (e, invoice) => {
+        e.stopPropagation();
+        navigate(`${invoice.id}/edit`);
+    };
+
+    const updateFilter = (setter, value) => {
+        setter(value);
+        setCurrentPage(1);
     };
 
     const isRtl = language === 'ar';
@@ -148,14 +179,14 @@ const Invoices = () => {
                                 placeholder={isRtl ? 'بحث برقم الفاتورة أو العميل...' : "Search invoice or client..."}
                                 startIcon={<Search size={16} />}
                                 value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
+                                onChange={e => updateFilter(setSearchTerm, e.target.value)}
                             />
                         </div>
 
                         <select
                             style={{ padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', fontSize: '0.875rem', minWidth: '180px', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                             value={customerFilter}
-                            onChange={e => setCustomerFilter(e.target.value)}
+                            onChange={e => updateFilter(setCustomerFilter, e.target.value)}
                         >
                             <option value="All">{isRtl ? 'كل العملاء' : 'All Customers'}</option>
                             {customerOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -166,7 +197,7 @@ const Invoices = () => {
                             <Input
                                 type="date"
                                 value={dateFrom}
-                                onChange={e => setDateFrom(e.target.value)}
+                                onChange={e => updateFilter(setDateFrom, e.target.value)}
                                 style={{ padding: '0.4rem', fontSize: '0.875rem', width: 'auto' }}
                             />
                         </div>
@@ -176,7 +207,7 @@ const Invoices = () => {
                             <Input
                                 type="date"
                                 value={dateTo}
-                                onChange={e => setDateTo(e.target.value)}
+                                onChange={e => updateFilter(setDateTo, e.target.value)}
                                 style={{ padding: '0.4rem', fontSize: '0.875rem', width: 'auto' }}
                             />
                         </div>
@@ -189,7 +220,7 @@ const Invoices = () => {
                             {['All', 'Paid', 'Partial', 'Posted', 'Draft', 'Overdue'].map(status => (
                                 <button
                                     key={status}
-                                    onClick={() => setStatusFilter(status)}
+                                    onClick={() => updateFilter(setStatusFilter, status)}
                                     style={{
                                         padding: '5px 12px',
                                         borderRadius: '6px',
@@ -216,6 +247,7 @@ const Invoices = () => {
                                     setCustomerFilter('All');
                                     setDateFrom('');
                                     setDateTo('');
+                                    setCurrentPage(1);
                                 }}
                                 style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}
                             >
@@ -237,63 +269,78 @@ const Invoices = () => {
                 )}
                 {!invoicesQuery.isLoading && !invoicesQuery.isError && (
                     <>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                            <thead>
-                                <tr style={{ background: 'var(--color-bg-table-header)', textAlign: isRtl ? 'right' : 'left', color: 'var(--color-text-secondary)' }}>
-                                    <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'رقم الفاتورة' : 'Invoice #'}</th>
-                                    <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'العميل' : 'Client'}</th>
-                                    <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'التاريخ' : 'Date'}</th>
-                                    <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'استحقاق' : 'Due Date'}</th>
-                                    <th style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right' }}>{isRtl ? 'القيمة' : 'Amount'}</th>
-                                    <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'الحالة' : 'Status'}</th>
-                                    <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'إجراءات' : 'Actions'}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredInvoices.map(inv => {
-                                    const statusStyle = getStatusStyle(inv.status);
-                                    return (
-                                        <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }} className="erp-table-row-hover" onClick={() => navigate(inv.id)}>
-                                            <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{inv.number}</td>
-                                            <td style={{ padding: '1rem 1rem' }}>{inv.customerDisplayName}</td>
-                                            <td style={{ padding: '1rem 1rem' }}>{inv.date}</td>
-                                            <td style={{ padding: '1rem 1rem' }}>{inv.dueDate}</td>
-                                            <td style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right', fontWeight: 600 }}>
-                                                {inv.currency} {inv.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </td>
-                                            <td style={{ padding: '1rem 1.5rem' }}>
-                                                <span style={{
-                                                    padding: '0.25rem 0.75rem', borderRadius: '1rem',
-                                                    background: statusStyle.bg, color: statusStyle.color,
-                                                    fontSize: '0.75rem', fontWeight: 600
-                                                }}>
-                                                    {inv.status}
-                                                </span>
-                                            </td>
-                                            <td style={{ padding: '1rem 1rem' }}>
-                                                {(inv.status === 'Posted' || inv.status === 'Partial') && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        icon={<CreditCard size={14} />}
-                                                        onClick={(e) => handleRecordPayment(e, inv)}
-                                                    >
-                                                        {isRtl ? 'سداد' : 'Pay'}
-                                                    </Button>
-                                                )}
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', minWidth: '920px', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--color-bg-table-header)', textAlign: isRtl ? 'right' : 'left', color: 'var(--color-text-secondary)' }}>
+                                        <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'رقم الفاتورة' : 'Invoice #'}</th>
+                                        <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'العميل' : 'Client'}</th>
+                                        <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'التاريخ' : 'Date'}</th>
+                                        <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'استحقاق' : 'Due Date'}</th>
+                                        <th style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right' }}>{isRtl ? 'القيمة' : 'Amount'}</th>
+                                        <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'الحالة' : 'Status'}</th>
+                                        <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'إجراءات' : 'Actions'}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredInvoices.map(inv => {
+                                        const statusStyle = getStatusStyle(inv.status);
+                                        const isPaid = inv.status === 'Paid';
+                                        return (
+                                            <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }} className="erp-table-row-hover" onClick={() => navigate(inv.id)}>
+                                                <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{inv.number}</td>
+                                                <td style={{ padding: '1rem 1rem' }}>{inv.customerDisplayName}</td>
+                                                <td style={{ padding: '1rem 1rem' }}>{inv.date}</td>
+                                                <td style={{ padding: '1rem 1rem' }}>{inv.dueDate}</td>
+                                                <td style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right', fontWeight: 600 }}>
+                                                    {inv.currency} {inv.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td style={{ padding: '1rem 1.5rem' }}>
+                                                    <span style={{
+                                                        padding: '0.25rem 0.75rem', borderRadius: '1rem',
+                                                        background: statusStyle.bg, color: statusStyle.color,
+                                                        fontSize: '0.75rem', fontWeight: 600
+                                                    }}>
+                                                        {inv.status}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: '1rem 1rem' }}>
+                                                    {!isPaid && (
+                                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                icon={<CreditCard size={14} />}
+                                                                onClick={(e) => handleRecordPayment(e, inv)}
+                                                                className="cursor-pointer"
+                                                            >
+                                                                {isRtl ? 'سداد' : 'Pay'}
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                icon={<Edit size={14} />}
+                                                                onClick={(e) => handleEditInvoice(e, inv)}
+                                                                className="cursor-pointer"
+                                                                aria-label={isRtl ? 'تعديل الفاتورة' : 'Edit invoice'}
+                                                                title={isRtl ? 'تعديل الفاتورة' : 'Edit invoice'}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {filteredInvoices.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                                                {isRtl ? 'لا توجد فواتير مطابقة.' : 'No invoices found.'}
                                             </td>
                                         </tr>
-                                    );
-                                })}
-                                {filteredInvoices.length === 0 && (
-                                    <tr>
-                                        <td colSpan={7} style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                            {isRtl ? 'لا توجد فواتير مطابقة.' : 'No invoices found.'}
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                         <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--color-border)' }}>
                             <Pagination
                                 currentPage={currentPage}

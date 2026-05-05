@@ -158,6 +158,7 @@ export default function AppRoutes() {
           <Route path="trial-balance" element={<TrialBalance />} />
           <Route path="invoices" element={<Invoices />} />
           <Route path="invoices/new" element={<CreateInvoice />} />
+          <Route path="invoices/:id/edit" element={<CreateInvoice />} />
           <Route path="invoices/:id" element={<InvoicePreview />} />
           <Route path="bank" element={<BankAccounts />} />
           <Route path="bank/new" element={<AddBankAccount />} />

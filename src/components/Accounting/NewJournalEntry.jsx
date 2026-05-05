@@ -13,7 +13,7 @@ import Input from '@/components/Shared/Input';
 import { Save, Plus, Trash2, ArrowLeft, Upload, FileText, CheckCircle, AlertTriangle, XCircle, Monitor, Lock } from 'lucide-react';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
 
-const defaultLine = { account: '', accountLabel: '', description: '', debit: 0, credit: 0, costCenter: '' };
+const defaultLine = { account: '', accountLabel: '', description: '', debit: 0, credit: 0 };
 
 const defaultValues = {
   date: new Date().toISOString().split('T')[0],
@@ -110,7 +110,7 @@ const NewJournalEntry = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id } = useParams();
-  const { costCenters, budgetUsage, getAccountBalance, getPeriodStatus } = useAccounting();
+  const { getAccountBalance, getPeriodStatus } = useAccounting();
   const [warningModal, setWarningModal] = useState({ isOpen: false, messages: [] });
   const [blockingErrors, setBlockingErrors] = useState([]);
   const [pendingStatus, setPendingStatus] = useState(null);
@@ -171,6 +171,7 @@ const NewJournalEntry = () => {
   const exchangeRate = Number(useWatch({ control, name: 'exchangeRate' })) || 1;
   const isAutomatic = Boolean(useWatch({ control, name: 'isAutomatic' }));
   const sourceType = useWatch({ control, name: 'sourceType' });
+  const entryStatus = useWatch({ control, name: 'status' });
   const lines = useWatch({ control, name: 'lines' }) || [];
   const attachedFile = useWatch({ control, name: 'attachedFile' });
 
@@ -180,7 +181,19 @@ const NewJournalEntry = () => {
 
   const periodStatus = getPeriodStatus(formDate);
   const isPeriodLocked = periodStatus === 'Hard Lock';
-  const isReadOnly = isAutomatic || isPeriodLocked;
+  const isPosted = String(entryStatus || '').toLowerCase() === 'posted';
+  const isReadOnly = isPosted || isAutomatic || isPeriodLocked;
+  const ReadOnlyIcon = isPosted ? CheckCircle : isAutomatic ? Monitor : Lock;
+  const readOnlyTitle = isPosted
+    ? 'Posted Entry'
+    : isAutomatic
+      ? `Auto-Generated Entry (${sourceType || 'System'})`
+      : 'Period Locked';
+  const readOnlyDescription = isPosted
+    ? 'This journal entry has been posted and can only be viewed.'
+    : isAutomatic
+      ? 'This entry was automatically generated. Please edit the original source transaction to make changes.'
+      : 'The accounting period for this date is closed. Entries cannot be modified.';
 
   useEffect(() => {
     if (accountsQuery.error) {
@@ -227,7 +240,6 @@ const NewJournalEntry = () => {
         description: line.description || '',
         debit: Number(line.debit || 0),
         credit: Number(line.credit || 0),
-        costCenter: line.cost_center || line.costCenter || '',
         };
       }),
     });
@@ -248,6 +260,7 @@ const NewJournalEntry = () => {
   };
 
   const handleFileChange = (event) => {
+    if (isReadOnly) return;
     const file = event.target.files?.[0];
     setValue('attachedFile', file || null);
   };
@@ -265,7 +278,6 @@ const NewJournalEntry = () => {
       ...(line.id ? { id: line.id } : {}),
       account: line.account,
       description: line.description || '',
-      cost_center: line.costCenter || null,
       debit: Number(line.debit || 0).toFixed(2),
       credit: Number(line.credit || 0).toFixed(2),
       order: index,
@@ -359,26 +371,6 @@ const NewJournalEntry = () => {
           warnings.push(`CASH WARNING: Credit to [${account.name}] will result in negative balance (${projectedBalance.toFixed(2)} JOD).`);
         }
       });
-
-      const spendingByCC = {};
-      values.lines.forEach((line) => {
-        const debitAmount = Number(line.debit || 0);
-        if (debitAmount <= 0 || !line.costCenter) return;
-        const account = accountById.get(line.account);
-        if (!account || account.type !== 'Expense') return;
-        spendingByCC[line.costCenter] = (spendingByCC[line.costCenter] || 0) + (debitAmount * exchangeRate);
-      });
-
-      Object.entries(spendingByCC).forEach(([ccId, amount]) => {
-        const costCenter = costCenters.find((item) => item.id === ccId);
-        if (!costCenter) return;
-        const currentSpent = budgetUsage[ccId] || 0;
-        const maxBudget = costCenter.budget || 0;
-        if (currentSpent + amount > maxBudget) {
-          const excess = (currentSpent + amount) - maxBudget;
-          warnings.push(`BUDGET WARNING: [${costCenter.name}] exceeds budget by ${excess.toFixed(2)} JOD.`);
-        }
-      });
     }
 
     if (warnings.length > 0) {
@@ -405,7 +397,7 @@ const NewJournalEntry = () => {
             onClick={() => navigate('/admin/accounting/journal')}
             className="cursor-pointer shrink-0"
           />
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{id ? 'Edit Journal Entry' : 'New Journal Entry'}</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{id ? (isPosted ? 'View Journal Entry' : 'Edit Journal Entry') : 'New Journal Entry'}</h1>
         </div>
       </div>
 
@@ -423,15 +415,13 @@ const NewJournalEntry = () => {
             color: 'var(--color-warning-800)',
           }}
         >
-          {isAutomatic ? <Monitor size={24} /> : <Lock size={24} />}
+          <ReadOnlyIcon size={24} />
           <div>
             <h4 style={{ fontWeight: 600, fontSize: '0.95rem' }}>
-              {isAutomatic ? `Auto-Generated Entry (${sourceType || 'System'})` : 'Period Locked'}
+              {readOnlyTitle}
             </h4>
             <p style={{ fontSize: '0.85rem' }}>
-              {isAutomatic
-                ? 'This entry was automatically generated. Please edit the original source transaction to make changes.'
-                : 'The accounting period for this date is closed. Entries cannot be modified.'}
+              {readOnlyDescription}
             </p>
           </div>
         </div>
@@ -657,12 +647,12 @@ const NewJournalEntry = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowX: 'auto' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 40px', gap: '0.75rem', minWidth: '900px', padding: '0.5rem', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-                <div>Account</div><div>Line Description</div><div>Cost Center</div><div style={{ textAlign: 'right' }}>Debit</div><div style={{ textAlign: 'right' }}>Credit</div><div></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 40px', gap: '0.75rem', minWidth: '780px', padding: '0.5rem', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+                <div>Account</div><div>Line Description</div><div style={{ textAlign: 'right' }}>Debit</div><div style={{ textAlign: 'right' }}>Credit</div><div></div>
               </div>
 
               {fields.map((field, index) => (
-                <div key={field.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 40px', gap: '0.75rem', minWidth: '900px', alignItems: 'start' }}>
+                <div key={field.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 40px', gap: '0.75rem', minWidth: '780px', alignItems: 'start' }}>
                   <Controller
                     name={`lines.${index}.account`}
                     control={control}
@@ -701,21 +691,6 @@ const NewJournalEntry = () => {
                         disabled={isReadOnly}
                         style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '0.9rem' }}
                       />
-                    )}
-                  />
-                  <Controller
-                    name={`lines.${index}.costCenter`}
-                    control={control}
-                    render={({ field: lineField }) => (
-                      <select
-                        value={lineField.value || ''}
-                        onChange={lineField.onChange}
-                        disabled={isReadOnly}
-                        style={{ width: '100%', padding: '0 0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '0.9rem', height: '36px', boxSizing: 'border-box', lineHeight: 1.2 }}
-                      >
-                        <option value="">None</option>
-                        {costCenters.map((cc) => <option key={cc.id} value={cc.id}>{cc.name} ({cc.code})</option>)}
-                      </select>
                     )}
                   />
                   <Controller

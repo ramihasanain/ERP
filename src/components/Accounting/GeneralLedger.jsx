@@ -209,7 +209,6 @@ const AccountLedgerTable = ({ account }) => {
                                 <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Date</th>
                                 <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Reference</th>
                                 <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Description</th>
-                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Cost Center</th>
                                 <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>Debit</th>
                                 <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>Credit</th>
                                 <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>Balance</th>
@@ -238,9 +237,6 @@ const AccountLedgerTable = ({ account }) => {
                                         <td style={{ padding: '0.85rem 1rem', fontWeight: 500 }}>{line.reference || '—'}</td>
                                         <td style={{ padding: '0.85rem 1rem', color: 'var(--color-text-secondary)' }}>
                                             {line.description || '—'}
-                                        </td>
-                                        <td style={{ padding: '0.85rem 1rem' }}>
-                                            {line.costCenterCode || line.costCenterName || '—'}
                                         </td>
                                         <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                                             {line.debit ? formatCurrency(line.debit) : '—'}

@@ -1,51 +1,106 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
-import { X, Save, CheckCircle2 } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
+import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPost } from '@/hooks/useMutation';
+import { toast } from 'sonner';
+
+const getCurrencyCode = (invoice) => {
+    const currency = invoice?.currency;
+
+    if (typeof currency === 'string' && currency.trim()) return currency.trim();
+    if (currency && typeof currency === 'object') {
+        return currency.code || currency.currency_code || currency.name || '';
+    }
+
+    return invoice?.currency_code || invoice?.customer_currency_code || 'JOD';
+};
 
 const InvoicePaymentModal = ({ invoice, onClose }) => {
-    const { recordInvoicePayment, accounts } = useAccounting();
+    const { recordInvoicePayment } = useAccounting();
     const { language } = useLanguage();
+    const invoiceId = invoice?.id || '';
+    const bankAccountsQuery = useCustomQuery(
+        '/accounting/bank-accounts/',
+        ['accounting-bank-accounts'],
+        {
+            select: (response) => {
+                if (Array.isArray(response?.data)) return response.data;
+                if (Array.isArray(response?.results)) return response.results;
+                if (Array.isArray(response)) return response;
+                return [];
+            },
+        }
+    );
+
+    const submitPaymentMutation = useCustomPost(
+        `/api/sales/invoices/${invoiceId}/payments/create/`,
+        [['sales-invoices'], ['sales-invoice-preview', invoiceId]]
+    );
 
     // Calculate remaining balance
-    const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
-    const remaining = invoice.total - totalPaid;
+    const totalPaid = invoice.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const remaining = Number(invoice.remainingBalance ?? (Number(invoice.total ?? 0) - totalPaid));
+    const currencyCode = getCurrencyCode(invoice);
+    const formatMoney = (amount) => `${Number(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currencyCode}`;
 
     const [formData, setFormData] = useState({
-        date: new Date().toISOString().split('T')[0],
-        amount: remaining,
-        method: 'Cash',
-        accountId: '', // Will default to first cash/bank found
+        date: '2026-05-10',
+        amount: '',
+        method: 'bank_transfer',
+        accountId: "",
         reference: '',
         notes: ''
     });
 
-    // Filter for Cash and Bank accounts only (Assets -> 1110, 1130 usually)
-    // We can filter by type="Asset" and maybe check codes or just show all assets that are not groups
-    // Better: Filter for accounts that are NOT groups and type is Asset
-    const paymentAccounts = accounts.filter(a =>
-        !a.isGroup && a.type === 'Asset' &&
-        (a.code.startsWith('111') || a.code.startsWith('113')) // Heuristic for Cash/Bank in standard CoA
-    );
+    const paymentAccounts = bankAccountsQuery.data ?? [];
+    const hasSelectedAccount = paymentAccounts.some(acc => String(acc.id) === String(formData.accountId));
+    const selectedAccountId = formData.accountId || paymentAccounts[0]?.id || '';
 
-    useEffect(() => {
-        if (paymentAccounts.length > 0 && !formData.accountId) {
-            setFormData(prev => ({ ...prev, accountId: paymentAccounts[0].id }));
-        }
-    }, [paymentAccounts]);
+    const handleSubmit = async () => {
+        if (!formData.amount || !selectedAccountId) return;
+        const paymentAmount = Number(formData.amount);
 
-    const handleSubmit = () => {
-        if (!formData.amount || !formData.accountId) return;
-        if (Number(formData.amount) > remaining) {
-            alert(language === 'ar' ? 'المبلغ المدخل أكبر من الرصيد المتبقي' : 'Amount exceeds remaining balance');
+        if (paymentAmount <= 0) {
+            toast.error(language === 'ar' ? 'يرجى إدخال مبلغ صحيح.' : 'Please enter a valid payment amount.');
             return;
         }
 
-        recordInvoicePayment(invoice.id, formData);
-        onClose();
+        if (remaining > 0 && paymentAmount > remaining) {
+            toast.error(language === 'ar' ? 'المبلغ المدخل أكبر من الرصيد المتبقي' : 'Amount exceeds remaining balance');
+            return;
+        }
+
+        try {
+            const payload = {
+                amount: paymentAmount.toFixed(2),
+                payment_date: formData.date,
+                bank_account: selectedAccountId,
+                payment_method: formData.method,
+                notes: formData.notes,
+            };
+
+            if (formData.reference.trim()) {
+                payload.reference = formData.reference.trim();
+            }
+
+            await submitPaymentMutation.mutateAsync(payload);
+
+            recordInvoicePayment(invoice.id, formData);
+            toast.success(language === 'ar' ? 'تم تسجيل دفعة الفاتورة بنجاح.' : 'Invoice payment recorded successfully.');
+            onClose();
+        } catch (error) {
+            const detail = error?.response?.data?.detail;
+            toast.error(
+                typeof detail === 'string'
+                    ? detail
+                    : (language === 'ar' ? 'تعذر تسجيل دفعة الفاتورة.' : 'Failed to record invoice payment.')
+            );
+        }
     };
 
     const isRtl = language === 'ar';
@@ -69,11 +124,11 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                 <div style={{ background: 'var(--color-bg-subtle)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', border: '1px solid var(--color-border)' }}>
                     <div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>{isRtl ? 'إجمالي الفاتورة' : 'Invoice Total'}</div>
-                        <div style={{ fontWeight: 700 }}>{invoice.total.toLocaleString()} JOD</div>
+                        <div style={{ fontWeight: 700 }}>{formatMoney(invoice.total)}</div>
                     </div>
                     <div style={{ textAlign: isRtl ? 'left' : 'right' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>{isRtl ? 'الرصيد المتبقي' : 'Remaining Balance'}</div>
-                        <div style={{ fontWeight: 700, color: 'var(--color-primary-600)' }}>{remaining.toLocaleString()} JOD</div>
+                        <div style={{ fontWeight: 700, color: 'var(--color-primary-600)' }}>{formatMoney(remaining)}</div>
                     </div>
                 </div>
 
@@ -98,7 +153,7 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                             {isRtl ? 'حساب الإيداع (البنك/الصندوق)' : 'Deposit To'}
                         </label>
                         <select
-                            value={formData.accountId}
+                            value={selectedAccountId}
                             onChange={e => setFormData({ ...formData, accountId: e.target.value })}
                             style={{
                                 height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px',
@@ -106,8 +161,12 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                                 fontSize: '0.9rem', color: 'var(--color-text-main)',
                             }}
                         >
+                            <option value="" disabled>{isRtl ? 'اختر حساباً' : 'Select account'}</option>
+                            {!hasSelectedAccount && selectedAccountId && (
+                                <option value={selectedAccountId}>{isRtl ? 'الحساب الافتراضي' : 'Default bank account'}</option>
+                            )}
                             {paymentAccounts.map(acc => (
-                                <option key={acc.id} value={acc.id}>{acc.code} - {acc.name}</option>
+                                <option key={acc.id} value={acc.id}>{acc.name}</option>
                             ))}
                         </select>
                     </div>
@@ -125,9 +184,9 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                                     border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', fontSize: '0.9rem', color: 'var(--color-text-main)'
                                 }}
                             >
-                                <option value="Cash">{isRtl ? 'نقد (Cash)' : 'Cash'}</option>
-                                <option value="Check">{isRtl ? 'شيك (Check)' : 'Check'}</option>
-                                <option value="Bank Transfer">{isRtl ? 'حوالة بنكية (Bank Transfer)' : 'Bank Transfer'}</option>
+                                <option value="bank_transfer">{isRtl ? 'حوالة بنكية' : 'Bank Transfer'}</option>
+                                <option value="cash">{isRtl ? 'نقد' : 'Cash'}</option>
+                                <option value="check">{isRtl ? 'شيك' : 'Check'}</option>
                             </select>
                         </div>
                         <Input
@@ -147,7 +206,11 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
                         <Button variant="ghost" onClick={onClose}>{isRtl ? 'إلغاء' : 'Cancel'}</Button>
-                        <Button icon={<Save size={16} />} onClick={handleSubmit}>
+                        <Button
+                            icon={<Save size={16} />}
+                            onClick={handleSubmit}
+                            disabled={submitPaymentMutation.isPending || bankAccountsQuery.isPending || !formData.amount || !selectedAccountId}
+                        >
                             {isRtl ? 'تسجيل الدفعة' : 'Record Payment'}
                         </Button>
                     </div>

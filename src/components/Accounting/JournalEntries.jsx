@@ -103,7 +103,6 @@ const JournalEntries = () => {
                     'Credit (-)': !isDebit ? line.credit : 0,
                     'Sign': isDebit ? '+' : '-',
                     'Direction': isDebit ? (language === 'ar' ? 'مدين' : 'Debit') : (language === 'ar' ? 'دائن' : 'Credit'),
-                    'Cost Center': line.costCenter || '',
                     'Source': entry.sourceType || 'Manual'
                 });
             });

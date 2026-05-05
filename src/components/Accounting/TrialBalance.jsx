@@ -120,7 +120,13 @@ const formatExcelAmount = (value) => {
 
 const downloadExcelFile = ({ filename, sheetName, rows }) => {
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
-  worksheet["!cols"] = [{ wch: 18 }, { wch: 34 }, { wch: 16 }, { wch: 16 }];
+  worksheet["!cols"] = [
+    { wch: 18 },
+    { wch: 34 },
+    { wch: 14 },
+    { wch: 16 },
+    { wch: 16 },
+  ];
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
@@ -216,16 +222,18 @@ const TrialBalance = () => {
       ["Trial Balance"],
       [`As of ${trialBalance.asOf || filters.asOf}`],
       [],
-      ["Account Code", "Account Name", "Debit", "Credit"],
+      ["Account Code", "Account Name", "Currency", "Debit", "Credit"],
       ...trialBalance.accounts.map((account) => [
         account.code || "-",
         account.name || "-",
+        account.currency || "-",
         formatExcelAmount(account.debit),
         formatExcelAmount(account.credit),
       ]),
       [],
       [
         "Total",
+        "",
         "",
         formatExcelAmount(trialBalance.totalDebit),
         formatExcelAmount(trialBalance.totalCredit),
@@ -433,6 +441,7 @@ const TrialBalance = () => {
                   >
                     <th style={tableCellStyle}>Account Code</th>
                     <th style={tableCellStyle}>Account Name</th>
+                    <th style={tableCellStyle}>Currency</th>
                     <th style={tableAmountCellStyle}>Debit</th>
                     <th style={tableAmountCellStyle}>Credit</th>
                   </tr>
@@ -441,7 +450,7 @@ const TrialBalance = () => {
                   {trialBalance.accounts.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={4}
+                        colSpan={5}
                         style={{
                           ...tableCellStyle,
                           color: "var(--color-text-secondary)",
@@ -467,6 +476,14 @@ const TrialBalance = () => {
                           {account.code || "-"}
                         </td>
                         <td style={tableCellStyle}>{account.name || "-"}</td>
+                        <td
+                          style={{
+                            ...tableCellStyle,
+                            fontFamily: "var(--font-mono)",
+                          }}
+                        >
+                          {account.currency || "-"}
+                        </td>
                         <td style={tableAmountCellStyle}>
                           {formatAmount(account.debit)}
                         </td>
@@ -486,6 +503,7 @@ const TrialBalance = () => {
                   >
                     <td style={totalCellStyle}></td>
                     <td style={totalCellStyle}>Total</td>
+                    <td style={totalCellStyle}></td>
                     <td style={totalAmountCellStyle}>
                       {formatAmount(trialBalance.totalDebit)}
                     </td>
