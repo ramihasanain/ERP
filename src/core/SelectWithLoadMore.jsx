@@ -44,6 +44,7 @@ const SelectWithLoadMore = ({
     const spinKeyframesId = `selectWithLoadMoreSpin_${reactIdSafe(uid)}`;
     const listboxId = id ? `${id}-listbox` : `${reactIdSafe(uid)}-listbox`;
     const [open, setOpen] = useState(false);
+    const [hoveredValue, setHoveredValue] = useState(null);
     const rootRef = useRef(null);
     const listRef = useRef(null);
     const sentinelRef = useRef(null);
@@ -142,12 +143,16 @@ const SelectWithLoadMore = ({
 
     const maxH = typeof listMaxHeight === 'number' ? `${listMaxHeight}px` : listMaxHeight;
 
-    const optionRowStyle = (active) => ({
+    const optionRowStyle = (active, hovered) => ({
         padding: '0.5rem 0.75rem',
         fontSize: '0.875rem',
         fontWeight: 400,
         cursor: 'pointer',
-        background: active ? 'var(--color-primary-500)' : 'transparent',
+        background: active
+            ? 'var(--color-primary-500)'
+            : hovered
+                ? 'var(--color-bg-table-header)'
+                : 'transparent',
         color: active ? '#fff' : 'var(--color-text-main)',
         border: 'none',
         width: '100%',
@@ -213,7 +218,9 @@ const SelectWithLoadMore = ({
                             type="button"
                             role="option"
                             aria-selected={value === ''}
-                            style={optionRowStyle(value === '')}
+                            style={optionRowStyle(value === '', hoveredValue === '__empty__')}
+                            onMouseEnter={() => setHoveredValue('__empty__')}
+                            onMouseLeave={() => setHoveredValue(null)}
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => {
                                 onChange('');
@@ -229,7 +236,9 @@ const SelectWithLoadMore = ({
                             type="button"
                             role="option"
                             aria-selected={opt.value === value}
-                            style={optionRowStyle(opt.value === value)}
+                            style={optionRowStyle(opt.value === value, hoveredValue === opt.value)}
+                            onMouseEnter={() => setHoveredValue(opt.value)}
+                            onMouseLeave={() => setHoveredValue(null)}
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => {
                                 onChange(opt.value);

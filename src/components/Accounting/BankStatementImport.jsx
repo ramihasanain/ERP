@@ -16,6 +16,14 @@ const SAMPLE_DATA = [
     ['2025-03-10', 'Product Sale', 'INV-002', '3200.00', '', '19150.00', 'Revenue'],
 ];
 
+const stripCsvBom = (value) => value.replace(/^\uFEFF/, '');
+
+const detectDelimiter = (line) => {
+    const commaCount = (line.match(/,/g) || []).length;
+    const semicolonCount = (line.match(/;/g) || []).length;
+    return semicolonCount > commaCount ? ';' : ',';
+};
+
 const BankStatementImport = () => {
     const navigate = useNavigate();
     const { addJournalEntry } = useAccounting();
@@ -29,11 +37,12 @@ const BankStatementImport = () => {
 
     const downloadTemplate = () => {
         const csvContent = [
+            'sep=,',
             TEMPLATE_HEADERS.join(','),
             ...SAMPLE_DATA.map(row => row.join(','))
-        ].join('\n');
+        ].join('\r\n');
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -51,13 +60,28 @@ const BankStatementImport = () => {
         reader.onload = (e) => {
             try {
                 const text = e.target.result;
-                const lines = text.split('\n').filter(l => l.trim());
-                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+                if (lines.length === 0) {
+                    throw new Error('The CSV file is empty.');
+                }
+
+                const firstLine = stripCsvBom(lines[0]);
+                const hasSeparatorHint = /^sep\s*=/.test(firstLine.toLowerCase());
+                const delimiter = hasSeparatorHint
+                    ? (firstLine.split('=')[1]?.trim() || ',')
+                    : detectDelimiter(firstLine);
+                const headerIndex = hasSeparatorHint ? 1 : 0;
+
+                if (!lines[headerIndex]) {
+                    throw new Error('Missing header row in CSV file.');
+                }
+
+                const headers = stripCsvBom(lines[headerIndex]).split(delimiter).map(h => h.trim().replace(/"/g, ''));
                 const rows = [];
                 const parseErrors = [];
 
-                for (let i = 1; i < lines.length; i++) {
-                    const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                for (let i = headerIndex + 1; i < lines.length; i++) {
+                    const values = lines[i].split(delimiter).map(v => v.trim().replace(/"/g, ''));
                     if (values.length < 4) {
                         parseErrors.push(`Row ${i}: Insufficient columns (${values.length})`);
                         continue;
