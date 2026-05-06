@@ -31,12 +31,13 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
             backdropFilter: 'blur(2px)'
         }}>
             <div style={{
-                background: 'white', borderRadius: 'var(--radius-lg)', width: '90%', maxWidth: getMaxWidth(),
-                boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column', maxHeight: '90vh'
+                background: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', width: '90%', maxWidth: getMaxWidth(),
+                boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column', maxHeight: '90vh',
+                border: '1px solid var(--color-border)'
             }}>
                 <div style={{
                     padding: '1.25rem', borderBottom: '1px solid var(--color-border)', display: 'flex',
-                    alignItems: 'center', justifyContent: 'space-between', background: 'var(--color-slate-50)',
+                    alignItems: 'center', justifyContent: 'space-between', background: 'var(--color-bg-secondary)',
                     borderTopLeftRadius: 'var(--radius-lg)', borderTopRightRadius: 'var(--radius-lg)'
                 }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 500, color: 'var(--color-text-main)' }}>{title}</h3>
@@ -45,7 +46,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
                     </button>
                 </div>
 
-                <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
+                <div style={{ padding: '1.5rem', overflowY: 'auto', background: 'var(--color-bg-card)', color: 'var(--color-text-main)' }}>
                     {children}
                 </div>
             </div>

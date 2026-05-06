@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
     ArrowUpRight, ArrowDownRight,
     Users, DollarSign, Package, ShoppingCart,
-    TrendingUp, CreditCard, Clock, AlertTriangle,
     Wallet, FileText, UserCheck, Truck, ChevronRight
 } from 'lucide-react';
 import {
@@ -11,31 +10,10 @@ import {
     PieChart, Pie, Cell, Legend
 } from 'recharts';
 import Card from '@/components/Shared/Card';
-
-// ── Generate realistic daily data (Jan 2024 → Dec 2025) ──
-
-const generateDailyData = () => {
-    const data = [];
-    const start = new Date(2024, 0, 1);
-    const end = new Date(2025, 11, 31);
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dayOfWeek = d.getDay();
-        const month = d.getMonth();
-        const seasonFactor = 1 + 0.2 * Math.sin((month - 3) * Math.PI / 6);
-        const weekendDip = (dayOfWeek === 5 || dayOfWeek === 6) ? 0.6 : 1;
-        const base = 1500 * seasonFactor * weekendDip;
-        data.push({
-            date: d.toISOString().split('T')[0],
-            revenue: Math.round(base + Math.random() * 800),
-            expenses: Math.round((base * 0.65) + Math.random() * 400),
-        });
-    }
-    return data;
-};
-const allDailyData = generateDailyData();
+import Spinner from '@/core/Spinner';
+import useCustomQuery from '@/hooks/useQuery';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const aggregateData = (data, mode) => {
     if (mode === 'daily') return data.map(d => ({ label: d.date.slice(5), ...d }));
@@ -69,21 +47,24 @@ const aggregateData = (data, mode) => {
     });
 };
 
-const expenseBreakdown = [
-    { name: 'Salaries', value: 45 },
-    { name: 'Operations', value: 25 },
-    { name: 'Marketing', value: 15 },
-    { name: 'Supplies', value: 15 },
-];
 const PIE_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899'];
+const DEFAULT_DEPARTMENT_COLOR = '#6b7280';
+const DEPARTMENT_COLORS = {
+    finance: '#10b981',
+    hr: '#3b82f6',
+    inventory: '#f59e0b',
+    sales: '#8b5cf6',
+};
 
-const recentActivity = [
-    { id: 1, text: 'Payroll processed for February', dept: 'HR', time: '2h ago', color: '#3b82f6' },
-    { id: 2, text: 'Invoice #1042 paid — $8,500', dept: 'Finance', time: '3h ago', color: '#10b981' },
-    { id: 3, text: 'Low stock alert: USB-C Hubs (5 left)', dept: 'Inventory', time: '5h ago', color: '#f59e0b' },
-    { id: 4, text: 'New purchase order #PO-331 created', dept: 'Sales', time: '6h ago', color: '#8b5cf6' },
-    { id: 5, text: 'Employee Sarah Ahmed promoted', dept: 'HR', time: '1d ago', color: '#3b82f6' },
-];
+const formatNumber = (value) => Number(value ?? 0).toLocaleString();
+const formatCurrency = (value) => `$${Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+const isPositiveTrend = (trend) => {
+    if (!trend || typeof trend !== 'string') return undefined;
+    if (trend.includes('+')) return true;
+    if (trend.includes('-')) return false;
+    return undefined;
+};
+const resolveActivityColor = (label = '') => DEPARTMENT_COLORS[label.trim().toLowerCase()] || DEFAULT_DEPARTMENT_COLOR;
 
 const useElementWidth = () => {
     const elementRef = useRef(null);
@@ -114,11 +95,21 @@ const AdminDashboard = () => {
     const [chartFilter, setChartFilter] = useState('monthly');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const { data, isLoading, isError } = useCustomQuery('/api/shared/dashboard/main/', ['shared-dashboard-main']);
     const { elementRef: revenueChartRef, width: revenueChartWidth } = useElementWidth();
     const { elementRef: expenseChartRef, width: expenseChartWidth } = useElementWidth();
 
+    const revenueSeriesData = useMemo(() => {
+        const series = data?.revenue_vs_expenses?.series || [];
+        return series.map(item => ({
+            date: item?.period_start || item?.period,
+            revenue: Number(item?.revenue ?? 0),
+            expenses: Number(item?.expenses ?? 0),
+        }));
+    }, [data?.revenue_vs_expenses?.series]);
+
     const chartData = useMemo(() => {
-        let filtered = allDailyData;
+        let filtered = revenueSeriesData;
         if (dateFrom) filtered = filtered.filter(d => d.date >= dateFrom);
         if (dateTo) filtered = filtered.filter(d => d.date <= dateTo);
         // If date range is short (≤14 days), show daily; otherwise use selected mode
@@ -126,7 +117,26 @@ const AdminDashboard = () => {
             ? ((new Date(dateTo) - new Date(dateFrom)) / 86400000 <= 14 ? 'daily' : chartFilter)
             : chartFilter;
         return aggregateData(filtered, effectiveMode);
-    }, [chartFilter, dateFrom, dateTo]);
+    }, [chartFilter, dateFrom, dateTo, revenueSeriesData]);
+
+    const expenseBreakdown = useMemo(() => {
+        const segments = data?.expense_breakdown?.segments || [];
+        return segments.map((segment) => ({
+            name: segment?.label || 'Unknown',
+            value: Number(segment?.value ?? 0),
+        }));
+    }, [data?.expense_breakdown?.segments]);
+
+    const recentActivity = useMemo(() => {
+        const items = data?.recent_activity?.items || [];
+        return items.map((item, index) => ({
+            id: `${item?.message || 'activity'}-${index}`,
+            text: item?.message || '-',
+            dept: item?.label || 'General',
+            time: item?.age_label || '',
+            color: resolveActivityColor(item?.label),
+        }));
+    }, [data?.recent_activity?.items]);
 
     const dateInputStyle = {
         padding: '0.35rem 0.5rem', borderRadius: '0.4rem',
@@ -143,6 +153,22 @@ const AdminDashboard = () => {
         color: 'var(--color-text-main)'
     };
 
+    if (isLoading) {
+        return (
+            <div style={{ minHeight: '320px', display: 'grid', placeItems: 'center' }}>
+                <Spinner />
+            </div>
+        );
+    }
+
+    if (isError || !data) {
+        return (
+            <Card className="padding-lg">
+                <p style={{ color: 'var(--color-error)' }}>Failed to load dashboard data.</p>
+            </Card>
+        );
+    }
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
@@ -157,20 +183,31 @@ const AdminDashboard = () => {
             {/* ── Top KPI Row ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
                 <KpiCard
-                    label="Total Revenue" value="$145,200" change="+12.5%"
-                    up icon={<DollarSign size={20} />} accent="#10b981"
+                    label={data?.total_revenue?.title || 'Total Revenue'}
+                    value={formatCurrency(data?.total_revenue?.value)}
+                    change={data?.total_revenue?.trend}
+                    up={isPositiveTrend(data?.total_revenue?.trend)}
+                    icon={<DollarSign size={20} />} accent="#10b981"
                 />
                 <KpiCard
-                    label="Employees" value="124" change="+4 this month"
-                    up icon={<Users size={20} />} accent="#3b82f6"
+                    label={data?.employees?.title || 'Employees'}
+                    value={formatNumber(data?.employees?.value)}
+                    change={data?.employees?.trend}
+                    up={isPositiveTrend(data?.employees?.trend)}
+                    icon={<Users size={20} />} accent="#3b82f6"
                 />
                 <KpiCard
-                    label="Inventory Items" value="1,204" change="12 low stock"
+                    label={data?.inventory_items?.title || 'Inventory Items'}
+                    value={formatNumber(data?.inventory_items?.value)}
+                    change={typeof data?.inventory_items?.low_stock === 'number' ? `${data.inventory_items.low_stock} low stock` : undefined}
                     icon={<Package size={20} />} accent="#f59e0b"
                 />
                 <KpiCard
-                    label="Open Orders" value="45" change="+8 today"
-                    up icon={<ShoppingCart size={20} />} accent="#8b5cf6"
+                    label={data?.open_orders?.title || 'Open Orders'}
+                    value={formatNumber(data?.open_orders?.value)}
+                    change={data?.open_orders?.trend}
+                    up={isPositiveTrend(data?.open_orders?.trend)}
+                    icon={<ShoppingCart size={20} />} accent="#8b5cf6"
                 />
             </div>
 
@@ -179,7 +216,7 @@ const AdminDashboard = () => {
                 {/* Revenue Trend */}
                 <Card className="padding-lg" style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Revenue vs Expenses</h3>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-main)' }}>{data?.revenue_vs_expenses?.title || 'Revenue vs Expenses'}</h3>
                         <div style={{ display: 'flex', gap: '0.25rem', background: 'color-mix(in srgb, var(--color-text-main) 8%, var(--color-bg-card))', borderRadius: '0.5rem', padding: '3px' }}>
                             {['weekly', 'monthly', 'yearly'].map(f => (
                                 <button key={f} onClick={() => setChartFilter(f)} style={{
@@ -241,7 +278,7 @@ const AdminDashboard = () => {
 
                 {/* Expense Breakdown */}
                 <Card className="padding-lg" style={{ minWidth: 0 }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>Expense Breakdown</h3>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>{data?.expense_breakdown?.title || 'Expense Breakdown'}</h3>
                     <div ref={expenseChartRef} style={{ width: '100%', minWidth: 0, height: '250px', minHeight: 250 }}>
                         {expenseChartWidth > 0 && (
                             <PieChart width={expenseChartWidth} height={250}>
@@ -263,60 +300,70 @@ const AdminDashboard = () => {
 
                 {/* Finance & Accounting */}
                 <DeptCard
-                    title="Finance & Accounting" accent="#10b981"
+                    title={data?.finance_and_accounting?.title || 'Finance & Accounting'} accent="#10b981"
                     icon={<Wallet size={20} />}
                     onClick={() => navigate('/admin/accounting')}
                     stats={[
-                        { label: 'Cash Balance', value: '$842,000' },
-                        { label: 'Receivables', value: '$38,500' },
-                        { label: 'Payables', value: '$24,200' },
-                        { label: 'Net Profit', value: '$61,200', trend: '+18%', up: true },
+                        { label: 'Cash Balance', value: formatCurrency(data?.finance_and_accounting?.cash_balance) },
+                        { label: 'Receivables', value: formatCurrency(data?.finance_and_accounting?.receivables) },
+                        { label: 'Payables', value: formatCurrency(data?.finance_and_accounting?.payables) },
+                        {
+                            label: 'Net Profit',
+                            value: formatCurrency(data?.finance_and_accounting?.net_profit),
+                            trend: data?.finance_and_accounting?.net_profit_trend,
+                            up: isPositiveTrend(data?.finance_and_accounting?.net_profit_trend)
+                        },
                     ]}
                 />
 
                 {/* Human Resources */}
                 <DeptCard
-                    title="Human Resources" accent="#3b82f6"
+                    title={data?.human_resources?.title || 'Human Resources'} accent="#3b82f6"
                     icon={<UserCheck size={20} />}
                     onClick={() => navigate('/admin/hr')}
                     stats={[
-                        { label: 'Total Employees', value: '124' },
-                        { label: 'On Leave Today', value: '8' },
-                        { label: 'Open Positions', value: '6' },
-                        { label: 'Payroll (Monthly)', value: '$240,000' },
+                        { label: 'Total Employees', value: formatNumber(data?.human_resources?.total_employees) },
+                        { label: 'On Leave Today', value: formatNumber(data?.human_resources?.on_leave_today) },
+                        { label: 'Open Positions', value: formatNumber(data?.human_resources?.open_positions) },
+                        { label: 'Payroll (Monthly)', value: formatCurrency(data?.human_resources?.payroll_monthly) },
                     ]}
                 />
 
                 {/* Inventory & Warehouse */}
                 <DeptCard
-                    title="Inventory & Warehouse" accent="#f59e0b"
+                    title={data?.inventory_and_warehouse?.title || 'Inventory & Warehouse'} accent="#f59e0b"
                     icon={<Package size={20} />}
                     onClick={() => navigate('/admin/inventory')}
                     stats={[
-                        { label: 'Total Items', value: '1,204' },
-                        { label: 'Stock Value', value: '$840,000' },
-                        { label: 'Low Stock Items', value: '12', color: '#ef4444' },
-                        { label: 'Pending POs', value: '5' },
+                        { label: 'Total Items', value: formatNumber(data?.inventory_and_warehouse?.total_items) },
+                        { label: 'Stock Value', value: formatCurrency(data?.inventory_and_warehouse?.stock_value) },
+                        { label: 'Low Stock Items', value: formatNumber(data?.inventory_and_warehouse?.low_stock_items), color: '#ef4444' },
+                        { label: 'Pending POs', value: formatNumber(data?.inventory_and_warehouse?.pending_purchase_orders) },
                     ]}
                 />
 
                 {/* Sales & CRM */}
                 <DeptCard
-                    title="Sales & CRM" accent="#8b5cf6"
+                    title={data?.sales_and_crm?.title || 'Sales & CRM'} accent="#8b5cf6"
                     icon={<ShoppingCart size={20} />}
                     onClick={() => navigate('/admin/sales')}
                     stats={[
-                        { label: 'Active Orders', value: '45' },
-                        { label: 'Monthly Sales', value: '$52,000', trend: '+15%', up: true },
-                        { label: 'Customers', value: '312' },
-                        { label: 'Avg. Order Value', value: '$1,155' },
+                        { label: 'Active Orders', value: formatNumber(data?.sales_and_crm?.active_orders) },
+                        {
+                            label: 'Monthly Sales',
+                            value: formatCurrency(data?.sales_and_crm?.monthly_sales),
+                            trend: data?.sales_and_crm?.monthly_sales_trend,
+                            up: isPositiveTrend(data?.sales_and_crm?.monthly_sales_trend)
+                        },
+                        { label: 'Customers', value: formatNumber(data?.sales_and_crm?.customers) },
+                        { label: 'Avg. Order Value', value: formatCurrency(data?.sales_and_crm?.avg_order_value) },
                     ]}
                 />
             </div>
 
             {/* ── Recent Activity ── */}
             <Card className="padding-lg">
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>Recent Activity</h3>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>{data?.recent_activity?.title || 'Recent Activity'}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     {recentActivity.map(item => (
                         <div key={item.id} style={{

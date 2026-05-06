@@ -43,7 +43,7 @@ const JournalEntryDetailModal = ({ isOpen, entryId, onClose }) => {
       )}
 
       {!detailQuery.isLoading && entry && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: 'var(--color-text-main)' }}>
           <div
             style={{
               display: 'grid',
@@ -62,23 +62,30 @@ const JournalEntryDetailModal = ({ isOpen, entryId, onClose }) => {
             <div style={{ gridColumn: '1 / -1' }}><strong>Description:</strong> {entry.description || '-'}</div>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+          <div
+            style={{
+              overflowX: 'auto',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--color-bg-card)',
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', background: 'var(--color-bg-card)' }}>
               <thead>
                 <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)' }}>
-                  <th style={{ padding: '0.75rem', textAlign: 'left' }}>Account</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'left' }}>Description</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'right' }}>Debit</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'right' }}>Credit</th>
+                  <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--color-text-main)' }}>Account</th>
+                  <th style={{ padding: '0.75rem', textAlign: 'left', color: 'var(--color-text-main)' }}>Description</th>
+                  <th style={{ padding: '0.75rem', textAlign: 'right', color: 'var(--color-text-main)' }}>Debit</th>
+                  <th style={{ padding: '0.75rem', textAlign: 'right', color: 'var(--color-text-main)' }}>Credit</th>
                 </tr>
               </thead>
               <tbody>
                 {lines.map((line, index) => (
-                  <tr key={line.id || index} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <td style={{ padding: '0.75rem' }}>{line.account_name || line.accountName || line.account || '-'}</td>
-                    <td style={{ padding: '0.75rem' }}>{line.description || '-'}</td>
-                    <td style={{ padding: '0.75rem', textAlign: 'right' }}>{line.debit || '0.00'}</td>
-                    <td style={{ padding: '0.75rem', textAlign: 'right' }}>{line.credit || '0.00'}</td>
+                  <tr key={line.id || index} style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg-card)' }}>
+                    <td style={{ padding: '0.75rem', color: 'var(--color-text-main)' }}>{line.account_name || line.accountName || line.account || '-'}</td>
+                    <td style={{ padding: '0.75rem', color: 'var(--color-text-main)' }}>{line.description || '-'}</td>
+                    <td style={{ padding: '0.75rem', textAlign: 'right', color: 'var(--color-text-main)' }}>{line.debit || '0.00'}</td>
+                    <td style={{ padding: '0.75rem', textAlign: 'right', color: 'var(--color-text-main)' }}>{line.credit || '0.00'}</td>
                   </tr>
                 ))}
               </tbody>
