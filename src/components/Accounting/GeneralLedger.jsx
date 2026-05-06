@@ -7,20 +7,24 @@ import Spinner from '@/core/Spinner';
 import Pagination from '@/core/Pagination';
 import ResourceLoadError from '@/core/ResourceLoadError';
 import useCustomQuery from '@/hooks/useQuery';
-import { Search, ArrowLeft } from 'lucide-react';
+import { Search, ArrowLeft, ChevronRight } from 'lucide-react';
 
 const PAGE_SIZE = 5;
 const LINES_VISIBLE_LIMIT = 5;
 const LINE_ROW_HEIGHT = 52;
 
-const formatCurrency = (value) => {
+const formatCurrency = (value, currencyCode = 'USD') => {
     const number = Number(value) || 0;
+    const normalizedCurrency = typeof currencyCode === 'string' ? currencyCode.trim().toUpperCase() : 'USD';
     const formatted = Math.abs(number).toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
-    return number < 0 ? `-$${formatted}` : `$${formatted}`;
+    const code = normalizedCurrency || 'USD';
+    return number < 0 ? `-${code} ${formatted}` : `${code} ${formatted}`;
 };
+
+const isNil = (value) => value === null || value === undefined || value === '';
 
 const normalizeLedgerResponse = (response) => {
     const payload = response && typeof response === 'object' ? response : {};
@@ -41,6 +45,7 @@ const normalizeLedgerResponse = (response) => {
             accountType: account?.account_type || '—',
             isActive: Boolean(account?.is_active),
             currentBalance: Number(account?.current_balance) || 0,
+            currentBalanceCurrency: account?.current_balance_currency || 'USD',
             lines: Array.isArray(account?.lines)
                 ? account.lines.map((line) => ({
                     id: line?.id || '',
@@ -53,6 +58,14 @@ const normalizeLedgerResponse = (response) => {
                     debit: Number(line?.debit) || 0,
                     credit: Number(line?.credit) || 0,
                     balance: Number(line?.balance) || 0,
+                    currency: line?.currency || 'USD',
+                    balanceCurrency: line?.balance_currency || line?.currency || 'USD',
+                    baseDebit: Number(line?.base_debit) || 0,
+                    baseCredit: Number(line?.base_credit) || 0,
+                    convertedDebit: Number(line?.converted_debit) || 0,
+                    convertedCredit: Number(line?.converted_credit) || 0,
+                    exchangeRateUsed: line?.exchange_rate_used,
+                    exchangeRateDate: line?.exchange_rate_date || '',
                 }))
                 : [],
         })),
@@ -80,6 +93,7 @@ const normalizeAccountTypesResponse = (response) => {
 
 const AccountLedgerTable = ({ account }) => {
     const [lineSearch, setLineSearch] = useState('');
+    const [expandedLineKeys, setExpandedLineKeys] = useState(() => new Set());
 
     const filteredLines = useMemo(() => {
         const term = lineSearch.trim().toLowerCase();
@@ -99,6 +113,18 @@ const AccountLedgerTable = ({ account }) => {
                 : 'var(--color-text-main)';
 
     const scrollMaxHeight = LINES_VISIBLE_LIMIT * LINE_ROW_HEIGHT + 8;
+
+    const toggleLineExpansion = (lineKey) => {
+        setExpandedLineKeys((previous) => {
+            const next = new Set(previous);
+            if (next.has(lineKey)) {
+                next.delete(lineKey);
+            } else {
+                next.add(lineKey);
+            }
+            return next;
+        });
+    };
 
     return (
         <Card className="padding-lg">
@@ -185,7 +211,7 @@ const AccountLedgerTable = ({ account }) => {
                             Current Balance
                         </span>
                         <span style={{ fontSize: '1.1rem', fontWeight: 700, color: balanceColor, whiteSpace: 'nowrap' }}>
-                            {formatCurrency(account.currentBalance)}
+                            {formatCurrency(account.currentBalance, account.currentBalanceCurrency)}
                         </span>
                     </div>
                 </div>
@@ -206,6 +232,7 @@ const AccountLedgerTable = ({ account }) => {
                                     zIndex: 1,
                                 }}
                             >
+                                <th style={{ width: '36px', padding: '0.75rem 0.5rem' }} />
                                 <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Date</th>
                                 <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Reference</th>
                                 <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Description</th>
@@ -231,30 +258,119 @@ const AccountLedgerTable = ({ account }) => {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredLines.map((line) => (
-                                    <tr key={line.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                        <td style={{ padding: '0.85rem 1rem' }}>{line.date || '—'}</td>
-                                        <td style={{ padding: '0.85rem 1rem', fontWeight: 500 }}>{line.reference || '—'}</td>
-                                        <td style={{ padding: '0.85rem 1rem', color: 'var(--color-text-secondary)' }}>
-                                            {line.description || '—'}
-                                        </td>
-                                        <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                                            {line.debit ? formatCurrency(line.debit) : '—'}
-                                        </td>
-                                        <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                                            {line.credit ? formatCurrency(line.credit) : '—'}
-                                        </td>
-                                        <td
-                                            style={{
-                                                padding: '0.85rem 1rem',
-                                                textAlign: 'right',
-                                                fontWeight: 600,
-                                            }}
-                                        >
-                                            {formatCurrency(line.balance)}
-                                        </td>
-                                    </tr>
-                                ))
+                                filteredLines.map((line, index) => {
+                                    const lineKey = line.id || `${line.date}-${line.reference}-${index}`;
+                                    const isExpanded = expandedLineKeys.has(lineKey);
+
+                                    const metadataItems = [
+                                        { label: 'Currency', value: line.currency || '—' },
+                                        { label: 'Balance Currency', value: line.balanceCurrency || '—' },
+                                        { label: 'Base Debit', value: formatCurrency(line.baseDebit, line.balanceCurrency) },
+                                        { label: 'Base Credit', value: formatCurrency(line.baseCredit, line.balanceCurrency) },
+                                        { label: 'Converted Debit', value: formatCurrency(line.convertedDebit, line.balanceCurrency) },
+                                        { label: 'Converted Credit', value: formatCurrency(line.convertedCredit, line.balanceCurrency) },
+                                        {
+                                            label: 'Exchange Rate Used',
+                                            value: isNil(line.exchangeRateUsed) ? '—' : Number(line.exchangeRateUsed).toLocaleString(),
+                                        },
+                                        { label: 'Exchange Rate Date', value: line.exchangeRateDate || '—' },
+                                    ];
+
+                                    return (
+                                        <React.Fragment key={lineKey}>
+                                            <tr
+                                                onClick={() => toggleLineExpansion(lineKey)}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === 'Enter' || event.key === ' ') {
+                                                        event.preventDefault();
+                                                        toggleLineExpansion(lineKey);
+                                                    }
+                                                }}
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-expanded={isExpanded}
+                                                className="ledger-line-row"
+                                                style={{
+                                                    borderBottom: '1px solid var(--color-border)',
+                                                    cursor: 'pointer',
+                                                    background: isExpanded ? 'var(--color-bg-subtle)' : 'transparent',
+                                                }}
+                                            >
+                                                <td style={{ padding: '0.85rem 0.5rem', textAlign: 'center' }}>
+                                                    <ChevronRight
+                                                        size={16}
+                                                        style={{
+                                                            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                                                            transition: 'transform 0.2s ease',
+                                                            color: 'var(--color-text-secondary)',
+                                                        }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '0.85rem 1rem' }}>{line.date || '—'}</td>
+                                                <td style={{ padding: '0.85rem 1rem', fontWeight: 500 }}>{line.reference || '—'}</td>
+                                                <td style={{ padding: '0.85rem 1rem', color: 'var(--color-text-secondary)' }}>
+                                                    {line.description || '—'}
+                                                </td>
+                                                <td style={{ padding: '0.85rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                                    {line.debit ? formatCurrency(line.debit, line.currency) : '—'}
+                                                </td>
+                                                <td style={{ padding: '0.85rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                                    {line.credit ? formatCurrency(line.credit, line.currency) : '—'}
+                                                </td>
+                                                <td
+                                                    style={{
+                                                        padding: '0.85rem 1rem',
+                                                        textAlign: 'right',
+                                                        fontWeight: 600,
+                                                        whiteSpace: 'nowrap',
+                                                    }}
+                                                >
+                                                    {formatCurrency(line.balance, line.balanceCurrency)}
+                                                </td>
+                                            </tr>
+                                            {isExpanded && (
+                                                <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                                    <td colSpan={7} style={{ padding: '0.9rem 1rem 1rem 2.2rem' }}>
+                                                        <div
+                                                            style={{
+                                                                display: 'grid',
+                                                                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                                                                gap: '0.75rem',
+                                                            }}
+                                                        >
+                                                            {metadataItems.map((item) => (
+                                                                <div
+                                                                    key={item.label}
+                                                                    className="ledger-line-metadata-card"
+                                                                    style={{
+                                                                        background: 'var(--color-bg-surface)',
+                                                                        border: '1px solid var(--color-border)',
+                                                                        borderRadius: '0.5rem',
+                                                                        padding: '0.65rem 0.75rem',
+                                                                    }}
+                                                                >
+                                                                    <p
+                                                                        style={{
+                                                                            margin: 0,
+                                                                            fontSize: '0.72rem',
+                                                                            color: 'var(--color-text-secondary)',
+                                                                            fontWeight: 600,
+                                                                        }}
+                                                                    >
+                                                                        {item.label}
+                                                                    </p>
+                                                                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.86rem', fontWeight: 500 }}>
+                                                                        {item.value}
+                                                                    </p>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
@@ -429,6 +545,37 @@ const GeneralLedger = () => {
                 </div>
             </Card>
             <style>{`
+                .ledger-line-row {
+                    transition: background-color 0.2s ease;
+                }
+
+                .ledger-line-row:hover {
+                    background: linear-gradient(
+                        90deg,
+                        color-mix(in srgb, var(--color-primary-500) 10%, transparent) 0%,
+                        color-mix(in srgb, var(--color-primary-500) 4%, transparent) 45%,
+                        transparent 100%
+                    );
+                }
+
+                .ledger-line-row:hover td {
+                    background: transparent;
+                }
+
+                .ledger-line-row:hover td:first-child {
+                    box-shadow: inset 3px 0 0 var(--color-primary-500);
+                }
+
+                .ledger-line-metadata-card {
+                    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+                }
+
+                .ledger-line-metadata-card:hover {
+                    border-color: var(--color-primary-300);
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+                    transform: translateY(-1px);
+                }
+
                 @media (max-width: 520px) {
                     .ledger-type-filter {
                         width: 100%;
