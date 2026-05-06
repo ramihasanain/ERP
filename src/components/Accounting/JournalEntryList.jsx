@@ -51,7 +51,7 @@ const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
                         <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Reference</th>
                         <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Source</th>
                         <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Description</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600, textAlign: 'right' }}>Amount</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Amount</th>
                         <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Status</th>
                         <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Actions</th>
                     </tr>
@@ -99,7 +99,7 @@ const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
                                         {entry.description}
                                     </td>
 
-                                    <td style={{ padding: '1rem 1rem', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
+                                    <td style={{ padding: '1rem 1rem', textAlign: 'right', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
                                         {currency} {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
                                     <td style={{ padding: '1rem 1rem' }}>
