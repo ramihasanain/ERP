@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
+import Pagination from '@/core/Pagination';
 import { X, Calendar, ArrowRight, ArrowLeft, Filter, Search, Tag, Info, List, Link as LinkIcon, Monitor, User, DollarSign, Target, Activity, FileText, Landmark, Download, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -15,6 +16,8 @@ const FinancialDrawer = () => {
     const { language } = useLanguage();
     const { isOpen, entityType, entityId } = drawerState;
     const [activeTab, setActiveTab] = useState('overview');
+    const [transactionsPage, setTransactionsPage] = useState(1);
+    const transactionsPageSize = 15;
     const isCustomerDrawer = entityType === 'Customer' && Boolean(entityId);
     const isJournalDrawer = entityType === 'Journal' && Boolean(entityId);
     const isCostCenterDrawer = entityType === 'Cost Center' && Boolean(entityId);
@@ -24,6 +27,7 @@ const FinancialDrawer = () => {
     /* eslint-disable react-hooks/set-state-in-effect -- deliberate drawer tab reset */
     useLayoutEffect(() => {
         setActiveTab('overview');
+        setTransactionsPage(1);
     }, [isOpen, entityType, entityId]);
     /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -144,11 +148,18 @@ const FinancialDrawer = () => {
     );
 
     const costCenterTransactionsQuery = useCustomQuery(
-        isCostCenterDrawer ? `/accounting/cost-centers/${entityId}/transactions/` : '/accounting/cost-centers/',
-        ['cost-center-drawer-transactions', entityId],
+        isCostCenterDrawer
+            ? `/accounting/cost-centers/${entityId}/transactions/?page=${transactionsPage}&page_size=${transactionsPageSize}`
+            : '/accounting/cost-centers/',
+        ['cost-center-drawer-transactions', entityId, transactionsPage, transactionsPageSize],
         {
             enabled: isOpen && isCostCenterDrawer && activeTab === 'transactions',
-            select: (res) => (Array.isArray(res?.data) ? res.data : []),
+            select: (res) => ({
+                rows: Array.isArray(res?.results)
+                    ? res.results
+                    : (Array.isArray(res?.data) ? res.data : []),
+                count: Number(res?.count ?? (Array.isArray(res?.results) ? res.results.length : 0)),
+            }),
         }
     );
 
@@ -199,15 +210,22 @@ const FinancialDrawer = () => {
     );
 
     const assetTransactionsQuery = useCustomQuery(
-        isAssetDrawer ? `/api/assets/${entityId}/transactions/` : '/api/assets/',
-        ['asset-drawer-transactions', entityId],
+        isAssetDrawer
+            ? `/api/assets/${entityId}/transactions/?page=${transactionsPage}&page_size=${transactionsPageSize}`
+            : '/api/assets/',
+        ['asset-drawer-transactions', entityId, transactionsPage, transactionsPageSize],
         {
             enabled: isOpen && isAssetDrawer && activeTab === 'transactions',
             select: (payload) => {
-                if (Array.isArray(payload?.data)) return payload.data;
-                if (Array.isArray(payload?.results)) return payload.results;
-                if (Array.isArray(payload)) return payload;
-                return [];
+                const rows = Array.isArray(payload?.results)
+                    ? payload.results
+                    : (Array.isArray(payload?.data)
+                        ? payload.data
+                        : (Array.isArray(payload) ? payload : []));
+                return {
+                    rows,
+                    count: Number(payload?.count ?? rows.length),
+                };
             },
         }
     );
@@ -216,6 +234,73 @@ const FinancialDrawer = () => {
         isAssetDrawer ? `/api/assets/${entityId}/related/` : '/api/assets/',
         ['asset-drawer-related', entityId],
         { enabled: isOpen && isAssetDrawer && activeTab === 'related' }
+    );
+
+    const isBankDrawer = entityType === 'Bank' && Boolean(entityId);
+
+    const bankDetailQuery = useCustomQuery(
+        isBankDrawer ? `/accounting/bank-accounts/${entityId}/` : '/accounting/bank-accounts/',
+        ['bank-drawer-detail', entityId],
+        {
+            enabled: isOpen && isBankDrawer,
+            select: (payload) => ({
+                id: payload?.id || '',
+                name: payload?.name || '—',
+                account_type: payload?.account_type || '',
+                account_type_display: payload?.account_type_display || '',
+                bank_name: payload?.bank_name || '',
+                account_number: payload?.account_number || '',
+                currency_code: payload?.currency_code || 'JOD',
+                opening_balance: Number(payload?.opening_balance ?? 0),
+                current_balance: Number(payload?.current_balance ?? 0),
+                account_id: payload?.account_id || '',
+                account_code: payload?.account_code || '',
+                account_name: payload?.account_name || payload?.name || '',
+                is_active: Boolean(payload?.is_active),
+            }),
+        }
+    );
+
+    const bankOverviewQuery = useCustomQuery(
+        isBankDrawer ? `/accounting/bank-accounts/${entityId}/overview/` : '/accounting/bank-accounts/',
+        ['bank-drawer-overview', entityId],
+        {
+            enabled: isOpen && isBankDrawer && activeTab === 'overview',
+            select: (payload) => ({
+                current_balance: Number(payload?.current_balance ?? 0),
+                currency: payload?.currency || 'JOD',
+                activity_count: Number(payload?.activity_count ?? 0),
+                last_transaction: payload?.last_transaction ?? null,
+                ledger_sync_note: payload?.ledger_sync_note || 'Real-time Ledger Sync Complete',
+            }),
+        }
+    );
+
+    const bankTransactionsQuery = useCustomQuery(
+        isBankDrawer
+            ? `/accounting/bank-accounts/${entityId}/transactions/?page=${transactionsPage}&page_size=${transactionsPageSize}`
+            : '/accounting/bank-accounts/',
+        ['bank-drawer-transactions', entityId, transactionsPage, transactionsPageSize],
+        {
+            enabled: isOpen && isBankDrawer && activeTab === 'transactions',
+            select: (payload) => {
+                const rows = Array.isArray(payload?.results)
+                    ? payload.results
+                    : (Array.isArray(payload?.data)
+                        ? payload.data
+                        : (Array.isArray(payload) ? payload : []));
+                return {
+                    rows,
+                    count: Number(payload?.count ?? rows.length),
+                };
+            },
+        }
+    );
+
+    const bankRelatedQuery = useCustomQuery(
+        isBankDrawer ? `/accounting/bank-accounts/${entityId}/related/` : '/accounting/bank-accounts/',
+        ['bank-drawer-related', entityId],
+        { enabled: isOpen && isBankDrawer && activeTab === 'related' }
     );
 
     // Handle ESC key
@@ -289,7 +374,7 @@ const FinancialDrawer = () => {
                 const fromContext = accounts.find(a => a.id === entityId);
                 const detail = assetDetailQuery.data;
                 const overview = assetOverviewQuery.data;
-                const txRows = assetTransactionsQuery.data;
+                const txRows = assetTransactionsQuery.data?.rows;
                 const related = assetRelatedQuery.data;
                 const currency = overview?.currency || 'JOD';
                 const history_logs = Array.isArray(txRows)
@@ -321,7 +406,47 @@ const FinancialDrawer = () => {
                     assetRelated: related || null,
                 };
             }
-            case 'Bank': return bankAccounts.find(b => b.id === entityId);
+            case 'Bank': {
+                const fromContext = bankAccounts.find((b) => b.id === entityId);
+                const detail = bankDetailQuery.data;
+                const overview = bankOverviewQuery.data;
+                const txRows = bankTransactionsQuery.data?.rows;
+                const related = bankRelatedQuery.data;
+                const currency = overview?.currency || detail?.currency_code || fromContext?.currency || 'JOD';
+                const history_logs = Array.isArray(txRows)
+                    ? txRows.map((log) => mapHistoryLogRow(log, currency))
+                    : [];
+
+                return {
+                    id: entityId,
+                    ...(fromContext || {}),
+                    ...(detail?.id
+                        ? {
+                            ...detail,
+                            id: detail.id,
+                            name: detail.name || fromContext?.name || '—',
+                            accountNumber: detail.account_number || fromContext?.accountNumber || '',
+                            currency: detail.currency_code || fromContext?.currency || 'JOD',
+                            openingBalance: Number(detail.opening_balance ?? fromContext?.openingBalance ?? 0),
+                            currentBalance: Number(detail.current_balance ?? fromContext?.currentBalance ?? 0),
+                            glAccountId: detail.account_id || fromContext?.glAccountId || '',
+                            code: detail.account_code || fromContext?.code || '',
+                            isActive: detail.is_active ?? fromContext?.isActive ?? true,
+                        }
+                        : {}),
+                    overview: overview
+                        ? {
+                            current_balance: Number(overview?.current_balance ?? 0),
+                            currency,
+                            activity_count: Number(overview?.activity_count ?? 0),
+                            last_transaction: overview?.last_transaction ?? null,
+                            ledger_sync_note: overview?.ledger_sync_note || 'Real-time Ledger Sync Complete',
+                        }
+                        : undefined,
+                    history_logs,
+                    bankRelated: related || null,
+                };
+            }
             case 'Cost Center': {
                 const fromContext = costCenters.find(cc => cc.id === entityId);
                 const detail = costCenterDetailQuery.data;
@@ -338,7 +463,7 @@ const FinancialDrawer = () => {
                         : {}),
                 };
                 const overview = costCenterOverviewQuery.data;
-                const txRows = costCenterTransactionsQuery.data;
+                const txRows = costCenterTransactionsQuery.data?.rows;
                 const related = costCenterRelatedQuery.data;
                 const currency = overview?.currency || 'JOD';
                 const history_logs = Array.isArray(txRows)
@@ -361,7 +486,7 @@ const FinancialDrawer = () => {
             }
             default: return null;
         }
-    }, [entityType, entityId, accounts, entries, customers, costCenters, bankAccounts, customerDetailsQuery.data, journalDetailsQuery.data, costCenterDetailQuery.data, costCenterOverviewQuery.data, costCenterTransactionsQuery.data, costCenterRelatedQuery.data, assetDetailQuery.data, assetOverviewQuery.data, assetTransactionsQuery.data, assetRelatedQuery.data]);
+    }, [entityType, entityId, accounts, entries, customers, costCenters, bankAccounts, customerDetailsQuery.data, journalDetailsQuery.data, costCenterDetailQuery.data, costCenterOverviewQuery.data, costCenterTransactionsQuery.data, costCenterRelatedQuery.data, assetDetailQuery.data, assetOverviewQuery.data, assetTransactionsQuery.data, assetRelatedQuery.data, bankDetailQuery.data, bankOverviewQuery.data, bankTransactionsQuery.data, bankRelatedQuery.data]);
 
     // Transaction History for Entity (Supports Aggregation)
     const transactionHistory = useMemo(() => {
@@ -381,7 +506,9 @@ const FinancialDrawer = () => {
                 ? entityData.history_logs
                 : [];
         } else if (entityType === 'Bank') {
-            relatedEntries = entries.filter(e => e.lines.some(l => l.account === entityData.glAccountId));
+            relatedEntries = Array.isArray(entityData?.history_logs)
+                ? entityData.history_logs
+                : [];
         } else if (entityType === 'Cost Center') {
             relatedEntries = Array.isArray(entityData?.history_logs)
                 ? entityData.history_logs
@@ -393,6 +520,50 @@ const FinancialDrawer = () => {
         return relatedEntries.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
     }, [entityType, entityId, entityData, entries, getAllChildAccountIds]);
 
+    const transactionTotalCount = useMemo(() => {
+        if (entityType === 'Cost Center') return Number(costCenterTransactionsQuery.data?.count ?? transactionHistory.length);
+        if (entityType === 'Asset') return Number(assetTransactionsQuery.data?.count ?? transactionHistory.length);
+        if (entityType === 'Bank') return Number(bankTransactionsQuery.data?.count ?? transactionHistory.length);
+        return transactionHistory.length;
+    }, [
+        entityType,
+        transactionHistory.length,
+        costCenterTransactionsQuery.data?.count,
+        assetTransactionsQuery.data?.count,
+        bankTransactionsQuery.data?.count,
+    ]);
+
+    const isDrawerInitialLoading = useMemo(() => {
+        if (entityType === 'Customer') {
+            return customerDetailsQuery.isPending && !customerDetailsQuery.data;
+        }
+        if (entityType === 'Journal') {
+            return journalDetailsQuery.isPending && !journalDetailsQuery.data;
+        }
+        if (entityType === 'Cost Center') {
+            return costCenterDetailQuery.isPending && !costCenterDetailQuery.data;
+        }
+        if (entityType === 'Asset') {
+            return assetDetailQuery.isPending && !assetDetailQuery.data;
+        }
+        if (entityType === 'Bank') {
+            return bankDetailQuery.isPending && !bankDetailQuery.data;
+        }
+        return false;
+    }, [
+        entityType,
+        customerDetailsQuery.isPending,
+        customerDetailsQuery.data,
+        journalDetailsQuery.isPending,
+        journalDetailsQuery.data,
+        costCenterDetailQuery.isPending,
+        costCenterDetailQuery.data,
+        assetDetailQuery.isPending,
+        assetDetailQuery.data,
+        bankDetailQuery.isPending,
+        bankDetailQuery.data,
+    ]);
+
     if (!isOpen) return null;
 
     return (
@@ -402,6 +573,14 @@ const FinancialDrawer = () => {
             display: 'flex', justifyContent: 'flex-end',
             transition: 'opacity 0.3s ease'
         }} onClick={closeDrawer}>
+            <style>
+                {`
+                    @keyframes drawerSkeletonShimmer {
+                        0% { background-position: 100% 0; }
+                        100% { background-position: -100% 0; }
+                    }
+                `}
+            </style>
             <div
                 style={{
                     width: '100%', maxWidth: '520px', background: 'var(--color-bg-surface)',
@@ -444,11 +623,15 @@ const FinancialDrawer = () => {
                             <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary-600)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                                 {entityType} {t.historyLogs}
                             </p>
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-main)' }}>
-                                {isCostCenterDrawer && costCenterDetailQuery.isPending && !costCenterDetailQuery.data
-                                    ? (language === 'ar' ? 'جاري التحميل…' : 'Loading…')
-                                    : (entityData?.name || 'Unknown Entity')}
-                            </h3>
+                            {isDrawerInitialLoading ? (
+                                <div style={{ marginTop: '0.45rem' }}>
+                                    <SkeletonLine width="220px" height="1.2rem" />
+                                </div>
+                            ) : (
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-main)' }}>
+                                    {entityData?.name || 'Unknown Entity'}
+                                </h3>
+                            )}
                         </div>
                     </div>
 
@@ -479,6 +662,8 @@ const FinancialDrawer = () => {
                             isAssetOverviewError={isAssetDrawer && assetOverviewQuery.isError}
                             isAssetDetailLoading={isAssetDrawer && assetDetailQuery.isPending}
                             isAssetDetailError={isAssetDrawer && assetDetailQuery.isError}
+                            isBankOverviewLoading={isBankDrawer && bankOverviewQuery.isPending}
+                            isBankOverviewError={isBankDrawer && bankOverviewQuery.isError}
                         />
                     )}
                     {activeTab === 'transactions' && (
@@ -486,14 +671,19 @@ const FinancialDrawer = () => {
                             language={language}
                             t={t}
                             history={transactionHistory}
+                            totalCount={transactionTotalCount}
                             entityName={entityData?.name}
                             entityType={entityType}
                             entityId={entityId}
                             entityData={entityData}
                             accounts={accounts}
                             getAllChildAccountIds={getAllChildAccountIds}
+                            currentPage={transactionsPage}
+                            pageSize={transactionsPageSize}
+                            onPageChange={setTransactionsPage}
                             isCostCenterTransactionsLoading={isCostCenterDrawer && costCenterTransactionsQuery.isPending}
                             isAssetTransactionsLoading={isAssetDrawer && assetTransactionsQuery.isPending}
+                            isBankTransactionsLoading={isBankDrawer && bankTransactionsQuery.isPending}
                         />
                     )}
                     {activeTab === 'related' && (
@@ -505,6 +695,8 @@ const FinancialDrawer = () => {
                             isCostCenterRelatedError={isCostCenterDrawer && costCenterRelatedQuery.isError}
                             isAssetRelatedLoading={isAssetDrawer && assetRelatedQuery.isPending}
                             isAssetRelatedError={isAssetDrawer && assetRelatedQuery.isError}
+                            isBankRelatedLoading={isBankDrawer && bankRelatedQuery.isPending}
+                            isBankRelatedError={isBankDrawer && bankRelatedQuery.isError}
                         />
                     )}
                 </div>
@@ -559,6 +751,109 @@ const AestheticBadge = ({ status, type }) => {
     );
 };
 
+const SkeletonLine = ({ width = '100%', height = '0.875rem', radius = '8px' }) => (
+    <div
+        aria-hidden
+        style={{
+            width,
+            height,
+            borderRadius: radius,
+            background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-bg-subtle) 92%, #fff) 0%, color-mix(in srgb, var(--color-bg-subtle) 72%, #fff) 50%, color-mix(in srgb, var(--color-bg-subtle) 92%, #fff) 100%)',
+            backgroundSize: '220% 100%',
+            animation: 'drawerSkeletonShimmer 1.35s ease-in-out infinite',
+        }}
+    />
+);
+
+const OverviewSkeleton = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{
+            background: 'var(--color-bg-surface)',
+            padding: '1.5rem',
+            borderRadius: '20px',
+            border: '1px solid var(--color-border)',
+        }}>
+            <SkeletonLine width="120px" height="0.8rem" />
+            <div style={{ marginTop: '0.85rem' }}>
+                <SkeletonLine width="70%" height="2.1rem" radius="12px" />
+            </div>
+            <div style={{ marginTop: '0.9rem' }}>
+                <SkeletonLine width="55%" height="0.75rem" />
+            </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <Card style={{ padding: '1.25rem', borderRadius: '16px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+                <SkeletonLine width="65%" height="0.72rem" />
+                <div style={{ marginTop: '0.7rem' }}>
+                    <SkeletonLine width="40%" height="1.35rem" />
+                </div>
+            </Card>
+            <Card style={{ padding: '1.25rem', borderRadius: '16px', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)' }}>
+                <SkeletonLine width="70%" height="0.72rem" />
+                <div style={{ marginTop: '0.7rem' }}>
+                    <SkeletonLine width="60%" height="1.05rem" />
+                </div>
+            </Card>
+        </div>
+        <div style={{ background: 'var(--color-bg-surface)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
+            <SkeletonLine width="35%" height="0.8rem" />
+            <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                <SkeletonLine width="100%" />
+                <SkeletonLine width="93%" />
+                <SkeletonLine width="76%" />
+            </div>
+        </div>
+    </div>
+);
+
+const TransactionListSkeleton = ({ rows = 4 }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {Array.from({ length: rows }).map((_, idx) => (
+            <div key={idx} style={{
+                padding: '1.2rem',
+                borderRadius: '16px',
+                background: 'var(--color-bg-surface)',
+                border: '1px solid var(--color-border)',
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <SkeletonLine width="110px" height="0.82rem" />
+                    <SkeletonLine width="70px" height="0.72rem" />
+                </div>
+                <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <SkeletonLine width="58%" height="0.9rem" />
+                    <SkeletonLine width="105px" height="1rem" />
+                </div>
+            </div>
+        ))}
+    </div>
+);
+
+const RelatedSkeleton = ({ rows = 4 }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <SkeletonLine width="140px" height="0.95rem" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+            <SkeletonLine width="100%" />
+            <SkeletonLine width="92%" />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+            {Array.from({ length: rows }).map((_, idx) => (
+                <div key={idx} style={{
+                    padding: '1rem',
+                    borderRadius: '12px',
+                    background: 'var(--color-bg-surface)',
+                    border: '1px solid var(--color-border)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                }}>
+                    <SkeletonLine width="42%" height="0.82rem" />
+                    <SkeletonLine width="28%" height="0.88rem" />
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
 const OverviewTab = ({
     t, entityType, data, history, getAccountBalance,
     isCustomerDetailsLoading, isCustomerDetailsError,
@@ -566,8 +861,9 @@ const OverviewTab = ({
     isCostCenterDetailLoading, isCostCenterDetailError,
     isAssetOverviewLoading, isAssetOverviewError,
     isAssetDetailLoading, isAssetDetailError,
+    isBankOverviewLoading, isBankOverviewError,
 }) => {
-    const usesApiOverview = entityType === 'Journal' || entityType === 'Cost Center' || entityType === 'Asset';
+    const usesApiOverview = entityType === 'Journal' || entityType === 'Cost Center' || entityType === 'Asset' || entityType === 'Bank';
     const ccOverview = entityType === 'Cost Center' ? data?.overview : null;
     const assetOverview = entityType === 'Asset' ? data?.overview : null;
     const balanceAccountId = entityType === 'Bank' ? data?.glAccountId : data?.id;
@@ -602,8 +898,15 @@ const OverviewTab = ({
     const showCostCenterOverviewError = entityType === 'Cost Center' && isCostCenterOverviewError;
     const showAssetOverviewLoading = entityType === 'Asset' && isAssetOverviewLoading;
     const showAssetOverviewError = entityType === 'Asset' && isAssetOverviewError;
-    const showOverviewLoading = showCostCenterOverviewLoading || showAssetOverviewLoading;
-    const showOverviewError = showCostCenterOverviewError || showAssetOverviewError;
+    const showBankOverviewLoading = entityType === 'Bank' && isBankOverviewLoading;
+    const showBankOverviewError = entityType === 'Bank' && isBankOverviewError;
+    const showOverviewLoading = showCostCenterOverviewLoading || showAssetOverviewLoading || showBankOverviewLoading;
+    const showOverviewError = showCostCenterOverviewError || showAssetOverviewError || showBankOverviewError;
+    const showPrimaryOverviewSkeleton = showOverviewLoading && !data?.overview;
+
+    if (showPrimaryOverviewSkeleton) {
+        return <OverviewSkeleton />;
+    }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -663,7 +966,16 @@ const OverviewTab = ({
                     {isCostCenterDetailError ? (
                         <p style={{ fontSize: '0.85rem', color: 'var(--color-error)', margin: 0 }}>Could not load cost center details.</p>
                     ) : isCostCenterDetailLoading ? (
-                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: 0 }}>Loading cost center details…</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1rem' }}>
+                            {Array.from({ length: 6 }).map((_, idx) => (
+                                <div key={idx}>
+                                    <SkeletonLine width="45%" height="0.7rem" />
+                                    <div style={{ marginTop: '0.35rem' }}>
+                                        <SkeletonLine width="70%" height="0.85rem" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1rem' }}>
                             <DetailItem label="Code" value={data?.code} />
@@ -683,7 +995,16 @@ const OverviewTab = ({
                     {isAssetDetailError ? (
                         <p style={{ fontSize: '0.85rem', color: 'var(--color-error)', margin: 0 }}>Could not load asset details.</p>
                     ) : isAssetDetailLoading ? (
-                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: 0 }}>Loading asset details…</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1rem' }}>
+                            {Array.from({ length: 6 }).map((_, idx) => (
+                                <div key={idx}>
+                                    <SkeletonLine width="48%" height="0.7rem" />
+                                    <div style={{ marginTop: '0.35rem' }}>
+                                        <SkeletonLine width="72%" height="0.85rem" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1rem' }}>
                             <DetailItem label="Account code" value={data?.account_code || data?.code} />
@@ -702,7 +1023,16 @@ const OverviewTab = ({
                     <h4 style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--color-text-main)' }}>Customer Details</h4>
 
                     {isCustomerDetailsLoading ? (
-                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: 0 }}>Loading customer details...</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1rem' }}>
+                            {Array.from({ length: 7 }).map((_, idx) => (
+                                <div key={idx} style={{ gridColumn: idx === 6 ? '1 / -1' : 'auto' }}>
+                                    <SkeletonLine width="42%" height="0.7rem" />
+                                    <div style={{ marginTop: '0.35rem' }}>
+                                        <SkeletonLine width={idx === 6 ? '85%' : '75%'} height="0.85rem" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : isCustomerDetailsError ? (
                         <p style={{ fontSize: '0.85rem', color: 'var(--color-error)', margin: 0 }}>Could not load customer details.</p>
                     ) : (
@@ -730,9 +1060,11 @@ const DetailItem = ({ label, value, fullWidth = false }) => (
 );
 
 const TransactionsTab = ({
-    language, t, history, entityName, entityType, entityId, entityData, accounts, getAllChildAccountIds,
+    language, t, history, totalCount, entityName, entityType, entityId, entityData, accounts, getAllChildAccountIds,
+    currentPage, pageSize, onPageChange,
     isCostCenterTransactionsLoading,
     isAssetTransactionsLoading,
+    isBankTransactionsLoading,
 }) => {
     const [expandedEntry, setExpandedEntry] = useState(null);
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -783,13 +1115,12 @@ const TransactionsTab = ({
         exportToCSV(fullLedger, `Detailed_Ledger_${entityName}`);
     };
 
-    if ((isCostCenterTransactionsLoading || isAssetTransactionsLoading) && history.length === 0) {
-        return (
-            <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--color-text-muted)' }}>
-                <Activity size={48} style={{ opacity: 0.1, marginBottom: '1.5rem' }} />
-                <p style={{ fontWeight: 600 }}>Loading transactions…</p>
-            </div>
-        );
+    useEffect(() => {
+        setExpandedEntry(null);
+    }, [entityId, entityType, history.length, currentPage]);
+
+    if ((isCostCenterTransactionsLoading || isAssetTransactionsLoading || isBankTransactionsLoading) && history.length === 0) {
+        return <TransactionListSkeleton />;
     }
 
     if (history.length === 0) {
@@ -802,7 +1133,6 @@ const TransactionsTab = ({
     }
 
     const isGroup = entityData?.isGroup;
-
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
@@ -938,6 +1268,18 @@ const TransactionsTab = ({
                     </div>
                 );
             })}
+
+            <div style={{ marginTop: '0.5rem' }}>
+                <Pagination
+                    currentPage={currentPage}
+                    count={totalCount}
+                    pageSize={pageSize}
+                    onPageChange={(page) => {
+                        onPageChange?.(page);
+                        setExpandedEntry(null);
+                    }}
+                />
+            </div>
         </div>
     );
 };
@@ -945,10 +1287,12 @@ const TransactionsTab = ({
 const RelatedTab = ({
     t, entityType, data, isCostCenterRelatedLoading, isCostCenterRelatedError,
     isAssetRelatedLoading, isAssetRelatedError,
+    isBankRelatedLoading, isBankRelatedError,
 }) => {
     const journalMeta = data?.related?.journal_entry;
     const costRel = data?.costCenterRelated;
     const assetRel = data?.assetRelated;
+    const bankRel = data?.bankRelated;
     const normalizeLabel = (value) => {
         if (!value || typeof value !== 'string') return '—';
         return value
@@ -969,6 +1313,8 @@ const RelatedTab = ({
                     ? costRel.connected_modules_description
                     : entityType === 'Asset' && assetRel?.connected_modules_description
                         ? assetRel.connected_modules_description
+                        : entityType === 'Bank' && bankRel?.connected_modules_description
+                            ? bankRel.connected_modules_description
                     : defaultRelatedIntro}
             </p>
 
@@ -981,8 +1327,30 @@ const RelatedTab = ({
                 )}
                 {entityType === 'Bank' && (
                     <>
-                        <RelatedItem label="GL Mapping" value={data?.glAccountId || '—'} />
-                        <RelatedItem label="Treasury" value="Cash Management" />
+                        {isBankRelatedLoading && (
+                            <RelatedSkeleton rows={3} />
+                        )}
+                        {isBankRelatedError && (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--color-error)', margin: 0 }}>Could not load related dimensions.</p>
+                        )}
+                        {!isBankRelatedLoading && !isBankRelatedError && (
+                            <>
+                                {(bankRel?.mappings || []).length === 0 ? (
+                                    <>
+                                        <RelatedItem label="GL Mapping" value={data?.code || data?.glAccountId || '—'} />
+                                        <RelatedItem label="Treasury" value="Cash Management" />
+                                    </>
+                                ) : (
+                                    (bankRel?.mappings || []).map((mapping, idx) => (
+                                        <RelatedItem
+                                            key={`${mapping?.module || 'module'}-${idx}`}
+                                            label={mapping?.module || 'Module'}
+                                            value={mapping?.dimension || '—'}
+                                        />
+                                    ))
+                                )}
+                            </>
+                        )}
                     </>
                 )}
                 {entityType === 'Customer' && (
@@ -994,7 +1362,7 @@ const RelatedTab = ({
                 {entityType === 'Asset' && (
                     <>
                         {isAssetRelatedLoading && (
-                            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: 0 }}>Loading related data…</p>
+                            <RelatedSkeleton rows={3} />
                         )}
                         {isAssetRelatedError && (
                             <p style={{ fontSize: '0.85rem', color: 'var(--color-error)', margin: 0 }}>Could not load related dimensions.</p>
@@ -1028,7 +1396,7 @@ const RelatedTab = ({
                 {entityType === 'Cost Center' && (
                     <>
                         {isCostCenterRelatedLoading && (
-                            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: 0 }}>Loading related data…</p>
+                            <RelatedSkeleton rows={3} />
                         )}
                         {isCostCenterRelatedError && (
                             <p style={{ fontSize: '0.85rem', color: 'var(--color-error)', margin: 0 }}>Could not load related dimensions.</p>
