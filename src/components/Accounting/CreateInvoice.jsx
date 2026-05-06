@@ -64,9 +64,11 @@ const toNumber = (value) => {
 const normalizeCatalogItems = (response) => normalizePagedResponse(response).items.map((catalogItem) => {
     const item = catalogItem?.item || catalogItem?.product || catalogItem;
     const taxRule = catalogItem?.tax_rule || item?.tax_rule || {};
+    const resolvedProductId = catalogItem?.product_id || item?.product_id || catalogItem?.id;
 
     return {
         id: catalogItem.id,
+        productId: resolvedProductId,
         name: item?.name || catalogItem.name || catalogItem.description || 'Unnamed item',
         sku: item?.sku || catalogItem.sku || '',
         price: toNumber(catalogItem.selling_price ?? catalogItem.unit_price ?? item?.selling_price ?? item?.cost_price),
@@ -83,17 +85,18 @@ const normalizeWarehouses = (response) => normalizePagedResponse(response).items
     location: warehouse.location || '',
 }));
 
-const buildInvoicePayload = ({ customerId, invoiceDate, dueDate, isTaxInclusive, notes, warehouseId, items, includeTaxFlag = true }) => ({
+const buildInvoicePayload = ({ customerId, invoiceDate, dueDate, isTaxInclusive, notes, billingAddress, warehouseId, items, includeTaxFlag = true }) => ({
     customer: customerId,
     ...(includeTaxFlag ? { amounts_include_tax: Boolean(isTaxInclusive) } : {}),
     invoice_date: invoiceDate,
     due_date: dueDate,
     notes,
+    billing_address: billingAddress || '',
     warehouse: warehouseId,
     lines: items
-        .filter((item) => item.productId && toNumber(item.qty) > 0)
+        .filter((item) => item.catalogItemId && toNumber(item.qty) > 0)
         .map((item) => ({
-            sales_catalog_item: item.productId,
+            sales_catalog_item: item.catalogItemId,
             quantity: String(item.qty),
             ...(item.taxRuleId ? { tax_rule: item.taxRuleId } : {}),
         })),
@@ -124,6 +127,7 @@ const CreateInvoice = () => {
     const [dueDate, setDueDate] = useState('');
     const [isTaxInclusive, setIsTaxInclusive] = useState(false);
     const [notes, setNotes] = useState('');
+    const [billingAddress, setBillingAddress] = useState('');
     const [warehouseId, setWarehouseId] = useState('');
     const [warehouseSearchTerm, setWarehouseSearchTerm] = useState('');
     const [warehousePage, setWarehousePage] = useState(1);
@@ -140,7 +144,7 @@ const CreateInvoice = () => {
 
     // Items State
     const [items, setItems] = useState([
-        { id: 1, productId: '', item: '', qty: 1, price: 0, taxRuleId: '', costCenter: '', taxAmount: 0, total: 0 }
+        { id: 1, product: null, productId: '', catalogItemId: '', item: '', qty: 1, price: 0, taxRuleId: '', costCenter: '', taxAmount: 0, total: 0 }
     ]);
     const [initialPayload, setInitialPayload] = useState(null);
     const [initializedInvoiceId, setInitializedInvoiceId] = useState('');
@@ -278,10 +282,22 @@ const CreateInvoice = () => {
         const invoice = invoiceDetailsQuery.data;
         if (!isEditMode || !invoice || initializedInvoiceId === invoiceId) return;
 
+        const resolveId = (value) => {
+            if (typeof value === 'string') return value;
+            if (typeof value === 'number') return String(value);
+            if (value && typeof value === 'object') return value.id || value.uuid || '';
+            return '';
+        };
+
         const nextItems = (invoice.lines || []).map((line, index) => ({
-            id: line.id || `${line.sales_catalog_item}-${index}`,
-            productId: line.sales_catalog_item || '',
-            item: line.description || '',
+            id: line.id || `${resolveId(line.sales_catalog_item)}-${index}`,
+            product: {
+                id: resolveId(line.sales_catalog_item?.product_id) || resolveId(line.product?.id),
+                name: line.product?.name || line.sales_catalog_item?.name || line.description || '',
+            },
+            productId: resolveId(line.sales_catalog_item?.product_id) || resolveId(line.product?.id),
+            catalogItemId: resolveId(line.sales_catalog_item),
+            item: line.description || line.product?.name || line.sales_catalog_item?.name || '',
             qty: String(Number(line.quantity ?? 1)),
             price: toNumber(line.unit_price),
             taxRuleId: line.tax_rule?.id || '',
@@ -292,7 +308,7 @@ const CreateInvoice = () => {
         }));
         const populatedItems = nextItems.length
             ? nextItems
-            : [{ id: 1, productId: '', item: '', qty: 1, price: 0, taxRuleId: '', costCenter: '', taxAmount: 0, total: 0 }];
+            : [{ id: 1, product: null, productId: '', catalogItemId: '', item: '', qty: 1, price: 0, taxRuleId: '', costCenter: '', taxAmount: 0, total: 0 }];
 
         const selectedCustomer = {
             id: invoice.customer,
@@ -303,13 +319,14 @@ const CreateInvoice = () => {
             name: invoice.warehouse_display?.name || invoice.warehouse || 'Warehouse',
         };
         const selectedProducts = (invoice.lines || [])
-            .filter((line) => line.sales_catalog_item)
+            .filter((line) => resolveId(line.sales_catalog_item))
             .map((line) => ({
-                id: line.sales_catalog_item,
-                name: line.description || line.product || 'Invoice item',
-                sku: '',
-                price: toNumber(line.unit_price),
-                description: line.description || '',
+                id: resolveId(line.sales_catalog_item),
+                productId: resolveId(line.sales_catalog_item?.product_id) || resolveId(line.product?.id) || resolveId(line.sales_catalog_item),
+                name: line.sales_catalog_item?.name || line.product?.name || line.description || 'Invoice item',
+                sku: line.sales_catalog_item?.sku || line.product?.sku || '',
+                price: toNumber(line.unit_price ?? line.sales_catalog_item?.selling_price ?? line.product?.selling_price),
+                description: line.description || line.sales_catalog_item?.description || line.product?.description || '',
                 taxRuleId: line.tax_rule?.id || '',
                 taxRuleName: line.tax_rule?.name || '',
             }));
@@ -326,6 +343,7 @@ const CreateInvoice = () => {
         setDueDate(invoice.due_date || '');
         setIsTaxInclusive(Boolean(invoice.amounts_include_tax));
         setNotes(invoice.notes || '');
+        setBillingAddress(invoice.billing_address || '');
         setWarehouseId(invoice.warehouse || '');
         setItems(populatedItems);
         setCustomerOptions((prev) => mergeUniqueById(prev, selectedCustomer.id ? [selectedCustomer] : [], 2));
@@ -339,6 +357,7 @@ const CreateInvoice = () => {
             dueDate: invoice.due_date || '',
             isTaxInclusive: Boolean(invoice.amounts_include_tax),
             notes: invoice.notes || '',
+            billingAddress: invoice.billing_address || '',
             warehouseId: invoice.warehouse || '',
             items: populatedItems,
         }));
@@ -389,8 +408,29 @@ const CreateInvoice = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTaxInclusive, taxRateById, items.map(i => `${i.qty}-${i.price}-${i.taxRuleId}`).join(',')]);
 
+    useEffect(() => {
+        if (!productOptions.length) return;
+        setItems((prev) => prev.map((line) => {
+            if (line.catalogItemId || !line.productId) return line;
+            const matchedCatalogItem = productOptions.find((product) => product.productId === line.productId);
+            if (!matchedCatalogItem) return line;
+
+            return {
+                ...line,
+                product: line.product || {
+                    id: matchedCatalogItem.productId || '',
+                    name: matchedCatalogItem.name || '',
+                },
+                catalogItemId: matchedCatalogItem.id,
+                item: line.item || matchedCatalogItem.name || matchedCatalogItem.description || '',
+                price: toNumber(line.price) || matchedCatalogItem.price,
+                taxRuleId: line.taxRuleId || matchedCatalogItem.taxRuleId || '',
+            };
+        }));
+    }, [productOptions]);
+
     const addItem = () => {
-        setItems([...items, { id: Date.now(), productId: '', item: '', qty: 1, price: 0, taxRuleId: '', costCenter: '', taxAmount: 0, total: 0 }]);
+        setItems([...items, { id: Date.now(), product: null, productId: '', catalogItemId: '', item: '', qty: 1, price: 0, taxRuleId: '', costCenter: '', taxAmount: 0, total: 0 }]);
     };
 
     const removeItem = (id) => {
@@ -417,10 +457,11 @@ const CreateInvoice = () => {
         dueDate,
         isTaxInclusive,
         notes,
+        billingAddress,
         warehouseId,
         items,
         includeTaxFlag: isEditMode || isTaxInclusive,
-    }), [customerId, dueDate, invoiceDate, isEditMode, isTaxInclusive, items, notes, warehouseId]);
+    }), [billingAddress, customerId, dueDate, invoiceDate, isEditMode, isTaxInclusive, items, notes, warehouseId]);
     const isFormComplete = isInvoicePayloadComplete(invoicePayload);
     const hasInvoiceChanges = !isEditMode || JSON.stringify(invoicePayload) !== JSON.stringify(initialPayload);
     const isSubmitting = createInvoiceMutation.isPending || updateInvoiceMutation.isPending;
@@ -531,7 +572,12 @@ const CreateInvoice = () => {
                                 <Plus size={18} />
                             </Button>
                         </div>
-                        <Input label="Billing Address" placeholder="Street, City, Country" />
+                        <Input
+                            label="Billing Address"
+                            placeholder="Street, City, Country"
+                            value={billingAddress}
+                            onChange={(e) => setBillingAddress(e.target.value)}
+                        />
 
                         <SearchableSelectBackend
                             label="Warehouse"
@@ -588,6 +634,7 @@ const CreateInvoice = () => {
 
                 <div className="invoice-lines" style={{ position: 'relative', zIndex: 20 }}>
                     <div className="invoice-lines-header">
+                        <span>Product</span>
                         <span>Item Description</span>
                         <span style={{ textAlign: 'center' }}>Qty</span>
                         <span style={{ textAlign: 'right' }}>Price</span>
@@ -599,8 +646,8 @@ const CreateInvoice = () => {
                     <div className="invoice-lines-body">
                         {items.map((item) => (
                             <div key={item.id} className="invoice-line-row">
-                                <div className="invoice-line-field invoice-line-item" data-label="Item Description">
-                                    <div className="invoice-mobile-label">Item Description</div>
+                                <div className="invoice-line-field invoice-line-product" data-label="Product">
+                                    <div className="invoice-mobile-label">Product</div>
                                     <div style={{ minWidth: 0 }}>
                                         <SearchableSelectBackend
                                             value={item.productId}
@@ -610,26 +657,41 @@ const CreateInvoice = () => {
                                             onChange={(nextValue, selectedProduct) => {
                                                 setItems(prev => prev.map(i => i.id === item.id ? {
                                                     ...i,
+                                                    product: selectedProduct ? {
+                                                        id: nextValue,
+                                                        name: selectedProduct?.name || '',
+                                                    } : null,
                                                     productId: nextValue,
-                                                    item: selectedProduct?.description || selectedProduct?.name || '',
+                                                    catalogItemId: selectedProduct?.id || '',
+                                                    item: selectedProduct?.name || selectedProduct?.description || '',
                                                     price: selectedProduct?.price ?? i.price,
                                                     taxRuleId: selectedProduct?.taxRuleId || i.taxRuleId,
                                                 } : i));
                                             }}
-                                            placeholder="Search item..."
+                                            placeholder="Search product..."
                                             emptyLabel={productsQuery.isFetching && productPage === 1 ? 'Loading items...' : 'No items found'}
                                             getOptionLabel={(option) => [
                                                 option.name,
                                                 option.sku ? `SKU: ${option.sku}` : '',
                                                 `${toNumber(option.price).toFixed(2)}`,
                                             ].filter(Boolean).join(' - ')}
-                                            getOptionValue={(option) => option.id}
+                                            getOptionValue={(option) => option.productId || option.id}
                                             hasMore={productsHasMore}
                                             onLoadMore={() => setProductPage((prev) => prev + 1)}
                                             isLoadingMore={productsQuery.isFetching && productPage > 1}
                                             isInitialLoading={productsQuery.isFetching && productPage === 1}
                                             paginationError={productsQuery.isError ? 'Failed to load items.' : ''}
                                             zIndex={4000}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="invoice-line-field invoice-line-item" data-label="Item Description">
+                                    <div className="invoice-mobile-label">Item Description</div>
+                                    <div style={{ minWidth: 0 }}>
+                                        <Input
+                                            value={item.product?.name || item.item || ''}
+                                            readOnly
+                                            placeholder="Description"
                                         />
                                     </div>
                                 </div>
@@ -737,7 +799,7 @@ const CreateInvoice = () => {
                     flex-direction: column;
                     gap: 2rem;
                     width: 100%;
-                    max-width: 1000px;
+                    max-width: 1400px;
                     min-width: 0;
                     margin: 0 auto;
                 }
@@ -780,18 +842,16 @@ const CreateInvoice = () => {
                     gap: 0;
                     margin-bottom: 1.5rem;
                     min-width: 0;
-                    overflow-x: auto;
-                    overflow-y: visible;
-                    padding-bottom: 0.25rem;
+                    overflow: visible;
                 }
 
                 .invoice-lines-header,
                 .invoice-line-row {
                     display: grid;
-                    grid-template-columns: minmax(0, 2fr) minmax(4.5rem, 0.6fr) minmax(6rem, 0.8fr) minmax(0, 1.2fr) minmax(6.5rem, 0.8fr) 2.5rem;
+                    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.7fr) minmax(4.5rem, 0.6fr) minmax(6rem, 0.8fr) minmax(0, 1.2fr) minmax(6.5rem, 0.8fr) 2.5rem;
                     gap: 0.75rem;
                     align-items: center;
-                    min-width: 820px;
+                    min-width: 0;
                 }
 
                 .invoice-lines-header {
@@ -811,6 +871,12 @@ const CreateInvoice = () => {
                 .invoice-line-total,
                 .invoice-line-remove {
                     min-width: 0;
+                }
+
+                .invoice-line-field {
+                    position: relative;
+                    z-index: 1;
+                    overflow: visible;
                 }
 
                 .invoice-line-total {
@@ -897,6 +963,7 @@ const CreateInvoice = () => {
                     }
 
                     .invoice-line-item,
+                    .invoice-line-product,
                     .invoice-line-tax,
                     .invoice-line-total {
                         grid-column: 1 / -1;

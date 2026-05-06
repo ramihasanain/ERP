@@ -9,6 +9,8 @@ import InvoicePaymentModal from '@/components/Accounting/InvoicePaymentModal';
 import Pagination from '@/core/Pagination';
 import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
+import { useCustomPatch } from '@/hooks/useMutation';
+import { toast } from 'sonner';
 
 const Invoices = () => {
     const navigate = useNavigate();
@@ -46,6 +48,10 @@ const Invoices = () => {
         {
             keepPreviousData: true,
         }
+    );
+    const postInvoiceMutation = useCustomPatch(
+        (id) => `/api/sales/invoices/${id}/`,
+        [['sales-invoices'], ['sales-invoice-preview']]
     );
 
     const getStatusLabel = (status) => {
@@ -142,6 +148,18 @@ const Invoices = () => {
     const handleEditInvoice = (e, invoice) => {
         e.stopPropagation();
         navigate(`${invoice.id}/edit`);
+    };
+    const handlePostInvoice = async (e, invoice) => {
+        e.stopPropagation();
+        try {
+            await postInvoiceMutation.mutateAsync({
+                id: invoice.id,
+                status: 'posted',
+            });
+            toast.success(isRtl ? 'تم ترحيل الفاتورة بنجاح.' : 'Invoice posted successfully.');
+        } catch (error) {
+            toast.error(error?.response?.data?.message || (isRtl ? 'فشل ترحيل الفاتورة.' : 'Failed to post invoice.'));
+        }
     };
 
     const updateFilter = (setter, value) => {
@@ -286,6 +304,7 @@ const Invoices = () => {
                                     {filteredInvoices.map(inv => {
                                         const statusStyle = getStatusStyle(inv.status);
                                         const isPaid = inv.status === 'Paid';
+                                        const isDraft = inv.status === 'Draft';
                                         return (
                                             <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border)', cursor: 'pointer' }} className="erp-table-row-hover" onClick={() => navigate(inv.id)}>
                                                 <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{inv.number}</td>
@@ -307,15 +326,27 @@ const Invoices = () => {
                                                 <td style={{ padding: '1rem 1rem' }}>
                                                     {!isPaid && (
                                                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                icon={<CreditCard size={14} />}
-                                                                onClick={(e) => handleRecordPayment(e, inv)}
-                                                                className="cursor-pointer"
-                                                            >
-                                                                {isRtl ? 'سداد' : 'Pay'}
-                                                            </Button>
+                                                            {isDraft ? (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={(e) => handlePostInvoice(e, inv)}
+                                                                    className="cursor-pointer"
+                                                                    disabled={postInvoiceMutation.isPending}
+                                                                >
+                                                                    {isRtl ? 'ترحيل' : 'Post'}
+                                                                </Button>
+                                                            ) : (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    icon={<CreditCard size={14} />}
+                                                                    onClick={(e) => handleRecordPayment(e, inv)}
+                                                                    className="cursor-pointer"
+                                                                >
+                                                                    {isRtl ? 'سداد' : 'Pay'}
+                                                                </Button>
+                                                            )}
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"

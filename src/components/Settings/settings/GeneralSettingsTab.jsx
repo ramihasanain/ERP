@@ -55,7 +55,12 @@ const GeneralSettingsTab = () => {
     const industriesQuery = useCustomQuery('/api/shared/industries/', ['settings-industries']);
     const currenciesQuery = useCurrenciesInfiniteQuery();
 
-    const { control, handleSubmit, reset } = useForm({
+    const {
+        control,
+        handleSubmit,
+        reset,
+        formState: { isDirty },
+    } = useForm({
         defaultValues: {
             company_name: '',
             industry: '',
@@ -67,6 +72,13 @@ const GeneralSettingsTab = () => {
     });
 
     const defaultCurrencyId = useWatch({ control, name: 'default_currency' });
+    const watchedValues = useWatch({ control });
+    const settingsData = useMemo(() => {
+        if (!settingsQuery.data) return null;
+        return settingsQuery.data?.data && typeof settingsQuery.data.data === 'object'
+            ? settingsQuery.data.data
+            : settingsQuery.data;
+    }, [settingsQuery.data]);
 
     const industries = useMemo(() => {
         return listFromResponse(industriesQuery.data)
@@ -106,18 +118,21 @@ const GeneralSettingsTab = () => {
             label: `${c.name} (${c.code})`,
         }));
         if (defaultCurrencyId && !currencies.some((c) => c.id === defaultCurrencyId)) {
-            return [{ value: defaultCurrencyId, label: defaultCurrencyId }, ...base];
+            const settingsCurrencyId = coerceSettingsRef(settingsData?.default_currency);
+            const settingsCurrencyName = (settingsData?.currency_name || '').trim();
+            const fallbackLabel =
+                settingsCurrencyName && settingsCurrencyId === defaultCurrencyId
+                    ? settingsCurrencyName
+                    : defaultCurrencyId;
+            return [{ value: defaultCurrencyId, label: fallbackLabel }, ...base];
         }
         return base;
-    }, [currencies, defaultCurrencyId]);
+    }, [currencies, defaultCurrencyId, settingsData]);
 
     useEffect(() => {
         if (!settingsQuery.data) return;
 
-        const data =
-            settingsQuery.data?.data && typeof settingsQuery.data.data === 'object'
-                ? settingsQuery.data.data
-                : settingsQuery.data;
+        const data = settingsData;
 
         reset(
             {
@@ -130,7 +145,7 @@ const GeneralSettingsTab = () => {
             },
             { keepDirtyValues: true },
         );
-    }, [settingsQuery.data, industries, currencies, reset]);
+    }, [settingsData, industries, currencies, reset]);
 
     const onSubmitGeneral = async (values) => {
         const payload = {
@@ -166,6 +181,16 @@ const GeneralSettingsTab = () => {
         isFetchingNextPage,
         isFetchNextPageError,
     } = currenciesQuery;
+
+    const hasMissingRequiredValues =
+        !watchedValues?.company_name?.trim() ||
+        !watchedValues?.industry ||
+        !watchedValues?.tax_id?.trim() ||
+        !watchedValues?.default_currency ||
+        !watchedValues?.date_format ||
+        !watchedValues?.timezone;
+
+    const isSaveDisabled = updateCompanySettings.isPending || !isDirty || hasMissingRequiredValues;
 
     return (
         <Card className="padding-lg" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -305,7 +330,7 @@ const GeneralSettingsTab = () => {
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                        <Button icon={<Save size={18} />} type="submit" disabled={updateCompanySettings.isPending}>
+                        <Button icon={<Save size={18} />} type="submit" disabled={isSaveDisabled}>
                             {updateCompanySettings.isPending ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </div>
