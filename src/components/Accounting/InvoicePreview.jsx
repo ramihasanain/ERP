@@ -31,6 +31,9 @@ const InvoicePreview = () => {
         if (value === 'paid') {
             return { bg: 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))', color: 'var(--color-success)' };
         }
+        if (value === 'posted') {
+            return { bg: 'color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))', color: 'var(--color-success)' };
+        }
         if (value === 'partial') {
             return { bg: 'color-mix(in srgb, var(--color-warning) 18%, var(--color-bg-card))', color: 'var(--color-warning)' };
         }
@@ -69,7 +72,7 @@ const InvoicePreview = () => {
             createdAt: formatDate(data.created_at),
             updatedAt: formatDate(data.updated_at),
             company: {
-                name: 'UnifiedCore Systems',
+                name: data.customer_name || 'Tech solution ltd.',
                 address: '123 Innovation Drive, Tech City, TC 90210',
                 email: 'finance@unifiedcore.com',
                 phone: '+1 (555) 000-1234',
@@ -217,7 +220,7 @@ const InvoicePreview = () => {
                             </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--color-slate-200)', letterSpacing: '-0.02em', margin: 0 }}>INVOICE</h2>
+                            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'color-mix(in srgb, var(--color-primary-600) 28%, var(--color-bg-card))', letterSpacing: '-0.02em', margin: 0 }}>INVOICE</h2>
                             <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-text-main)', marginTop: '0.5rem' }}>#{invoice.id}</div>
                             <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                 <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import classes from '@/components/app-layout/Sidebar.module.css';
 import {
@@ -28,6 +28,16 @@ const navItems = [
 const Sidebar = () => {
     const { logout } = useAuth();
     const navigate = useNavigate();
+    const companyName = useMemo(() => {
+        try {
+            const authUserRaw = localStorage.getItem('auth_user');
+            if (!authUserRaw) return 'UnifiedCore';
+            const parsed = JSON.parse(authUserRaw);
+            return parsed?.user?.company_name || 'UnifiedCore';
+        } catch (error) {
+            return 'UnifiedCore';
+        }
+    }, []);
 
     const handleSignOut = () => {
         logout();
@@ -38,7 +48,7 @@ const Sidebar = () => {
         <aside className={classes.sidebar}>
             <div className={classes.logoContainer}>
                 <div className={classes.logoIcon} />
-                <span className={classes.logoText}>UnifiedCore</span>
+                <span className={classes.logoText}>{companyName}</span>
             </div>
 
             <nav className={classes.nav}>
