@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { useCustomPost } from '@/hooks/useMutation';
+import { post } from '@/api';
 import { toast } from 'sonner';
 import {
     clearStoredUser,
@@ -10,6 +11,7 @@ import {
     migrateLegacyTokenStorage,
     persistAuthSession,
     removeTokens,
+    storeUser,
     storeTenantDomain,
 } from '@/services/auth';
 import { successToastOptions } from '@/utils/toastOptions';
@@ -29,7 +31,6 @@ export const AuthProvider = ({ children }) => {
         migrateLegacyTokenStorage();
         return getStoredUser();
     });
-    const loginMutation = useCustomPost('/login/');
     const registerMutation = useCustomPost('/register/');
 
     const normalizeAuthResponse = (responseData, fallbackRole = 'admin') => {
@@ -54,6 +55,10 @@ export const AuthProvider = ({ children }) => {
             email: responseUser?.email || responseData?.email || '',
             role: resolvedRole,
             name: responseUser?.name || responseUser?.full_name || responseData?.full_name || responseData?.name || 'User',
+            reset_password_required:
+                responseUser?.reset_password_required ??
+                responseData?.reset_password_required ??
+                false,
         };
 
         // Tokens are persisted with the same `auth_user` blob (see persistAuthSession).
@@ -68,30 +73,44 @@ export const AuthProvider = ({ children }) => {
                 company_name: responseUser?.company_name || responseData?.company_name || '',
                 email: responseUser?.email || responseData?.email || '',
                 role: resolvedRole,
+                reset_password_required:
+                    responseUser?.reset_password_required ??
+                    responseData?.reset_password_required ??
+                    false,
             },
         };
 
         return { tokenPayload, normalizedUser, normalizedAuthPayload };
     };
 
-    const login = async (email, password, role = 'admin') => {
-        const response = await loginMutation.mutateAsync({ email, password });
-        const { tokenPayload, normalizedUser, normalizedAuthPayload } = normalizeAuthResponse(response, role);
-        const tenantDomain = extractTenantDomain(response);
+    const [isLoginLoading, setIsLoginLoading] = useState(false);
+    const login = async (email, password, role = 'admin', options = {}) => {
+        console.log(options?.loginBaseUrl);
+        setIsLoginLoading(true);
+        try {
+            const requestConfig = options?.loginBaseUrl
+                ? { baseURL: options.loginBaseUrl }
+                : {};
+            const response = await post(`${requestConfig.baseURL || ''}/login/`, { email, password });
+            const { tokenPayload, normalizedUser, normalizedAuthPayload } = normalizeAuthResponse(response, role);
+            const tenantDomain = extractTenantDomain(response) || options?.loginBaseUrl || null;
 
-        if (tenantDomain) {
-            storeTenantDomain(tenantDomain);
+            if (tenantDomain) {
+                storeTenantDomain(tenantDomain);
+            }
+
+            persistAuthSession({
+                ...normalizedAuthPayload,
+                access: tokenPayload.access,
+                refresh: tokenPayload.refresh,
+            });
+
+            setUser(normalizedUser);
+
+            return normalizedUser;
+        } finally {
+            setIsLoginLoading(false);
         }
-
-        persistAuthSession({
-            ...normalizedAuthPayload,
-            access: tokenPayload.access,
-            refresh: tokenPayload.refresh,
-        });
-
-        setUser(normalizedUser);
-
-        return normalizedUser;
     };
 
     const register = async (payload = {}) => {
@@ -122,10 +141,22 @@ export const AuthProvider = ({ children }) => {
         toast.success('Signed out successfully.', successToastOptions);
     };
 
+    const updateUser = (userPatch = {}) => {
+        setUser((prevUser) => {
+            if (!prevUser) return prevUser;
+            const nextUser = {
+                ...prevUser,
+                ...userPatch,
+            };
+            storeUser(nextUser);
+            return nextUser;
+        });
+    };
+
     const isAuthenticated = !!user || hasAccessToken();
     const isAdmin = user?.role === 'admin';
     const isEmployee = user?.role === 'employee';
-    const isLoading = loginMutation.isPending || registerMutation.isPending;
+    const isLoading = isLoginLoading || registerMutation.isPending;
 
     const contextValue = useMemo(() => ({
         user,
@@ -136,6 +167,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateUser,
     }), [user, isAuthenticated, isAdmin, isEmployee, isLoading, login, register]);
 
     return (

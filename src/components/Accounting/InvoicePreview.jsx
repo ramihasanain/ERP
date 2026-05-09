@@ -10,6 +10,16 @@ const InvoicePreview = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const printableRef = useRef(null);
+    const tenantCompanyName = useMemo(() => {
+        try {
+            const authUserRaw = localStorage.getItem('auth_user');
+            if (!authUserRaw) return 'Company';
+            const authUser = JSON.parse(authUserRaw);
+            return authUser?.user?.company_name || 'Company';
+        } catch {
+            return 'Company';
+        }
+    }, []);
 
     const invoiceQuery = useCustomQuery(
         `/api/sales/invoices/${id}/`,
@@ -60,9 +70,10 @@ const InvoicePreview = () => {
             status: data.status ? String(data.status).charAt(0).toUpperCase() + String(data.status).slice(1) : 'Draft',
             currency: data.currency || 'USD',
             client: {
-                name: data.customer_name || 'Customer',
-                address: data.billing_address || '-',
-                email: '-',
+                name: data.customer_name || 'Tech Solutions Ltd.',
+                address: data.billing_address || '123 Innovation Drive, Tech City, TC 90210',
+                email: data.customer_email || data.customer?.email || 'finance@unifiedcore.com',
+                phone: data.customer_phone || data.customer?.phone || '+1 (555) 000-1234',
             },
             amountsIncludeTax: Boolean(data.amounts_include_tax),
             notes: data.notes || '',
@@ -72,12 +83,10 @@ const InvoicePreview = () => {
             createdAt: formatDate(data.created_at),
             updatedAt: formatDate(data.updated_at),
             company: {
-                name: data.customer_name || 'Tech solution ltd.',
-                address: '123 Innovation Drive, Tech City, TC 90210',
-                email: 'finance@unifiedcore.com',
-                phone: '+1 (555) 000-1234',
+                name: tenantCompanyName,
             },
-            items: (data.lines || []).map((line) => ({
+            items: (data.lines || []).map((line, index) => ({
+                id: line.id ?? `${line.order ?? index}-${line.description ?? 'item'}`,
                 description: line.description || 'Item',
                 qty: Number(line.quantity ?? 0),
                 price: Number(line.unit_price ?? 0),
@@ -103,7 +112,7 @@ const InvoicePreview = () => {
             total,
             remainingBalance: Number(data.remaining_balance ?? 0),
         };
-    }, [invoiceQuery.data]);
+    }, [invoiceQuery.data, tenantCompanyName]);
 
     const dueDateRaw = invoice?.dueDateRaw;
 
@@ -213,11 +222,6 @@ const InvoicePreview = () => {
                                 U
                             </div>
                             <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-main)' }}>{invoice.company.name}</h1>
-                            <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem', lineHeight: '1.5' }}>
-                                {invoice.company.address}<br />
-                                {invoice.company.email}<br />
-                                {invoice.company.phone}
-                            </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                             <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'color-mix(in srgb, var(--color-primary-600) 28%, var(--color-bg-card))', letterSpacing: '-0.02em', margin: 0 }}>INVOICE</h2>
@@ -240,7 +244,8 @@ const InvoicePreview = () => {
                         <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: '0.25rem' }}>{invoice.client.name}</div>
                         <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }}>
                             {invoice.client.address}<br />
-                            {invoice.client.email}
+                            {invoice.client.email}<br />
+                            {invoice.client.phone}
                         </div>
                     </div>
 

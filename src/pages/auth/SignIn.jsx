@@ -1,61 +1,49 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import AuthLayout from '@/components/app-layout/AuthLayout';
 import Input from '@/components/Shared/Input';
 import Button from '@/components/Shared/Button';
-import { Mail, Lock, ArrowRight, Shield, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Shield, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { errorToastOptions, successToastOptions } from '@/utils/toastOptions';
 
-const trackStyle = {
-    display: 'flex',
-    background: 'var(--color-bg-toggle-track)',
-    padding: '4px',
-    borderRadius: '12px',
-    border: '1px solid var(--color-border)',
-};
-
-const tabBase = {
-    flex: 1,
-    padding: '0.75rem',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    fontWeight: 600,
-    fontSize: '0.9rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    transition: 'all 0.2s ease',
-};
+const BACKEND_ROOT_DOMAIN = 'erp-api.site';
+const COMPANY_SEGMENT_REGEX = /^[a-z0-9-]+$/i;
 
 const SignIn = () => {
     const navigate = useNavigate();
+    const { company } = useParams();
+    console.log(company);
     const { login, isLoading } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const {
         control,
         handleSubmit,
-        watch,
-        setValue,
         formState: { errors },
     } = useForm({
         defaultValues: {
             email: '',
             password: '',
-            role: 'admin',
         },
     });
 
     const onSubmit = async (values) => {
         try {
-            const user = await login(values.email, values.password, values.role);
+            const role = company ? 'employee' : 'admin';
+            const loginBaseUrl = company
+                ? `https://${company}.${BACKEND_ROOT_DOMAIN}/api`
+                : null;
+                console.log(loginBaseUrl);
+            const user = await login(values.email, values.password, role, { loginBaseUrl });
             toast.success(`Welcome back, ${user?.name || 'User'}!`, successToastOptions);
             if (user.role === 'admin') {
                 navigate('/admin/dashboard');
+            } else if (user.role === 'auditor') {
+                navigate('/auditor/dashboard');
+            } else if (user.reset_password_required) {
+                navigate('/employee/reset-password-first-login');
             } else {
                 navigate('/employee/dashboard');
             }
@@ -70,45 +58,12 @@ const SignIn = () => {
         }
     };
 
-    const role = watch('role');
-    const adminActive = role === 'admin';
-    const employeeActive = role === 'employee';
-
     return (
         <AuthLayout
             title="Welcome back"
             subtitle="Sign in to your account to continue"
         >
             <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={trackStyle}>
-                    <button
-                        type="button"
-                        onClick={() => setValue('role', 'admin')}
-                        className={`auth-role-tab ${adminActive ? 'active' : ''}`}
-                        style={{
-                            ...tabBase,
-                            background: adminActive ? 'var(--color-primary-600)' : 'transparent',
-                            color: adminActive ? 'white' : 'var(--color-text-secondary)',
-                            boxShadow: adminActive ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
-                        }}
-                    >
-                        <Shield size={18} /> Admin
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setValue('role', 'employee')}
-                        className={`auth-role-tab ${employeeActive ? 'active' : ''}`}
-                        style={{
-                            ...tabBase,
-                            background: employeeActive ? 'var(--color-primary-600)' : 'transparent',
-                            color: employeeActive ? 'white' : 'var(--color-text-secondary)',
-                            boxShadow: employeeActive ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
-                        }}
-                    >
-                        <User size={18} /> Employee
-                    </button>
-                </div>
-
                 <Controller
                     name="email"
                     control={control}
@@ -171,7 +126,7 @@ const SignIn = () => {
                 </div>
 
                 <Button type="submit" size="lg" isLoading={isLoading} icon={<ArrowRight size={18} />}>
-                    Sign In as {role === 'admin' ? 'Admin' : 'Employee'}
+                    Sign In
                 </Button>
             </form>
 
@@ -209,14 +164,6 @@ const SignIn = () => {
                 </Link>
             </div>
             <style>{`
-                .auth-role-tab:hover {
-                    transform: translateY(-1px);
-                }
-
-                .auth-role-tab.active:hover {
-                    transform: translateY(-1px) scale(1.01);
-                }
-
                 .auth-inline-link {
                     text-decoration: none;
                     transition: color 0.2s ease, opacity 0.2s ease;

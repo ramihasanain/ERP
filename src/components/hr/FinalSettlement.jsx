@@ -439,10 +439,6 @@ const FinalSettlement = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginLeft: '1.7rem' }}>
-                                    <div>Tenure: {Number(calculation?.yearsOfService ?? 0).toFixed(2)} Years</div>
-                                    <div style={{ color: 'var(--color-primary-700)', marginTop: '0.25rem' }}>Rule: {calculation?.ruleApplied}</div>
-                                </div>
                             </div>
 
                             <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--color-border)' }}>

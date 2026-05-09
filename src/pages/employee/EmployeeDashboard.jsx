@@ -1,26 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Calendar, FileText, Clock, Plus, CheckCircle, Play, Square, Timer, FolderOpen } from 'lucide-react';
 import { useHR } from '@/context/HRContext';
+import Spinner from '@/core/Spinner';
+import useCustomQuery from '@/hooks/useQuery';
+import { toast } from 'sonner';
 
 const EmployeeDashboard = () => {
     const { projects, getEmployeeProjects, getActiveTimer, startTimer, stopTimer, timeLogs } = useHR();
     const currentEmployeeId = 'EMP-002'; // Simulating logged-in employee
 
     const [showRequestModal, setShowRequestModal] = useState(false);
-    const [requests, setRequests] = useState([
-        { id: 1, type: 'Annual Leave', date: 'Mar 10, 2026', dates: 'Mar 20 - Mar 25', status: 'Approved' }
-    ]);
 
     // Timer state
     const [selectedProject, setSelectedProject] = useState('');
     const [taskDescription, setTaskDescription] = useState('');
     const [elapsedTime, setElapsedTime] = useState(0);
     const activeTimer = getActiveTimer(currentEmployeeId);
-    const myProjects = getEmployeeProjects(currentEmployeeId);
+    const myProjectsFromContext = getEmployeeProjects(currentEmployeeId);
     const myLogs = timeLogs.filter(l => l.employeeId === currentEmployeeId && l.endTime).slice(0, 5);
+    const dashboardQuery = useCustomQuery('/api/hr/employees/dashboard/', ['hr-employee-dashboard'], {
+        staleTime: 1000 * 60 * 2,
+    });
+
+    const dashboardData = dashboardQuery.data ?? {};
+    const apiProjects = useMemo(
+        () => (Array.isArray(dashboardData?.my_projects) ? dashboardData.my_projects : []),
+        [dashboardData?.my_projects]
+    );
+    const myProjects = apiProjects.length > 0 ? apiProjects : myProjectsFromContext;
+    const myRequests = Array.isArray(dashboardData?.my_requests) ? dashboardData.my_requests : [];
+    const upcomingHolidays = Array.isArray(dashboardData?.upcoming_holidays) ? dashboardData.upcoming_holidays : [];
+    const pendingRequestsCount = Number(dashboardData?.pending_requests_count ?? 0);
+    const leaveBalance = dashboardData?.leave_balance ?? {};
+    const latestPayslip = dashboardData?.latest_payslip ?? null;
+    const greetingName = dashboardData?.user?.full_name || 'Employee';
 
     // Live ticker
     useEffect(() => {
@@ -54,24 +70,68 @@ const EmployeeDashboard = () => {
 
     const getProjectName = (projectId) => {
         const p = projects.find(pr => pr.id === projectId);
-        return p ? p.name : projectId;
+        if (p) return p.name;
+        const matchedApiProject = myProjects.find((project) => String(project.id) === String(projectId));
+        return matchedApiProject?.name || projectId;
     };
 
     const handleSubmitRequest = (e) => {
         e.preventDefault();
         setShowRequestModal(false);
-        setRequests([{ id: Date.now(), type: 'Salary Slip', date: 'Today', dates: '-', status: 'Pending' }, ...requests]);
+        toast.info('Request submission from dashboard is not connected yet.');
     };
+
+    const formatDate = (dateValue, options = {}) => {
+        if (!dateValue) return '-';
+        const parsed = new Date(dateValue);
+        if (Number.isNaN(parsed.getTime())) return '-';
+        return parsed.toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            ...options,
+        });
+    };
+
+    const formatCurrency = (amount, currency = 'USD') => {
+        const parsedAmount = Number(amount);
+        if (Number.isNaN(parsedAmount)) return '-';
+        return new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(parsedAmount);
+    };
+
+    const annualEntitlement = Number(leaveBalance?.annual_entitlement ?? 0);
+    const remainingBalance = Number(leaveBalance?.remaining_balance ?? 0);
+    const leaveUsed = Math.max(annualEntitlement - remainingBalance, 0);
+    const leaveUsagePercentage = annualEntitlement > 0 ? Math.min((leaveUsed / annualEntitlement) * 100, 100) : 0;
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Good Morning, Sarah</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>You have 2 pending tasks and 1 approval request.</p>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{`Good Morning, ${greetingName}`}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>
+                        {`You currently have ${pendingRequestsCount} pending request${pendingRequestsCount === 1 ? '' : 's'}.`}
+                    </p>
                 </div>
                 <Button icon={<Plus size={18} />} onClick={() => setShowRequestModal(true)}>New Request</Button>
             </div>
+
+            {dashboardQuery.isLoading && <Spinner />}
+            {dashboardQuery.isError && (
+                <Card className="padding-lg">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                        <p style={{ margin: 0, color: 'var(--color-error)' }}>Could not load dashboard data.</p>
+                        <Button variant="outline" type="button" onClick={() => dashboardQuery.refetch()}>
+                            Retry
+                        </Button>
+                    </div>
+                </Card>
+            )}
 
             {/* Request Modal */}
             {showRequestModal && (
@@ -218,10 +278,10 @@ const EmployeeDashboard = () => {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                         <span style={{ color: 'var(--color-text-secondary)' }}>Annual Leave</span>
-                        <span style={{ fontWeight: 700 }}>14 Days</span>
+                        <span style={{ fontWeight: 700 }}>{`${remainingBalance} / ${annualEntitlement} Days`}</span>
                     </div>
                     <div style={{ width: '100%', height: '6px', background: 'var(--color-slate-100)', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div style={{ width: '60%', height: '100%', background: 'var(--color-primary-500)' }} />
+                        <div style={{ width: `${100 - leaveUsagePercentage}%`, height: '100%', background: 'var(--color-primary-500)' }} />
                     </div>
                 </Card>
 
@@ -231,10 +291,24 @@ const EmployeeDashboard = () => {
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Payslips</h3>
                     </div>
                     <div style={{ marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>$3,250.00</div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Last payment on Feb 28, 2025</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                            {latestPayslip ? formatCurrency(latestPayslip.amount, latestPayslip.currency || 'USD') : '-'}
+                        </div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                            {latestPayslip
+                                ? `Last payment on ${formatDate(latestPayslip.pay_date)} (${latestPayslip.period_name || 'Period'})`
+                                : 'No payslip available yet'}
+                        </div>
                     </div>
-                    <Button variant="outline" size="sm" style={{ width: '100%' }} onClick={() => alert("Downloading Payslip for Feb 2025...")}>Download PDF</Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        style={{ width: '100%' }}
+                        disabled={!latestPayslip}
+                        onClick={() => toast.info('Payslip download is not connected yet.')}
+                    >
+                        Download PDF
+                    </Button>
                 </Card>
 
                 <Card className="padding-lg">
@@ -243,14 +317,24 @@ const EmployeeDashboard = () => {
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Upcoming Holidays</h3>
                     </div>
                     <ul style={{ listStyle: 'none', padding: 0 }}>
-                        <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--color-border)' }}>
-                            <span>Eid Al-Fitr</span>
-                            <span style={{ color: 'var(--color-text-muted)' }}>Apr 09</span>
-                        </li>
-                        <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0' }}>
-                            <span>Labor Day</span>
-                            <span style={{ color: 'var(--color-text-muted)' }}>May 01</span>
-                        </li>
+                        {upcomingHolidays.length === 0 ? (
+                            <li style={{ padding: '0.5rem 0', color: 'var(--color-text-secondary)' }}>No upcoming holidays</li>
+                        ) : (
+                            upcomingHolidays.map((holiday, index) => (
+                                <li
+                                    key={holiday.id || `${holiday.name}-${holiday.date}`}
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        padding: '0.5rem 0',
+                                        borderBottom: index === upcomingHolidays.length - 1 ? 'none' : '1px solid var(--color-border)',
+                                    }}
+                                >
+                                    <span>{holiday.name || 'Holiday'}</span>
+                                    <span style={{ color: 'var(--color-text-muted)' }}>{formatDate(holiday.date, { month: 'short', day: '2-digit' })}</span>
+                                </li>
+                            ))
+                        )}
                     </ul>
                 </Card>
             </div>
@@ -261,14 +345,17 @@ const EmployeeDashboard = () => {
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>My Projects</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                         {myProjects.map(p => (
-                            <Card key={p.id} className="padding-md hoverable" style={{ cursor: 'default' }}>
+                            <Card key={p.id || p.name} className="padding-md hoverable" style={{ cursor: 'default' }}>
                                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                                     <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '10px', background: 'var(--color-primary-50)', color: 'var(--color-primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <FolderOpen size={18} />
                                     </div>
                                     <div>
                                         <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{p.name}</div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{p.client || 'Internal'} • {p.assignedEmployees.length} members</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                                            {(p.client_name || p.client || 'Internal')}
+                                            {Array.isArray(p.assignedEmployees) ? ` • ${p.assignedEmployees.length} members` : ''}
+                                        </div>
                                     </div>
                                 </div>
                             </Card>
@@ -290,22 +377,40 @@ const EmployeeDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {requests.map(req => (
-                                <tr key={req.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                    <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>{req.type}</td>
-                                    <td style={{ padding: '1rem 1rem', color: 'var(--color-text-secondary)' }}>{req.date}</td>
-                                    <td style={{ padding: '1rem 1rem' }}>{req.dates}</td>
-                                    <td style={{ padding: '1rem 1.5rem' }}>
-                                        <span style={{
-                                            display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.75rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 600,
-                                            background: req.status === 'Approved' ? 'var(--color-success-dim)' : 'var(--color-warning-dim)',
-                                            color: req.status === 'Approved' ? 'var(--color-success)' : 'var(--color-warning)'
-                                        }}>
-                                            {req.status === 'Approved' ? <CheckCircle size={14} /> : <Clock size={14} />} {req.status}
-                                        </span>
+                            {myRequests.length === 0 ? (
+                                <tr>
+                                    <td colSpan={4} style={{ padding: '1rem 1.5rem', color: 'var(--color-text-secondary)' }}>
+                                        No requests found.
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                myRequests.map(req => {
+                                    const requestStatus = (req.status || 'Pending').toString();
+                                    const isApproved = requestStatus.toLowerCase() === 'approved';
+                                    return (
+                                        <tr key={req.id || `${req.type}-${req.created_at}`} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                            <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>{req.type || req.request_type || 'Request'}</td>
+                                            <td style={{ padding: '1rem 1rem', color: 'var(--color-text-secondary)' }}>
+                                                {formatDate(req.created_at || req.date_requested || req.date)}
+                                            </td>
+                                            <td style={{ padding: '1rem 1rem' }}>
+                                                {req.start_date && req.end_date
+                                                    ? `${formatDate(req.start_date)} - ${formatDate(req.end_date)}`
+                                                    : req.dates || '-'}
+                                            </td>
+                                            <td style={{ padding: '1rem 1.5rem' }}>
+                                                <span style={{
+                                                    display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.75rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 600,
+                                                    background: isApproved ? 'var(--color-success-dim)' : 'var(--color-warning-dim)',
+                                                    color: isApproved ? 'var(--color-success)' : 'var(--color-warning)'
+                                                }}>
+                                                    {isApproved ? <CheckCircle size={14} /> : <Clock size={14} />} {requestStatus}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </Card>

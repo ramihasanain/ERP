@@ -70,6 +70,7 @@ import CashFlowStatement from "@/components/Reports/CashFlowStatement";
 import CategoryManagement from "@/components/CategoryManagement/CategoryManagement";
 import EmployeeLayout from "@/components/app-layout/EmployeeLayout";
 import EmployeeDashboard from "@/pages/employee/EmployeeDashboard";
+import FirstLoginResetPassword from "@/pages/employee/FirstLoginResetPassword";
 import MyRequests from "@/pages/employee/MyRequests";
 import Payslips from "@/pages/employee/Payslips";
 import PayslipPreview from "@/pages/employee/PayslipPreview";
@@ -83,11 +84,22 @@ import AuditorAdjustmentsPage from "@/components/AuditorAdjustmentsPage";
 import NotificationsPage from "@/components/NotificationsPage";
 import { useAuth } from "@/context/AuthContext";
 
-const getDashboardPath = (user) =>
-  user?.role === "employee" ? "/employee/dashboard" : "/admin/dashboard";
+const getDashboardPath = (user) => {
+  if (user?.role === "employee") return "/employee/dashboard";
+  if (user?.role === "auditor") return "/auditor/dashboard";
+  return "/admin/dashboard";
+};
+
+const getEmployeeLandingPath = (user) =>
+  user?.reset_password_required
+    ? "/employee/reset-password-first-login"
+    : "/employee/dashboard";
 
 const PublicOnlyRoute = ({ children, isAuthenticated, user }) => {
   if (isAuthenticated) {
+    if (user?.role === "employee") {
+      return <Navigate to={getEmployeeLandingPath(user)} replace />;
+    }
     return <Navigate to={getDashboardPath(user)} replace />;
   }
 
@@ -100,6 +112,38 @@ const ProtectedRoute = ({ children, isAuthenticated }) => {
   }
 
   return children;
+};
+
+const ProtectedEmployeeRoute = ({ children, isAuthenticated, user }) => {
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/signin" replace />;
+  }
+
+  if (user?.role !== "employee") {
+    return <Navigate to={getDashboardPath(user)} replace />;
+  }
+
+  if (user?.reset_password_required) {
+    return <Navigate to="/employee/reset-password-first-login" replace />;
+  }
+
+  return children;
+};
+
+const FirstLoginResetPasswordRoute = ({ isAuthenticated, user }) => {
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/signin" replace />;
+  }
+
+  if (user?.role !== "employee") {
+    return <Navigate to={getDashboardPath(user)} replace />;
+  }
+
+  if (!user?.reset_password_required) {
+    return <Navigate to="/employee/dashboard" replace />;
+  }
+
+  return <FirstLoginResetPassword />;
 };
 
 export default function AppRoutes() {
@@ -125,6 +169,14 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/auth/signin/:company"
+        element={
+          <PublicOnlyRoute isAuthenticated={isAuthenticated} user={user}>
+            <SignIn />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
         path="/auth/signup"
         element={
           <PublicOnlyRoute isAuthenticated={isAuthenticated} user={user}>
@@ -136,6 +188,16 @@ export default function AppRoutes() {
 
       <Route path="/auditor/login" element={<AuditorLogin />} />
       <Route path="/auditor/dashboard" element={<AuditorDashboard />} />
+
+      <Route
+        path="/employee/reset-password-first-login"
+        element={
+          <FirstLoginResetPasswordRoute
+            isAuthenticated={isAuthenticated}
+            user={user}
+          />
+        }
+      />
 
       <Route
         path="/admin"
@@ -259,7 +321,14 @@ export default function AppRoutes() {
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>
 
-      <Route path="/employee" element={<EmployeeLayout />}>
+      <Route
+        path="/employee"
+        element={
+          <ProtectedEmployeeRoute isAuthenticated={isAuthenticated} user={user}>
+            <EmployeeLayout />
+          </ProtectedEmployeeRoute>
+        }
+      >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<EmployeeDashboard />} />
         <Route path="requests" element={<MyRequests />} />

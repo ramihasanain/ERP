@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -49,11 +49,36 @@ const selectStyle = {
     cursor: 'pointer',
 };
 
+const PAY_DAY_LAST_DAY = 31;
+const PAY_DAY_FIXED_DAY = 'fixed_day';
+
+const parsePayDayFromSettings = (rawPayDay) => {
+    if (rawPayDay == null || rawPayDay === '') {
+        return { pay_day_mode: PAY_DAY_LAST_DAY, pay_day: '' };
+    }
+
+    const normalized = String(rawPayDay).trim().toLowerCase();
+    if (normalized === PAY_DAY_LAST_DAY) {
+        return { pay_day_mode: PAY_DAY_LAST_DAY, pay_day: '' };
+    }
+
+    const dayNumber = Number(normalized);
+    if (Number.isInteger(dayNumber) && dayNumber >= 1 && dayNumber <= 31) {
+        return { pay_day_mode: PAY_DAY_FIXED_DAY, pay_day: String(dayNumber) };
+    }
+
+    return { pay_day_mode: PAY_DAY_LAST_DAY, pay_day: '' };
+};
+
 const GeneralSettingsTab = () => {
     const updateCompanySettings = useCustomPatch('/api/tenants/clients/settings/', ['company-settings']);
     const settingsQuery = useCustomQuery('/api/tenants/clients/settings/', ['company-settings']);
     const industriesQuery = useCustomQuery('/api/shared/industries/', ['settings-industries']);
     const currenciesQuery = useCurrenciesInfiniteQuery();
+    const [isNarrowScreen, setIsNarrowScreen] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia('(max-width: 600px)').matches;
+    });
 
     const {
         control,
@@ -66,6 +91,8 @@ const GeneralSettingsTab = () => {
             industry: '',
             tax_id: '',
             default_currency: '',
+            pay_day_mode: PAY_DAY_LAST_DAY,
+            pay_day: '',
             date_format: 'DD/MM/YYYY',
             timezone: 'Africa/Egypt',
         },
@@ -140,6 +167,7 @@ const GeneralSettingsTab = () => {
                 industry: normalizeIndustryValue(data?.industry, industries),
                 tax_id: data?.tax_id || '',
                 default_currency: normalizeCurrencyValue(data?.default_currency, currencies),
+                ...parsePayDayFromSettings(data?.pay_day),
                 date_format: data?.date_format || 'DD/MM/YYYY',
                 timezone: data?.timezone || 'Africa/Egypt',
             },
@@ -147,12 +175,29 @@ const GeneralSettingsTab = () => {
         );
     }, [settingsData, industries, currencies, reset]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const mediaQuery = window.matchMedia('(max-width: 600px)');
+        const onMediaChange = (event) => setIsNarrowScreen(event.matches);
+
+        setIsNarrowScreen(mediaQuery.matches);
+        mediaQuery.addEventListener('change', onMediaChange);
+        return () => mediaQuery.removeEventListener('change', onMediaChange);
+    }, []);
+
     const onSubmitGeneral = async (values) => {
+        const payDayValue =
+            values.pay_day_mode === PAY_DAY_FIXED_DAY && values.pay_day
+                ? Number(values.pay_day)
+                : PAY_DAY_LAST_DAY;
+
         const payload = {
             company_name: values.company_name?.trim() || '',
             industry: values.industry || null,
             tax_id: values.tax_id?.trim() || '',
             default_currency: values.default_currency || null,
+            pay_day: payDayValue,
             date_format: values.date_format || 'DD/MM/YYYY',
             timezone: values.timezone || 'Africa/Egypt',
         };
@@ -187,6 +232,8 @@ const GeneralSettingsTab = () => {
         !watchedValues?.industry ||
         !watchedValues?.tax_id?.trim() ||
         !watchedValues?.default_currency ||
+        !watchedValues?.pay_day_mode ||
+        (watchedValues?.pay_day_mode === PAY_DAY_FIXED_DAY && !watchedValues?.pay_day) ||
         !watchedValues?.date_format ||
         !watchedValues?.timezone;
 
@@ -218,7 +265,7 @@ const GeneralSettingsTab = () => {
 
             {showForm && !settingsFailed && (
                 <form onSubmit={handleSubmit(onSubmitGeneral)} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isNarrowScreen ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
                         <Controller
                             name="company_name"
                             control={control}
@@ -290,11 +337,99 @@ const GeneralSettingsTab = () => {
                                 />
                             )}
                         />
+
+                        <Controller
+                            name="pay_day_mode"
+                            control={control}
+                            render={({ field }) => (
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '0.5rem',
+                                        gridColumn: isNarrowScreen ? 'span 1' : 'span 2',
+                                    }}
+                                >
+                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Pay Day</label>
+                                    <div
+                                        style={{
+                                            border: '1px solid var(--color-border)',
+                                            borderRadius: 'var(--radius-md)',
+                                            background: 'var(--color-bg-surface)',
+                                            padding: '0.75rem',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '0.75rem',
+                                        }}
+                                    >
+                                        {field.value === PAY_DAY_FIXED_DAY ? (
+                                            <div
+                                                style={{
+                                                    display: 'grid',
+                                                    gridTemplateColumns: isNarrowScreen ? '1fr' : '1fr 1fr',
+                                                    gap: '0.75rem',
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Type</label>
+                                                    <select value={field.value} onChange={field.onChange} style={selectStyle}>
+                                                        <option value={PAY_DAY_LAST_DAY}>Last day of the month</option>
+                                                        <option value={PAY_DAY_FIXED_DAY}>Fixed day of the month</option>
+                                                    </select>
+                                                </div>
+                                                <Controller
+                                                    name="pay_day"
+                                                    control={control}
+                                                    render={({ field: payDayField }) => (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                            <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                                                                Day
+                                                            </label>
+                                                            <select
+                                                                value={payDayField.value || ''}
+                                                                onChange={payDayField.onChange}
+                                                                style={selectStyle}
+                                                            >
+                                                                <option value="">Choose day</option>
+                                                                {Array.from({ length: 31 }, (_, index) => {
+                                                                    const day = String(index + 1);
+                                                                    return (
+                                                                        <option key={day} value={day}>
+                                                                            Day {day}
+                                                                        </option>
+                                                                    );
+                                                                })}
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <select value={field.value} onChange={field.onChange} style={selectStyle}>
+                                                    <option value={PAY_DAY_LAST_DAY}>Last day of the month</option>
+                                                    <option value={PAY_DAY_FIXED_DAY}>Fixed day of the month</option>
+                                                </select>
+                                                <div
+                                                    style={{
+                                                        fontSize: '0.875rem',
+                                                        color: 'var(--color-text-secondary)',
+                                                        padding: '0.25rem 0',
+                                                    }}
+                                                >
+                                                    Salary will be processed on the last available day of each month.
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        />
                     </div>
 
                     <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem', marginTop: '1rem' }}>
                         <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Localization</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isNarrowScreen ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
                             <Controller
                                 name="date_format"
                                 control={control}

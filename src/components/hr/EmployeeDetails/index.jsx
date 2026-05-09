@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, CreditCard, FileText, Save, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, Copy, CreditCard, FileText, Save, User, X } from 'lucide-react';
 import { toast } from 'sonner';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import Spinner from '@/core/Spinner';
+import SearchableSelectBackend from '@/core/SearchableSelectBackend';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
 import ContractSalaryTab from '@/components/hr/ContractSalaryTab';
@@ -82,6 +83,25 @@ const normalizeLeaves = (response) => normalizeArrayResponse(response);
 
 const normalizeDocuments = (response) => normalizeArrayResponse(response);
 
+const copyText = async (value) => {
+    if (!value) return false;
+    try {
+        await navigator.clipboard.writeText(value);
+        return true;
+    } catch {
+        const textArea = document.createElement('textarea');
+        textArea.value = value;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return copied;
+    }
+};
+
 const EmployeeDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -89,6 +109,10 @@ const EmployeeDetails = () => {
     const isNew = !id;
     const [activeTab, setActiveTab] = useState('overview');
     const [isTerminationOpen, setIsTerminationOpen] = useState(false);
+    const [departmentSearchTerm, setDepartmentSearchTerm] = useState('');
+    const [positionSearchTerm, setPositionSearchTerm] = useState('');
+    const [createdCredentials, setCreatedCredentials] = useState(null);
+    const [copiedField, setCopiedField] = useState('');
     const isAuthUserEmployee = user?.auth_user?.role === 'employee' || isEmployee;
     const isProfileApiTab = activeTab === 'overview' || activeTab === 'banking';
     const isLeavesTab = isAuthUserEmployee && activeTab === 'leaves';
@@ -184,12 +208,33 @@ const EmployeeDetails = () => {
         }
     }, [isAuthUserEmployee, activeTab]);
 
+    useEffect(() => {
+        if (!createdCredentials) return undefined;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [createdCredentials]);
+
     const isLoading = isProfileApiTab && (departmentsQuery.isLoading || positionsQuery.isLoading || (!isNew && employeeQuery.isLoading));
     const hasError = isProfileApiTab && (departmentsQuery.isError || positionsQuery.isError || (!isNew && employeeQuery.isError));
     const isSubmitting = createEmployeeMutation.isPending || updateEmployeeMutation.isPending;
 
     const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
     const positions = useMemo(() => positionsQuery.data ?? [], [positionsQuery.data]);
+    const filteredDepartments = useMemo(() => {
+        const term = departmentSearchTerm.trim().toLowerCase();
+        if (!term) return departments;
+        return departments.filter((department) => (department?.name || '').toLowerCase().includes(term));
+    }, [departments, departmentSearchTerm]);
+    const filteredPositions = useMemo(() => {
+        const term = positionSearchTerm.trim().toLowerCase();
+        if (!term) return positions;
+        return positions.filter((position) => (position?.name || '').toLowerCase().includes(term));
+    }, [positions, positionSearchTerm]);
     const leaves = useMemo(() => leavesQuery.data ?? [], [leavesQuery.data]);
     const documents = useMemo(() => documentsQuery.data ?? [], [documentsQuery.data]);
     const watchedData = watch();
@@ -225,13 +270,15 @@ const EmployeeDetails = () => {
         try {
             if (isNew) {
                 const result = await createEmployeeMutation.mutateAsync(payload);
-                const newId = result?.id || result?.uuid;
+                const newId = result?.id || result?.uuid || '';
+                const createdEmail = result?.email || values.email.trim();
+                const temporaryPassword = result?.temporary_password || '';
                 toast.success('Employee created successfully.');
-                if (newId) {
-                    navigate(`/admin/hr/employees/${newId}`);
-                } else {
-                    navigate('/admin/hr/employees');
-                }
+                setCreatedCredentials({
+                    id: newId,
+                    email: createdEmail,
+                    temporaryPassword,
+                });
                 return;
             }
 
@@ -256,6 +303,19 @@ const EmployeeDetails = () => {
     const handleDocumentsRefresh = async () => {
         if (!isDocumentsTab) return;
         await documentsQuery.refetch();
+    };
+
+    const handleCopyCredential = async (field) => {
+        const value = field === 'email' ? createdCredentials?.email : createdCredentials?.temporaryPassword;
+        const copied = await copyText(value || '');
+        if (!copied) {
+            toast.error(`Could not copy ${field}.`);
+            return;
+        }
+
+        setCopiedField(field);
+        toast.success(`${field === 'email' ? 'Email' : 'Temporary password'} copied.`);
+        window.setTimeout(() => setCopiedField(''), 900);
     };
 
     const onSubmitLeave = async (values) => {
@@ -391,24 +451,19 @@ const EmployeeDetails = () => {
                                 name="department"
                                 control={control}
                                 render={({ field }) => (
-                                    <select
-                                        {...field}
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.625rem',
-                                            borderRadius: 'var(--radius-md)',
-                                            border: '1px solid var(--color-border)',
-                                            background: 'var(--color-bg-surface)',
-                                            color: 'var(--color-text-main)',
-                                        }}
-                                    >
-                                        <option value="">Select Department</option>
-                                        {departments.map((department) => (
-                                            <option key={department.id} value={department.id}>
-                                                {department.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <SearchableSelectBackend
+                                        value={field.value || ''}
+                                        onChange={(selectedValue) => field.onChange(selectedValue || '')}
+                                        options={filteredDepartments}
+                                        searchTerm={departmentSearchTerm}
+                                        onSearchChange={setDepartmentSearchTerm}
+                                        placeholder="Search departments..."
+                                        emptyLabel="No departments found"
+                                        getOptionLabel={(option) => option?.name || ''}
+                                        getOptionValue={(option) => option?.id || ''}
+                                        isInitialLoading={departmentsQuery.isLoading}
+                                        zIndex={91}
+                                    />
                                 )}
                             />
                         </div>
@@ -419,24 +474,19 @@ const EmployeeDetails = () => {
                                 name="position"
                                 control={control}
                                 render={({ field }) => (
-                                    <select
-                                        {...field}
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.625rem',
-                                            borderRadius: 'var(--radius-md)',
-                                            border: '1px solid var(--color-border)',
-                                            background: 'var(--color-bg-surface)',
-                                            color: 'var(--color-text-main)',
-                                        }}
-                                    >
-                                        <option value="">Select Position</option>
-                                        {positions.map((position) => (
-                                            <option key={position.id} value={position.id}>
-                                                {position.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <SearchableSelectBackend
+                                        value={field.value || ''}
+                                        onChange={(selectedValue) => field.onChange(selectedValue || '')}
+                                        options={filteredPositions}
+                                        searchTerm={positionSearchTerm}
+                                        onSearchChange={setPositionSearchTerm}
+                                        placeholder="Search positions..."
+                                        emptyLabel="No positions found"
+                                        getOptionLabel={(option) => option?.name || ''}
+                                        getOptionValue={(option) => option?.id || ''}
+                                        isInitialLoading={positionsQuery.isLoading}
+                                        zIndex={90}
+                                    />
                                 )}
                             />
                         </div>
@@ -647,9 +697,154 @@ const EmployeeDetails = () => {
                 }}
             />
         )}
+        {createdCredentials && (
+            <div
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(0, 0, 0, 0.45)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '1rem',
+                    zIndex: 1001,
+                }}
+            >
+                <div
+                    style={{
+                        width: 'min(520px, 100%)',
+                        borderRadius: '14px',
+                        background: 'var(--color-bg-surface)',
+                        border: '1px solid var(--color-border)',
+                        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.2)',
+                        overflow: 'hidden',
+                    }}
+                >
+                    <div
+                        style={{
+                            padding: '1rem 1.25rem',
+                            borderBottom: '1px solid var(--color-border)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                        }}
+                    >
+                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Account Created</h3>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const targetId = createdCredentials.id;
+                                setCreatedCredentials(null);
+                                setCopiedField('');
+                                if (targetId) {
+                                    navigate(`/admin/hr/employees/${targetId}`);
+                                } else {
+                                    navigate('/admin/hr/employees');
+                                }
+                            }}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--color-text-secondary)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+                    <div style={{ padding: '1.25rem', display: 'grid', gap: '1rem' }}>
+                        <p style={{ margin: 0, color: 'var(--color-text-secondary)', lineHeight: 1.55 }}>
+                            This employee account is created and must change the password on first login.
+                        </p>
+
+                        <CredentialRow
+                            label="Email"
+                            value={createdCredentials.email}
+                            isCopied={copiedField === 'email'}
+                            onCopy={() => handleCopyCredential('email')}
+                        />
+                        <CredentialRow
+                            label="Temporary Password"
+                            value={createdCredentials.temporaryPassword}
+                            isCopied={copiedField === 'password'}
+                            onCopy={() => handleCopyCredential('password')}
+                        />
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                            <Button
+                                type="button"
+                                onClick={() => {
+                                    const targetId = createdCredentials.id;
+                                    setCreatedCredentials(null);
+                                    setCopiedField('');
+                                    if (targetId) {
+                                        navigate(`/admin/hr/employees/${targetId}`);
+                                    } else {
+                                        navigate('/admin/hr/employees');
+                                    }
+                                }}
+                            >
+                                Continue
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     );
 };
+
+const CredentialRow = ({ label, value, onCopy, isCopied }) => (
+    <div
+        style={{
+            border: '1px solid var(--color-border)',
+            borderRadius: '10px',
+            padding: '0.75rem',
+            display: 'grid',
+            gap: '0.4rem',
+            background: 'var(--color-bg-primary)',
+        }}
+    >
+        <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{label}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <code
+                style={{
+                    margin: 0,
+                    fontSize: '0.9rem',
+                    color: 'var(--color-text-main)',
+                    overflowWrap: 'anywhere',
+                    flex: 1,
+                }}
+            >
+                {value || '-'}
+            </code>
+            <button
+                type="button"
+                onClick={onCopy}
+                style={{
+                    border: '1px solid var(--color-border)',
+                    background: isCopied ? 'var(--color-success)' : 'var(--color-bg-surface)',
+                    color: isCopied ? '#fff' : 'var(--color-text-secondary)',
+                    borderRadius: '8px',
+                    width: '2rem',
+                    height: '2rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transform: isCopied ? 'scale(1.08)' : 'scale(1)',
+                    transition: 'all 0.2s ease',
+                }}
+            >
+                {isCopied ? <Check size={16} /> : <Copy size={16} />}
+            </button>
+        </div>
+    </div>
+);
 
 const TabButton = ({ label, icon, active, onClick }) => (
     <button

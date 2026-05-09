@@ -13,7 +13,6 @@ const Settings = () => {
         { id: 'general', label: 'General', icon: <Globe size={18} /> },
         { id: 'security', label: 'Security', icon: <Lock size={18} /> },
         { id: 'tax', label: 'Tax Management', icon: <Percent size={18} /> },
-        { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
         { id: 'permissions', label: 'Permissions & Roles', icon: <Shield size={18} /> },
     ];
 
@@ -79,7 +78,6 @@ const Settings = () => {
                     {activeTab === 'general' && <GeneralSettingsTab />}
                     {activeTab === 'security' && <SecuritySettingsTab />}
                     {activeTab === 'tax' && <TaxSettings />}
-                    {activeTab === 'notifications' && <NotificationsSettingsTab />}
                     {activeTab === 'permissions' && <PermissionsSettingsTab />}
                 </div>
             </div>
