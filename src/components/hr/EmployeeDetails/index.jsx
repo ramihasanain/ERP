@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Check, Copy, CreditCard, FileText, Save, User, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,7 +7,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import Spinner from '@/core/Spinner';
-import SearchableSelectBackend from '@/core/SearchableSelectBackend';
+import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
 import ContractSalaryTab from '@/components/hr/ContractSalaryTab';
@@ -43,16 +43,25 @@ const normalizeArrayResponse = (response) => {
     return [];
 };
 
+const normalizeEntityId = (value) => {
+    if (value == null) return '';
+    if (typeof value === 'object') {
+        return String(value?.id || value?.uuid || '');
+    }
+    return String(value);
+};
+
 const normalizeDepartments = (response) =>
     normalizeArrayResponse(response).map((item) => ({
-        id: item?.id || item?.uuid || '',
+        id: normalizeEntityId(item?.id || item?.uuid),
         name: item?.name || '',
     }));
 
 const normalizePositions = (response) =>
     normalizeArrayResponse(response).map((item) => ({
-        id: item?.id || item?.uuid || '',
+        id: normalizeEntityId(item?.id || item?.uuid),
         name: item?.name || '',
+        department: normalizeEntityId(item?.department || item?.department_id),
     }));
 
 const normalizeEmployeeFormData = (response) => {
@@ -70,8 +79,8 @@ const normalizeEmployeeFormData = (response) => {
         nationality: profileData?.nationality || '',
         phone_number: profileData?.phone_number || '',
         address: profileData?.address || '',
-        department: profileData?.department || '',
-        position: profileData?.position || '',
+        department: normalizeEntityId(profileData?.department),
+        position: normalizeEntityId(profileData?.position),
         joining_date: profileData?.joining_date || '',
         status: (profileData?.status || 'active').toLowerCase(),
         bank_name: profileData?.bank_name || '',
@@ -110,8 +119,6 @@ const EmployeeDetails = () => {
     const isNew = !id;
     const [activeTab, setActiveTab] = useState('overview');
     const [isTerminationOpen, setIsTerminationOpen] = useState(false);
-    const [departmentSearchTerm, setDepartmentSearchTerm] = useState('');
-    const [positionSearchTerm, setPositionSearchTerm] = useState('');
     const [createdCredentials, setCreatedCredentials] = useState(null);
     const [copiedField, setCopiedField] = useState('');
     const companyName = useCompanyName();
@@ -129,11 +136,13 @@ const EmployeeDetails = () => {
         control,
         handleSubmit,
         reset,
-        watch,
+        setValue,
         formState: { isDirty },
     } = useForm({
         defaultValues,
     });
+    const watchedData = useWatch({ control }) || defaultValues;
+    const selectedDepartmentId = normalizeEntityId(watchedData.department);
     const {
         register: registerLeave,
         handleSubmit: handleLeaveSubmit,
@@ -168,16 +177,20 @@ const EmployeeDetails = () => {
         ...sessionCacheQueryOpts,
     });
 
-    const departmentsQuery = useCustomQuery('/api/hr/departments/', ['hr-departments'], {
+    const departmentsQuery = useCustomQuery('/api/hr/departments/?page_size=999', ['hr-departments', 'page_size_999'], {
         enabled: !isNew || isProfileApiTab,
         select: normalizeDepartments,
         ...sessionCacheQueryOpts,
     });
-    const positionsQuery = useCustomQuery('/api/hr/positions/', ['hr-positions'], {
-        enabled: !isNew || isProfileApiTab,
-        select: normalizePositions,
-        ...sessionCacheQueryOpts,
-    });
+    const positionsQuery = useCustomQuery(
+        `/api/hr/positions/?page_size=999${selectedDepartmentId ? `&department=${encodeURIComponent(selectedDepartmentId)}` : ''}`,
+        ['hr-positions', 'page_size_999', selectedDepartmentId],
+        {
+            enabled: !isNew || isProfileApiTab,
+            select: normalizePositions,
+            ...sessionCacheQueryOpts,
+        }
+    );
     const leavesQuery = useCustomQuery('/api/hr/employees/leaves/', ['hr-employee-leaves', id || 'new'], {
         enabled: isAuthUserEmployee && !!id,
         select: normalizeLeaves,
@@ -232,25 +245,43 @@ const EmployeeDetails = () => {
 
     const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
     const positions = useMemo(() => positionsQuery.data ?? [], [positionsQuery.data]);
-    const filteredDepartments = useMemo(() => {
-        const term = departmentSearchTerm.trim().toLowerCase();
-        if (!term) return departments;
-        return departments.filter((department) => (department?.name || '').toLowerCase().includes(term));
-    }, [departments, departmentSearchTerm]);
-    const filteredPositions = useMemo(() => {
-        const term = positionSearchTerm.trim().toLowerCase();
-        if (!term) return positions;
-        return positions.filter((position) => (position?.name || '').toLowerCase().includes(term));
-    }, [positions, positionSearchTerm]);
+    const departmentSelectOptions = useMemo(
+        () => departments.map((department) => ({ value: department.id, label: department.name || department.id })),
+        [departments]
+    );
+    const positionSelectOptions = useMemo(
+        () => positions.map((position) => ({ value: position.id, label: position.name || position.id })),
+        [positions]
+    );
     const leaves = useMemo(() => leavesQuery.data ?? [], [leavesQuery.data]);
     const documents = useMemo(() => documentsQuery.data ?? [], [documentsQuery.data]);
-    const watchedData = watch();
 
     const employeeName = `${watchedData.first_name || ''} ${watchedData.last_name || ''}`.trim();
     const employeeUserId =
         watchedData.user !== undefined && watchedData.user !== null && watchedData.user !== ''
             ? String(watchedData.user)
             : null;
+
+    const handleDepartmentChange = (selectedValue, onChange) => {
+        const nextDepartmentId = selectedValue || '';
+        onChange(nextDepartmentId);
+
+        const currentPositionId = normalizeEntityId(watchedData.position);
+        const selectedPosition = positions.find((position) => position.id === currentPositionId);
+        if (selectedPosition?.department && selectedPosition.department !== nextDepartmentId) {
+            setValue('position', '', { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+        }
+    };
+
+    const handlePositionChange = (selectedValue, onChange) => {
+        const nextPositionId = selectedValue || '';
+        onChange(nextPositionId);
+
+        const selectedPosition = positions.find((position) => position.id === nextPositionId);
+        if (selectedPosition?.department) {
+            setValue('department', selectedPosition.department, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+        }
+    };
 
     const onSubmit = async (values) => {
         const payload = {
@@ -465,22 +496,20 @@ const EmployeeDetails = () => {
                             render={({ field }) => <Input label="Address" style={{ gridColumn: 'span 2' }} {...field} />}
                         />
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Department</label>
                             <Controller
                                 name="department"
                                 control={control}
                                 render={({ field }) => (
-                                    <SearchableSelectBackend
+                                    <SelectWithLoadMore
+                                        id="employee-details-department"
+                                        label="Department"
                                         value={field.value || ''}
-                                        onChange={(selectedValue) => field.onChange(selectedValue || '')}
-                                        options={filteredDepartments}
-                                        searchTerm={departmentSearchTerm}
-                                        onSearchChange={setDepartmentSearchTerm}
-                                        placeholder="Search departments..."
-                                        emptyLabel="No departments found"
-                                        getOptionLabel={(option) => option?.name || ''}
-                                        getOptionValue={(option) => option?.id || ''}
+                                        onChange={(selectedValue) => handleDepartmentChange(selectedValue, field.onChange)}
+                                        options={departmentSelectOptions}
+                                        emptyOptionLabel="Select department..."
                                         isInitialLoading={departmentsQuery.isLoading}
+                                        paginationError={departmentsQuery.isError ? 'Failed to load departments.' : null}
+                                        hasMore={false}
                                         zIndex={91}
                                     />
                                 )}
@@ -488,22 +517,20 @@ const EmployeeDetails = () => {
                         </div>
 
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Position</label>
                             <Controller
                                 name="position"
                                 control={control}
                                 render={({ field }) => (
-                                    <SearchableSelectBackend
+                                    <SelectWithLoadMore
+                                        id="employee-details-position"
+                                        label="Position"
                                         value={field.value || ''}
-                                        onChange={(selectedValue) => field.onChange(selectedValue || '')}
-                                        options={filteredPositions}
-                                        searchTerm={positionSearchTerm}
-                                        onSearchChange={setPositionSearchTerm}
-                                        placeholder="Search positions..."
-                                        emptyLabel="No positions found"
-                                        getOptionLabel={(option) => option?.name || ''}
-                                        getOptionValue={(option) => option?.id || ''}
+                                        onChange={(selectedValue) => handlePositionChange(selectedValue, field.onChange)}
+                                        options={positionSelectOptions}
+                                        emptyOptionLabel="Select position..."
                                         isInitialLoading={positionsQuery.isLoading}
+                                        paginationError={positionsQuery.isError ? 'Failed to load positions.' : null}
+                                        hasMore={false}
                                         zIndex={90}
                                     />
                                 )}

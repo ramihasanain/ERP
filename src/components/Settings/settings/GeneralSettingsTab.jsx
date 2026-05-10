@@ -205,6 +205,19 @@ const GeneralSettingsTab = () => {
         try {
             await updateCompanySettings.mutateAsync(payload);
             toast.success('Company settings updated successfully.');
+            try {
+                if (typeof window !== 'undefined') {
+                    const currencyId = values.default_currency ? String(values.default_currency).trim() : '';
+                    if (!currencyId) {
+                        localStorage.removeItem('erp_currency');
+                    } else {
+                        const currencyCode = currencies.find((c) => c.id === currencyId)?.code;
+                        localStorage.setItem('erp_currency', String(currencyCode || currencyId));
+                    }
+                }
+            } catch {
+                // ignore storage errors
+            }
         } catch (error) {
             const message = error?.response?.data?.detail || 'Failed to update company settings.';
             toast.error(message);

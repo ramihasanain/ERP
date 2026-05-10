@@ -1,4 +1,17 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
+import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import { errorToastOptions, successToastOptions } from '@/utils/toastOptions';
+import {
+    useClearAllNotifications,
+    useDeleteNotification,
+    useMarkAllNotificationsRead,
+    useMarkNotificationRead,
+    useNotificationsQuery,
+    useNotificationStatsQuery,
+} from '@/hooks/useNotificationsApi';
+import { subscribeToForegroundMessages } from '@/services/firebase';
 
 const NotificationsContext = createContext();
 
@@ -111,37 +124,240 @@ const DEFAULT_NOTIFICATIONS = [
     }
 ];
 
-export const NotificationsProvider = ({ children }) => {
-    const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS);
+const normalizeNotification = (raw) => {
+    if (!raw || typeof raw !== 'object') return null;
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const id =
+        raw.id ??
+        raw.pk ??
+        raw.uuid ??
+        raw.notification_id ??
+        raw.notificationId ??
+        null;
+
+    const timestamp =
+        raw.timestamp ??
+        raw.created_at ??
+        raw.createdAt ??
+        raw.date ??
+        raw.sent_at ??
+        raw.sentAt ??
+        new Date().toISOString();
+
+    const read =
+        raw.read ??
+        raw.is_read ??
+        raw.isRead ??
+        raw.seen ??
+        raw.is_seen ??
+        false;
+
+    const title =
+        raw.title ??
+        raw.subject ??
+        raw.heading ??
+        raw.name ??
+        'Notification';
+
+    const message =
+        raw.message ??
+        raw.body ??
+        raw.text ??
+        raw.description ??
+        '';
+
+    const type =
+        raw.type ??
+        raw.category ??
+        raw.kind ??
+        'system';
+
+    const link =
+        raw.link ??
+        raw.url ??
+        raw.path ??
+        raw.click_action ??
+        raw.clickAction ??
+        null;
+
+    const icon =
+        raw.icon ??
+        (type === 'payment' ? '💳' : type === 'inventory' ? '📦' : type === 'audit' ? '🛡️' : '🔔');
+
+    return {
+        id: id != null ? String(id) : `N-${Date.now()}`,
+        type: String(type || 'system'),
+        title: String(title || 'Notification'),
+        message: String(message || ''),
+        timestamp: String(timestamp || new Date().toISOString()),
+        read: Boolean(read),
+        icon: String(icon || '🔔'),
+        link: link ? String(link) : null,
+        _raw: raw,
+    };
+};
+
+export const NotificationsProvider = ({ children }) => {
+    const { isAuthenticated } = useAuth();
+    const [localNotifications, setLocalNotifications] = useState([]);
+
+    const notificationsQuery = useNotificationsQuery({
+        enabled: isAuthenticated,
+        staleTime: 10_000,
+        refetchInterval: 60_000,
+    });
+
+    const statsQuery = useNotificationStatsQuery({
+        enabled: isAuthenticated,
+        staleTime: 10_000,
+        refetchInterval: 60_000,
+    });
+
+    const markReadMutation = useMarkNotificationRead();
+    const markAllReadMutation = useMarkAllNotificationsRead();
+    const deleteNotificationMutation = useDeleteNotification();
+    const clearAllMutation = useClearAllNotifications();
+
+    const baseNotifications = useMemo(() => {
+        if (!isAuthenticated) return DEFAULT_NOTIFICATIONS;
+        const data = notificationsQuery.data;
+        const list = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.results)
+                ? data.results
+                : Array.isArray(data?.data)
+                    ? data.data
+                    : [];
+        return list.map(normalizeNotification).filter(Boolean);
+    }, [isAuthenticated, notificationsQuery.data]);
+
+    const notifications = useMemo(() => {
+        // Local items first (foreground FCM or optimistic adds), then backend list.
+        const merged = [...localNotifications, ...baseNotifications];
+
+        // De-dupe by id (local overrides backend)
+        const seen = new Set();
+        const deduped = [];
+        for (const n of merged) {
+            if (!n?.id) continue;
+            if (seen.has(n.id)) continue;
+            seen.add(n.id);
+            deduped.push(n);
+        }
+
+        // Sort latest first when timestamps exist
+        deduped.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        return deduped;
+    }, [localNotifications, baseNotifications]);
+
+    const unreadCount = useMemo(() => {
+        if (isAuthenticated) {
+            const s = statsQuery.data;
+            const candidate =
+                s?.unread_count ??
+                s?.unreadCount ??
+                s?.unread ??
+                s?.data?.unread_count ??
+                null;
+            if (typeof candidate === 'number') return candidate;
+        }
+        return notifications.filter(n => !n.read).length;
+    }, [isAuthenticated, statsQuery.data, notifications]);
 
     const addNotification = useCallback((notification) => {
-        const newNotif = {
+        const normalized = normalizeNotification({
             ...notification,
-            id: `N-${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            read: false
-        };
-        setNotifications(prev => [newNotif, ...prev]);
-        return newNotif;
+            id: notification?.id ?? `N-${Date.now()}`,
+            created_at: notification?.timestamp ?? new Date().toISOString(),
+            is_read: notification?.read ?? false,
+        });
+        if (!normalized) return null;
+        setLocalNotifications(prev => [normalized, ...prev]);
+        return normalized;
     }, []);
 
     const markAsRead = useCallback((id) => {
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    }, []);
+        setLocalNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        if (isAuthenticated) {
+            markReadMutation.mutate(
+                { id, is_read: true },
+                {
+                    onError: (e) => {
+                        toast.error(getApiErrorMessage(e, 'Could not mark notification as read.'), errorToastOptions);
+                    },
+                }
+            );
+        }
+    }, [isAuthenticated, markReadMutation]);
 
     const markAllAsRead = useCallback(() => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    }, []);
+        setLocalNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        if (isAuthenticated) {
+            markAllReadMutation.mutate(
+                {},
+                {
+                    onSuccess: () => toast.success('All notifications marked as read.', successToastOptions),
+                    onError: (e) => toast.error(getApiErrorMessage(e, 'Could not mark all as read.'), errorToastOptions),
+                }
+            );
+        }
+    }, [isAuthenticated, markAllReadMutation]);
 
     const deleteNotification = useCallback((id) => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
-    }, []);
+        setLocalNotifications(prev => prev.filter(n => n.id !== id));
+        if (isAuthenticated) {
+            deleteNotificationMutation.mutate(id, {
+                onError: (e) => toast.error(getApiErrorMessage(e, 'Could not delete notification.'), errorToastOptions),
+            });
+        }
+    }, [isAuthenticated, deleteNotificationMutation]);
 
     const clearAll = useCallback(() => {
-        setNotifications([]);
-    }, []);
+        setLocalNotifications([]);
+        if (isAuthenticated) {
+            clearAllMutation.mutate(undefined, {
+                onSuccess: () => toast.success('Notifications cleared.', successToastOptions),
+                onError: (e) => toast.error(getApiErrorMessage(e, 'Could not clear notifications.'), errorToastOptions),
+            });
+        }
+    }, [isAuthenticated, clearAllMutation]);
+
+    // Foreground FCM -> add to local list + toast
+    const unsubRef = useRef(null);
+    useEffect(() => {
+        let alive = true;
+
+        (async () => {
+            if (!isAuthenticated) return;
+            const unsubscribe = await subscribeToForegroundMessages((payload) => {
+                if (!alive) return;
+                const title = payload?.notification?.title || payload?.data?.title || 'Notification';
+                const body = payload?.notification?.body || payload?.data?.body || '';
+                const link = payload?.data?.click_action || payload?.data?.link || null;
+
+                addNotification({
+                    type: payload?.data?.type || 'system',
+                    title,
+                    message: body,
+                    icon: '🔔',
+                    link,
+                });
+
+                toast(title, { description: body, ...successToastOptions });
+            });
+            unsubRef.current = unsubscribe;
+        })();
+
+        return () => {
+            alive = false;
+            try {
+                unsubRef.current?.();
+            } catch {
+                // ignore
+            }
+            unsubRef.current = null;
+        };
+    }, [isAuthenticated, addNotification]);
 
     return (
         <NotificationsContext.Provider value={{

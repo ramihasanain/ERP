@@ -86,6 +86,17 @@ const EmployeeDashboard = () => {
         },
     });
 
+    useEffect(() => {
+        if (!showRequestModal) return undefined;
+
+        const previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = previousBodyOverflow;
+        };
+    }, [showRequestModal]);
+
     const dashboardData = dashboardQuery.data ?? {};
     const apiProjects = useMemo(
         () => (Array.isArray(dashboardData?.my_projects) ? dashboardData.my_projects : []),

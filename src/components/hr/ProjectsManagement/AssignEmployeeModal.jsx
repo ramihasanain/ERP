@@ -52,15 +52,12 @@ const AssignEmployeeModal = ({
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Role in Project *</label>
-                        <select style={selectStyle} value={assignRole} onChange={(event) => onRoleChange(event.target.value)}>
-                            <option value="">Select role...</option>
-                            {assignableRoles.map((role) => (
-                                <option key={role.id} value={role.name}>
-                                    {role.name}
-                                </option>
-                            ))}
-                        </select>
-                        {isRolesLoading && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Loading roles...</span>}
+                        <input
+                            style={selectStyle}
+                            value={assignRole}
+                            onChange={(event) => onRoleChange(event.target.value)}
+                            placeholder="Enter role..."
+                        />
                     </div>
                 </div>
 

@@ -18,6 +18,14 @@ const PurchaseOrders = () => {
     const [statusFilter, setStatusFilter] = useState('All');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const currency = (() => {
+        if (typeof window === 'undefined') return '$';
+        try {
+            return localStorage.getItem('erp_currency') || '$';
+        } catch {
+            return '$';
+        }
+    })();
 
     const filteredPOs = allPOs.filter(po => {
         const matchesSearch = po.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,7 +149,9 @@ const PurchaseOrders = () => {
                                 <td style={{ padding: '1rem 1.5rem' }}>{po.date}</td>
                                 <td style={{ padding: '1rem 1rem', fontWeight: 600 }}>{po.id}</td>
                                 <td style={{ padding: '1rem 1rem' }}>{po.supplier}</td>
-                                <td style={{ padding: '1rem 1rem', textAlign: 'right' }}>${po.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                <td style={{ padding: '1rem 1rem', textAlign: 'right' }}>
+                                    {String(currency).length === 1 ? currency : `${currency} `}{po.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </td>
                                 <td style={{ padding: '1rem 1.5rem' }}>
                                     <span style={{
                                         padding: '0.25rem 0.5rem',

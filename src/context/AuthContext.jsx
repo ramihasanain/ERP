@@ -14,6 +14,8 @@ import {
     storeUser,
     storeTenantDomain,
 } from '@/services/auth';
+import { getStoredFcmToken, storeFcmToken } from '@/services/firebase';
+import { unregisterFcmToken } from '@/services/notificationsApi';
 import { successToastOptions } from '@/utils/toastOptions';
 
 const AuthContext = createContext();
@@ -32,6 +34,20 @@ export const AuthProvider = ({ children }) => {
         return getStoredUser();
     });
     const registerMutation = useCustomPost('/register/');
+    const persistErpCurrency = (rawCurrency) => {
+        if (typeof window === 'undefined') return;
+        const currency =
+            (typeof rawCurrency === 'object'
+                ? rawCurrency?.code ?? rawCurrency?.symbol ?? rawCurrency?.name ?? rawCurrency?.id ?? rawCurrency?.uuid
+                : rawCurrency) ?? '';
+        const normalized = String(currency || '').trim();
+        if (!normalized) return;
+        try {
+            localStorage.setItem('erp_currency', normalized);
+        } catch {
+            // ignore storage errors
+        }
+    };
 
     const normalizeAuthResponse = (responseData, fallbackRole = 'admin') => {
         const tokenPayload = {
@@ -107,6 +123,17 @@ export const AuthProvider = ({ children }) => {
             });
 
             setUser(normalizedUser);
+            persistErpCurrency(
+                response?.user?.currency ??
+                response?.user?.currncy ??
+                response?.data?.user?.currency ??
+                response?.data?.user?.currncy ??
+                normalizedUser?.currency ??
+                normalizedUser?.currncy ??
+                normalizedAuthPayload?.user?.currency ??
+                normalizedAuthPayload?.user?.currncy ??
+                null
+            );
 
             return normalizedUser;
         } finally {
@@ -137,6 +164,19 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         const preserveTenantDomain = user?.role === 'employee';
         setUser(null);
+
+        // Best-effort: unregister the last stored FCM token for this browser session.
+        try {
+            const token = getStoredFcmToken();
+            if (token) {
+                unregisterFcmToken(token).finally(() => {
+                    storeFcmToken(null);
+                });
+            }
+        } catch {
+            // ignore
+        }
+
         removeTokens();
         if (!preserveTenantDomain) {
             clearTenantDomain();

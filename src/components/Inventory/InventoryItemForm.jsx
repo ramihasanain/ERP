@@ -101,6 +101,7 @@ const InventoryItemForm = ({ isEdit = false }) => {
     const { id } = useParams();
     const [formData, setFormData] = useState(defaultFormData);
     const [initialPayload, setInitialPayload] = useState(null);
+    const [isNarrow, setIsNarrow] = useState(false);
 
     const categoriesQuery = useCustomQuery('/api/inventory/categories/', ['inventory-categories-form'], {
         select: (response) =>
@@ -175,6 +176,22 @@ const InventoryItemForm = ({ isEdit = false }) => {
         });
     }, [unitOptions, categoryOptions]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+
+        const media = window.matchMedia('(max-width: 900px)');
+        const update = () => setIsNarrow(media.matches);
+
+        update();
+        if (typeof media.addEventListener === 'function') {
+            media.addEventListener('change', update);
+            return () => media.removeEventListener('change', update);
+        }
+
+        media.addListener(update);
+        return () => media.removeListener(update);
+    }, []);
+
     const handleChange = (e) => {
         setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
@@ -222,8 +239,8 @@ const InventoryItemForm = ({ isEdit = false }) => {
             {!isLoading && !hasError && (
                 <form onSubmit={handleSubmit}>
                     <Card className="padding-md">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                            <div style={{ gridColumn: 'span 2' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
+                            <div style={{ gridColumn: isNarrow ? 'span 1' : 'span 2' }}>
                                 <label style={labelStyle}>Item Name</label>
                                 <input name="name" value={formData.name} onChange={handleChange} required style={inputStyle} />
                             </div>
@@ -267,35 +284,18 @@ const InventoryItemForm = ({ isEdit = false }) => {
                                 </select>
                             </div>
 
-                            <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--color-border)', margin: '1rem 0' }} />
+                            <div style={{ gridColumn: isNarrow ? 'span 1' : 'span 2', borderTop: '1px solid var(--color-border)', margin: '1rem 0' }} />
 
                             <div>
                                 <label style={labelStyle}>Cost Price (Purchase)</label>
                                 <input name="purchasePrice" type="number" step="0.01" value={formData.purchasePrice} onChange={handleChange} required style={inputStyle} />
                             </div>
 
-                            <div>
-                                <label style={labelStyle}>Selling Price</label>
-                                <input name="sellingPrice" type="number" step="0.01" value={formData.sellingPrice} onChange={handleChange} required style={inputStyle} />
-                            </div>
-
                             {formData.type === 'stock_item' && (
                                 <>
-                                    <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--color-border)', margin: '1rem 0' }} />
-
                                     <div>
                                         <label style={labelStyle}>Reorder Level (Low Stock Alert)</label>
                                         <input name="reorderLevel" type="number" value={formData.reorderLevel} onChange={handleChange} style={inputStyle} />
-                                    </div>
-
-                                    <div>
-                                        <label style={labelStyle}>Inventory Asset Account (GL)</label>
-                                        <select name="glAccountId" value={formData.glAccountId} onChange={handleChange} style={inputStyle} disabled>
-                                            <option value="1200">1200 - Inventory Asset</option>
-                                        </select>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                                            Default GL account for stock valuation.
-                                        </div>
                                     </div>
                                 </>
                             )}

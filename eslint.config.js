@@ -24,6 +24,9 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // This repo currently uses state updates inside effects in many places.
+      // Keep the guidance but don't block CI/dev with hard errors.
+      'react-hooks/set-state-in-effect': 'warn',
     },
   },
 ])

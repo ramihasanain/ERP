@@ -64,7 +64,7 @@ const ProductsServices = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [formData, setFormData] = useState({
-        name: '', type: 'Service', price: '', unit: 'Unit', taxRuleId: '', description: '', revenueAccount: '4110'
+        name: '', type: 'Service', price: '', unit: 'Unit', taxRuleId: '', description: '', revenueAccount: ''
     });
     const [selectedProductId, setSelectedProductId] = useState('');
     const [taxSearchTerm, setTaxSearchTerm] = useState('');
@@ -278,7 +278,7 @@ const ProductsServices = () => {
             unit: details?.item?.unit_name || 'Unit',
             taxRuleId: details?.tax_rule?.id || '',
             description: details?.item?.description || '',
-            revenueAccount: details?.revenue_account?.id || '4110',
+            revenueAccount: details?.revenue_account?.id || '',
         };
 
         setFormData(mappedForm);
@@ -347,10 +347,10 @@ const ProductsServices = () => {
                 unit: 'Unit',
                 taxRuleId: '',
                 description: item.description || '',
-                revenueAccount: '4110',
+                revenueAccount: '',
             });
         } else {
-            const localForm = { name: item.name, type: item.type, price: item.price, unit: item.unit, taxRuleId: item.taxRuleId || '', description: item.description || '', revenueAccount: item.revenueAccount || '4110' };
+            const localForm = { name: item.name, type: item.type, price: item.price, unit: item.unit, taxRuleId: item.taxRuleId || '', description: item.description || '', revenueAccount: item.revenueAccount || '' };
             setFormData(localForm);
             setInitialEditSnapshot(normalizeFormSnapshot(localForm));
         }
@@ -390,7 +390,7 @@ const ProductsServices = () => {
         setUnitsPage(1);
         setTaxPage(1);
         setRevenuePage(1);
-        setFormData({ name: '', type: 'Service', price: '', unit: 'Unit', taxRuleId: '', description: '', revenueAccount: '4110' });
+        setFormData({ name: '', type: 'Service', price: '', unit: 'Unit', taxRuleId: '', description: '', revenueAccount: '' });
     };
 
     const selectStyle = {

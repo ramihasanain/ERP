@@ -4,6 +4,7 @@ import Button from '@/components/Shared/Button';
 import Modal from '@/components/Shared/Modal';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
 import Spinner from '@/core/Spinner';
+import SearchableSelectBackend from '@/core/SearchableSelectBackend';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut, useCustomRemove } from '@/hooks/useMutation';
 import { Controller, useForm } from 'react-hook-form';
@@ -49,6 +50,8 @@ const normalizeEmployee = (item) => {
     return {
         id: getEntityId(item),
         fullName: `${firstName} ${lastName}`.trim() || email || 'Unknown',
+        email,
+        status: item?.status ?? userData?.status ?? '',
         roleKey: getEmployeeRoleKey(item),
     };
 };
@@ -62,6 +65,7 @@ const Warehouses = () => {
     const [editingWarehouse, setEditingWarehouse] = useState(null);
     const [selectedWarehouseId, setSelectedWarehouseId] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [managerSearchTerm, setManagerSearchTerm] = useState('');
 
     const warehousesQuery = useCustomQuery('/api/inventory/warehouses/', ['inventory-warehouses'], {
         select: normalizeWarehouses,
@@ -107,27 +111,35 @@ const Warehouses = () => {
     const warehouses = useMemo(() => warehousesQuery.data ?? [], [warehousesQuery.data]);
     const employees = useMemo(() => employeesQuery.data ?? [], [employeesQuery.data]);
 
-    const managerEmployees = useMemo(
-        () => employees.filter((employee) => employee.roleKey === 'manager'),
-        [employees]
-    );
-
-    /** Dropdown: managers only; when editing, keep current assignee visible even if not role manager */
-    const managerSelectOptions = useMemo(() => {
-        const byId = new Map(managerEmployees.map((e) => [e.id, e]));
+    const managerEmployees = useMemo(() => {
+        const activeEmployees = employees.filter((employee) => String(employee.status).toLowerCase() === 'active');
+        const byId = new Map(activeEmployees.map((e) => [e.id, e]));
         const currentId = editingWarehouse?.manager;
-        if (!currentId || byId.has(currentId)) return managerEmployees;
-        const fromAll = employees.find((e) => e.id === currentId);
-        if (fromAll) return [...managerEmployees, fromAll];
-        return [
-            ...managerEmployees,
-            {
-                id: currentId,
-                fullName: editingWarehouse.managerName?.trim() || 'Current manager',
-                roleKey: '',
-            },
-        ];
-    }, [managerEmployees, employees, editingWarehouse]);
+
+        if (currentId && !byId.has(currentId)) {
+            const fromAll = employees.find((e) => e.id === currentId);
+            if (fromAll) {
+                activeEmployees.push(fromAll);
+                byId.set(fromAll.id, fromAll);
+            } else {
+                activeEmployees.push({
+                    id: currentId,
+                    fullName: editingWarehouse?.managerName?.trim() || 'Current manager',
+                    email: '',
+                    status: '',
+                    roleKey: '',
+                });
+            }
+        }
+
+        const term = managerSearchTerm.trim().toLowerCase();
+        if (!term) return activeEmployees;
+        return activeEmployees.filter((employee) => {
+            const name = employee.fullName?.toLowerCase() || '';
+            const email = employee.email?.toLowerCase() || '';
+            return name.includes(term) || email.includes(term);
+        });
+    }, [employees, editingWarehouse, managerSearchTerm]);
 
     const managerNameMap = useMemo(
         () => new Map(employees.map((employee) => [employee.id, employee.fullName])),
@@ -141,6 +153,7 @@ const Warehouses = () => {
 
     const handleEdit = (warehouse) => {
         setEditingWarehouse(warehouse);
+        setManagerSearchTerm('');
         reset({
             name: warehouse.name || '',
             location: warehouse.location || '',
@@ -151,6 +164,7 @@ const Warehouses = () => {
 
     const handleAdd = () => {
         setEditingWarehouse(null);
+        setManagerSearchTerm('');
         reset({ name: '', location: '', manager: '' });
         setIsFormOpen(true);
     };
@@ -342,14 +356,22 @@ const Warehouses = () => {
                             name="manager"
                             control={control}
                             render={({ field }) => (
-                                <select {...field} style={inputStyle}>
-                                    <option value="">Select Manager</option>
-                                    {managerSelectOptions.map((employee) => (
-                                        <option key={employee.id} value={employee.id}>
-                                            {employee.fullName}
-                                        </option>
-                                    ))}
-                                </select>
+                                <SearchableSelectBackend
+                                    value={field.value || ''}
+                                    onChange={(nextValue) => field.onChange(nextValue)}
+                                    options={managerEmployees.map((employee) => ({
+                                        value: employee.id,
+                                        label: employee.email
+                                            ? `${employee.fullName} (${employee.email})`
+                                            : employee.fullName,
+                                    }))}
+                                    searchTerm={managerSearchTerm}
+                                    onSearchChange={setManagerSearchTerm}
+                                    placeholder="Select manager"
+                                    emptyLabel={employeesQuery.isLoading ? 'Loading...' : 'No employees found'}
+                                    isInitialLoading={employeesQuery.isLoading}
+                                    disabled={employeesQuery.isLoading || employeesQuery.isError}
+                                />
                             )}
                         />
                     </div>

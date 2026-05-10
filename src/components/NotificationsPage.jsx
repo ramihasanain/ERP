@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { useNotifications } from '@/context/NotificationsContext';
@@ -26,6 +26,7 @@ const NotificationsPage = () => {
     const navigate = useNavigate();
     const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
     const [filter, setFilter] = useState('all'); // all | unread | read
+    const hoverTimersRef = useRef(new Map());
 
     const filtered = notifications.filter(n => {
         if (filter === 'unread') return !n.read;
@@ -99,6 +100,22 @@ const NotificationsPage = () => {
                 <Card className="padding-none">
                     {filtered.map((notif, index) => {
                         const tc = typeColors[notif.type] || typeColors.system;
+                        const scheduleSeen = () => {
+                            if (notif.read) return;
+                            if (hoverTimersRef.current.has(notif.id)) return;
+                            const t = window.setTimeout(() => {
+                                hoverTimersRef.current.delete(notif.id);
+                                markAsRead(notif.id);
+                            }, 250);
+                            hoverTimersRef.current.set(notif.id, t);
+                        };
+
+                        const cancelSeen = () => {
+                            const t = hoverTimersRef.current.get(notif.id);
+                            if (t) window.clearTimeout(t);
+                            hoverTimersRef.current.delete(notif.id);
+                        };
+
                         return (
                             <div
                                 key={notif.id}
@@ -107,15 +124,21 @@ const NotificationsPage = () => {
                                     borderBottom: index < filtered.length - 1 ? '1px solid var(--color-border)' : 'none',
                                     display: 'flex', gap: '1rem', alignItems: 'flex-start',
                                     background: notif.read ? 'transparent' : notifUnreadBg,
-                                    cursor: 'pointer',
+                                    cursor: 'default',
                                     transition: 'background 0.15s'
                                 }}
-                                onClick={() => {
-                                    markAsRead(notif.id);
-                                    if (notif.link) navigate(notif.link);
+                                onMouseEnter={(e) => {
+                                    if (!notif.read) {
+                                        e.currentTarget.style.background = notifUnreadHover;
+                                        scheduleSeen();
+                                    } else {
+                                        e.currentTarget.style.background = 'transparent';
+                                    }
                                 }}
-                                onMouseOver={e => { e.currentTarget.style.background = notif.read ? notifReadHover : notifUnreadHover; }}
-                                onMouseOut={e => { e.currentTarget.style.background = notif.read ? 'transparent' : notifUnreadBg; }}
+                                onMouseLeave={(e) => {
+                                    cancelSeen();
+                                    e.currentTarget.style.background = notif.read ? 'transparent' : notifUnreadBg;
+                                }}
                             >
                                 {/* Icon */}
                                 <div style={{
@@ -131,8 +154,26 @@ const NotificationsPage = () => {
                                 <div style={{ flex: 1 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                         <div>
-                                            <h4 style={{ fontWeight: notif.read ? 500 : 700, fontSize: '0.9rem', marginBottom: '0.2rem', color: 'var(--color-text-main)' }}>{notif.title}</h4>
-                                            <p style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}>{notif.message}</p>
+                                            <h4 style={{
+                                                fontWeight: notif.read ? 500 : 700,
+                                                fontSize: '0.9rem',
+                                                marginBottom: '0.2rem',
+                                                color: 'var(--color-text-main)',
+                                                userSelect: 'text',
+                                                cursor: 'text',
+                                            }}>
+                                                {notif.title}
+                                            </h4>
+                                            <p style={{
+                                                fontSize: '0.82rem',
+                                                color: 'var(--color-text-secondary)',
+                                                lineHeight: 1.5,
+                                                margin: 0,
+                                                userSelect: 'text',
+                                                cursor: 'text',
+                                            }}>
+                                                {notif.message}
+                                            </p>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: '1rem' }}>
                                             <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{getTimeAgo(notif.timestamp)}</span>
@@ -145,22 +186,15 @@ const NotificationsPage = () => {
                                         }}>
                                             {notif.type}
                                         </span>
-                                        {!notif.read && (
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); markAsRead(notif.id); }}
-                                                style={{
-                                                    background: 'none', border: 'none', cursor: 'pointer',
-                                                    color: 'var(--color-primary-600)', fontSize: '0.7rem', fontWeight: 600,
-                                                    display: 'flex', alignItems: 'center', gap: '0.2rem', padding: 0
-                                                }}
-                                            >
-                                                <Check size={12} /> Mark read
-                                            </button>
-                                        )}
+                                        {!notif.read ? (
+                                            <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                                                Hover 1s to mark as seen
+                                            </span>
+                                        ) : null}
                                         <button
                                             onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }}
                                             style={{
-                                                background: 'none', border: 'none', cursor: 'pointer',
+                                                background: 'none', border: 'none', cursor: 'default',
                                                 color: 'var(--color-text-muted)', fontSize: '0.7rem',
                                                 display: 'flex', alignItems: 'center', gap: '0.2rem', padding: 0,
                                                 marginLeft: 'auto'
@@ -169,6 +203,26 @@ const NotificationsPage = () => {
                                             <X size={12} /> Remove
                                         </button>
                                     </div>
+                                    {!notif.read && notif.link ? (
+                                        <div style={{ marginTop: '0.5rem' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => navigate(notif.link)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: '1px solid var(--color-border)',
+                                                    borderRadius: '10px',
+                                                    padding: '0.4rem 0.6rem',
+                                                    cursor: 'default',
+                                                    color: 'var(--color-text-main)',
+                                                    fontWeight: 600,
+                                                    fontSize: '0.78rem',
+                                                }}
+                                            >
+                                                Open
+                                            </button>
+                                        </div>
+                                    ) : null}
                                 </div>
                             </div>
                         );

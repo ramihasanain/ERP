@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Plus, CheckCircle, Clock, Download, Eye, FileText, X, XCircle } from 'lucide-react';
@@ -109,6 +109,17 @@ const MyRequests = () => {
             document_file: null,
         },
     });
+
+    useEffect(() => {
+        if (!showRequestModal) return undefined;
+
+        const previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = previousBodyOverflow;
+        };
+    }, [showRequestModal]);
 
     const requestKind = watch('request_kind');
     const selectedDocumentFile = watch('document_file')?.[0] || null;

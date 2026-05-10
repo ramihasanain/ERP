@@ -4,7 +4,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
-import { FileText, List, Plus, Landmark, Monitor, Percent, Users, ArrowUpRight, DollarSign, ShoppingCart, Package, Target, CheckCircle, Upload, Shield, ArrowLeft, Hammer, Map, Box, Building2, Banknote, X } from 'lucide-react';
+import { FileText, List, Plus, Landmark, Monitor, Percent, Users, ArrowUpRight, DollarSign, ShoppingCart, Package, Target, CheckCircle, Upload, Shield, ArrowLeft, Hammer, Map, Box, Building2, Banknote, X, Wallet } from 'lucide-react';
 
 const normalizeRecentTransactionsResponse = (response) => ({
     title: response?.title || 'Recent Transactions',
@@ -232,6 +232,19 @@ const AccountingDashboard = () => {
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Trial Balance</h3>
                     <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Debit/Credit totals.</p>
                 </Card>
+
+                <Card
+                    className="padding-md hoverable"
+                    style={{ width: '240px', cursor: 'pointer' }}
+                    onClick={() => navigate('accountant-payments')}
+                >
+                    <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
+                        <Wallet size={24} />
+                    </div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Accountant Payment</h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Payroll payables and bank disbursements.</p>
+                </Card>
+
                 <Card
                     className="padding-md hoverable"
                     style={{ width: '240px', cursor: 'pointer' }}

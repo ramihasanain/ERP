@@ -12,6 +12,7 @@ import {
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
+import styles from './AdminDashboard.module.css';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -169,7 +170,7 @@ const AdminDashboard = () => {
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className={styles.page}>
 
             {/* Page Header */}
             <div>
@@ -180,7 +181,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* ── Top KPI Row ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+            <div className={styles.kpiGrid}>
                 <KpiCard
                     label={data?.total_revenue?.title || 'Total Revenue'}
                     value={formatNumber(data?.total_revenue?.value)}
@@ -211,9 +212,9 @@ const AdminDashboard = () => {
             </div>
 
             {/* ── Charts Row ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', minWidth: 0 }}>
+            <div className={styles.chartsGrid}>
                 {/* Revenue Trend */}
-                <Card className="padding-lg" style={{ minWidth: 0 }}>
+                <Card className={`padding-lg ${styles.fullWidthGridItem}`} style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                         <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-main)' }}>{data?.revenue_vs_expenses?.title || 'Revenue vs Expenses'}</h3>
                         <div style={{ display: 'flex', gap: '0.25rem', background: 'color-mix(in srgb, var(--color-text-main) 8%, var(--color-bg-card))', borderRadius: '0.5rem', padding: '3px' }}>
@@ -276,7 +277,7 @@ const AdminDashboard = () => {
                 </Card>
 
                 {/* Expense Breakdown */}
-                <Card className="padding-lg" style={{ minWidth: 0 }}>
+                {/* <Card className="padding-lg" style={{ minWidth: 0 }}>
                     <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>{data?.expense_breakdown?.title || 'Expense Breakdown'}</h3>
                     <div ref={expenseChartRef} style={{ width: '100%', minWidth: 0, height: '250px', minHeight: 250 }}>
                         {expenseChartWidth > 0 && (
@@ -291,11 +292,11 @@ const AdminDashboard = () => {
                             </PieChart>
                         )}
                     </div>
-                </Card>
+                </Card> */}
             </div>
 
             {/* ── Department Panels ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div className={styles.deptGrid}>
 
                 {/* Finance & Accounting */}
                 <DeptCard
@@ -436,7 +437,7 @@ const DeptCard = ({ title, accent, icon, stats, onClick }) => (
             </div>
             <ChevronRight size={18} color="var(--color-text-muted)" />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div className={styles.deptStatsGrid}>
             {stats.map((s, i) => (
                 <div key={i} style={{ padding: '0.5rem 0' }}>
                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '2px' }}>{s.label}</p>

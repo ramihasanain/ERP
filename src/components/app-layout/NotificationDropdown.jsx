@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '@/context/NotificationsContext';
 import { Bell, CheckCheck, X } from 'lucide-react';
@@ -43,9 +43,9 @@ const getTimeAgo = (timestamp) => {
 const NotificationDropdown = ({ open, onRequestClose, panelAlign = 'end' }) => {
     const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
     const navigate = useNavigate();
+    const hoverTimersRef = useRef(new Map());
 
     const handleNotifClick = (notif) => {
-        markAsRead(notif.id);
         if (notif.link) {
             navigate(notif.link);
             onRequestClose();
@@ -118,14 +118,30 @@ const NotificationDropdown = ({ open, onRequestClose, panelAlign = 'end' }) => {
                             style={{
                                 padding: '0.75rem 1rem',
                                 borderBottom: '1px solid var(--color-border)',
-                                cursor: 'pointer',
+                                cursor: 'default',
                                 display: 'flex', gap: '0.75rem',
                                 background: notif.read ? 'transparent' : notifUnreadBg,
                                 transition: 'background 0.15s',
                                 position: 'relative'
                             }}
-                            onMouseOver={(e) => { e.currentTarget.style.background = notif.read ? notifReadHover : notifUnreadHover; }}
-                            onMouseOut={(e) => { e.currentTarget.style.background = notif.read ? 'transparent' : notifUnreadBg; }}
+                            onMouseEnter={(e) => {
+                                if (!notif.read) {
+                                    e.currentTarget.style.background = notifUnreadHover;
+                                    if (!hoverTimersRef.current.has(notif.id)) {
+                                        const t = window.setTimeout(() => {
+                                            hoverTimersRef.current.delete(notif.id);
+                                            markAsRead(notif.id);
+                                        }, 250);
+                                        hoverTimersRef.current.set(notif.id, t);
+                                    }
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                const t = hoverTimersRef.current.get(notif.id);
+                                if (t) window.clearTimeout(t);
+                                hoverTimersRef.current.delete(notif.id);
+                                e.currentTarget.style.background = notif.read ? 'transparent' : notifUnreadBg;
+                            }}
                         >
                             <div style={{
                                 width: '2.25rem', height: '2.25rem', borderRadius: '10px',
@@ -141,7 +157,9 @@ const NotificationDropdown = ({ open, onRequestClose, panelAlign = 'end' }) => {
                                     <p style={{
                                         fontSize: '0.82rem', fontWeight: notif.read ? 500 : 700,
                                         color: 'var(--color-text-main)', margin: 0,
-                                        lineHeight: 1.3
+                                        lineHeight: 1.3,
+                                        userSelect: 'text',
+                                        cursor: 'text',
                                     }}>
                                         {notif.title}
                                     </p>
@@ -149,7 +167,7 @@ const NotificationDropdown = ({ open, onRequestClose, panelAlign = 'end' }) => {
                                         type="button"
                                         onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }}
                                         style={{
-                                            background: 'none', border: 'none', cursor: 'pointer',
+                                            background: 'none', border: 'none', cursor: 'default',
                                             color: 'var(--color-text-muted)', padding: '2px',
                                             opacity: 0.5, flexShrink: 0
                                         }}
@@ -159,7 +177,7 @@ const NotificationDropdown = ({ open, onRequestClose, panelAlign = 'end' }) => {
                                         <X size={12} />
                                     </button>
                                 </div>
-                                <p style={notifMessageClampStyle}>{notif.message}</p>
+                                <p style={{ ...notifMessageClampStyle, userSelect: 'text', cursor: 'text' }}>{notif.message}</p>
                                 <p style={{
                                     fontSize: '0.65rem', color: 'var(--color-text-muted)',
                                     margin: '4px 0 0', fontWeight: 500
