@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Globe, Lock, Bell, Shield, Percent } from 'lucide-react';
+import { Globe, Lock, Shield, Percent, CalendarDays } from 'lucide-react';
 import TaxSettings from '@/components/Settings/TaxSettings';
 import GeneralSettingsTab from '@/components/Settings/settings/GeneralSettingsTab';
 import SecuritySettingsTab from '@/components/Settings/settings/SecuritySettingsTab';
 import NotificationsSettingsTab from '@/components/Settings/settings/NotificationsSettingsTab';
 import PermissionsSettingsTab from '@/components/Settings/settings/PermissionsSettingsTab';
+import HolidaysTab from '@/components/Settings/settings/HolidaysTab';
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('general');
@@ -14,6 +15,7 @@ const Settings = () => {
         { id: 'security', label: 'Security', icon: <Lock size={18} /> },
         { id: 'tax', label: 'Tax Management', icon: <Percent size={18} /> },
         { id: 'permissions', label: 'Permissions & Roles', icon: <Shield size={18} /> },
+        { id: 'holidays', label: 'Holidays', icon: <CalendarDays size={18} /> },
     ];
 
     return (
@@ -79,6 +81,7 @@ const Settings = () => {
                     {activeTab === 'security' && <SecuritySettingsTab />}
                     {activeTab === 'tax' && <TaxSettings />}
                     {activeTab === 'permissions' && <PermissionsSettingsTab />}
+                    {activeTab === 'holidays' && <HolidaysTab />}
                 </div>
             </div>
         </div>

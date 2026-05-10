@@ -113,6 +113,12 @@ const formatDateLabel = (date) => {
   });
 };
 
+const getTodayIsoDate = () => {
+  const today = new Date();
+  today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+  return today.toISOString().slice(0, 10);
+};
+
 const formatExcelAmount = (value) => {
   const number = Number(value);
   return Number.isFinite(number) ? number : "";
@@ -136,7 +142,7 @@ const downloadExcelFile = ({ filename, sheetName, rows }) => {
 const TrialBalance = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({
-    asOf: "2026-02-08",
+    asOf: getTodayIsoDate(),
     isActive: "true",
     accountType: "",
     includeZeroAccounts: "false",

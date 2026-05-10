@@ -7,6 +7,7 @@ import Input from '@/components/Shared/Input';
 import { Save, ArrowLeft, Landmark } from 'lucide-react';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost } from '@/hooks/useMutation';
+import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 
 const AddBankAccount = () => {
     const navigate = useNavigate();
@@ -44,7 +45,14 @@ const AddBankAccount = () => {
         () => (banksQuery.data ?? []).filter((bank) => bank?.is_active),
         [banksQuery.data]
     );
-    const currencyOptions = useMemo(() => currenciesQuery.data ?? [], [currenciesQuery.data]);
+    const currencySelectOptions = useMemo(
+        () =>
+            (currenciesQuery.data ?? []).map((currency) => ({
+                value: currency.id,
+                label: `${currency.code} - ${currency.name}`,
+            })),
+        [currenciesQuery.data]
+    );
 
     const isBankType = formData.type === 'bank';
     const isFormValid = useMemo(() => {
@@ -178,24 +186,22 @@ const AddBankAccount = () => {
                     )}
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Currency</label>
-                            <select
-                                value={formData.currency}
-                                onChange={e => setFormData({ ...formData, currency: e.target.value })}
-                                style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
-                                disabled={currenciesQuery.isPending}
-                            >
-                                <option value="">
-                                    {currenciesQuery.isPending ? 'Loading currencies...' : 'Select currency...'}
-                                </option>
-                                {currencyOptions.map((currency) => (
-                                    <option key={currency.id} value={currency.id}>
-                                        {currency.code} - {currency.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        <SelectWithLoadMore
+                            id="add-bank-account-currency"
+                            label="Currency"
+                            value={formData.currency}
+                            onChange={(next) => setFormData({ ...formData, currency: next })}
+                            options={currencySelectOptions}
+                            emptyOptionLabel={
+                                currenciesQuery.isPending ? 'Loading currencies...' : 'Select currency...'
+                            }
+                            disabled={currenciesQuery.isPending || currenciesQuery.isError}
+                            isInitialLoading={currenciesQuery.isPending}
+                            paginationError={
+                                currenciesQuery.isError ? 'Failed to load currencies.' : null
+                            }
+                            hasMore={false}
+                        />
                         <Input
                             label="Opening Balance"
                             type="number"

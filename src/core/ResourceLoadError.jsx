@@ -4,6 +4,29 @@ import Button from '@/components/Shared/Button';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 
+const isHtmlLike = (value) => {
+    if (typeof value !== 'string') return false;
+    const text = value.trim().slice(0, 400).toLowerCase();
+    if (!text) return false;
+    return (
+        text.includes('<!doctype html') ||
+        text.includes('<html') ||
+        text.includes('<head') ||
+        text.includes('<body') ||
+        text.includes('<title') ||
+        text.includes('<meta') ||
+        text.includes('<script') ||
+        text.includes('</html>')
+    );
+};
+
+const getResponseContentType = (error) => {
+    const headers = error?.response?.headers;
+    if (!headers) return '';
+    const ct = headers['content-type'] || headers['Content-Type'] || '';
+    return typeof ct === 'string' ? ct : '';
+};
+
 /**
  * Shown when a page or section cannot load (permission, missing resource, server error).
  * Displays backend error text when available, with go-back and full page refresh actions.
@@ -19,8 +42,14 @@ const ResourceLoadError = ({
     refreshLabel = 'Refresh page',
     style,
 }) => {
-    const fromBackend = messageProp?.trim() || getApiErrorMessage(error, '');
-    const bodyText = fromBackend || fallbackMessage;
+    const contentType = getResponseContentType(error).toLowerCase();
+    const rawMessage = messageProp?.trim() || getApiErrorMessage(error, '');
+    const backendLooksHtml =
+        contentType.includes('text/html') ||
+        contentType.includes('application/xhtml+xml') ||
+        isHtmlLike(rawMessage);
+    const safeBackendMessage = backendLooksHtml ? '' : rawMessage;
+    const bodyText = safeBackendMessage || fallbackMessage;
 
     const handleBack =
         onGoBack ||

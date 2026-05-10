@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import AuthLayout from '@/components/app-layout/AuthLayout';
 import Input from '@/components/Shared/Input';
 import Button from '@/components/Shared/Button';
-import { Mail, Lock, ArrowRight, Shield, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Shield, Eye, EyeOff, Building2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -28,6 +28,11 @@ const SignIn = () => {
             password: '',
         },
     });
+
+    const handleSignInAsAdmin = () => {
+        localStorage.clear();
+        navigate('/auth/signin', { replace: true });
+    };
 
     const onSubmit = async (values) => {
         try {
@@ -128,6 +133,20 @@ const SignIn = () => {
                 <Button type="submit" size="lg" isLoading={isLoading} icon={<ArrowRight size={18} />}>
                     Sign In
                 </Button>
+
+                {company ? (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        fullWidth
+                        icon={<Building2 size={18} />}
+                        onClick={handleSignInAsAdmin}
+                        className="cursor-pointer"
+                    >
+                        Sign in as admin
+                    </Button>
+                ) : null}
             </form>
 
             <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.95rem' }}>

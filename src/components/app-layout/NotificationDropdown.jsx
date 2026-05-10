@@ -38,9 +38,9 @@ const getTimeAgo = (timestamp) => {
 };
 
 /**
- * @param {{ open: boolean; onRequestClose: () => void }} props
+ * @param {{ open: boolean; onRequestClose: () => void; panelAlign?: 'start' | 'end' }} props
  */
-const NotificationDropdown = ({ open, onRequestClose }) => {
+const NotificationDropdown = ({ open, onRequestClose, panelAlign = 'end' }) => {
     const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
     const navigate = useNavigate();
 
@@ -56,17 +56,25 @@ const NotificationDropdown = ({ open, onRequestClose }) => {
         return null;
     }
 
+    const panelPosition =
+        panelAlign === 'start'
+            ? { top: 'calc(100% + 8px)', left: 0, right: 'auto' }
+            : { top: 'calc(100% + 8px)', right: 0, left: 'auto' };
+    const panelWidth =
+        panelAlign === 'start' ? 'min(400px, calc(100vw - 2rem))' : '400px';
+
     return (
         <div style={{
             position: 'absolute',
-            top: 'calc(100% + 8px)', right: 0,
-            width: '400px',
+            ...panelPosition,
+            width: panelWidth,
+            maxWidth: 'calc(100vw - 2rem)',
             background: 'var(--color-bg-surface)',
             borderRadius: '12px',
             boxShadow: '0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
             border: '1px solid var(--color-border)',
             overflow: 'hidden',
-            zIndex: 100
+            zIndex: 140
         }}>
             <div style={{
                 padding: '0.875rem 1rem',

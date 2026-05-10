@@ -13,6 +13,7 @@ import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
 import ContractSalaryTab from '@/components/hr/ContractSalaryTab';
 import TerminationModal from '@/components/hr/TerminationModal';
 import { useAuth } from '@/context/AuthContext';
+import { useCompanyName } from '@/hooks/useCompanyName';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 
 const defaultValues = {
@@ -113,6 +114,12 @@ const EmployeeDetails = () => {
     const [positionSearchTerm, setPositionSearchTerm] = useState('');
     const [createdCredentials, setCreatedCredentials] = useState(null);
     const [copiedField, setCopiedField] = useState('');
+    const companyName = useCompanyName();
+    const loginUrl = useMemo(() => {
+        if (typeof window === 'undefined') return '';
+        const slug = companyName ? encodeURIComponent(companyName) : '';
+        return `${window.location.origin}/auth/signup/${slug}`;
+    }, [companyName]);
     const isAuthUserEmployee = user?.auth_user?.role === 'employee' || isEmployee;
     const isProfileApiTab = activeTab === 'overview' || activeTab === 'banking';
     const isLeavesTab = isAuthUserEmployee && activeTab === 'leaves';
@@ -306,15 +313,27 @@ const EmployeeDetails = () => {
     };
 
     const handleCopyCredential = async (field) => {
-        const value = field === 'email' ? createdCredentials?.email : createdCredentials?.temporaryPassword;
-        const copied = await copyText(value || '');
+        let value = '';
+        let successLabel = '';
+        if (field === 'email') {
+            value = createdCredentials?.email || '';
+            successLabel = 'Email';
+        } else if (field === 'loginUrl') {
+            value = loginUrl;
+            successLabel = 'Login URL';
+        } else {
+            value = createdCredentials?.temporaryPassword || '';
+            successLabel = 'Temporary password';
+        }
+
+        const copied = await copyText(value);
         if (!copied) {
-            toast.error(`Could not copy ${field}.`);
+            toast.error(`Could not copy ${successLabel.toLowerCase()}.`);
             return;
         }
 
         setCopiedField(field);
-        toast.success(`${field === 'email' ? 'Email' : 'Temporary password'} copied.`);
+        toast.success(`${successLabel} copied.`);
         window.setTimeout(() => setCopiedField(''), 900);
     };
 
@@ -771,6 +790,12 @@ const EmployeeDetails = () => {
                             value={createdCredentials.temporaryPassword}
                             isCopied={copiedField === 'password'}
                             onCopy={() => handleCopyCredential('password')}
+                        />
+                        <CredentialRow
+                            label="Login URL"
+                            value={loginUrl}
+                            isCopied={copiedField === 'loginUrl'}
+                            onCopy={() => handleCopyCredential('loginUrl')}
                         />
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>

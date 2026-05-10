@@ -10,6 +10,7 @@ import Input from '@/components/Shared/Input';
 import { Plus, Landmark, ArrowRightLeft, X, ArrowRight, Eye, Edit3, Save, ArrowLeft } from 'lucide-react';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 import { toast } from 'sonner';
+import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 
 const BankAccounts = () => {
     const navigate = useNavigate();
@@ -383,6 +384,14 @@ const EditBankModal = ({ account, onClose }) => {
         [banksQuery.data]
     );
     const currencyOptions = useMemo(() => currenciesQuery.data ?? [], [currenciesQuery.data]);
+    const currencySelectOptions = useMemo(
+        () =>
+            currencyOptions.map((currency) => ({
+                value: currency.id,
+                label: `${currency.code} - ${currency.name}`,
+            })),
+        [currencyOptions]
+    );
     const defaultCurrencyId = 'b03ed094-c56f-4d58-b563-2407f4c4977d';
 
     const [formData, setFormData] = useState({
@@ -512,22 +521,22 @@ const EditBankModal = ({ account, onClose }) => {
                     )}
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Currency</label>
-                            <select
-                                value={formData.currency}
-                                onChange={e => setFormData({ ...formData, currency: e.target.value })}
-                                style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
-                                disabled={currenciesQuery.isPending}
-                            >
-                                <option value="">{currenciesQuery.isPending ? 'Loading currencies...' : 'Select currency...'}</option>
-                                {currencyOptions.map((currency) => (
-                                    <option key={currency.id} value={currency.id}>
-                                        {currency.code} - {currency.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        <SelectWithLoadMore
+                            id={`edit-bank-account-currency-${account.id}`}
+                            label="Currency"
+                            value={formData.currency}
+                            onChange={(next) => setFormData({ ...formData, currency: next })}
+                            options={currencySelectOptions}
+                            emptyOptionLabel={
+                                currenciesQuery.isPending ? 'Loading currencies...' : 'Select currency...'
+                            }
+                            disabled={currenciesQuery.isPending || currenciesQuery.isError}
+                            isInitialLoading={currenciesQuery.isPending}
+                            paginationError={
+                                currenciesQuery.isError ? 'Failed to load currencies.' : null
+                            }
+                            hasMore={false}
+                        />
                         <Input
                             label="Current Balance"
                             type="number"

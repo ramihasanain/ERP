@@ -1,30 +1,72 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { useHR } from '@/context/HRContext';
 import { FileText, Printer, Copy, Download, Clock, CheckCircle } from 'lucide-react';
+import useCustomQuery from '@/hooks/useQuery';
+import NoData from '@/core/NoData';
+import ResourceLoadError from '@/core/ResourceLoadError';
+import { MyContractSkeleton } from '@/pages/employee/skeleton';
+import formatDate from '@/utils/formatDate';
+
+const isEndDateInPast = (dateStr) => {
+    if (!dateStr) return false;
+    const end = new Date(dateStr);
+    if (Number.isNaN(end.getTime())) return false;
+    const today = new Date();
+    end.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return end < today;
+};
+
+const formatStatusLabel = (apiContract) => {
+    if (!apiContract) return { label: 'N/A', expired: false };
+    const raw = (apiContract.status || '').toLowerCase();
+    const expiredByStatus = raw === 'expired' || raw === 'terminated';
+    const expiredByDate = isEndDateInPast(apiContract.end_date);
+    const expired = expiredByStatus || expiredByDate;
+    if (expired) return { label: 'Expired', expired: true };
+    if (raw === 'active') return { label: 'Active', expired: false };
+    if (raw) {
+        return {
+            label: raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+            expired: false,
+        };
+    }
+    return { label: 'N/A', expired: false };
+};
 
 const MyContract = () => {
-    const { employees, generateContract, contractTemplates } = useHR();
+    const { employees, contractTemplates } = useHR();
     const currentEmployeeId = 'EMP-002'; // Simulating logged-in employee
     const employee = employees.find(e => e.id === currentEmployeeId);
     const contract = employee?.contract || {};
 
-    // Check if employee has a generated contract
-    const hasGeneratedContract = !!contract.generatedContract;
-    const templateUsed = contractTemplates.find(t => t.id === contract.templateId);
+    const myContractQuery = useCustomQuery('/api/hr/employees/contracts/current/', ['employee-my-contract'], {
+        enabled: true,
+    });
 
-    // Generate a live preview using the default template if none saved
-    const [previewContent, setPreviewContent] = useState(null);
-    const [previewTemplate, setPreviewTemplate] = useState('');
+    const apiContract = myContractQuery.data;
+    const hasApiContract = Boolean(apiContract && (apiContract.id || apiContract.start_date));
 
-    const handleGeneratePreview = () => {
-        const templateId = previewTemplate || contractTemplates.find(t => t.isDefault)?.id;
-        if (templateId) {
-            const content = generateContract(templateId, currentEmployeeId);
-            setPreviewContent(content);
+    const templateUsed = useMemo(() => {
+        if (apiContract?.template) {
+            return contractTemplates.find((t) => t.id === apiContract.template);
         }
-    };
+        return contractTemplates.find((t) => t.id === contract.templateId);
+    }, [apiContract, contract.templateId, contractTemplates]);
+
+    const statusDisplay = useMemo(() => {
+        if (apiContract) return formatStatusLabel(apiContract);
+        if (contract.endDate && isEndDateInPast(contract.endDate)) {
+            return { label: 'Expired', expired: true };
+        }
+        return { label: 'Active', expired: false };
+    }, [apiContract, contract.endDate]);
+
+    // Check if employee has a generated contract (context) or API document URL
+    const hasGeneratedContract = !!contract.generatedContract;
+    const apiDocumentUrl = apiContract?.document && String(apiContract.document).trim();
 
     const handlePrint = (content) => {
         const pw = window.open('', '_blank');
@@ -37,6 +79,50 @@ const MyContract = () => {
         pw.print();
     };
 
+    if (myContractQuery.isLoading && !myContractQuery.data) {
+        return <MyContractSkeleton />;
+    }
+
+    if (myContractQuery.isError) {
+        return (
+            <ResourceLoadError
+                error={myContractQuery.error}
+                title="My contract could not be loaded"
+                onRefresh={() => myContractQuery.refetch()}
+                refreshLabel="Try again"
+            />
+        );
+    }
+
+    if (myContractQuery.isSuccess && !hasApiContract && !employee) {
+        return <NoData label="contract" />;
+    }
+
+    const displayType =
+        apiContract?.contract_type_display ||
+        apiContract?.contract_type ||
+        contract.type ||
+        'N/A';
+    const displayStart =
+        hasApiContract && apiContract.start_date
+            ? formatDate(apiContract.start_date) || 'N/A'
+            : contract.startDate
+              ? formatDate(contract.startDate) || contract.startDate
+              : 'N/A';
+    const displayEnd =
+        hasApiContract && apiContract.end_date
+            ? formatDate(apiContract.end_date)
+            : contract.endDate
+              ? formatDate(contract.endDate) || contract.endDate
+              : 'Open-ended';
+    const annualLeaveDays =
+        apiContract?.annual_leave_days ?? contract.annualLeaveEntitlement ?? 14;
+
+    const showCompensationBreakdown =
+        typeof contract.basicSalary === 'number' ||
+        typeof contract.housingAllowance === 'number' ||
+        typeof contract.transportationAllowance === 'number';
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div>
@@ -44,55 +130,86 @@ const MyContract = () => {
                 <p style={{ color: 'var(--color-text-secondary)' }}>View your employment contract details.</p>
             </div>
 
-            {/* Contract Summary */}
+            {/* Contract Summary (API) */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 <Card className="padding-md">
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Contract Type</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{contract.type || 'N/A'}</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{displayType}</div>
                 </Card>
                 <Card className="padding-md">
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Start Date</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{contract.startDate || 'N/A'}</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{displayStart}</div>
                 </Card>
                 <Card className="padding-md">
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>End Date</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{contract.endDate || 'Open-ended'}</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{displayEnd}</div>
                 </Card>
                 <Card className="padding-md">
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Status</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {contract.endDate && new Date(contract.endDate) < new Date() ? (
-                            <><Clock size={16} style={{ color: 'var(--color-error)' }} /><span style={{ fontWeight: 700, color: 'var(--color-error)' }}>Expired</span></>
+                        {statusDisplay.expired ? (
+                            <>
+                                <Clock size={16} style={{ color: 'var(--color-error)' }} />
+                                <span style={{ fontWeight: 700, color: 'var(--color-error)' }}>{statusDisplay.label}</span>
+                            </>
                         ) : (
-                            <><CheckCircle size={16} style={{ color: 'var(--color-success)' }} /><span style={{ fontWeight: 700, color: 'var(--color-success)' }}>Active</span></>
+                            <>
+                                <CheckCircle size={16} style={{ color: 'var(--color-success)' }} />
+                                <span style={{ fontWeight: 700, color: 'var(--color-success)' }}>{statusDisplay.label}</span>
+                            </>
                         )}
                     </div>
                 </Card>
             </div>
 
-            {/* Compensation Summary */}
+            {hasApiContract && (apiContract.created_at || apiContract.updated_at) && (
+                <Card className="padding-md">
+                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                        {apiContract.created_at && (
+                            <span style={{ marginRight: '1.5rem' }}>
+                                <strong style={{ color: 'var(--color-text-primary)' }}>Created:</strong>{' '}
+                                {formatDate(apiContract.created_at)}
+                            </span>
+                        )}
+                        {apiContract.updated_at && (
+                            <span>
+                                <strong style={{ color: 'var(--color-text-primary)' }}>Last updated:</strong>{' '}
+                                {formatDate(apiContract.updated_at)}
+                            </span>
+                        )}
+                    </div>
+                </Card>
+            )}
+
+            {/* Compensation Summary (context mock — not returned by contract API) */}
             <Card className="padding-lg">
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>Compensation Summary</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-                    <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-primary-50)' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-primary-600)', fontWeight: 500 }}>Basic Salary</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{contract.basicSalary?.toLocaleString() || 0} {contract.currency || 'JOD'}</div>
-                    </div>
-                    <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Housing</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{(contract.housingAllowance || 0).toLocaleString()} {contract.currency || 'JOD'}</div>
-                    </div>
-                    <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Transportation</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{(contract.transportationAllowance || 0).toLocaleString()} {contract.currency || 'JOD'}</div>
-                    </div>
-                    <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-success-dim)' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-success)', fontWeight: 500 }}>Total</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                            {((contract.basicSalary || 0) + (contract.housingAllowance || 0) + (contract.transportationAllowance || 0) + (contract.otherAllowance || 0)).toLocaleString()} {contract.currency || 'JOD'}
+                {showCompensationBreakdown ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-primary-50)' }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-primary-600)', fontWeight: 500 }}>Basic Salary</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{contract.basicSalary?.toLocaleString() || 0} {contract.currency || 'JOD'}</div>
+                        </div>
+                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Housing</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{(contract.housingAllowance || 0).toLocaleString()} {contract.currency || 'JOD'}</div>
+                        </div>
+                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Transportation</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{(contract.transportationAllowance || 0).toLocaleString()} {contract.currency || 'JOD'}</div>
+                        </div>
+                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-success-dim)' }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-success)', fontWeight: 500 }}>Total</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                                {((contract.basicSalary || 0) + (contract.housingAllowance || 0) + (contract.transportationAllowance || 0) + (contract.otherAllowance || 0)).toLocaleString()} {contract.currency || 'JOD'}
+                            </div>
                         </div>
                     </div>
-                </div>
+                ) : (
+                    <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', margin: 0 }}>
+                        Compensation breakdown is not included in your contract record. Contact HR if you need salary details.
+                    </p>
+                )}
             </Card>
 
             {/* Contract Document */}
@@ -104,12 +221,31 @@ const MyContract = () => {
                         </div>
                         <div>
                             <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Employment Contract</h3>
-                            {templateUsed && <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Template: {templateUsed.name}</p>}
+                            {(templateUsed || apiContract?.template) && (
+                                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                                    Template:{' '}
+                                    {templateUsed?.name ||
+                                        (apiContract?.template ? `ID ${apiContract.template.slice(0, 8)}…` : '')}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {hasGeneratedContract ? (
+                {apiDocumentUrl ? (
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="cursor-pointer"
+                            icon={<Download size={14} />}
+                            type="button"
+                            onClick={() => window.open(apiDocumentUrl, '_blank', 'noopener,noreferrer')}
+                        >
+                            Download contract document
+                        </Button>
+                    </div>
+                ) : hasGeneratedContract ? (
                     <div>
                         <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
                             <Button variant="outline" size="sm" icon={<Copy size={14} />} onClick={() => navigator.clipboard.writeText(contract.generatedContract)}>Copy</Button>
@@ -144,7 +280,7 @@ const MyContract = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                     <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-primary-50)' }}>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-primary-600)' }}>Annual Leave</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{contract.annualLeaveEntitlement || 14}</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{annualLeaveDays}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Days per year</div>
                     </div>
                     <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>

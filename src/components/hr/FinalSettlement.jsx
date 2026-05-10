@@ -492,7 +492,7 @@ const FinalSettlement = () => {
                                     )}
                                 </div>
                                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginLeft: '1.7rem' }}>
-                                    {calculation?.leaveBalance} days remaining @ {dailyRateDisplay?.toFixed(4)} {currencyCode}/day
+                                    {calculation?.leaveBalance} days worked @ {dailyRateDisplay?.toFixed(4)} {currencyCode}/day
                                 </p>
                             </div>
 

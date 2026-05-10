@@ -134,9 +134,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
+        const preserveTenantDomain = user?.role === 'employee';
         setUser(null);
         removeTokens();
-        clearTenantDomain();
+        if (!preserveTenantDomain) {
+            clearTenantDomain();
+        }
         clearStoredUser();
         toast.success('Signed out successfully.', successToastOptions);
     };
@@ -153,13 +156,17 @@ export const AuthProvider = ({ children }) => {
         });
     };
 
-    const isAuthenticated = !!user || hasAccessToken();
-    const isAdmin = user?.role === 'admin';
-    const isEmployee = user?.role === 'employee';
+    // Session is valid only while an access token exists (same source as `getAccessToken()`).
+    // Avoid treating stale React user state as logged-in when tokens were cleared from storage.
+    const tokenPresent = hasAccessToken();
+    const isAuthenticated = tokenPresent;
+    const resolvedUser = tokenPresent ? user : null;
+    const isAdmin = resolvedUser?.role === 'admin';
+    const isEmployee = resolvedUser?.role === 'employee';
     const isLoading = isLoginLoading || registerMutation.isPending;
 
     const contextValue = useMemo(() => ({
-        user,
+        user: resolvedUser,
         isAuthenticated,
         isAdmin,
         isEmployee,
@@ -168,7 +175,7 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateUser,
-    }), [user, isAuthenticated, isAdmin, isEmployee, isLoading, login, register]);
+    }), [resolvedUser, isAuthenticated, isAdmin, isEmployee, isLoading, login, register]);
 
     return (
         <AuthContext.Provider value={contextValue}>
