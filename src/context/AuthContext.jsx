@@ -91,6 +91,7 @@ export const AuthProvider = ({ children }) => {
             const requestConfig = options?.loginBaseUrl
                 ? { baseURL: options.loginBaseUrl }
                 : {};
+                console.log(`${requestConfig.baseURL || ''}/login/`);
             const response = await post(`${requestConfig.baseURL || ''}/login/`, { email, password });
             const { tokenPayload, normalizedUser, normalizedAuthPayload } = normalizeAuthResponse(response, role);
             const tenantDomain = extractTenantDomain(response) || options?.loginBaseUrl || null;

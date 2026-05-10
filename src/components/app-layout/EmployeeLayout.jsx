@@ -4,6 +4,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { Moon, Sun, Bell, User, LogOut } from 'lucide-react';
 import { useTimeTrackerStore } from '@/store/timeTrackerStore';
+import { clearTenantDomain } from '@/services/auth';
 
 const EmployeeHeader = () => {
     const { theme, toggleTheme } = useTheme();
@@ -42,6 +43,7 @@ const EmployeeHeader = () => {
 
     const handleSignOut = () => {
         logout();
+        clearTenantDomain();
         navigate('/auth/signin');
     };
 
