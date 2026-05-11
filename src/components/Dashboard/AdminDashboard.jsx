@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowUpRight, ArrowDownRight,
@@ -58,6 +58,17 @@ const DEPARTMENT_COLORS = {
 };
 
 const formatNumber = (value) => Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const formatCurrency = (value, currency) => {
+    const numericValue = Number(value ?? 0);
+    if (!currency) return formatNumber(numericValue);
+    return `${formatNumber(numericValue)} ${currency}`;
+};
+
+const formatCompactCurrency = (value, currency) => {
+    const numericValue = Number(value ?? 0);
+    if (!currency) return numericValue >= 1000 ? `${numericValue / 1000}k` : `${numericValue}`;
+    return `${numericValue >= 1000 ? `${numericValue / 1000}k` : `${numericValue}`} ${currency}`;
+};
 const isPositiveTrend = (trend) => {
     if (!trend || typeof trend !== 'string') return undefined;
     if (trend.includes('+')) return true;
@@ -67,11 +78,14 @@ const isPositiveTrend = (trend) => {
 const resolveActivityColor = (label = '') => DEPARTMENT_COLORS[label.trim().toLowerCase()] || DEFAULT_DEPARTMENT_COLOR;
 
 const useElementWidth = () => {
-    const elementRef = useRef(null);
+    const [node, setNode] = useState(null);
     const [width, setWidth] = useState(0);
 
-    useEffect(() => {
-        const node = elementRef.current;
+    const elementRef = useCallback((el) => {
+        setNode(el);
+    }, []);
+
+    useLayoutEffect(() => {
         if (!node) return undefined;
 
         const updateWidth = () => {
@@ -83,7 +97,7 @@ const useElementWidth = () => {
         observer.observe(node);
 
         return () => observer.disconnect();
-    }, []);
+    }, [node]);
 
     return { elementRef, width };
 };
@@ -98,6 +112,7 @@ const AdminDashboard = () => {
     const { data, isLoading, isError } = useCustomQuery('/api/shared/dashboard/main/', ['shared-dashboard-main']);
     const { elementRef: revenueChartRef, width: revenueChartWidth } = useElementWidth();
     const { elementRef: expenseChartRef, width: expenseChartWidth } = useElementWidth();
+    const dashboardCurrency = data?.revenue_vs_expenses?.currency || data?.total_revenue?.currency;
 
     const revenueSeriesData = useMemo(() => {
         const series = data?.revenue_vs_expenses?.series || [];
@@ -184,7 +199,7 @@ const AdminDashboard = () => {
             <div className={styles.kpiGrid}>
                 <KpiCard
                     label={data?.total_revenue?.title || 'Total Revenue'}
-                    value={formatNumber(data?.total_revenue?.value)}
+                    value={formatCurrency(data?.total_revenue?.value, data?.total_revenue?.currency)}
                     change={data?.total_revenue?.trend}
                     up={isPositiveTrend(data?.total_revenue?.trend)}
                     icon={<DollarSign size={20} />} accent="#10b981"
@@ -266,8 +281,17 @@ const AdminDashboard = () => {
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
                                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }} tickFormatter={v => (v >= 1000 ? `${v / 1000}k` : `${v}`)} />
-                                <RechartsTooltip contentStyle={chartTooltipStyle} labelStyle={{ color: 'var(--color-text-main)' }} />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }}
+                                    tickFormatter={(v) => formatCompactCurrency(v, dashboardCurrency)}
+                                />
+                                <RechartsTooltip
+                                    contentStyle={chartTooltipStyle}
+                                    labelStyle={{ color: 'var(--color-text-main)' }}
+                                    formatter={(value, name) => [formatCurrency(value, dashboardCurrency), name]}
+                                />
                                 <Legend iconType="circle" />
                                 <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#10b981" strokeWidth={2.5} fill="url(#revGrad)" />
                                 <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={2.5} fill="url(#expGrad)" />
@@ -304,12 +328,33 @@ const AdminDashboard = () => {
                     icon={<Wallet size={20} />}
                     onClick={() => navigate('/admin/accounting')}
                     stats={[
-                        { label: 'Cash Balance', value: formatNumber(data?.finance_and_accounting?.cash_balance) },
-                        { label: 'Receivables', value: formatNumber(data?.finance_and_accounting?.receivables) },
-                        { label: 'Payables', value: formatNumber(data?.finance_and_accounting?.payables) },
+                        {
+                            label: 'Cash Balance',
+                            value: formatCurrency(
+                                data?.finance_and_accounting?.cash_balance,
+                                data?.finance_and_accounting?.cash_balance_currency || data?.finance_and_accounting?.currency
+                            )
+                        },
+                        {
+                            label: 'Receivables',
+                            value: formatCurrency(
+                                data?.finance_and_accounting?.receivables,
+                                data?.finance_and_accounting?.receivables_currency || data?.finance_and_accounting?.currency
+                            )
+                        },
+                        {
+                            label: 'Payables',
+                            value: formatCurrency(
+                                data?.finance_and_accounting?.payables,
+                                data?.finance_and_accounting?.payables_currency || data?.finance_and_accounting?.currency
+                            )
+                        },
                         {
                             label: 'Net Profit',
-                            value: formatNumber(data?.finance_and_accounting?.net_profit),
+                            value: formatCurrency(
+                                data?.finance_and_accounting?.net_profit,
+                                data?.finance_and_accounting?.net_profit_currency || data?.finance_and_accounting?.currency
+                            ),
                             trend: data?.finance_and_accounting?.net_profit_trend,
                             up: isPositiveTrend(data?.finance_and_accounting?.net_profit_trend)
                         },
@@ -325,7 +370,10 @@ const AdminDashboard = () => {
                         { label: 'Total Employees', value: formatNumber(data?.human_resources?.total_employees) },
                         { label: 'On Leave Today', value: formatNumber(data?.human_resources?.on_leave_today) },
                         { label: 'Open Positions', value: formatNumber(data?.human_resources?.open_positions) },
-                        { label: 'Payroll (Monthly)', value: formatNumber(data?.human_resources?.payroll_monthly) },
+                        {
+                            label: 'Payroll (Monthly)',
+                            value: formatCurrency(data?.human_resources?.payroll_monthly, data?.human_resources?.payroll_monthly_currency)
+                        },
                     ]}
                 />
 
@@ -336,7 +384,13 @@ const AdminDashboard = () => {
                     onClick={() => navigate('/admin/inventory')}
                     stats={[
                         { label: 'Total Items', value: formatNumber(data?.inventory_and_warehouse?.total_items) },
-                        { label: 'Stock Value', value: formatNumber(data?.inventory_and_warehouse?.stock_value) },
+                        {
+                            label: 'Stock Value',
+                            value: formatCurrency(
+                                data?.inventory_and_warehouse?.stock_value,
+                                data?.inventory_and_warehouse?.stock_value_currency
+                            )
+                        },
                         { label: 'Low Stock Items', value: formatNumber(data?.inventory_and_warehouse?.low_stock_items), color: '#ef4444' },
                         { label: 'Pending POs', value: formatNumber(data?.inventory_and_warehouse?.pending_purchase_orders) },
                     ]}
@@ -351,12 +405,21 @@ const AdminDashboard = () => {
                         { label: 'Active Orders', value: formatNumber(data?.sales_and_crm?.active_orders) },
                         {
                             label: 'Monthly Sales',
-                            value: formatNumber(data?.sales_and_crm?.monthly_sales),
+                            value: formatCurrency(
+                                data?.sales_and_crm?.monthly_sales,
+                                data?.sales_and_crm?.monthly_sales_currency || data?.sales_and_crm?.currency
+                            ),
                             trend: data?.sales_and_crm?.monthly_sales_trend,
                             up: isPositiveTrend(data?.sales_and_crm?.monthly_sales_trend)
                         },
                         { label: 'Customers', value: formatNumber(data?.sales_and_crm?.customers) },
-                        { label: 'Avg. Order Value', value: formatNumber(data?.sales_and_crm?.avg_order_value) },
+                        {
+                            label: 'Avg. Order Value',
+                            value: formatCurrency(
+                                data?.sales_and_crm?.avg_order_value,
+                                data?.sales_and_crm?.avg_order_value_currency || data?.sales_and_crm?.currency
+                            )
+                        },
                     ]}
                 />
             </div>

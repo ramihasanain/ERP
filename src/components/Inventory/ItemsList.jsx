@@ -34,10 +34,38 @@ const toDisplayText = (value, fallback = '') => {
     return fallback;
 };
 
+const readErpCurrencyLabel = () => {
+    try {
+        const raw = localStorage.getItem('erp_currency');
+        if (!raw) return 'JOD';
+
+        const trimmed = raw.trim();
+        if (!trimmed) return 'JOD';
+
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            const parsed = JSON.parse(trimmed);
+            if (typeof parsed === 'string') return parsed || 'JOD';
+            if (parsed && typeof parsed === 'object') {
+                return (
+                    parsed.code ||
+                    parsed.currency ||
+                    parsed.symbol ||
+                    parsed.name ||
+                    'JOD'
+                );
+            }
+            return 'JOD';
+        }
+
+        return trimmed;
+    } catch {
+        return 'JOD';
+    }
+};
+
 const normalizeProduct = (item) => {
     const typeRaw = String(item?.type ?? '').toLowerCase();
     const isStock = typeRaw.includes('stock') || typeRaw === 'inventory_item' || typeRaw === 'inventory';
-    const selling = parseFloat(item?.selling_price ?? item?.sellingPrice ?? 0) || 0;
     const cost = parseFloat(item?.cost_price ?? item?.purchasePrice ?? 0) || 0;
     return {
         id: getEntityId(item),
@@ -47,7 +75,6 @@ const normalizeProduct = (item) => {
         type: isStock ? 'Stock' : 'Service',
         uom: toDisplayText(item?.unit ?? item?.uom, 'pcs'),
         purchasePrice: cost,
-        sellingPrice: selling,
         reorderLevel: Number(item?.reorder_level ?? item?.reorderLevel ?? 0),
         totalStock: Number(item?.total_stock ?? item?.totalStock ?? 0),
         isActive: item?.is_active ?? true,
@@ -67,6 +94,7 @@ const ItemsList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const currencyLabel = useMemo(() => readErpCurrencyLabel(), []);
 
     const categoriesQuery = useCustomQuery('/api/inventory/categories/', ['inventory-categories'], {
         select: (response) =>
@@ -230,14 +258,12 @@ const ItemsList = () => {
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                                    <div>
-                                        <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Selling Price</div>
-                                        <div style={{ fontWeight: 600 }}>{item.sellingPrice.toFixed(2)} JOD</div>
-                                    </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', fontSize: '0.9rem', marginBottom: '1rem' }}>
                                     <div>
                                         <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Cost Price</div>
-                                        <div style={{ fontWeight: 600 }}>{item.purchasePrice.toFixed(2)} JOD</div>
+                                        <div style={{ fontWeight: 600 }}>
+                                            {item.purchasePrice.toFixed(2)} {currencyLabel}
+                                        </div>
                                     </div>
                                 </div>
 

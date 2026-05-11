@@ -5,19 +5,13 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Save, ArrowLeft, Building2, User, Phone, MapPin } from 'lucide-react';
-import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost } from '@/hooks/useMutation';
+import SelectWithLoadMore from '@/core/SelectWithLoadMore';
+import { useCurrenciesInfiniteQuery } from '@/hooks/useCurrenciesInfiniteQuery';
 
 const AddCustomer = () => {
     const navigate = useNavigate();
-    const currenciesQuery = useCustomQuery('/api/shared/currencies/', ['shared-currencies'], {
-        select: (response) => {
-            if (Array.isArray(response?.data)) return response.data;
-            if (Array.isArray(response?.results)) return response.results;
-            if (Array.isArray(response)) return response;
-            return [];
-        },
-    });
+    const currenciesQuery = useCurrenciesInfiniteQuery();
     const createCustomerMutation = useCustomPost('/api/sales/customers/create/', [['sales-customers']]);
 
     const [formData, setFormData] = useState({
@@ -30,11 +24,56 @@ const AddCustomer = () => {
         billing_address: '',
     });
 
-    const currencyOptions = useMemo(() => currenciesQuery.data ?? [], [currenciesQuery.data]);
     const isFormValid = useMemo(
         () => Boolean(formData.name.trim()) && Boolean(formData.currency) && Boolean(formData.contact_person.trim()),
         [formData]
     );
+
+    const currencies = useMemo(() => {
+        const seen = new Set();
+        const out = [];
+        for (const page of currenciesQuery.data?.pages ?? []) {
+            const list = page?.data?.results ?? page?.data ?? page?.results ?? page;
+            if (!Array.isArray(list)) continue;
+            for (const item of list) {
+                const id = String(item?.uuid ?? item?.id ?? '');
+                if (!id || seen.has(id)) continue;
+                seen.add(id);
+                out.push(item);
+            }
+        }
+        return out;
+    }, [currenciesQuery.data]);
+
+    const currencySelectOptions = useMemo(() => {
+        const base = currencies.map((currency) => ({
+            value: String(currency?.uuid ?? currency?.id ?? ''),
+            label: `${currency?.code || ''} - ${currency?.name || ''}`.trim(),
+        })).filter((opt) => opt.value);
+
+        if (formData.currency && !base.some((o) => o.value === formData.currency)) {
+            return [{ value: formData.currency, label: formData.currency }, ...base];
+        }
+
+        return base;
+    }, [currencies, formData.currency]);
+
+    const selectedCurrency = useMemo(() => {
+        if (!formData.currency) return null;
+        const selectedId = String(formData.currency);
+        return (
+            currencies.find((currency) => String(currency?.uuid ?? currency?.id ?? '') === selectedId) ?? null
+        );
+    }, [currencies, formData.currency]);
+
+    const {
+        isLoading: currenciesInitialLoading,
+        hasNextPage: currenciesHasNextPage,
+        fetchNextPage: fetchNextCurrenciesPage,
+        isFetchingNextPage: isFetchingNextCurrenciesPage,
+        isFetchNextPageError: isFetchNextCurrenciesPageError,
+        isError: currenciesFailed,
+    } = currenciesQuery;
 
     const handleSubmit = async () => {
         if (!isFormValid) return;
@@ -47,6 +86,7 @@ const AddCustomer = () => {
             email: formData.email.trim(),
             billing_address: formData.billing_address.trim(),
             currency: formData.currency,
+            currency_code: selectedCurrency?.code || selectedCurrency?.currency_code || '',
             is_active: true,
         };
 
@@ -75,8 +115,8 @@ const AddCustomer = () => {
             </div>
 
             <Card className="padding-lg">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className="grid grid-cols-2 gap-8 max-[900px]:grid-cols-1">
+                    <div className="flex flex-col gap-6">
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <Building2 size={20} color="var(--color-primary-600)" />
                             Customer Details
@@ -93,25 +133,16 @@ const AddCustomer = () => {
                             value={formData.tax_id}
                             onChange={e => setFormData({ ...formData, tax_id: e.target.value })}
                         />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Currency</label>
-                            <select
-                                value={formData.currency}
-                                onChange={e => setFormData({ ...formData, currency: e.target.value })}
-                                style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
-                                disabled={currenciesQuery.isPending}
-                            >
-                                <option value="">{currenciesQuery.isPending ? 'Loading currencies...' : 'Select currency...'}</option>
-                                {currencyOptions.map((currency) => (
-                                    <option key={currency.id} value={currency.id}>
-                                        {currency.code} - {currency.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        <Input
+                            startIcon={<MapPin size={16} />}
+                            label="Billing Address"
+                            placeholder="Street, City, Country"
+                            value={formData.billing_address}
+                            onChange={e => setFormData({ ...formData, billing_address: e.target.value })}
+                        />
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className="flex flex-col gap-6">
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <User size={20} color="var(--color-primary-600)" />
                             Contact Information
@@ -135,12 +166,27 @@ const AddCustomer = () => {
                             value={formData.email}
                             onChange={e => setFormData({ ...formData, email: e.target.value })}
                         />
-                        <Input
-                            startIcon={<MapPin size={16} />}
-                            label="Billing Address"
-                            placeholder="Street, City, Country"
-                            value={formData.billing_address}
-                            onChange={e => setFormData({ ...formData, billing_address: e.target.value })}
+                    </div>
+
+                    <div className="col-span-2 max-[900px]:col-span-1">
+                        <SelectWithLoadMore
+                            id="add-customer-currency"
+                            label="Currency"
+                            value={formData.currency}
+                            onChange={(nextValue) => setFormData((prev) => ({ ...prev, currency: nextValue || '' }))}
+                            options={currencySelectOptions}
+                            emptyOptionLabel={currenciesInitialLoading ? 'Loading currencies...' : 'Select currency...'}
+                            disabled={currenciesFailed}
+                            isInitialLoading={currenciesInitialLoading && !currenciesQuery.data}
+                            hasMore={Boolean(currenciesHasNextPage) && !currenciesFailed}
+                            onLoadMore={() => fetchNextCurrenciesPage()}
+                            isLoadingMore={isFetchingNextCurrenciesPage}
+                            paginationError={
+                                isFetchNextCurrenciesPageError
+                                    ? 'Could not load more currencies. Scroll down to retry.'
+                                    : null
+                            }
+                            zIndex={1400}
                         />
                     </div>
                 </div>

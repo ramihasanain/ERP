@@ -3,6 +3,7 @@ import Button from '@/components/Shared/Button';
 import Modal from '@/components/Shared/Modal';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
 import Spinner from '@/core/Spinner';
+import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut, useCustomRemove } from '@/hooks/useMutation';
 import { Controller, useForm } from 'react-hook-form';
@@ -531,14 +532,29 @@ const CategoryManagement = () => {
                             control={control}
                             rules={{ required: 'Category type is required.' }}
                             render={({ field }) => (
-                                <select {...field} style={inputStyle}>
-                                    <option value="">Select category type</option>
-                                    {categoryTypes.map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                            {t.name || 'Unnamed type'}
-                                        </option>
-                                    ))}
-                                </select>
+                                editingCategory ? (
+                                    <SelectWithLoadMore
+                                        id="category-type-edit"
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        options={categoryTypes.map((t) => ({
+                                            value: t.id,
+                                            label: t.name || 'Unnamed type',
+                                        }))}
+                                        emptyOptionLabel="Select category type"
+                                        disabled={Boolean(lockedTypeId)}
+                                        triggerStyle={inputStyle}
+                                    />
+                                ) : (
+                                    <select {...field} style={inputStyle} disabled={Boolean(lockedTypeId)}>
+                                        <option value="">Select category type</option>
+                                        {categoryTypes.map((t) => (
+                                            <option key={t.id} value={t.id}>
+                                                {t.name || 'Unnamed type'}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )
                             )}
                         />
                         {errors.type && <p style={errorStyle}>{errors.type.message}</p>}

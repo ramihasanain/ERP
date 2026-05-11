@@ -15,7 +15,17 @@ export const useCustomPost = (url, invalidateKeys = []) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data) => post(url, data),
+    mutationFn: (data) => {
+      if (typeof url === 'function') {
+        const resolvedUrl = url(data);
+        const requestBody =
+          data && Object.prototype.hasOwnProperty.call(data, 'body')
+            ? data.body
+            : data;
+        return post(resolvedUrl, requestBody);
+      }
+      return post(url, data);
+    },
     onSuccess: async (...args) => {
       await invalidateQueryKeys(queryClient, invalidateKeys);
       return args;

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Spinner from '@/core/Spinner';
+import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
@@ -252,14 +253,29 @@ const InventoryItemForm = ({ isEdit = false }) => {
 
                             <div>
                                 <label style={labelStyle}>Category</label>
-                                <select name="categoryId" value={formData.categoryId} onChange={handleChange} style={inputStyle}>
-                                    <option value="">Select category</option>
-                                    {categoryOptions.map((category) => (
-                                        <option key={category.id} value={category.id}>
-                                            {category.name || category.id}
-                                        </option>
-                                    ))}
-                                </select>
+                                <SelectWithLoadMore
+                                    id="inventory-item-category"
+                                    value={formData.categoryId ?? ''}
+                                    onChange={(nextValue) => {
+                                        setFormData((prev) => ({ ...prev, categoryId: nextValue }));
+                                    }}
+                                    options={categoryOptions.map((category) => ({
+                                        value: category.id,
+                                        label: category.name || category.id,
+                                    }))}
+                                    emptyOptionLabel="Select category"
+                                    isInitialLoading={categoriesQuery.isPending}
+                                    disabled={categoriesQuery.isError}
+                                    triggerStyle={{
+                                        ...inputStyle,
+                                        height: 'auto',
+                                        padding: inputStyle.padding,
+                                        borderRadius: inputStyle.borderRadius,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                    }}
+                                />
                             </div>
 
                             <div>

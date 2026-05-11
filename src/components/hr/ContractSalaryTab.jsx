@@ -15,6 +15,7 @@ import Button from "@/components/Shared/Button";
 import Input from "@/components/Shared/Input";
 import Modal from "@/components/Shared/Modal";
 import ConfirmationModal from "@/components/Shared/ConfirmationModal";
+import ContractTemplatesPreviewView from "@/components/hr/ContractTemplates/ContractTemplatesPreviewView";
 import Spinner from "@/core/Spinner";
 import useCustomQuery from "@/hooks/useQuery";
 import {
@@ -113,7 +114,7 @@ const formatDate = (value) => {
   if (!value) return "-";
   try {
     return new Date(value).toLocaleDateString();
-  } catch (error) {
+  } catch {
     return value;
   }
 };
@@ -184,6 +185,26 @@ const getErrorMessage = (error, fallbackMessage) => {
 
   return error?.message || fallbackMessage;
 };
+
+const getRenderedTemplateHtml = (response) => {
+  if (typeof response === "string") return response;
+  if (typeof response?.data === "string") return response.data;
+  if (typeof response?.html === "string") return response.html;
+  if (typeof response?.rendered_html === "string") return response.rendered_html;
+  return "";
+};
+
+const getHtmlCopyContent = (html) => {
+  if (!html) return "";
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const bodyChildren = Array.from(doc.body.children);
+  if (bodyChildren.length === 1 && bodyChildren[0].tagName.toLowerCase() === "div") {
+    return bodyChildren[0].innerHTML;
+  }
+  return doc.body.innerHTML || html;
+};
+
 const parseStructureComponents = (description) => {
   if (!description || typeof description !== "string") return [];
   return description
@@ -202,6 +223,9 @@ const ContractSalaryTab = ({ employeeId }) => {
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
   const [contractMode, setContractMode] = useState("create");
   const [contractToDelete, setContractToDelete] = useState(null);
+  const [renderedContractHtml, setRenderedContractHtml] = useState("");
+  const [renderedTemplateId, setRenderedTemplateId] = useState("");
+  const [isTemplatePreviewOpen, setIsTemplatePreviewOpen] = useState(false);
 
   const sessionCacheQueryOpts = {
     staleTime: Infinity,
@@ -248,6 +272,10 @@ const ContractSalaryTab = ({ employeeId }) => {
     `/api/hr/employees/${employeeId}/evaluations/`,
     [["hr-employee-history", employeeId]],
   );
+  const renderTemplateMutation = useCustomPost(
+    ({ templateId }) =>
+      `/api/hr/contract-templates/${templateId}/render/?output=html`,
+  );
 
   const contractForm = useForm({ defaultValues: contractDefaults });
   const salaryIncreaseForm = useForm({ defaultValues: salaryIncreaseDefaults });
@@ -269,6 +297,16 @@ const ContractSalaryTab = ({ employeeId }) => {
   );
   const templates = parseArray(templatesQuery.data);
   const structures = parseArray(structuresQuery.data);
+  const selectedTemplateId = contractForm.watch("template");
+  const selectedTemplate = useMemo(
+    () =>
+      templates.find(
+        (template) => (template?.id || template?.uuid) === selectedTemplateId,
+      ) || null,
+    [selectedTemplateId, templates],
+  );
+  const hasGeneratedSelectedTemplate =
+    Boolean(renderedContractHtml) && renderedTemplateId === selectedTemplateId;
 
   const hasCurrentContract =
     Object.keys(currentContract).length > 0 ||
@@ -288,18 +326,22 @@ const ContractSalaryTab = ({ employeeId }) => {
     [selectedStructure],
   );
 
-  const openCreateContract = () => {
-    setContractMode("create");
-    contractForm.reset(contractDefaults);
-  };
-
   useEffect(() => {
     if (!employeeId) return;
     contractForm.reset(contractDefaults);
     setContractMode("create");
+    setRenderedContractHtml("");
+    setRenderedTemplateId("");
+    setIsTemplatePreviewOpen(false);
     // Only when switching employees — RHF `contractForm` identity is intentionally omitted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employeeId]);
+
+  useEffect(() => {
+    setRenderedContractHtml("");
+    setRenderedTemplateId("");
+    setIsTemplatePreviewOpen(false);
+  }, [selectedTemplateId]);
 
   useEffect(() => {
     if (!employeeId) return;
@@ -427,6 +469,71 @@ const ContractSalaryTab = ({ employeeId }) => {
     } catch (error) {
       toast.error(getErrorMessage(error, "Could not delete contract entry."));
     }
+  };
+
+  const handleGenerateTemplate = async () => {
+    if (!selectedTemplateId) {
+      toast.error("Please select a contract template first.");
+      return;
+    }
+
+    try {
+      const response = await renderTemplateMutation.mutateAsync({
+        templateId: selectedTemplateId,
+        body: { employee_id: employeeId },
+      });
+      const html = getRenderedTemplateHtml(response);
+      if (!html) {
+        toast.error("Template render returned empty HTML.");
+        return;
+      }
+      setRenderedContractHtml(html);
+      setRenderedTemplateId(selectedTemplateId);
+      toast.success("Contract template generated.");
+    } catch (error) {
+      toast.error(
+        getErrorMessage(error, "Could not render contract template."),
+      );
+    }
+  };
+
+  const handleCopyRenderedTemplate = async () => {
+    const contentToCopy = getHtmlCopyContent(renderedContractHtml);
+    if (!contentToCopy) return;
+    await navigator.clipboard.writeText(contentToCopy);
+    toast.success("Copied to clipboard.");
+  };
+
+  const handlePrintRenderedTemplate = () => {
+    if (!renderedContractHtml) return;
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+      <html>
+      <head>
+        <title></title>
+        <style>
+          @page { size: auto; margin: 0; }
+          html, body { margin: 0; padding: 0; }
+          body {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.8;
+            font-size: 14px;
+            color: #000;
+            background: #fff;
+          }
+          .print-root {
+            padding: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-root">${renderedContractHtml}</div>
+      </body>
+      </html>
+    `);
+    printWindow.document.title = "";
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const openRenewContractModal = () => {
@@ -637,13 +744,15 @@ const ContractSalaryTab = ({ employeeId }) => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() =>
-                    toast.info(
-                      "Template selection is ready and will be used during generation.",
-                    )
+                  onClick={
+                    hasGeneratedSelectedTemplate
+                      ? () => setIsTemplatePreviewOpen(true)
+                      : handleGenerateTemplate
                   }
+                  isLoading={renderTemplateMutation.isPending}
+                  disabled={!selectedTemplateId}
                 >
-                  Generate
+                  {hasGeneratedSelectedTemplate ? "Preview" : "Generate"}
                 </Button>
               </div>
             </div>
@@ -1285,6 +1394,26 @@ const ContractSalaryTab = ({ employeeId }) => {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={isTemplatePreviewOpen}
+        onClose={() => setIsTemplatePreviewOpen(false)}
+        title="Generated Contract Preview"
+        size="xl"
+      >
+        <ContractTemplatesPreviewView
+          templateDetailsQuery={{ isLoading: false, isError: false }}
+          previewTemplateName={
+            selectedTemplate?.name || selectedTemplate?.title || "Contract Preview"
+          }
+          isWidePreviewHeader={false}
+          navigate={() => setIsTemplatePreviewOpen(false)}
+          previewHtml={renderedContractHtml}
+          onCopy={handleCopyRenderedTemplate}
+          onPrint={handlePrintRenderedTemplate}
+          isRenderingPreview={renderTemplateMutation.isPending}
+        />
       </Modal>
 
       <Modal
