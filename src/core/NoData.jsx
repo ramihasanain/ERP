@@ -52,7 +52,7 @@ const NoData = ({
           width: '2rem',
           height: '2rem',
           borderRadius: '10px',
-          background: 'var(--color-primary-50)',
+          background: 'var(--color-bg-toggle-track)',
           color: 'var(--color-primary-600)',
           display: 'flex',
           alignItems: 'center',
@@ -64,7 +64,13 @@ const NoData = ({
         <Icon size={resolved.iconSize} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-        <div style={{ fontWeight: 600, fontSize: resolved.titleSize }}>
+        <div
+          style={{
+            fontWeight: 600,
+            fontSize: resolved.titleSize,
+            color: 'var(--color-text-main)',
+          }}
+        >
           {resolvedTitle}
         </div>
         <div
@@ -94,7 +100,8 @@ const NoData = ({
       style={{
         padding: resolved.padding,
         borderStyle: 'dashed',
-        background: 'var(--color-slate-50)',
+        borderColor: 'var(--color-border)',
+        background: 'var(--color-bg-subtle)',
         ...style,
       }}
     >

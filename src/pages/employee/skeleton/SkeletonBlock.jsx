@@ -26,7 +26,7 @@ const SkeletonBlock = ({
                     height: typeof height === 'number' ? `${height}px` : height,
                     borderRadius: typeof radius === 'number' ? `${radius}px` : radius,
                     backgroundImage:
-                        'linear-gradient(90deg, var(--color-slate-100), var(--color-slate-50), var(--color-slate-100))',
+                        'linear-gradient(90deg, var(--color-bg-secondary), var(--color-bg-subtle), var(--color-bg-secondary))',
                     backgroundSize: '400px 100%',
                     animation: 'skeletonShimmer 1.2s ease-in-out infinite',
                     ...style,

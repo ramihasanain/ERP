@@ -758,7 +758,8 @@ const SkeletonLine = ({ width = '100%', height = '0.875rem', radius = '8px' }) =
             width,
             height,
             borderRadius: radius,
-            background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-bg-subtle) 92%, #fff) 0%, color-mix(in srgb, var(--color-bg-subtle) 72%, #fff) 50%, color-mix(in srgb, var(--color-bg-subtle) 92%, #fff) 100%)',
+            background:
+                'linear-gradient(90deg, var(--color-bg-secondary), var(--color-bg-subtle), var(--color-bg-secondary))',
             backgroundSize: '220% 100%',
             animation: 'drawerSkeletonShimmer 1.35s ease-in-out infinite',
         }}

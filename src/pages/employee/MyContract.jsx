@@ -167,13 +167,13 @@ const MyContract = () => {
                     <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
                         {apiContract.created_at && (
                             <span style={{ marginRight: '1.5rem' }}>
-                                <strong style={{ color: 'var(--color-text-primary)' }}>Created:</strong>{' '}
+                                <strong style={{ color: 'var(--color-text-main)' }}>Created:</strong>{' '}
                                 {formatDate(apiContract.created_at)}
                             </span>
                         )}
                         {apiContract.updated_at && (
                             <span>
-                                <strong style={{ color: 'var(--color-text-primary)' }}>Last updated:</strong>{' '}
+                                <strong style={{ color: 'var(--color-text-main)' }}>Last updated:</strong>{' '}
                                 {formatDate(apiContract.updated_at)}
                             </span>
                         )}
@@ -186,22 +186,57 @@ const MyContract = () => {
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>Compensation Summary</h3>
                 {showCompensationBreakdown ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-primary-50)' }}>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--color-primary-600)', fontWeight: 500 }}>Basic Salary</div>
-                            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{contract.basicSalary?.toLocaleString() || 0} {contract.currency || 'JOD'}</div>
+                        <div
+                            style={{
+                                padding: '0.75rem',
+                                borderRadius: 'var(--radius-md)',
+                                background: 'color-mix(in srgb, var(--color-primary-600) 18%, var(--color-bg-card))',
+                                border: '1px solid color-mix(in srgb, var(--color-primary-500) 35%, var(--color-border))',
+                            }}
+                        >
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-primary-500)', fontWeight: 500 }}>Basic Salary</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
+                                {contract.basicSalary?.toLocaleString() || 0} {contract.currency || 'JOD'}
+                            </div>
                         </div>
-                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
+                        <div
+                            style={{
+                                padding: '0.75rem',
+                                borderRadius: 'var(--radius-md)',
+                                background: 'var(--color-bg-secondary)',
+                                border: '1px solid var(--color-border)',
+                            }}
+                        >
                             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Housing</div>
-                            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{(contract.housingAllowance || 0).toLocaleString()} {contract.currency || 'JOD'}</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
+                                {(contract.housingAllowance || 0).toLocaleString()} {contract.currency || 'JOD'}
+                            </div>
                         </div>
-                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
+                        <div
+                            style={{
+                                padding: '0.75rem',
+                                borderRadius: 'var(--radius-md)',
+                                background: 'var(--color-bg-secondary)',
+                                border: '1px solid var(--color-border)',
+                            }}
+                        >
                             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Transportation</div>
-                            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{(contract.transportationAllowance || 0).toLocaleString()} {contract.currency || 'JOD'}</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
+                                {(contract.transportationAllowance || 0).toLocaleString()} {contract.currency || 'JOD'}
+                            </div>
                         </div>
-                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-success-dim)' }}>
+                        <div
+                            style={{
+                                padding: '0.75rem',
+                                borderRadius: 'var(--radius-md)',
+                                background: 'color-mix(in srgb, var(--color-success) 20%, var(--color-bg-card))',
+                                border: '1px solid color-mix(in srgb, var(--color-success) 40%, var(--color-border))',
+                            }}
+                        >
                             <div style={{ fontSize: '0.75rem', color: 'var(--color-success)', fontWeight: 500 }}>Total</div>
-                            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                                {((contract.basicSalary || 0) + (contract.housingAllowance || 0) + (contract.transportationAllowance || 0) + (contract.otherAllowance || 0)).toLocaleString()} {contract.currency || 'JOD'}
+                            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
+                                {((contract.basicSalary || 0) + (contract.housingAllowance || 0) + (contract.transportationAllowance || 0) + (contract.otherAllowance || 0)).toLocaleString()}{' '}
+                                {contract.currency || 'JOD'}
                             </div>
                         </div>
                     </div>
@@ -216,7 +251,19 @@ const MyContract = () => {
             <Card className="padding-lg">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '10px', background: 'var(--color-primary-50)', color: 'var(--color-primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div
+                            style={{
+                                width: '2.5rem',
+                                height: '2.5rem',
+                                borderRadius: '10px',
+                                background: 'color-mix(in srgb, var(--color-primary-600) 18%, var(--color-bg-card))',
+                                border: '1px solid color-mix(in srgb, var(--color-primary-500) 35%, var(--color-border))',
+                                color: 'var(--color-primary-500)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
                             <FileText size={20} />
                         </div>
                         <div>
@@ -252,8 +299,8 @@ const MyContract = () => {
                             <Button variant="outline" size="sm" icon={<Printer size={14} />} onClick={() => handlePrint(contract.generatedContract)}>Print</Button>
                         </div>
                         <div style={{
-                            padding: '2rem', borderRadius: '8px', border: '1px solid var(--color-border)',
-                            background: 'white', fontFamily: "'Times New Roman', serif",
+                            padding: '2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
+                            background: 'var(--color-bg-secondary)', color: 'var(--color-text-main)', fontFamily: "'Times New Roman', serif",
                             fontSize: '0.9rem', lineHeight: 1.8, whiteSpace: 'pre-wrap',
                             maxHeight: '600px', overflow: 'auto'
                         }}>
@@ -262,8 +309,8 @@ const MyContract = () => {
                     </div>
                 ) : (
                     <div style={{
-                        padding: '2rem', borderRadius: '8px', border: '2px dashed var(--color-border)',
-                        textAlign: 'center', background: 'var(--color-slate-50)'
+                        padding: '2rem', borderRadius: 'var(--radius-md)', border: '2px dashed var(--color-border)',
+                        textAlign: 'center', background: 'var(--color-bg-secondary)'
                     }}>
                         <FileText size={40} style={{ color: 'var(--color-text-muted)', marginBottom: '0.75rem' }} />
                         <p style={{ fontWeight: 500, marginBottom: '0.5rem' }}>No contract document generated yet</p>
@@ -278,14 +325,28 @@ const MyContract = () => {
             <Card className="padding-lg">
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Leave Entitlements</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                    <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-primary-50)' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-primary-600)' }}>Annual Leave</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{annualLeaveDays}</div>
+                    <div
+                        style={{
+                            padding: '0.75rem',
+                            borderRadius: 'var(--radius-md)',
+                            background: 'color-mix(in srgb, var(--color-primary-600) 18%, var(--color-bg-card))',
+                            border: '1px solid color-mix(in srgb, var(--color-primary-500) 35%, var(--color-border))',
+                        }}
+                    >
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-primary-500)' }}>Annual Leave</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-main)' }}>{annualLeaveDays}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Days per year</div>
                     </div>
-                    <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
+                    <div
+                        style={{
+                            padding: '0.75rem',
+                            borderRadius: 'var(--radius-md)',
+                            background: 'var(--color-bg-secondary)',
+                            border: '1px solid var(--color-border)',
+                        }}
+                    >
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Sick Leave</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>14</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-main)' }}>14</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Days (full pay)</div>
                     </div>
                 </div>

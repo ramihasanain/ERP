@@ -1,14 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import {
-  Plus,
-  RefreshCw,
-  TrendingUp,
-  Star,
-  Eye,
-  FileText,
-  Trash2,
-} from "lucide-react";
+import { Plus, RefreshCw, Eye, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
@@ -17,7 +9,9 @@ import Modal from "@/components/Shared/Modal";
 import ConfirmationModal from "@/components/Shared/ConfirmationModal";
 import ContractTemplatesPreviewView from "@/components/hr/ContractTemplates/ContractTemplatesPreviewView";
 import Spinner from "@/core/Spinner";
+import SelectWithLoadMore from "@/core/SelectWithLoadMore";
 import useCustomQuery from "@/hooks/useQuery";
+import { useCurrenciesInfiniteQuery } from "@/hooks/useCurrenciesInfiniteQuery";
 import {
   useCustomPost,
   useCustomPut,
@@ -32,7 +26,7 @@ const contractDefaults = {
   template: "",
   structure: "",
   basic_salary: "",
-  currency: "JOD",
+  currency: "",
   transportation: "",
   housing: "",
   other_allowances: "",
@@ -104,6 +98,89 @@ const asObject = (value) =>
   value && typeof value === "object" && !Array.isArray(value)
     ? value
     : EMPTY_OBJECT;
+
+const normalizeCurrencyCode = (raw) => {
+  if (raw == null || raw === "") return "";
+  return String(raw).trim().toUpperCase();
+};
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const looksLikeUuid = (raw) =>
+  typeof raw === "string" && UUID_RE.test(raw.trim());
+
+const getCurrencyItemId = (item) => {
+  if (!item || typeof item !== "object") return "";
+  const id = item?.uuid ?? item?.id;
+  return id != null && id !== "" ? String(id).trim() : "";
+};
+
+/**
+ * Normalize `compensation_data.currency` from the API into a currency row id (uuid).
+ * Accepts uuid string, nested { id, uuid }, or legacy ISO code when `currencies` is loaded.
+ */
+const coerceCompensationCurrencyToId = (raw, currencies) => {
+  const list = Array.isArray(currencies) ? currencies : [];
+  if (raw == null || raw === "") return "";
+  if (typeof raw === "object") {
+    const id = getCurrencyItemId(raw);
+    if (id) return id;
+    const nestedCode = normalizeCurrencyCode(raw.code || raw.currency_code);
+    if (nestedCode) {
+      const hit = list.find(
+        (c) => normalizeCurrencyCode(c?.code) === nestedCode,
+      );
+      if (hit) return getCurrencyItemId(hit);
+    }
+    return "";
+  }
+  const s = String(raw).trim();
+  if (!s) return "";
+  if (looksLikeUuid(s)) return s;
+  const code = normalizeCurrencyCode(s);
+  if (!code || !list.length) return "";
+  const hit = list.find((c) => normalizeCurrencyCode(c?.code) === code);
+  return hit ? getCurrencyItemId(hit) : "";
+};
+
+const compensationCurrencyDisplayCode = (comp, currencies) => {
+  const list = Array.isArray(currencies) ? currencies : [];
+  const fromCode = normalizeCurrencyCode(comp?.currency_code);
+  if (fromCode) return fromCode;
+  const cur = comp?.currency;
+  if (cur && typeof cur === "object") {
+    return (
+      normalizeCurrencyCode(cur.code || cur.currency_code) ||
+      (getCurrencyItemId(cur)
+        ? normalizeCurrencyCode(
+            list.find((c) => getCurrencyItemId(c) === getCurrencyItemId(cur))
+              ?.code,
+          )
+        : "")
+    );
+  }
+  const s = String(cur ?? "").trim();
+  if (!s) return "";
+  if (looksLikeUuid(s)) {
+    const hit = list.find((c) => getCurrencyItemId(c) === s);
+    return normalizeCurrencyCode(hit?.code);
+  }
+  return normalizeCurrencyCode(s);
+};
+
+const rowCurrencyDisplayCode = (rowCurrency, currencies, fallbackCode) => {
+  const list = Array.isArray(currencies) ? currencies : [];
+  const fb = normalizeCurrencyCode(fallbackCode) || "JOD";
+  if (rowCurrency == null || rowCurrency === "") return fb;
+  const s = String(rowCurrency).trim();
+  if (!s) return fb;
+  if (looksLikeUuid(s)) {
+    const hit = list.find((c) => getCurrencyItemId(c) === s);
+    return normalizeCurrencyCode(hit?.code) || fb;
+  }
+  return normalizeCurrencyCode(s) || fb;
+};
 
 const formatMoney = (value, currency = "JOD") => {
   const number = Number(value || 0);
@@ -190,7 +267,8 @@ const getRenderedTemplateHtml = (response) => {
   if (typeof response === "string") return response;
   if (typeof response?.data === "string") return response.data;
   if (typeof response?.html === "string") return response.html;
-  if (typeof response?.rendered_html === "string") return response.rendered_html;
+  if (typeof response?.rendered_html === "string")
+    return response.rendered_html;
   return "";
 };
 
@@ -199,7 +277,10 @@ const getHtmlCopyContent = (html) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
   const bodyChildren = Array.from(doc.body.children);
-  if (bodyChildren.length === 1 && bodyChildren[0].tagName.toLowerCase() === "div") {
+  if (
+    bodyChildren.length === 1 &&
+    bodyChildren[0].tagName.toLowerCase() === "div"
+  ) {
     return bodyChildren[0].innerHTML;
   }
   return doc.body.innerHTML || html;
@@ -313,6 +394,7 @@ const ContractSalaryTab = ({ employeeId }) => {
     Object.keys(currentCompensation).length > 0;
 
   const structureFieldId = contractForm.watch("structure");
+  const watchedCurrency = contractForm.watch("currency");
   const selectedStructure = useMemo(
     () =>
       structures.find(
@@ -325,6 +407,99 @@ const ContractSalaryTab = ({ employeeId }) => {
     () => parseStructureComponents(selectedStructure?.description),
     [selectedStructure],
   );
+
+  const currenciesQuery = useCurrenciesInfiniteQuery();
+  const currencies = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    for (const page of currenciesQuery.data?.pages ?? []) {
+      const list = page?.data?.results ?? page?.data ?? page?.results ?? page;
+      if (!Array.isArray(list)) continue;
+      for (const item of list) {
+        const id = getCurrencyItemId(item);
+        const code = normalizeCurrencyCode(item?.code);
+        if (!id || !code || seen.has(id)) continue;
+        seen.add(id);
+        out.push(item);
+      }
+    }
+    return out;
+  }, [currenciesQuery.data]);
+
+  const currencySelectOptions = useMemo(() => {
+    const base = currencies
+      .map((c) => {
+        const id = getCurrencyItemId(c);
+        const code = normalizeCurrencyCode(c?.code);
+        if (!id || !code) return null;
+        const name = (c?.name && String(c.name).trim()) || "";
+        const label = name ? `${code} - ${name}` : code;
+        return { value: id, label };
+      })
+      .filter(Boolean);
+
+    const currentId = String(watchedCurrency ?? "").trim();
+    if (currentId && !base.some((o) => o.value === currentId)) {
+      return [
+        {
+          value: currentId,
+          label: looksLikeUuid(currentId)
+            ? `${currentId.slice(0, 8)}…`
+            : currentId,
+        },
+        ...base,
+      ];
+    }
+    return base;
+  }, [currencies, watchedCurrency]);
+
+  const {
+    isLoading: currenciesInitialLoading,
+    hasNextPage: currenciesHasNextPage,
+    fetchNextPage: fetchNextCurrenciesPage,
+    isFetchingNextPage: isFetchingNextCurrenciesPage,
+    isFetchNextPageError: isFetchNextCurrenciesPageError,
+    isError: currenciesFailed,
+  } = currenciesQuery;
+
+  /** Map legacy code in the form to currency uuid once the list loads; fill default when empty. */
+  useEffect(() => {
+    if (!currencies.length) return;
+    const cur = String(contractForm.getValues("currency") ?? "").trim();
+
+    if (cur && !looksLikeUuid(cur)) {
+      const hit = currencies.find(
+        (c) => normalizeCurrencyCode(c?.code) === normalizeCurrencyCode(cur),
+      );
+      if (hit) {
+        contractForm.setValue("currency", getCurrencyItemId(hit), {
+          shouldDirty: false,
+        });
+      }
+      return;
+    }
+
+    if (cur) return;
+
+    const compRaw = asObject(
+      historyQuery.data?.current_compensation ??
+        historyQuery.data?.compensation_data,
+    );
+    const resolved = coerceCompensationCurrencyToId(
+      compRaw.currency,
+      currencies,
+    );
+    if (resolved) {
+      contractForm.setValue("currency", resolved, { shouldDirty: false });
+      return;
+    }
+    const pick =
+      currencies.find((c) => Boolean(c?.is_default)) || currencies[0];
+    const id = pick ? getCurrencyItemId(pick) : "";
+    if (id) {
+      contractForm.setValue("currency", id, { shouldDirty: false });
+    }
+  }, [currencies, employeeId, historyQuery.data, contractForm]);
 
   useEffect(() => {
     if (!employeeId) return;
@@ -369,7 +544,7 @@ const ContractSalaryTab = ({ employeeId }) => {
       template: contractRaw.template || "",
       structure: compRaw.structure || "",
       basic_salary: compRaw.basic_salary || "",
-      currency: compRaw.currency || "JOD",
+      currency: coerceCompensationCurrencyToId(compRaw.currency, []),
       transportation: compRaw.transportation || "",
       housing: compRaw.housing || "",
       other_allowances: compRaw.other_allowances || "",
@@ -386,6 +561,12 @@ const ContractSalaryTab = ({ employeeId }) => {
       options.successMessageEdit || "Contract and compensation updated.";
     const successCreate =
       options.successMessageCreate || "Contract and compensation created.";
+    const currencyId = String(values.currency ?? "").trim();
+    if (!currencyId || !looksLikeUuid(currencyId)) {
+      toast.error("Please select a currency.");
+      return false;
+    }
+
     const payload = {
       contract_data: {
         contract_type: values.contract_type,
@@ -397,7 +578,7 @@ const ContractSalaryTab = ({ employeeId }) => {
       compensation_data: {
         structure: values.structure || null,
         basic_salary: String(values.basic_salary || "0"),
-        currency: values.currency || "JOD",
+        currency: currencyId,
         transportation: String(values.transportation || "0"),
         housing: String(values.housing || "0"),
         other_allowances: String(values.other_allowances || "0"),
@@ -603,8 +784,15 @@ const ContractSalaryTab = ({ employeeId }) => {
   const salaryRows = parseArray(historyData?.salary_history);
   const contractRows = parseArray(historyData?.contract_history);
   const evaluationRows = parseArray(historyData?.performance_evaluations);
+  const selectedCurrencyId = String(watchedCurrency ?? "").trim();
+  const selectedCurrencyItem =
+    selectedCurrencyId && looksLikeUuid(selectedCurrencyId)
+      ? currencies.find((c) => getCurrencyItemId(c) === selectedCurrencyId)
+      : null;
   const activeCurrency =
-    contractForm.watch("currency") || currentCompensation?.currency || "JOD";
+    normalizeCurrencyCode(selectedCurrencyItem?.code) ||
+    compensationCurrencyDisplayCode(currentCompensation, currencies) ||
+    "JOD";
   const renewalEndDateDisplay = toIsoDateDisplay(
     contractForm.watch("end_date") || currentContract?.end_date,
   );
@@ -808,15 +996,38 @@ const ContractSalaryTab = ({ employeeId }) => {
                   />
                 )}
               />
-              <SelectField
-                control={contractForm.control}
+              <Controller
                 name="currency"
-                label="Currency"
-                options={[
-                  { value: "JOD", label: "JOD" },
-                  { value: "USD", label: "USD" },
-                  { value: "EUR", label: "EUR" },
-                ]}
+                control={contractForm.control}
+                render={({ field }) => (
+                  <SelectWithLoadMore
+                    id="contract-salary-currency"
+                    label="Currency"
+                    value={String(field.value ?? "").trim()}
+                    onChange={(next) =>
+                      field.onChange(
+                        next != null && next !== "" ? String(next).trim() : "",
+                      )
+                    }
+                    options={currencySelectOptions}
+                    disabled={currenciesFailed}
+                    isInitialLoading={
+                      currenciesInitialLoading && !currenciesQuery.data
+                    }
+                    hasMore={
+                      Boolean(currenciesHasNextPage) && !currenciesFailed
+                    }
+                    onLoadMore={() => fetchNextCurrenciesPage()}
+                    isLoadingMore={isFetchingNextCurrenciesPage}
+                    paginationError={
+                      currenciesFailed
+                        ? "Failed to load currencies."
+                        : isFetchNextCurrenciesPageError
+                          ? "Could not load more currencies. Scroll down to retry."
+                          : null
+                    }
+                  />
+                )}
               />
             </div>
 
@@ -1068,7 +1279,11 @@ const ContractSalaryTab = ({ employeeId }) => {
                     <td style={tableCellStyle}>
                       {formatMoney(
                         row?.salary || row?.basic_salary,
-                        row?.currency || activeCurrency,
+                        rowCurrencyDisplayCode(
+                          row?.currency,
+                          currencies,
+                          activeCurrency,
+                        ),
                       )}
                     </td>
                     <td style={tableCellStyle}>
@@ -1193,7 +1408,11 @@ const ContractSalaryTab = ({ employeeId }) => {
                     <td style={tableCellStyle}>
                       {formatMoney(
                         row?.new_basic_salary || row?.amount,
-                        row?.currency || activeCurrency,
+                        rowCurrencyDisplayCode(
+                          row?.currency,
+                          currencies,
+                          activeCurrency,
+                        ),
                       )}
                     </td>
                     <td style={tableCellStyle}>{row?.reason || "-"}</td>
@@ -1405,7 +1624,9 @@ const ContractSalaryTab = ({ employeeId }) => {
         <ContractTemplatesPreviewView
           templateDetailsQuery={{ isLoading: false, isError: false }}
           previewTemplateName={
-            selectedTemplate?.name || selectedTemplate?.title || "Contract Preview"
+            selectedTemplate?.name ||
+            selectedTemplate?.title ||
+            "Contract Preview"
           }
           isWidePreviewHeader={false}
           navigate={() => setIsTemplatePreviewOpen(false)}

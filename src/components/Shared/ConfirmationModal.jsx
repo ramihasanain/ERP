@@ -8,17 +8,22 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, type =
         switch (type) {
             case 'danger': return <AlertTriangle size={24} color="var(--color-error)" />;
             case 'success': return <CheckCircle size={24} color="var(--color-success)" />;
-            case 'info': return <Info size={24} color="var(--color-primary)" />;
+            case 'info': return <Info size={24} color="var(--color-info)" />;
             default: return <AlertTriangle size={24} color="var(--color-warning)" />;
         }
     };
 
+    /** Theme-aware tint (works in light and dark; avoids undefined *-50 tokens). */
     const getHeaderColor = () => {
         switch (type) {
-            case 'danger': return 'var(--color-error-50)';
-            case 'success': return 'var(--color-success-50)';
-            case 'info': return 'var(--color-primary-50)';
-            default: return 'var(--color-warning-50)';
+            case 'danger':
+                return 'color-mix(in srgb, var(--color-error) 26%, var(--color-bg-surface))';
+            case 'success':
+                return 'color-mix(in srgb, var(--color-success) 26%, var(--color-bg-surface))';
+            case 'info':
+                return 'color-mix(in srgb, var(--color-info) 26%, var(--color-bg-surface))';
+            default:
+                return 'color-mix(in srgb, var(--color-warning) 26%, var(--color-bg-surface))';
         }
     };
 
@@ -29,8 +34,8 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, type =
             backdropFilter: 'blur(2px)'
         }}>
             <div style={{
-                background: 'white', borderRadius: 'var(--radius-lg)', width: '90%', maxWidth: '500px',
-                boxShadow: 'var(--shadow-xl)', overflow: 'hidden', animation: 'fadeIn 0.2s ease-out'
+                background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-lg)', width: '90%', maxWidth: '500px',
+                boxShadow: 'var(--shadow-lg)', overflow: 'hidden', animation: 'fadeIn 0.2s ease-out', border: '1px solid var(--color-border)'
             }}>
                 <div style={{
                     padding: '1.25rem', borderBottom: '1px solid var(--color-border)', display: 'flex',
@@ -49,12 +54,12 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, type =
                     {message}
                 </div>
 
-                <div style={{ padding: '1.25rem', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', background: 'var(--color-slate-50)' }}>
+                <div style={{ padding: '1.25rem', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', background: 'var(--color-bg-subtle)' }}>
                     <button
                         onClick={onCancel}
                         style={{
                             padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)',
-                            background: 'white', color: 'var(--color-text-main)', cursor: 'pointer', fontWeight: 500
+                            background: 'var(--color-bg-surface)', color: 'var(--color-text-main)', cursor: 'pointer', fontWeight: 500
                         }}
                     >
                         {cancelText}
@@ -63,8 +68,8 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, type =
                         onClick={onConfirm}
                         style={{
                             padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: 'none',
-                            background: type === 'danger' ? 'var(--color-error)' : 'var(--color-primary)',
-                            color: 'white', cursor: 'pointer', fontWeight: 500
+                            background: type === 'danger' ? 'var(--color-error)' : 'var(--color-primary-600)',
+                            color: '#fff', cursor: 'pointer', fontWeight: 500
                         }}
                     >
                         {confirmText}

@@ -27,7 +27,7 @@ const MyContractSkeleton = () => {
                 <SkeletonBlock height={18} width={220} />
                 <div style={{ marginTop: '1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
                     {[0, 1, 2, 3].map((i) => (
-                        <div key={i} style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
+                        <div key={i} style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
                             <SkeletonBlock height={10} width={110} />
                             <div style={{ marginTop: '0.65rem' }}>
                                 <SkeletonBlock height={18} width={150} />
@@ -52,7 +52,7 @@ const MyContractSkeleton = () => {
                 <SkeletonBlock height={18} width={200} />
                 <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                     {[0, 1].map((i) => (
-                        <div key={i} style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-slate-50)' }}>
+                        <div key={i} style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
                             <SkeletonBlock height={10} width={110} />
                             <div style={{ marginTop: '0.65rem' }}>
                                 <SkeletonBlock height={20} width={90} />
