@@ -4,6 +4,13 @@ import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import { useAudit } from "@/context/AuditContext";
 import { useAccounting } from "@/context/AccountingContext";
+import { useAuth } from "@/context/AuthContext";
+import useCustomQuery from "@/hooks/useQuery";
+import { useCustomPost } from "@/hooks/useMutation";
+import ConfirmationModal from "@/components/Shared/ConfirmationModal";
+import { toast } from "sonner";
+import Spinner from "@/core/Spinner";
+import NoData from "@/core/NoData";
 import {
   Shield,
   LogOut,
@@ -26,26 +33,62 @@ import {
   BarChart3,
   Users,
   CreditCard,
-  ArrowLeft,
-  Briefcase,
   MapPin,
   Phone,
-  Mail,
-  Globe,
-  Hash,
-  FileCheck,
-  Paperclip,
-  PieChart,
   Plus,
   Trash2,
   Save,
 } from "lucide-react";
 
+const normalizeArrayResponse = (response) => {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.results)) return response.results;
+  if (Array.isArray(response?.data)) return response.data;
+  return [];
+};
+
+const normalizePortalItem = (item) => ({
+  id: item?.id || item?.connection_id || "",
+  client: item?.client || item?.client_id || "",
+  clientName: item?.client_name || item?.company_name || "—",
+  auditorFirm: item?.auditor_firm ?? "",
+  auditorFirmName: item?.auditor_firm_name || "—",
+  industry: item?.industry || "",
+  contact: item?.contact || "",
+  auditPeriodsCount: item?.audit_periods_count ?? null,
+  status: item?.status ?? "",
+  requestedByName: item?.requested_by_name || "—",
+  requestedByEmail: item?.requested_by_email || "",
+  requestNote: item?.request_note || "",
+  handledNote: item?.handled_note || "",
+  handledAt: item?.handled_at ?? null,
+  createdAt: item?.created_at ?? null,
+  updatedAt: item?.updated_at ?? null,
+});
+
+const normalizePortalItems = (response) =>
+  normalizeArrayResponse(response)
+    .map(normalizePortalItem)
+    .filter((c) => c.id);
+
+const CLIENT_COMPANIES_TABS = [
+  {
+    id: "pending",
+    label: "Pending",
+    endpoint: "/api/auditing/portal/requests/",
+  },
+  {
+    id: "approved",
+    label: "Approved",
+    endpoint: "/api/auditing/portal/companies/",
+  },
+];
+
 const AuditorDashboard = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const {
     currentAuditor,
-    logoutAuditor,
     getAuditorPeriods,
     getAuditorCompanies,
     clientCompanies,
@@ -58,7 +101,6 @@ const AuditorDashboard = () => {
     proposeAdjustment,
     getAdjustmentsForPeriod,
     logChange,
-    getChangesForPeriod,
     auditChanges,
   } = useAudit();
   const {
@@ -70,12 +112,9 @@ const AuditorDashboard = () => {
     customers,
     vendors,
     addEntry,
-    updateEntry,
     addAccount,
-    updateAccount,
     deleteAccount,
     setInvoices,
-    setCustomers,
   } = useAccounting();
 
   const [selectedPeriod, setSelectedPeriod] = useState(null);
@@ -83,8 +122,6 @@ const AuditorDashboard = () => {
   const [viewMode, setViewMode] = useState("list");
   const [activeAccountingTab, setActiveAccountingTab] = useState("summary");
   const [selectedCompanyId, setSelectedCompanyId] = useState("all");
-  const [selectedCompanyView, setSelectedCompanyView] = useState(null);
-  const [companyProfileTab, setCompanyProfileTab] = useState("overview");
   const [showNewAdjForm, setShowNewAdjForm] = useState(false);
   const [newAdjTitle, setNewAdjTitle] = useState("");
   const [newAdjDescription, setNewAdjDescription] = useState("");
@@ -92,6 +129,56 @@ const AuditorDashboard = () => {
     { account: "", accountName: "", debit: 0, credit: 0 },
   ]);
   const [editModal, setEditModal] = useState(null); // { title, fields: [{key,label,type,value}], onSave }
+  const [companiesTab, setCompaniesTab] = useState("pending");
+  const [requestAction, setRequestAction] = useState(null);
+
+  const activeCompaniesTab = CLIENT_COMPANIES_TABS.find(
+    (t) => t.id === companiesTab,
+  );
+  const portalQuery = useCustomQuery(
+    activeCompaniesTab.endpoint,
+    ["auditing-portal", companiesTab],
+    { select: normalizePortalItems, staleTime: 5 * 60 * 1000 },
+  );
+  const portalItems = portalQuery.data ?? [];
+
+  const acceptMutation = useCustomPost(
+    (data) => `/api/auditing/portal/requests/${data.id}/accept/`,
+    [
+      ["auditing-portal", "pending"],
+      ["auditing-portal", "approved"],
+    ],
+  );
+  const rejectMutation = useCustomPost(
+    (data) => `/api/auditing/portal/requests/${data.id}/reject/`,
+    [["auditing-portal", "pending"]],
+  );
+
+  const handleRequestAction = () => {
+    if (!requestAction) return;
+    const mutation =
+      requestAction.type === "accept" ? acceptMutation : rejectMutation;
+    const label = requestAction.type === "accept" ? "Approved" : "Rejected";
+    mutation.mutate(
+      {
+        id: requestAction.item.id,
+        body: { handled_note: requestAction.note },
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            `${requestAction.item.clientName} audit request ${label.toLowerCase()} successfully.`,
+          );
+          setRequestAction(null);
+        },
+        onError: () => {
+          toast.error(
+            `Failed to ${requestAction.type} the request. Please try again.`,
+          );
+        },
+      },
+    );
+  };
 
   if (!currentAuditor) {
     return (
@@ -175,7 +262,7 @@ const AuditorDashboard = () => {
   };
 
   const handleLogout = () => {
-    logoutAuditor();
+    logout();
     navigate("/auditor/login");
   };
 
@@ -231,8 +318,7 @@ Status:        ${period.status === AUDIT_STATUSES.SEALED ? "SEALED" : "APPROVED"
 AUDITING FIRM
 ───────────────────────────────────────────────────────
 Firm:          ${currentAuditor.name}
-License:       ${currentAuditor.licenseNumber}
-Contact:       ${currentAuditor.contactPerson}
+Email:         ${currentAuditor.email}
 ───────────────────────────────────────────────────────
 AUDITOR'S OPINION
 ───────────────────────────────────────────────────────
@@ -290,946 +376,9 @@ Digital Seal: ${period.sealNumber}
     { id: "adjustments", label: "Adjustments", icon: <Edit3 size={14} /> },
   ];
 
-  const handleOpenCompanyProfile = (company) => {
-    setSelectedCompanyView(company);
-    setCompanyProfileTab("overview");
-    setViewMode("company");
+  const handleOpenCompanyProfile = (companyId) => {
+    navigate(`/auditor/company/${companyId}`);
   };
-
-  const companyProfileTabs = [
-    { id: "overview", label: "Overview", icon: <Building2 size={14} /> },
-    { id: "tax", label: "Tax & Registration", icon: <FileCheck size={14} /> },
-    { id: "bank", label: "Bank Accounts", icon: <CreditCard size={14} /> },
-    { id: "shareholders", label: "Shareholders", icon: <PieChart size={14} /> },
-    { id: "attachments", label: "Attachments", icon: <Paperclip size={14} /> },
-    { id: "periods", label: "Audit Periods", icon: <FileText size={14} /> },
-  ];
-
-  // ---- COMPANY PROFILE MODE ----
-  if (viewMode === "company" && selectedCompanyView) {
-    const co = selectedCompanyView;
-    const companyPeriods = allPeriods.filter((p) => p.companyId === co.id);
-    const totalBankBalance =
-      co.bankAccounts?.reduce((s, b) => s + b.balance, 0) || 0;
-    const catColors = {
-      Legal: "#2563eb",
-      Tax: "#d97706",
-      Financial: "#059669",
-      Corporate: "#7c3aed",
-    };
-
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "var(--color-slate-50)",
-          padding: "2rem",
-        }}
-      >
-        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          {/* Header */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "1.5rem",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-              <button
-                onClick={() => {
-                  setViewMode("list");
-                  setSelectedCompanyView(null);
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--color-text-secondary)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  fontSize: "0.85rem",
-                  fontWeight: 500,
-                }}
-              >
-                <ArrowLeft size={18} /> Back to Dashboard
-              </button>
-            </div>
-          </div>
-
-          {/* Company Header Card */}
-          <Card
-            className="padding-lg"
-            style={{
-              marginBottom: "1.5rem",
-              background: "linear-gradient(135deg, #0f172a, #1e3a5f)",
-              color: "white",
-              borderRadius: "16px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-              }}
-            >
-              <div
-                style={{ display: "flex", gap: "1rem", alignItems: "center" }}
-              >
-                <div
-                  style={{
-                    width: "4rem",
-                    height: "4rem",
-                    borderRadius: "14px",
-                    background: "rgba(255,255,255,0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "2rem",
-                  }}
-                >
-                  {co.logo}
-                </div>
-                <div>
-                  <h1
-                    style={{
-                      fontWeight: 800,
-                      fontSize: "1.5rem",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    {co.name}
-                  </h1>
-                  <p style={{ opacity: 0.7, fontSize: "0.85rem" }}>
-                    {co.industry} • {co.legalForm} • Founded {co.foundedYear}
-                  </p>
-                  <p style={{ opacity: 0.6, fontSize: "0.8rem" }}>
-                    CEO: {co.ceo} &nbsp;|&nbsp; Reg: {co.registrationNumber}
-                  </p>
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <span
-                  style={{
-                    padding: "4px 12px",
-                    borderRadius: "8px",
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    background: "rgba(52,211,153,0.2)",
-                    color: "#34d399",
-                  }}
-                >
-                  {co.status.toUpperCase()}
-                </span>
-                <div
-                  style={{
-                    marginTop: "0.5rem",
-                    fontSize: "0.75rem",
-                    opacity: 0.7,
-                  }}
-                >
-                  {co.employees} employees
-                </div>
-              </div>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: "1rem",
-                marginTop: "1.25rem",
-                paddingTop: "1rem",
-                borderTop: "1px solid rgba(255,255,255,0.1)",
-              }}
-            >
-              {[
-                {
-                  label: "Capital",
-                  value: `${co.capital?.toLocaleString()} ${co.currency}`,
-                },
-                {
-                  label: "Annual Revenue",
-                  value: `${co.annualRevenue?.toLocaleString()} ${co.currency}`,
-                },
-                {
-                  label: "Bank Balance",
-                  value: `${totalBankBalance.toLocaleString()} ${co.currency}`,
-                },
-                { label: "Audit Periods", value: companyPeriods.length },
-              ].map((s, i) => (
-                <div key={i} style={{ textAlign: "center" }}>
-                  <div
-                    style={{
-                      fontSize: "0.65rem",
-                      opacity: 0.6,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    {s.label}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "1.15rem",
-                      fontWeight: 700,
-                      marginTop: "0.25rem",
-                    }}
-                  >
-                    {s.value}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Tabs */}
-          <div
-            style={{
-              display: "flex",
-              gap: "0",
-              borderBottom: "2px solid var(--color-border)",
-              marginBottom: "1.5rem",
-              overflowX: "auto",
-            }}
-          >
-            {companyProfileTabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setCompanyProfileTab(tab.id)}
-                style={{
-                  padding: "0.65rem 1.25rem",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  borderBottom:
-                    companyProfileTab === tab.id
-                      ? "2px solid var(--color-primary-600)"
-                      : "2px solid transparent",
-                  color:
-                    companyProfileTab === tab.id
-                      ? "var(--color-primary-600)"
-                      : "var(--color-text-secondary)",
-                  fontWeight: 600,
-                  fontSize: "0.82rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.4rem",
-                  marginBottom: "-2px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* TAB: Overview */}
-          {companyProfileTab === "overview" && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "1.5rem",
-              }}
-            >
-              <Card className="padding-lg">
-                <h4
-                  style={{
-                    fontWeight: 700,
-                    marginBottom: "1rem",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <Building2 size={16} /> Company Information
-                </h4>
-                {[
-                  {
-                    icon: <Briefcase size={14} />,
-                    label: "Industry",
-                    value: co.industry,
-                  },
-                  {
-                    icon: <Hash size={14} />,
-                    label: "Registration",
-                    value: co.registrationNumber,
-                  },
-                  {
-                    icon: <Hash size={14} />,
-                    label: "Legal Form",
-                    value: co.legalForm,
-                  },
-                  {
-                    icon: <MapPin size={14} />,
-                    label: "Address",
-                    value: co.address,
-                  },
-                  {
-                    icon: <Globe size={14} />,
-                    label: "Website",
-                    value: co.website,
-                  },
-                ].map((row, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      padding: "0.5rem 0",
-                      borderBottom: "1px solid var(--color-border)",
-                      fontSize: "0.82rem",
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: "var(--color-text-muted)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      {row.icon} {row.label}
-                    </span>
-                    <span
-                      style={{
-                        fontWeight: 500,
-                        textAlign: "right",
-                        maxWidth: "60%",
-                      }}
-                    >
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-              </Card>
-              <Card className="padding-lg">
-                <h4
-                  style={{
-                    fontWeight: 700,
-                    marginBottom: "1rem",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <Users size={16} /> Contact Details
-                </h4>
-                {[
-                  { icon: <Users size={14} />, label: "CEO", value: co.ceo },
-                  {
-                    icon: <Users size={14} />,
-                    label: "Contact Person",
-                    value: `${co.contactPerson} (${co.contactRole})`,
-                  },
-                  {
-                    icon: <Phone size={14} />,
-                    label: "Phone",
-                    value: co.phone,
-                  },
-                  { icon: <Phone size={14} />, label: "Fax", value: co.fax },
-                  { icon: <Mail size={14} />, label: "Email", value: co.email },
-                ].map((row, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      padding: "0.5rem 0",
-                      borderBottom: "1px solid var(--color-border)",
-                      fontSize: "0.82rem",
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: "var(--color-text-muted)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      {row.icon} {row.label}
-                    </span>
-                    <span style={{ fontWeight: 500 }}>{row.value}</span>
-                  </div>
-                ))}
-              </Card>
-            </div>
-          )}
-
-          {/* TAB: Tax & Registration */}
-          {companyProfileTab === "tax" && (
-            <Card className="padding-lg">
-              <h4
-                style={{
-                  fontWeight: 700,
-                  marginBottom: "1.25rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                <FileCheck size={16} /> Tax & Registration Information
-              </h4>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "2rem",
-                }}
-              >
-                <div>
-                  <h5
-                    style={{
-                      fontWeight: 600,
-                      fontSize: "0.85rem",
-                      marginBottom: "0.75rem",
-                      color: "var(--color-primary-600)",
-                    }}
-                  >
-                    Tax Numbers
-                  </h5>
-                  {[
-                    { label: "Tax Number", value: co.taxInfo?.taxNumber },
-                    {
-                      label: "Sales Tax Number",
-                      value: co.taxInfo?.salesTaxNumber,
-                    },
-                    { label: "Income Tax ID", value: co.taxInfo?.incomeTaxId },
-                    { label: "Tax Office", value: co.taxInfo?.taxOffice },
-                  ].map((row, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "0.5rem 0",
-                        borderBottom: "1px solid var(--color-border)",
-                        fontSize: "0.82rem",
-                      }}
-                    >
-                      <span style={{ color: "var(--color-text-muted)" }}>
-                        {row.label}
-                      </span>
-                      <span
-                        style={{
-                          fontWeight: 600,
-                          fontFamily: "monospace",
-                          fontSize: "0.8rem",
-                        }}
-                      >
-                        {row.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <h5
-                    style={{
-                      fontWeight: 600,
-                      fontSize: "0.85rem",
-                      marginBottom: "0.75rem",
-                      color: "var(--color-primary-600)",
-                    }}
-                  >
-                    VAT & Status
-                  </h5>
-                  {[
-                    {
-                      label: "VAT Registered",
-                      value: co.taxInfo?.vatRegistered ? "✅ Yes" : "❌ No",
-                    },
-                    { label: "VAT Rate", value: `${co.taxInfo?.vatRate}%` },
-                    {
-                      label: "Last Tax Filing",
-                      value: co.taxInfo?.lastTaxFiling,
-                    },
-                    { label: "Tax Status", value: co.taxInfo?.taxStatus },
-                  ].map((row, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "0.5rem 0",
-                        borderBottom: "1px solid var(--color-border)",
-                        fontSize: "0.82rem",
-                      }}
-                    >
-                      <span style={{ color: "var(--color-text-muted)" }}>
-                        {row.label}
-                      </span>
-                      <span
-                        style={{
-                          fontWeight: 600,
-                          color:
-                            row.label === "Tax Status"
-                              ? row.value === "Compliant"
-                                ? "var(--color-success)"
-                                : "var(--color-warning)"
-                              : "inherit",
-                        }}
-                      >
-                        {row.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* TAB: Bank Accounts */}
-          {companyProfileTab === "bank" && (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-            >
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-                  gap: "1rem",
-                }}
-              >
-                {(co.bankAccounts || []).map((bank, i) => (
-                  <Card
-                    key={i}
-                    className="padding-lg"
-                    style={{ border: "1px solid var(--color-border)" }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        marginBottom: "0.75rem",
-                      }}
-                    >
-                      <div>
-                        <h4 style={{ fontWeight: 700, fontSize: "1rem" }}>
-                          {bank.bankName}
-                        </h4>
-                        <span
-                          style={{
-                            fontSize: "0.7rem",
-                            padding: "2px 8px",
-                            borderRadius: "6px",
-                            background: "var(--color-slate-100)",
-                            color: "var(--color-text-secondary)",
-                          }}
-                        >
-                          {bank.type}
-                        </span>
-                      </div>
-                      <span
-                        style={{
-                          fontSize: "0.7rem",
-                          padding: "2px 8px",
-                          borderRadius: "6px",
-                          background: "#dbeafe",
-                          color: "#2563eb",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {bank.currency}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "1.75rem",
-                        fontWeight: 800,
-                        color: "var(--color-primary-600)",
-                        margin: "0.75rem 0",
-                      }}
-                    >
-                      {bank.balance.toLocaleString()}{" "}
-                      <span style={{ fontSize: "0.85rem", fontWeight: 500 }}>
-                        {bank.currency}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--color-text-muted)",
-                      }}
-                    >
-                      <div style={{ marginBottom: "0.25rem" }}>
-                        Account:{" "}
-                        <strong style={{ fontFamily: "monospace" }}>
-                          {bank.accountNumber}
-                        </strong>
-                      </div>
-                      <div>
-                        IBAN:{" "}
-                        <strong
-                          style={{
-                            fontFamily: "monospace",
-                            fontSize: "0.7rem",
-                          }}
-                        >
-                          {bank.iban}
-                        </strong>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-              <Card
-                className="padding-md"
-                style={{ background: "var(--color-primary-50)" }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <span style={{ fontWeight: 600 }}>
-                    Total Balance Across All Accounts
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "1.25rem",
-                      fontWeight: 800,
-                      color: "var(--color-primary-600)",
-                    }}
-                  >
-                    {totalBankBalance.toLocaleString()} {co.currency}
-                  </span>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {/* TAB: Shareholders */}
-          {companyProfileTab === "shareholders" && (
-            <Card className="padding-lg">
-              <h4
-                style={{
-                  fontWeight: 700,
-                  marginBottom: "1.25rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                <PieChart size={16} /> Ownership Structure
-              </h4>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
-                }}
-              >
-                {(co.shareholders || []).map((sh, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "1rem",
-                      padding: "0.75rem",
-                      borderRadius: "10px",
-                      border: "1px solid var(--color-border)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "2.5rem",
-                        height: "2.5rem",
-                        borderRadius: "50%",
-                        background: `hsl(${i * 90}, 60%, 50%)`,
-                        color: "white",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 700,
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      {sh.share}%
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                        {sh.name}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "0.75rem",
-                          color: "var(--color-text-muted)",
-                        }}
-                      >
-                        {sh.role}
-                      </div>
-                    </div>
-                    {/* Visual Bar */}
-                    <div
-                      style={{
-                        width: "200px",
-                        height: "8px",
-                        borderRadius: "4px",
-                        background: "var(--color-slate-100)",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${sh.share}%`,
-                          height: "100%",
-                          borderRadius: "4px",
-                          background: `hsl(${i * 90}, 60%, 50%)`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* TAB: Attachments */}
-          {companyProfileTab === "attachments" && (
-            <Card className="padding-none">
-              <div
-                style={{
-                  padding: "0.75rem 1rem",
-                  borderBottom: "1px solid var(--color-border)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <h4 style={{ fontWeight: 700 }}>
-                  Documents & Attachments ({co.attachments?.length || 0})
-                </h4>
-              </div>
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontSize: "0.82rem",
-                }}
-              >
-                <thead>
-                  <tr style={{ background: "var(--color-slate-50)" }}>
-                    <th style={{ padding: "8px 14px", textAlign: "left" }}>
-                      Document Name
-                    </th>
-                    <th style={{ padding: "8px 14px", textAlign: "left" }}>
-                      Category
-                    </th>
-                    <th style={{ padding: "8px 14px", textAlign: "left" }}>
-                      Type
-                    </th>
-                    <th style={{ padding: "8px 14px", textAlign: "left" }}>
-                      Size
-                    </th>
-                    <th style={{ padding: "8px 14px", textAlign: "left" }}>
-                      Date
-                    </th>
-                    <th style={{ padding: "8px 14px", textAlign: "center" }}>
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(co.attachments || []).map((att) => (
-                    <tr
-                      key={att.id}
-                      style={{ borderBottom: "1px solid var(--color-border)" }}
-                    >
-                      <td style={{ padding: "8px 14px", fontWeight: 500 }}>
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <Paperclip
-                            size={14}
-                            style={{ color: "var(--color-text-muted)" }}
-                          />{" "}
-                          {att.name}
-                        </span>
-                      </td>
-                      <td style={{ padding: "8px 14px" }}>
-                        <span
-                          style={{
-                            padding: "2px 8px",
-                            borderRadius: "6px",
-                            fontSize: "0.7rem",
-                            fontWeight: 600,
-                            background: `${catColors[att.category]}15`,
-                            color: catColors[att.category],
-                          }}
-                        >
-                          {att.category}
-                        </span>
-                      </td>
-                      <td
-                        style={{
-                          padding: "8px 14px",
-                          fontFamily: "monospace",
-                          fontSize: "0.75rem",
-                        }}
-                      >
-                        {att.type}
-                      </td>
-                      <td
-                        style={{
-                          padding: "8px 14px",
-                          color: "var(--color-text-muted)",
-                        }}
-                      >
-                        {att.size}
-                      </td>
-                      <td
-                        style={{
-                          padding: "8px 14px",
-                          color: "var(--color-text-muted)",
-                        }}
-                      >
-                        {att.date}
-                      </td>
-                      <td style={{ padding: "8px 14px", textAlign: "center" }}>
-                        <button
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "var(--color-primary-600)",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.25rem",
-                            fontSize: "0.75rem",
-                            fontWeight: 600,
-                            margin: "0 auto",
-                          }}
-                        >
-                          <Download size={13} /> Download
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          )}
-
-          {/* TAB: Audit Periods */}
-          {companyProfileTab === "periods" && (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-            >
-              {companyPeriods.length === 0 ? (
-                <Card className="padding-lg" style={{ textAlign: "center" }}>
-                  <p style={{ color: "var(--color-text-muted)" }}>
-                    No audit periods for this company.
-                  </p>
-                </Card>
-              ) : (
-                companyPeriods.map((period) => {
-                  const sc = statusConfig[period.status];
-                  return (
-                    <Card key={period.id} className="padding-md">
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.75rem",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "2.5rem",
-                              height: "2.5rem",
-                              borderRadius: "10px",
-                              background: sc?.bg,
-                              color: sc?.color,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            {sc?.icon}
-                          </div>
-                          <div>
-                            <h4
-                              style={{ fontWeight: 700, fontSize: "0.95rem" }}
-                            >
-                              {period.label}
-                            </h4>
-                            <span
-                              style={{
-                                padding: "2px 8px",
-                                borderRadius: "6px",
-                                fontSize: "0.65rem",
-                                fontWeight: 600,
-                                background: sc?.bg,
-                                color: sc?.color,
-                              }}
-                            >
-                              {sc?.label}
-                            </span>
-                          </div>
-                        </div>
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
-                          {period.status === AUDIT_STATUSES.SUBMITTED && (
-                            <Button
-                              size="sm"
-                              icon={<Eye size={14} />}
-                              onClick={() => handleStartReview(period)}
-                            >
-                              Start Review
-                            </Button>
-                          )}
-                          {period.status === AUDIT_STATUSES.IN_REVIEW && (
-                            <Button
-                              size="sm"
-                              icon={<Eye size={14} />}
-                              onClick={() => {
-                                setSelectedPeriod(period);
-                                setViewMode("review");
-                              }}
-                            >
-                              Continue
-                            </Button>
-                          )}
-                          {period.sealNumber && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              icon={<Download size={14} />}
-                              onClick={() => downloadSealedStatement(period)}
-                            >
-                              Download
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   // ---- REVIEW MODE ----
   if (viewMode === "review" && selectedPeriod) {
@@ -3930,7 +3079,7 @@ Digital Seal: ${period.sealNumber}
             </h1>
             <p style={{ fontSize: "0.8rem", opacity: 0.7 }}>
               <Building2 size={12} style={{ verticalAlign: "middle" }} />{" "}
-              {currentAuditor.name} — {currentAuditor.contactPerson}
+              {currentAuditor.name} — {currentAuditor.fullName}
             </p>
           </div>
         </div>
@@ -4021,8 +3170,7 @@ Digital Seal: ${period.sealNumber}
                   color: "var(--color-text-secondary)",
                 }}
               >
-                License: {currentAuditor.licenseNumber} •{" "}
-                {currentAuditor.specialization} • {currentAuditor.email}
+                {currentAuditor.email}
               </p>
             </div>
             <span
@@ -4041,115 +3189,368 @@ Digital Seal: ${period.sealNumber}
         </Card>
 
         {/* Client Companies */}
-        <h3
-          style={{ fontWeight: 700, marginBottom: "1rem", fontSize: "1.1rem" }}
-        >
-          Client Companies
-        </h3>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: "1rem",
-            marginBottom: "2rem",
-          }}
-        >
-          {auditorCompanies.map((company) => {
-            const companyPeriods = allPeriods.filter(
-              (p) => p.companyId === company.id,
-            );
-            const isSelected = selectedCompanyId === company.id;
-            return (
-              <Card
-                key={company.id}
-                className="padding-md hoverable"
+        <Card className="padding-lg">
+          <h3
+            style={{
+              fontWeight: 700,
+              marginBottom: "1rem",
+              fontSize: "1.1rem",
+            }}
+          >
+            Client Companies
+          </h3>
+
+          <div
+            style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}
+          >
+            {CLIENT_COMPANIES_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setCompaniesTab(tab.id)}
                 style={{
+                  padding: "0.45rem 1rem",
+                  borderRadius: "8px",
+                  border: "none",
                   cursor: "pointer",
-                  border: isSelected
-                    ? "2px solid var(--color-primary-600)"
-                    : "1px solid var(--color-border)",
-                  background: isSelected ? "var(--color-primary-50)" : "white",
-                  transition: "all 0.2s",
+                  background:
+                    companiesTab === tab.id
+                      ? "var(--color-primary-600)"
+                      : "var(--color-bg-body)",
+                  color:
+                    companiesTab === tab.id
+                      ? "#fff"
+                      : "var(--color-text-secondary)",
+                  fontWeight: 600,
+                  fontSize: "0.82rem",
                 }}
-                onClick={() => handleOpenCompanyProfile(company)}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "0.75rem",
-                      alignItems: "center",
-                    }}
-                  >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {portalQuery.isLoading && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "2rem",
+              }}
+            >
+              <Spinner />
+            </div>
+          )}
+          {portalQuery.isError && (
+            <div
+              style={{
+                padding: "0.75rem 1rem",
+                borderRadius: "8px",
+                background: "var(--color-error-dim)",
+                color: "var(--color-error)",
+                fontSize: "0.85rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
+              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+              <span>
+                Could not load client companies. Please try again later.
+              </span>
+            </div>
+          )}
+          {!portalQuery.isLoading &&
+            !portalQuery.isError &&
+            portalItems.length === 0 && (
+              <NoData variant="inline" label="client companies" />
+            )}
+          {!portalQuery.isLoading &&
+            !portalQuery.isError &&
+            portalItems.length > 0 && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gap: "1rem",
+                }}
+              >
+                {portalItems.map((item) => {
+                  const statusStyle =
+                    item.status === "approved"
+                      ? {
+                          bg: "var(--color-success-dim)",
+                          color: "var(--color-success)",
+                          label: "Approved",
+                        }
+                      : {
+                          bg: "var(--color-warning-dim)",
+                          color: "var(--color-warning)",
+                          label: "Pending",
+                        };
+
+                  return (
                     <div
+                      key={item.id}
+                      onClick={() => {
+                        if (companiesTab === "approved") {
+                          handleOpenCompanyProfile(item.id);
+                        }
+                      }}
                       style={{
-                        width: "2.75rem",
-                        height: "2.75rem",
+                        padding: "1rem 1.25rem",
                         borderRadius: "12px",
-                        background: "linear-gradient(135deg, #0f172a, #334155)",
-                        color: "white",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "1.25rem",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-bg-subtle)",
+                        cursor:
+                          companiesTab === "approved" ? "pointer" : "default",
+                        transition: "all 0.2s",
                       }}
                     >
-                      {company.logo}
-                    </div>
-                    <div>
-                      <h4 style={{ fontWeight: 700, fontSize: "0.95rem" }}>
-                        {company.name}
-                      </h4>
-                      <p
+                      <div
                         style={{
-                          fontSize: "0.7rem",
-                          color: "var(--color-text-muted)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          marginBottom: "0.5rem",
+                          gap: "0.5rem",
                         }}
                       >
-                        {company.industry} • {company.registrationNumber}
-                      </p>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "0.75rem",
+                            alignItems: "center",
+                            minWidth: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "2.5rem",
+                              height: "2.5rem",
+                              borderRadius: "10px",
+                              flexShrink: 0,
+                              background:
+                                "linear-gradient(135deg, #0f172a, #3b82f6)",
+                              color: "white",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Building2 size={16} />
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <h4 style={{ fontWeight: 700, fontSize: "0.9rem" }}>
+                              {item.clientName}
+                            </h4>
+                            <p
+                              style={{
+                                fontSize: "0.7rem",
+                                color: "var(--color-text-muted)",
+                              }}
+                            >
+                              {item.industry || item.requestedByEmail || "—"}
+                            </p>
+                          </div>
+                        </div>
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            padding: "2px 8px",
+                            borderRadius: "6px",
+                            fontSize: "0.65rem",
+                            fontWeight: 700,
+                            background: statusStyle.bg,
+                            color: statusStyle.color,
+                          }}
+                        >
+                          {statusStyle.label}
+                        </span>
+                      </div>
+                      {companiesTab === "pending" && (
+                        <>
+                          <p
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--color-text-secondary)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.35rem",
+                              marginBottom: "0.35rem",
+                            }}
+                          >
+                            <Users
+                              size={14}
+                              style={{
+                                flexShrink: 0,
+                                color: "var(--color-text-muted)",
+                              }}
+                            />
+                            <span>{item.requestedByName}</span>
+                          </p>
+                          {item.requestNote && (
+                            <p
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--color-text-secondary)",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: "0.35rem",
+                                marginBottom: "0.35rem",
+                              }}
+                            >
+                              <MapPin
+                                size={14}
+                                style={{
+                                  flexShrink: 0,
+                                  marginTop: "1px",
+                                  color: "var(--color-text-muted)",
+                                }}
+                              />
+                              <span
+                                style={{
+                                  lineHeight: 1.35,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                }}
+                              >
+                                {item.requestNote}
+                              </span>
+                            </p>
+                          )}
+                          {item.createdAt && (
+                            <p
+                              style={{
+                                fontSize: "0.7rem",
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.35rem",
+                              }}
+                            >
+                              <Clock size={12} style={{ flexShrink: 0 }} />
+                              <span>
+                                {new Date(item.createdAt).toLocaleDateString()}
+                              </span>
+                            </p>
+                          )}
+                        </>
+                      )}
+                      {companiesTab === "approved" && (
+                        <>
+                          {item.contact && (
+                            <p
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--color-text-secondary)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.35rem",
+                                marginBottom: "0.35rem",
+                              }}
+                            >
+                              <Phone
+                                size={14}
+                                style={{
+                                  flexShrink: 0,
+                                  color: "var(--color-text-muted)",
+                                }}
+                              />
+                              <span>{item.contact}</span>
+                            </p>
+                          )}
+                          {item.auditPeriodsCount != null && (
+                            <p
+                              style={{
+                                fontSize: "0.7rem",
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.35rem",
+                              }}
+                            >
+                              <FileText size={12} style={{ flexShrink: 0 }} />
+                              <span>
+                                {item.auditPeriodsCount} audit period
+                                {item.auditPeriodsCount !== 1 ? "s" : ""}
+                              </span>
+                            </p>
+                          )}
+                        </>
+                      )}
+                      {companiesTab === "pending" && (
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "0.5rem",
+                            marginTop: "0.75rem",
+                            paddingTop: "0.75rem",
+                            borderTop: "1px solid var(--color-border)",
+                          }}
+                        >
+                          <button
+                            onClick={() =>
+                              setRequestAction({
+                                item,
+                                type: "accept",
+                                note: "",
+                              })
+                            }
+                            style={{
+                              flex: 1,
+                              padding: "0.4rem 0.75rem",
+                              borderRadius: "8px",
+                              border: "none",
+                              background: "var(--color-success)",
+                              color: "#fff",
+                              fontWeight: 600,
+                              fontSize: "0.78rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "0.35rem",
+                            }}
+                          >
+                            <CheckCircle size={14} /> Approve
+                          </button>
+                          <button
+                            onClick={() =>
+                              setRequestAction({
+                                item,
+                                type: "reject",
+                                note: "",
+                              })
+                            }
+                            style={{
+                              flex: 1,
+                              padding: "0.4rem 0.75rem",
+                              borderRadius: "8px",
+                              border: "1px solid var(--color-error)",
+                              background: "transparent",
+                              color: "var(--color-error)",
+                              fontWeight: 600,
+                              fontSize: "0.78rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "0.35rem",
+                            }}
+                          >
+                            <ThumbsDown size={14} /> Reject
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <span
-                    style={{
-                      padding: "2px 8px",
-                      borderRadius: "6px",
-                      fontSize: "0.65rem",
-                      fontWeight: 700,
-                      background: "var(--color-success-dim)",
-                      color: "var(--color-success)",
-                    }}
-                  >
-                    {company.status}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "1rem",
-                    marginTop: "0.75rem",
-                    paddingTop: "0.5rem",
-                    borderTop: "1px solid var(--color-border)",
-                    fontSize: "0.75rem",
-                  }}
-                >
-                  <span style={{ color: "var(--color-text-muted)" }}>
-                    Contact: <strong>{company.contactPerson}</strong>
-                  </span>
-                  <span style={{ color: "var(--color-text-muted)" }}>
-                    Periods: <strong>{companyPeriods.length}</strong>
-                  </span>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                  );
+                })}
+              </div>
+            )}
+        </Card>
 
         {/* Tip */}
         <Card
@@ -4170,6 +3571,65 @@ Digital Seal: ${period.sealNumber}
           </p>
         </Card>
       </div>
+
+      <ConfirmationModal
+        isOpen={!!requestAction}
+        type={requestAction?.type === "accept" ? "success" : "danger"}
+        title={
+          requestAction?.type === "accept"
+            ? "Approve Audit Request"
+            : "Reject Audit Request"
+        }
+        message={
+          <div>
+            <p style={{ marginBottom: "0.75rem" }}>
+              {requestAction?.type === "accept"
+                ? `Are you sure you want to approve the audit request from "${requestAction?.item?.clientName}"?`
+                : `Are you sure you want to reject the audit request from "${requestAction?.item?.clientName}"?`}
+            </p>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                marginBottom: "0.35rem",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              Note
+            </label>
+            <textarea
+              value={requestAction?.note ?? ""}
+              onChange={(e) =>
+                setRequestAction((prev) =>
+                  prev ? { ...prev, note: e.target.value } : prev,
+                )
+              }
+              placeholder={
+                requestAction?.type === "accept"
+                  ? "Optional note for the client..."
+                  : "Reason for rejection..."
+              }
+              style={{
+                width: "100%",
+                minHeight: "80px",
+                padding: "0.6rem",
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                fontSize: "0.85rem",
+                fontFamily: "inherit",
+                resize: "vertical",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+        }
+        confirmText={requestAction?.type === "accept" ? "Approve" : "Reject"}
+        cancelText="Cancel"
+        disabled={acceptMutation.isPending || rejectMutation.isPending}
+        onConfirm={handleRequestAction}
+        onCancel={() => setRequestAction(null)}
+      />
     </div>
   );
 };

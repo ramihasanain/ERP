@@ -1,56 +1,73 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import Input from "@/components/Shared/Input";
-import { Shield, LogIn, ArrowLeft, Building2, Eye, EyeOff } from "lucide-react";
-import { useAudit } from "@/context/AuditContext";
+import { Shield, LogIn, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { errorToastOptions, successToastOptions } from "@/utils/toastOptions";
+
+const PUBLIC_API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const AuditorLogin = () => {
   const navigate = useNavigate();
-  const { loginAuditor, registerFirm } = useAudit();
-  const [mode, setMode] = useState("login"); // login | register
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { persistLoginResponse } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
 
-  // Registration
-  const [regForm, setRegForm] = useState({
-    name: "",
-    licenseNumber: "",
-    email: "",
-    phone: "",
-    address: "",
-    contactPerson: "",
-    specialization: "",
-    password: "",
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
-  const handleLogin = () => {
-    setError("");
-    const firm = loginAuditor(email, password);
-    if (firm) {
-      navigate("/auditor/dashboard");
-    } else {
-      setError("Invalid credentials. Please check your email and password.");
-    }
-  };
+  const onSubmit = async (values) => {
+    setIsSubmitting(true);
+    try {
+      const response = await axios.post(`${PUBLIC_API_URL}/login/`, {
+        email: values.email,
+        password: values.password,
+      });
+      const data = response.data;
 
-  const handleRegister = () => {
-    if (
-      !regForm.name ||
-      !regForm.email ||
-      !regForm.password ||
-      !regForm.licenseNumber
-    ) {
-      setError("Please fill all required fields.");
-      return;
+      if (data.user?.reset_password_required) {
+        toast.success(
+          "Please change your password before continuing.",
+          successToastOptions
+        );
+        navigate("/auditor/reset-password-first-login", {
+          replace: true,
+          state: { accessToken: data.access },
+        });
+      } else {
+        const user = persistLoginResponse(data, "auditor", {
+          loginBaseUrl: PUBLIC_API_URL,
+        });
+        toast.success(
+          `Welcome back, ${user?.name || "Auditor"}!`,
+          successToastOptions
+        );
+        navigate("/auditor/dashboard", { replace: true });
+      }
+    } catch (err) {
+      const message =
+        err?.response?.data?.detail ||
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Sign in failed. Please verify your credentials.";
+      toast.error(message, errorToastOptions);
+    } finally {
+      setIsSubmitting(false);
     }
-    registerFirm(regForm);
-    setMode("login");
-    setEmail(regForm.email);
-    setError("");
   };
 
   return (
@@ -67,11 +84,10 @@ const AuditorLogin = () => {
       <div
         style={{
           width: "100%",
-          maxWidth: mode === "register" ? "600px" : "420px",
+          maxWidth: "420px",
           padding: "2rem",
         }}
       >
-        {/* Back to main */}
         <div style={{ marginBottom: "1.5rem" }}>
           <button
             onClick={() => navigate("/auth/signin")}
@@ -91,7 +107,6 @@ const AuditorLogin = () => {
         </div>
 
         <Card className="padding-lg" style={{ borderRadius: "16px" }}>
-          {/* Header */}
           <div style={{ textAlign: "center", marginBottom: "2rem" }}>
             <div
               style={{
@@ -114,7 +129,6 @@ const AuditorLogin = () => {
                 marginBottom: "0.25rem",
               }}
             >
-              {/* {mode === "login" ? "Auditor Portal" : "Register Audit Firm"} */}
               Auditor Portal
             </h1>
             <p
@@ -123,198 +137,76 @@ const AuditorLogin = () => {
                 fontSize: "0.85rem",
               }}
             >
-              {mode === "login"
-                ? "Sign in to review and audit financial statements."
-                : "Create your audit firm account."}
+              Sign in to review and audit financial statements.
             </p>
           </div>
 
-          {error && (
-            <div
-              style={{
-                padding: "0.75rem",
-                borderRadius: "8px",
-                background: "var(--color-error-dim)",
-                color: "var(--color-error)",
-                fontSize: "0.85rem",
-                marginBottom: "1rem",
-                textAlign: "center",
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          {mode === "login" ? (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-            >
-              <Input
-                label="Email Address"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="audit@company.com"
-              />
-              <Input
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                endIcon={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((current) => !current)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      padding: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "var(--color-text-muted)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                }
-                endIconInteractive
-              />
-
-              <Button
-                onClick={handleLogin}
-                icon={<LogIn size={18} />}
-                style={{ width: "100%", marginTop: "0.5rem" }}
-              >
-                Sign In as Auditor
-              </Button>
-
-              {/* <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
-                                    Don't have an audit account?
-                                </p>
-                                <Button variant="outline" size="sm" icon={<Building2 size={14} />} onClick={() => { setMode('register'); setError(''); }}>
-                                    Register Audit Firm
-                                </Button>
-                            </div> */}
-
-              <div
-                style={{
-                  padding: "0.75rem",
-                  borderRadius: "8px",
-                  background: "var(--color-primary-50)",
-                  fontSize: "0.75rem",
-                  color: "var(--color-primary-700)",
-                }}
-              >
-                <strong>Demo:</strong> Use <code>audit@deloitte.jo</code> /{" "}
-                <code>demo123</code>
-              </div>
-            </div>
-          ) : (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-            >
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "1rem",
-                }}
-              >
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+          >
+            <Controller
+              name="email"
+              control={control}
+              rules={{ required: "Email is required" }}
+              render={({ field }) => (
                 <Input
-                  label="Firm Name *"
-                  value={regForm.name}
-                  onChange={(e) =>
-                    setRegForm({ ...regForm, name: e.target.value })
-                  }
-                  placeholder="e.g. ABC Audit"
-                />
-                <Input
-                  label="License Number *"
-                  value={regForm.licenseNumber}
-                  onChange={(e) =>
-                    setRegForm({ ...regForm, licenseNumber: e.target.value })
-                  }
-                  placeholder="AUD-XXXX"
-                />
-                <Input
-                  label="Email *"
+                  {...field}
+                  label="Email Address"
                   type="email"
-                  value={regForm.email}
-                  onChange={(e) =>
-                    setRegForm({ ...regForm, email: e.target.value })
-                  }
-                  placeholder="audit@firm.com"
+                  placeholder="audit@company.com"
+                  error={errors.email?.message}
+                  required
                 />
+              )}
+            />
+            <Controller
+              name="password"
+              control={control}
+              rules={{ required: "Password is required" }}
+              render={({ field }) => (
                 <Input
-                  label="Phone"
-                  value={regForm.phone}
-                  onChange={(e) =>
-                    setRegForm({ ...regForm, phone: e.target.value })
+                  {...field}
+                  label="Password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  endIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((current) => !current)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--color-text-muted)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   }
-                  placeholder="+962..."
+                  endIconInteractive
+                  error={errors.password?.message}
+                  required
                 />
-                <Input
-                  label="Contact Person"
-                  value={regForm.contactPerson}
-                  onChange={(e) =>
-                    setRegForm({ ...regForm, contactPerson: e.target.value })
-                  }
-                />
-                <Input
-                  label="Specialization"
-                  value={regForm.specialization}
-                  onChange={(e) =>
-                    setRegForm({ ...regForm, specialization: e.target.value })
-                  }
-                  placeholder="e.g. Tax & Assurance"
-                />
-              </div>
-              <Input
-                label="Address"
-                value={regForm.address}
-                onChange={(e) =>
-                  setRegForm({ ...regForm, address: e.target.value })
-                }
-              />
-              <Input
-                label="Password *"
-                type="password"
-                value={regForm.password}
-                onChange={(e) =>
-                  setRegForm({ ...regForm, password: e.target.value })
-                }
-              />
+              )}
+            />
 
-              <div
-                style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}
-              >
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setMode("login");
-                    setError("");
-                  }}
-                  style={{ flex: 1 }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleRegister}
-                  icon={<Building2 size={16} />}
-                  style={{ flex: 1 }}
-                >
-                  Register Firm
-                </Button>
-              </div>
-            </div>
-          )}
+            <Button
+              type="submit"
+              isLoading={isSubmitting}
+              icon={<LogIn size={18} />}
+              style={{ width: "100%", marginTop: "0.5rem" }}
+            >
+              Sign In as Auditor
+            </Button>
+          </form>
         </Card>
       </div>
     </div>

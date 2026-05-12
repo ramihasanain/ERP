@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 const AuditContext = createContext();
 
@@ -8,7 +9,7 @@ export const useAudit = () => {
     return context;
 };
 
-// Default Audit Firms
+// Default Audit Firms (used by admin-side components)
 const DEFAULT_FIRMS = [
     {
         id: 'AUDIT-001',
@@ -21,7 +22,6 @@ const DEFAULT_FIRMS = [
         specialization: 'Big Four - Full Service',
         rating: 5,
         logo: null,
-        password: 'demo123',
         createdAt: '2025-01-01'
     },
     {
@@ -35,7 +35,6 @@ const DEFAULT_FIRMS = [
         specialization: 'Tax & Assurance',
         rating: 5,
         logo: null,
-        password: 'demo123',
         createdAt: '2025-02-01'
     },
     {
@@ -49,7 +48,6 @@ const DEFAULT_FIRMS = [
         specialization: 'SME Auditing',
         rating: 4,
         logo: null,
-        password: 'demo123',
         createdAt: '2025-03-01'
     }
 ];
@@ -290,18 +288,22 @@ const DEFAULT_PERIODS = [
 ];
 
 export const AuditProvider = ({ children }) => {
+    const { user } = useAuth();
     const [auditFirms, setAuditFirms] = useState(DEFAULT_FIRMS);
     const [auditPeriods, setAuditPeriods] = useState(DEFAULT_PERIODS);
     const [clientCompanies] = useState(DEFAULT_CLIENT_COMPANIES);
-    const [currentAuditor, setCurrentAuditor] = useState(null);
 
-    // ---- FIRM CRUD ----
-    const registerFirm = (firm) => {
-        const newFirm = { ...firm, id: `AUDIT-${Date.now()}`, createdAt: new Date().toISOString().split('T')[0] };
-        setAuditFirms(prev => [...prev, newFirm]);
-        return newFirm;
-    };
+    const currentAuditor = useMemo(() => {
+        if (user?.role !== 'auditor') return null;
+        return {
+            id: user.auditor_firm?.id || user.id,
+            name: user.auditor_firm?.name || user.full_name || user.name || 'Auditor',
+            email: user.email,
+            fullName: user.full_name || user.name || 'Auditor',
+        };
+    }, [user]);
 
+    // ---- FIRM CRUD (admin-side) ----
     const updateFirm = (firmId, updates) => {
         setAuditFirms(prev => prev.map(f => f.id === firmId ? { ...f, ...updates } : f));
     };
@@ -309,18 +311,6 @@ export const AuditProvider = ({ children }) => {
     const deleteFirm = (firmId) => {
         setAuditFirms(prev => prev.filter(f => f.id !== firmId));
     };
-
-    // ---- AUDITOR AUTH ----
-    const loginAuditor = (email, password) => {
-        const firm = auditFirms.find(f => f.email === email && f.password === password);
-        if (firm) {
-            setCurrentAuditor(firm);
-            return firm;
-        }
-        return null;
-    };
-
-    const logoutAuditor = () => setCurrentAuditor(null);
 
     // ---- PERIOD MANAGEMENT ----
     const submitForAudit = (periodId, auditorId) => {
@@ -580,11 +570,8 @@ export const AuditProvider = ({ children }) => {
             auditPeriods,
             currentAuditor,
             AUDIT_STATUSES,
-            registerFirm,
             updateFirm,
             deleteFirm,
-            loginAuditor,
-            logoutAuditor,
             submitForAudit,
             startReview,
             requestRevision,

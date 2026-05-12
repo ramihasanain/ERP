@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import { useAudit } from "@/context/AuditContext";
 import useCustomQuery from "@/hooks/useQuery";
+import { useCustomPost } from "@/hooks/useMutation";
 import Spinner from "@/core/Spinner";
 import NoData from "@/core/NoData";
+import CompanyProfileModal from "@/components/Accounting/CompanyProfileModal";
 import {
   ArrowLeft,
   Send,
@@ -14,12 +17,16 @@ import {
   Clock,
   Eye,
   AlertTriangle,
-  Download,
   Building2,
   MapPin,
   Users,
   RotateCcw,
   Stamp,
+  FileText,
+  X,
+  Paperclip,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import styles from "./AuditManagement.module.css";
 
@@ -54,19 +61,397 @@ const CONNECTION_TABS = [
   { id: "un_registred", label: "Unregistered" },
 ];
 
+const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
+  const [note, setNote] = useState("");
+  const [attachments, setAttachments] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const submitMutation = useCustomPost(
+    `/api/auditing/periods/${periodId}/submit/`,
+    ["auditing-active-audits", "auditing-periods-min"],
+  );
+
+  const addFiles = (files) => {
+    const newItems = Array.from(files).map((file) => ({
+      file,
+      category: "",
+    }));
+    setAttachments((prev) => [...prev, ...newItems]);
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateCategory = (index, category) => {
+    setAttachments((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, category } : item)),
+    );
+  };
+
+  const handleSubmit = async () => {
+    if (!periodId || !firmId) return;
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("auditor_firm", firmId);
+      if (note.trim()) formData.append("submitted_note", note.trim());
+      attachments.forEach(({ file, category }) => {
+        formData.append("attachments", file);
+        formData.append("attachment_categories", category);
+      });
+      await submitMutation.mutateAsync(formData);
+      toast.success("Period submitted for audit successfully");
+      setNote("");
+      setAttachments([]);
+      onClose();
+    } catch (err) {
+      const data = err?.response?.data;
+      if (data && typeof data === "object") {
+        const messages = Object.values(data)
+          .flat()
+          .filter((m) => typeof m === "string");
+        if (messages.length) {
+          messages.forEach((msg) => toast.error(msg));
+          return;
+        }
+      }
+      toast.error(
+        typeof data === "string" ? data : "Failed to submit period for audit",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(0,0,0,0.45)",
+        padding: "1rem",
+      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        style={{
+          background: "var(--color-bg-card)",
+          borderRadius: "16px",
+          width: "100%",
+          maxWidth: "600px",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.3)",
+          border: "1px solid var(--color-border)",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: "1.25rem 1.5rem",
+            borderBottom: "1px solid var(--color-border)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+          >
+            <div
+              style={{
+                width: "2.5rem",
+                height: "2.5rem",
+                borderRadius: "10px",
+                background: "var(--color-primary-100)",
+                color: "var(--color-primary-600)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Send size={18} />
+            </div>
+            <div>
+              <h3 style={{ fontWeight: 700, fontSize: "1.05rem" }}>
+                Submit for Audit
+              </h3>
+              <p
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--color-text-secondary)",
+                }}
+              >
+                {firmName && `To: ${firmName}`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--color-text-muted)",
+              padding: "0.35rem",
+              borderRadius: "8px",
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "1.5rem" }}>
+          {/* Warning */}
+          <div
+            style={{
+              padding: "0.75rem",
+              borderRadius: "8px",
+              background: "var(--color-warning-dim)",
+              fontSize: "0.8rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              marginBottom: "1.25rem",
+            }}
+          >
+            <AlertTriangle
+              size={16}
+              style={{ color: "var(--color-warning)", flexShrink: 0 }}
+            />
+            <span>
+              Once submitted, you will <strong>not be able to modify</strong>{" "}
+              any accounting entries in this period until the auditor completes
+              their review.
+            </span>
+          </div>
+
+          {/* Note */}
+          <div style={{ marginBottom: "1.25rem" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                marginBottom: "0.4rem",
+              }}
+            >
+              Note to Auditor
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. Please review January 2025 financials."
+              rows={3}
+              style={{
+                width: "100%",
+                padding: "0.625rem",
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                background: "var(--color-bg-surface)",
+                color: "var(--color-text-main)",
+                fontSize: "0.85rem",
+                resize: "vertical",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+
+          {/* Attachments */}
+          <div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "0.75rem",
+              }}
+            >
+              <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>
+                Attachments
+              </label>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  background: "none",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "8px",
+                  padding: "0.35rem 0.75rem",
+                  cursor: "pointer",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  color: "var(--color-primary-600)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                }}
+              >
+                <Plus size={14} /> Add Files
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.png,.jpg,.jpeg,.webp"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  if (e.target.files?.length) addFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+
+            {attachments.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "1.5rem",
+                  color: "var(--color-text-muted)",
+                  fontSize: "0.8rem",
+                  border: "2px dashed var(--color-border)",
+                  borderRadius: "10px",
+                }}
+              >
+                <Paperclip
+                  size={24}
+                  style={{ marginBottom: "0.35rem", opacity: 0.4 }}
+                />
+                <p>No attachments added yet (optional).</p>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.5rem",
+                }}
+              >
+                {attachments.map((item, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                      padding: "0.5rem 0.75rem",
+                      borderRadius: "8px",
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-bg-subtle)",
+                    }}
+                  >
+                    <Paperclip
+                      size={14}
+                      style={{
+                        flexShrink: 0,
+                        color: "var(--color-text-muted)",
+                      }}
+                    />
+                    <span
+                      style={{
+                        flex: 1,
+                        fontSize: "0.78rem",
+                        fontWeight: 500,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        minWidth: 0,
+                      }}
+                    >
+                      {item.file.name}
+                    </span>
+                    <input
+                      type="text"
+                      value={item.category}
+                      onChange={(e) => updateCategory(index, e.target.value)}
+                      placeholder="Category"
+                      style={{
+                        padding: "0.3rem 0.5rem",
+                        borderRadius: "6px",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-bg-surface)",
+                        color: "var(--color-text-main)",
+                        fontSize: "0.72rem",
+                        fontWeight: 500,
+                        width: "120px",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(index)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "var(--color-error)",
+                        padding: "0.2rem",
+                        display: "flex",
+                        alignItems: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            padding: "1rem 1.5rem",
+            borderTop: "1px solid var(--color-border)",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "0.75rem",
+          }}
+        >
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            icon={<Send size={16} />}
+            onClick={handleSubmit}
+            isLoading={submitting}
+            disabled={submitting}
+          >
+            Submit for Audit
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AuditManagement = () => {
   const navigate = useNavigate();
-  const { auditFirms, auditPeriods, submitForAudit, AUDIT_STATUSES } =
-    useAudit();
+  const { AUDIT_STATUSES } = useAudit();
   const [selectedFirmId, setSelectedFirmId] = useState("");
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
   const [firmsTab, setFirmsTab] = useState("accepted");
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   const connectionsQuery = useCustomQuery(
     `/api/auditing/connections/?status=${firmsTab}`,
     ["auditing-connections", firmsTab],
     {
       select: normalizeConnections,
+      staleTime: 5 * 60 * 1000,
     },
   );
   const connections = connectionsQuery.data ?? [];
@@ -76,9 +461,20 @@ const AuditManagement = () => {
     ["auditing-connections", "accepted-firms"],
     {
       select: normalizeConnections,
+      staleTime: 5 * 60 * 1000,
     },
   );
   const acceptedFirms = acceptedFirmsQuery.data ?? [];
+
+  const periodsQuery = useCustomQuery(
+    "/api/auditing/periods/?min=true",
+    ["auditing-periods-min"],
+    {
+      select: normalizeArrayResponse,
+      staleTime: 5 * 60 * 1000,
+    },
+  );
+  const periods = periodsQuery.data ?? [];
 
   const activeAuditsQuery = useCustomQuery(
     "/api/auditing/active-audits/",
@@ -126,64 +522,12 @@ const AuditManagement = () => {
     },
   };
 
-  const handleSubmit = () => {
-    if (!selectedPeriodId || !selectedFirmId) return;
-    submitForAudit(selectedPeriodId, selectedFirmId);
-    setSelectedPeriodId("");
-    setSelectedFirmId("");
-  };
-
-  const openPeriods = auditPeriods.filter(
-    (p) =>
-      p.status === AUDIT_STATUSES.OPEN || p.status === AUDIT_STATUSES.REVISION,
+  const sealedStatementsQuery = useCustomQuery(
+    "/api/auditing/sealed-statements/",
+    ["auditing-sealed-statements"],
+    { select: normalizeArrayResponse, staleTime: 5 * 60 * 1000 },
   );
-  const completedPeriods = auditPeriods.filter((p) =>
-    [AUDIT_STATUSES.APPROVED, AUDIT_STATUSES.SEALED].includes(p.status),
-  );
-
-  const downloadStatement = (period) => {
-    const firm = auditFirms.find((f) => f.id === period.auditorId);
-    const content = `
-═══════════════════════════════════════════════════════
-       ELECTRONICALLY SEALED FINANCIAL STATEMENT
-═══════════════════════════════════════════════════════
-
-Period:        ${period.label}
-Seal Number:   ${period.sealNumber}
-Version:       ${period.version}
-Sealed Date:   ${period.sealedAt}
-Status:        ${period.status === AUDIT_STATUSES.SEALED ? "SEALED" : "APPROVED"}
-
-───────────────────────────────────────────────────────
-AUDITING FIRM
-───────────────────────────────────────────────────────
-Firm:          ${firm?.name || "Unknown"}
-License:       ${firm?.licenseNumber || "N/A"}
-
-───────────────────────────────────────────────────────
-AUDITOR'S OPINION
-───────────────────────────────────────────────────────
-${period.auditorNotes || "No additional notes."}
-
-───────────────────────────────────────────────────────
-VERSION HISTORY
-───────────────────────────────────────────────────────
-${period.versions.map((v) => `  v${v.version} | ${v.sealedAt} | ${v.sealNumber}`).join("\n")}
-
-═══════════════════════════════════════════════════════
-This document is electronically sealed and certified.
-Digital Seal: ${period.sealNumber}
-═══════════════════════════════════════════════════════
-        `.trim();
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `sealed_${period.label.replace(/\s/g, "_")}_v${period.version}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+  const sealedStatements = sealedStatementsQuery.data ?? [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
@@ -289,12 +633,9 @@ Digital Seal: ${period.sealNumber}
               }}
             >
               <option value="">Select period...</option>
-              {openPeriods.map((p) => (
+              {periods.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.label}{" "}
-                  {p.status === AUDIT_STATUSES.REVISION
-                    ? "(Revision needed)"
-                    : ""}
+                  {p.name}
                 </option>
               ))}
             </select>
@@ -333,38 +674,21 @@ Digital Seal: ${period.sealNumber}
           </div>
 
           <Button
+            variant="outline"
+            icon={<FileText size={16} />}
+            onClick={() => setShowProfileModal(true)}
+          >
+            Company Profile
+          </Button>
+
+          <Button
             icon={<Send size={16} />}
-            onClick={handleSubmit}
+            onClick={() => setShowSubmitModal(true)}
             disabled={!selectedPeriodId || !selectedFirmId}
           >
             Submit for Audit
           </Button>
         </div>
-
-        {selectedPeriodId && selectedFirmId && (
-          <div
-            style={{
-              marginTop: "1rem",
-              padding: "0.75rem",
-              borderRadius: "8px",
-              background: "var(--color-warning-dim)",
-              fontSize: "0.8rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <AlertTriangle
-              size={16}
-              style={{ color: "var(--color-warning)", flexShrink: 0 }}
-            />
-            <span>
-              Once submitted, you will <strong>not be able to modify</strong>{" "}
-              any accounting entries in this period until the auditor completes
-              their review.
-            </span>
-          </div>
-        )}
       </Card>
 
       {/* Audit Firms — connections by status */}
@@ -651,9 +975,7 @@ Digital Seal: ${period.sealNumber}
             }}
           >
             <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-            <span>
-              Could not load active audits. Please try again later.
-            </span>
+            <span>Could not load active audits. Please try again later.</span>
           </div>
         )}
         {!activeAuditsQuery.isLoading &&
@@ -739,10 +1061,7 @@ Digital Seal: ${period.sealNumber}
                               gap: "0.3rem",
                             }}
                           >
-                            <Building2
-                              size={13}
-                              style={{ flexShrink: 0 }}
-                            />
+                            <Building2 size={13} style={{ flexShrink: 0 }} />
                             {audit.auditor_firm_name || "—"}
                           </span>
                           {audit.submitted_at && (
@@ -805,112 +1124,219 @@ Digital Seal: ${period.sealNumber}
       </Card>
 
       {/* Completed / Sealed */}
-      {completedPeriods.length > 0 && (
-        <Card className="padding-lg">
-          <h3
+      <Card className="padding-lg">
+        <h3
+          style={{
+            fontWeight: 700,
+            marginBottom: "1rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <Stamp size={18} style={{ color: "#7c3aed" }} /> Sealed Statements
+        </h3>
+
+        {sealedStatementsQuery.isLoading && (
+          <div
             style={{
-              fontWeight: 700,
-              marginBottom: "1rem",
+              display: "flex",
+              justifyContent: "center",
+              padding: "2rem",
+            }}
+          >
+            <Spinner />
+          </div>
+        )}
+        {sealedStatementsQuery.isError && (
+          <div
+            style={{
+              padding: "0.75rem 1rem",
+              borderRadius: "8px",
+              background: "var(--color-error-dim)",
+              color: "var(--color-error)",
+              fontSize: "0.85rem",
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
             }}
           >
-            <Stamp size={18} style={{ color: "#7c3aed" }} /> Sealed Statements
-          </h3>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
-          >
-            {completedPeriods.map((period) => {
-              const sc = statusConfig[period.status];
-              const firm = auditFirms.find((f) => f.id === period.auditorId);
-              return (
-                <div
-                  key={period.id}
-                  style={{
-                    padding: "1rem",
-                    borderRadius: "10px",
-                    border:
-                      period.status === AUDIT_STATUSES.SEALED
-                        ? "2px solid var(--color-secondary-600)"
-                        : "1px solid var(--color-border)",
-                    background:
-                      period.status === AUDIT_STATUSES.SEALED
-                        ? "color-mix(in srgb, var(--color-secondary-600) 16%, var(--color-bg-card))"
-                        : "var(--color-bg-surface)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
+            <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+            <span>
+              Could not load sealed statements. Please try again later.
+            </span>
+          </div>
+        )}
+        {!sealedStatementsQuery.isLoading &&
+          !sealedStatementsQuery.isError &&
+          sealedStatements.length === 0 && (
+            <NoData variant="inline" label="sealed statements" />
+          )}
+        {!sealedStatementsQuery.isLoading &&
+          !sealedStatementsQuery.isError &&
+          sealedStatements.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.75rem",
+              }}
+            >
+              {sealedStatements.map((statement) => {
+                const sc = statusConfig[statement.status] || {
+                  label: statement.status_display || statement.status,
+                  color: "var(--color-text-secondary)",
+                  bg: "var(--color-bg-subtle)",
+                  icon: <Lock size={14} />,
+                };
+                return (
                   <div
+                    key={statement.id}
                     style={{
+                      padding: "1rem",
+                      borderRadius: "10px",
+                      border:
+                        statement.status === "sealed"
+                          ? "2px solid var(--color-secondary-600)"
+                          : "1px solid var(--color-border)",
+                      background:
+                        statement.status === "sealed"
+                          ? "color-mix(in srgb, var(--color-secondary-600) 16%, var(--color-bg-card))"
+                          : "var(--color-bg-surface)",
                       display: "flex",
+                      justifyContent: "space-between",
                       alignItems: "center",
                       gap: "1rem",
+                      flexWrap: "wrap",
                     }}
                   >
                     <div
                       style={{
-                        width: "2.5rem",
-                        height: "2.5rem",
-                        borderRadius: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "1rem",
+                        minWidth: 0,
+                        flex: 1,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "2.5rem",
+                          height: "2.5rem",
+                          borderRadius: "10px",
+                          flexShrink: 0,
+                          background: sc.bg,
+                          color: sc.color,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {sc.icon}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <h4 style={{ fontWeight: 700, fontSize: "0.95rem" }}>
+                          {statement.name}
+                        </h4>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "0.5rem 1.25rem",
+                            marginTop: "0.3rem",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--color-text-secondary)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.3rem",
+                            }}
+                          >
+                            <Building2 size={13} style={{ flexShrink: 0 }} />
+                            {statement.auditor_firm_name || "—"}
+                          </span>
+                          {statement.sealed_at && (
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.3rem",
+                              }}
+                            >
+                              <Lock size={12} style={{ flexShrink: 0 }} />
+                              Sealed{" "}
+                              {new Date(
+                                statement.sealed_at,
+                              ).toLocaleDateString()}
+                            </span>
+                          )}
+                          {statement.approved_by_admin_at && (
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.3rem",
+                              }}
+                            >
+                              <CheckCircle
+                                size={12}
+                                style={{ flexShrink: 0 }}
+                              />
+                              Approved{" "}
+                              {new Date(
+                                statement.approved_by_admin_at,
+                              ).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        padding: "4px 14px",
+                        borderRadius: "8px",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
                         background: sc.bg,
                         color: sc.color,
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
+                        gap: "0.35rem",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {sc.icon}
-                    </div>
-                    <div>
-                      <h4 style={{ fontWeight: 700 }}>{period.label}</h4>
-                      <p
-                        style={{
-                          fontSize: "0.75rem",
-                          color: "var(--color-text-secondary)",
-                        }}
-                      >
-                        {firm?.name} • Seal: {period.sealNumber} • v
-                        {period.version}
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.75rem",
-                    }}
-                  >
-                    <span
-                      style={{
-                        padding: "4px 12px",
-                        borderRadius: "8px",
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                        background: sc.bg,
-                        color: sc.color,
-                      }}
-                    >
-                      {sc.label}
+                      {sc.icon} {sc.label}
                     </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      icon={<Download size={14} />}
-                      onClick={() => downloadStatement(period)}
-                    >
-                      Download
-                    </Button>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      )}
+                );
+              })}
+            </div>
+          )}
+      </Card>
+
+      <CompanyProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+      />
+
+      <SubmitAuditModal
+        isOpen={showSubmitModal}
+        onClose={() => setShowSubmitModal(false)}
+        periodId={selectedPeriodId}
+        firmId={selectedFirmId}
+        firmName={
+          acceptedFirms.find((f) => f.auditorFirm === selectedFirmId)
+            ?.auditorFirmName
+        }
+      />
     </div>
   );
 };

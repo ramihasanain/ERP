@@ -79,6 +79,8 @@ import Settings from "@/components/Settings/Settings";
 import PermissionsManagement from "@/components/PermissionsManagement";
 import AuditorLogin from "@/pages/auditor/AuditorLogin";
 import AuditorDashboard from "@/pages/auditor/AuditorDashboard";
+import AuditorClientDetails from "@/pages/auditor/AuditorClientDetails";
+import AuditorFirstLoginResetPassword from "@/pages/auditor/AuditorFirstLoginResetPassword";
 import AuditManagement from "@/components/Accounting/AuditManagement";
 import AuditFirmDetails from "@/components/Accounting/AuditFirmDetails";
 import AccountantPaymentsPage from "@/components/Accounting/AccountantPayments/AccountantPaymentsPage";
@@ -98,10 +100,18 @@ const getEmployeeLandingPath = (user) =>
     ? "/employee/reset-password-first-login"
     : "/employee/dashboard";
 
+const getAuditorLandingPath = (user) =>
+  user?.reset_password_required
+    ? "/auditor/reset-password-first-login"
+    : "/auditor/dashboard";
+
 const PublicOnlyRoute = ({ children, isAuthenticated, user }) => {
   if (isAuthenticated) {
     if (user?.role === "employee") {
       return <Navigate to={getEmployeeLandingPath(user)} replace />;
+    }
+    if (user?.role === "auditor") {
+      return <Navigate to={getAuditorLandingPath(user)} replace />;
     }
     return <Navigate to={getDashboardPath(user)} replace />;
   }
@@ -149,6 +159,22 @@ const FirstLoginResetPasswordRoute = ({ isAuthenticated, user }) => {
   return <FirstLoginResetPassword />;
 };
 
+const ProtectedAuditorRoute = ({ children, isAuthenticated, user }) => {
+  if (!isAuthenticated) {
+    return <Navigate to="/auditor/login" replace />;
+  }
+
+  if (user?.role !== "auditor") {
+    return <Navigate to={getDashboardPath(user)} replace />;
+  }
+
+  if (user?.reset_password_required) {
+    return <Navigate to="/auditor/reset-password-first-login" replace />;
+  }
+
+  return children;
+};
+
 export default function AppRoutes() {
   const { isAuthenticated, user } = useAuth();
 
@@ -190,7 +216,26 @@ export default function AppRoutes() {
       <Route path="/onboarding" element={<OnboardingWizard />} />
 
       <Route path="/auditor/login" element={<AuditorLogin />} />
-      <Route path="/auditor/dashboard" element={<AuditorDashboard />} />
+      <Route
+        path="/auditor/reset-password-first-login"
+        element={<AuditorFirstLoginResetPassword />}
+      />
+      <Route
+        path="/auditor/dashboard"
+        element={
+          <ProtectedAuditorRoute isAuthenticated={isAuthenticated} user={user}>
+            <AuditorDashboard />
+          </ProtectedAuditorRoute>
+        }
+      />
+      <Route
+        path="/auditor/company/:companyId"
+        element={
+          <ProtectedAuditorRoute isAuthenticated={isAuthenticated} user={user}>
+            <AuditorClientDetails />
+          </ProtectedAuditorRoute>
+        }
+      />
 
       <Route
         path="/employee/reset-password-first-login"
@@ -238,7 +283,10 @@ export default function AppRoutes() {
           <Route path="bank-import" element={<BankStatementImport />} />
           <Route path="audit" element={<AuditManagement />} />
           <Route path="audit/firms/:id" element={<AuditFirmDetails />} />
-          <Route path="accountant-payments" element={<AccountantPaymentsPage />} />
+          <Route
+            path="accountant-payments"
+            element={<AccountantPaymentsPage />}
+          />
           <Route
             path="accountant-payments/payroll/:periodId"
             element={<PayrollPeriodPayablesPage />}

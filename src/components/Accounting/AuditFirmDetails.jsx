@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import ConfirmationModal from "@/components/Shared/ConfirmationModal";
+import CompanyProfileModal from "@/components/Accounting/CompanyProfileModal";
 import useCustomQuery from "@/hooks/useQuery";
 import { useCustomPost } from "@/hooks/useMutation";
 import Spinner from "@/core/Spinner";
@@ -24,11 +25,13 @@ import {
   Unlink,
   Clock,
   XCircle,
+  AlertTriangle,
+  FileText,
 } from "lucide-react";
 
 const CONNECTION_STATUS = {
   accepted: {
-    label: "Connected",
+    label: "Connectded",
     icon: LinkIcon,
     bg: "var(--color-success-dim)",
     color: "var(--color-success)",
@@ -88,6 +91,7 @@ const AuditFirmDetails = () => {
   const navigate = useNavigate();
 
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [requestNote, setRequestNote] = useState("");
 
   const {
@@ -186,7 +190,14 @@ const AuditFirmDetails = () => {
             Audit Firm Profile
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            flexWrap: "wrap",
+          }}
+        >
           <span
             style={{
               padding: "4px 14px",
@@ -212,7 +223,7 @@ const AuditFirmDetails = () => {
             {firm.is_active ? "Active" : "Inactive"}
           </span>
           <ConnectionBadge status={firm.connection_status} />
-          {firm.connection_status === "un_registerd" && (
+          {firm.connection_status === "un_registerd" && firm.company_profile_filled !== false && (
             <Button
               icon={<Send size={16} />}
               onClick={() => setShowRequestModal(true)}
@@ -223,6 +234,58 @@ const AuditFirmDetails = () => {
           )}
         </div>
       </div>
+
+      {firm.company_profile_filled === false && (
+        <div
+          style={{
+            padding: "1rem 1.25rem",
+            borderRadius: "10px",
+            border: "1.5px solid var(--color-warning)",
+            background: "var(--color-warning-dim)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "1rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              minWidth: 0,
+            }}
+          >
+            <AlertTriangle
+              size={20}
+              style={{ color: "var(--color-warning)", flexShrink: 0 }}
+            />
+            <div>
+              <p style={{ fontWeight: 600, fontSize: "0.88rem" }}>
+                Company profile incomplete
+              </p>
+              <p
+                style={{
+                  fontSize: "0.78rem",
+                  color: "var(--color-text-secondary)",
+                  marginTop: "0.15rem",
+                }}
+              >
+                You need to fill in your company information before you can
+                request an audit from this firm.
+              </p>
+            </div>
+          </div>
+          <Button
+            icon={<FileText size={16} />}
+            onClick={() => setShowProfileModal(true)}
+            className="cursor-pointer"
+          >
+            Fill Company Profile
+          </Button>
+        </div>
+      )}
 
       {/* Firm Info Card */}
       <Card
@@ -366,6 +429,11 @@ const AuditFirmDetails = () => {
           </div>
         )}
       </Card>
+
+      <CompanyProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+      />
 
       <ConfirmationModal
         disabled={isPending}

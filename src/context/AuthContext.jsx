@@ -82,6 +82,7 @@ export const AuthProvider = ({ children }) => {
             domain: responseData?.domain || responseData?.tenant_domain || null,
             is_superuser: Boolean(responseData?.is_superuser),
             permissions: responseData?.permissions || responseUser?.permissions || {},
+            portal_type: responseData?.portal_type ?? null,
             role: responseData?.role ?? responseUser?.role ?? null,
             user: {
                 id: responseUser?.id || responseData?.id || null,
@@ -93,10 +94,41 @@ export const AuthProvider = ({ children }) => {
                     responseUser?.reset_password_required ??
                     responseData?.reset_password_required ??
                     false,
+                ...(responseUser?.auditor_firm && { auditor_firm: responseUser.auditor_firm }),
             },
         };
 
         return { tokenPayload, normalizedUser, normalizedAuthPayload };
+    };
+
+    const persistLoginResponse = (responseData, role = 'admin', options = {}) => {
+        const { tokenPayload, normalizedUser, normalizedAuthPayload } = normalizeAuthResponse(responseData, role);
+        const tenantDomain = extractTenantDomain(responseData) || options?.loginBaseUrl || null;
+
+        if (tenantDomain) {
+            storeTenantDomain(tenantDomain);
+        }
+
+        persistAuthSession({
+            ...normalizedAuthPayload,
+            access: tokenPayload.access,
+            refresh: tokenPayload.refresh,
+        });
+
+        setUser(normalizedUser);
+        persistErpCurrency(
+            responseData?.user?.currency ??
+            responseData?.user?.currncy ??
+            responseData?.data?.user?.currency ??
+            responseData?.data?.user?.currncy ??
+            normalizedUser?.currency ??
+            normalizedUser?.currncy ??
+            normalizedAuthPayload?.user?.currency ??
+            normalizedAuthPayload?.user?.currncy ??
+            null
+        );
+
+        return normalizedUser;
     };
 
     const [isLoginLoading, setIsLoginLoading] = useState(false);
@@ -216,6 +248,7 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateUser,
+        persistLoginResponse,
     }), [resolvedUser, isAuthenticated, isAdmin, isEmployee, isLoading, login, register]);
 
     return (

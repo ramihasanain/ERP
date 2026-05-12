@@ -123,8 +123,10 @@ apiClient.interceptors.response.use(
       }
     }
 
-    removeTokens();
-    clearTenantDomain();
+    if (!originalRequest._retry) {
+      removeTokens();
+      clearTenantDomain();
+    }
     return Promise.reject(error);
   }
 );
