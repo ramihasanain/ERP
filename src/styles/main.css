@@ -1,99 +1,111 @@
-@import './variables.css';
+@import "./variables.css";
 
 /* Reset & Base */
 *,
 *::before,
 *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html,
 body {
-    height: 100%;
-    font-family: var(--font-sans);
-    background-color: var(--color-bg-body);
-    color: var(--color-text-main);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    transition: background-color 0.3s ease, color 0.3s ease;
+  height: 100%;
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-body);
+  color: var(--color-text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 a {
-    color: inherit;
-    text-decoration: none;
+  color: inherit;
+  text-decoration: none;
 }
 
 button {
-    cursor: pointer;
-    font-family: inherit;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 /* Native fields outside the Input component */
 select,
 textarea {
-    font-family: inherit;
-    font-size: inherit;
-    color: var(--color-text-main);
-    background-color: var(--color-bg-surface);
-    border: 1px solid var(--color-border);
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-text-main);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
 }
 
 select option,
 select optgroup {
-    background-color: var(--color-bg-card);
-    color: var(--color-text-main);
+  background-color: var(--color-bg-card);
+  color: var(--color-text-main);
 }
 
 input::placeholder,
 textarea::placeholder {
-    color: var(--color-text-muted);
-    opacity: 1;
+  color: var(--color-text-muted);
+  opacity: 1;
 }
 
-[data-theme='dark'] input::placeholder,
-[data-theme='dark'] textarea::placeholder {
-    color: var(--color-text-secondary);
-    opacity: 0.9;
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.9;
 }
 
 /* Table rows that should highlight on hover (replaces nonexistent Tailwind classes) */
 .erp-table-row-hover:hover {
-    background: color-mix(in srgb, var(--color-text-main) 5%, var(--color-bg-surface));
+  background: color-mix(
+    in srgb,
+    var(--color-text-main) 5%,
+    var(--color-bg-surface)
+  );
 }
 
 /* Utility Classes */
 .container {
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--color-slate-300);
-    border-radius: 4px;
+  background: var(--color-slate-300);
+  border-radius: 4px;
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-    background: var(--color-slate-600);
+  background: var(--color-slate-600);
 }
 
 .inventory-tabs-scroll {
-    scrollbar-width: thin;
+  scrollbar-width: thin;
 }
 
 .inventory-tabs-scroll::-webkit-scrollbar {
-    height: 4px;
+  height: 4px;
+}
+
+.btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }

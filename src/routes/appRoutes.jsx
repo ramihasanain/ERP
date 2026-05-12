@@ -80,6 +80,7 @@ import PermissionsManagement from "@/components/PermissionsManagement";
 import AuditorLogin from "@/pages/auditor/AuditorLogin";
 import AuditorDashboard from "@/pages/auditor/AuditorDashboard";
 import AuditManagement from "@/components/Accounting/AuditManagement";
+import AuditFirmDetails from "@/components/Accounting/AuditFirmDetails";
 import AccountantPaymentsPage from "@/components/Accounting/AccountantPayments/AccountantPaymentsPage";
 import PayrollPeriodPayablesPage from "@/components/Accounting/AccountantPayments/PayrollPeriodPayablesPage";
 import AuditorAdjustmentsPage from "@/components/AuditorAdjustmentsPage";
@@ -236,6 +237,7 @@ export default function AppRoutes() {
           <Route path="products-services" element={<ProductsServices />} />
           <Route path="bank-import" element={<BankStatementImport />} />
           <Route path="audit" element={<AuditManagement />} />
+          <Route path="audit/firms/:id" element={<AuditFirmDetails />} />
           <Route path="accountant-payments" element={<AccountantPaymentsPage />} />
           <Route
             path="accountant-payments/payroll/:periodId"

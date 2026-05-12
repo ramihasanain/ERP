@@ -1,0 +1,13 @@
+.firmCard {
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.firmCard:hover {
+  border-color: var(--color-primary-300);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+}

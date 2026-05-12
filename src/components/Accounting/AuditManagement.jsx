@@ -21,6 +21,7 @@ import {
   RotateCcw,
   Stamp,
 } from "lucide-react";
+import styles from "./AuditManagement.module.css";
 
 const normalizeArrayResponse = (response) => {
   if (Array.isArray(response)) return response;
@@ -29,27 +30,29 @@ const normalizeArrayResponse = (response) => {
   return [];
 };
 
-/** API: GET /api/auditing/firms/ — { id, name, license_number, address, is_active, active_auditors } */
-const normalizeRegisteredFirm = (item) => {
-  const id = item?.id ?? item?.uuid;
-  const auditors = Number(item?.active_auditors ?? 0);
-  return {
-    id: id != null ? String(id) : "",
-    name: item?.name || "—",
-    licenseNumber:
-      item?.license_number ?? item?.licenseNumber ?? item?.license ?? "—",
-    address: (item?.address && String(item.address).trim()) || "",
-    isActive: Boolean(item?.is_active),
-    activeAuditors: Number.isFinite(auditors)
-      ? Math.max(0, Math.round(auditors))
-      : 0,
-  };
-};
+const normalizeConnection = (item) => ({
+  id: item?.id ?? "",
+  auditorFirm: item?.auditor_firm ?? "",
+  auditorFirmName: item?.auditor_firm_name || "—",
+  status: item?.status ?? "",
+  requestedByName: item?.requested_by_name || "—",
+  requestedByEmail: item?.requested_by_email || "",
+  requestNote: item?.request_note || "",
+  handledNote: item?.handled_note || "",
+  handledAt: item?.handled_at ?? null,
+  createdAt: item?.created_at ?? null,
+});
 
-const normalizeRegisteredFirms = (response) =>
+const normalizeConnections = (response) =>
   normalizeArrayResponse(response)
-    .map(normalizeRegisteredFirm)
-    .filter((f) => f.id);
+    .map(normalizeConnection)
+    .filter((c) => c.id);
+
+const CONNECTION_TABS = [
+  { id: "accepted", label: "Accepted" },
+  { id: "pending", label: "Pending" },
+  { id: "un_registred", label: "Unregistered" },
+];
 
 const AuditManagement = () => {
   const navigate = useNavigate();
@@ -57,15 +60,32 @@ const AuditManagement = () => {
     useAudit();
   const [selectedFirmId, setSelectedFirmId] = useState("");
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
+  const [firmsTab, setFirmsTab] = useState("accepted");
 
-  const registeredFirmsQuery = useCustomQuery(
-    "/api/auditing/firms/",
-    ["auditing-firms"],
+  const connectionsQuery = useCustomQuery(
+    `/api/auditing/connections/?status=${firmsTab}`,
+    ["auditing-connections", firmsTab],
     {
-      select: normalizeRegisteredFirms,
+      select: normalizeConnections,
     },
   );
-  const registeredFirms = registeredFirmsQuery.data ?? [];
+  const connections = connectionsQuery.data ?? [];
+
+  const acceptedFirmsQuery = useCustomQuery(
+    "/api/auditing/connections/?status=accepted",
+    ["auditing-connections", "accepted-firms"],
+    {
+      select: normalizeConnections,
+    },
+  );
+  const acceptedFirms = acceptedFirmsQuery.data ?? [];
+
+  const activeAuditsQuery = useCustomQuery(
+    "/api/auditing/active-audits/",
+    ["auditing-active-audits"],
+    { select: normalizeArrayResponse },
+  );
+  const activeAudits = activeAuditsQuery.data ?? [];
 
   const statusConfig = {
     [AUDIT_STATUSES.OPEN]: {
@@ -116,9 +136,6 @@ const AuditManagement = () => {
   const openPeriods = auditPeriods.filter(
     (p) =>
       p.status === AUDIT_STATUSES.OPEN || p.status === AUDIT_STATUSES.REVISION,
-  );
-  const activePeriods = auditPeriods.filter((p) =>
-    [AUDIT_STATUSES.SUBMITTED, AUDIT_STATUSES.IN_REVIEW].includes(p.status),
   );
   const completedPeriods = auditPeriods.filter((p) =>
     [AUDIT_STATUSES.APPROVED, AUDIT_STATUSES.SEALED].includes(p.status),
@@ -307,9 +324,9 @@ Digital Seal: ${period.sealNumber}
               }}
             >
               <option value="">Select auditing firm...</option>
-              {auditFirms.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name} — {f.specialization}
+              {acceptedFirms.map((f) => (
+                <option key={f.id} value={f.auditorFirm}>
+                  {f.auditorFirmName}
                 </option>
               ))}
             </select>
@@ -350,14 +367,40 @@ Digital Seal: ${period.sealNumber}
         )}
       </Card>
 
-      {/* Audit Firms — list from API */}
+      {/* Audit Firms — connections by status */}
       <Card className="padding-lg">
         <h3
           style={{ fontWeight: 700, marginBottom: "1rem", fontSize: "1.1rem" }}
         >
           Registered Audit Firms
         </h3>
-        {registeredFirmsQuery.isLoading && (
+
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
+          {CONNECTION_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFirmsTab(tab.id)}
+              style={{
+                padding: "0.45rem 1rem",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                background:
+                  firmsTab === tab.id
+                    ? "var(--color-primary-600)"
+                    : "var(--color-bg-body)",
+                color:
+                  firmsTab === tab.id ? "#fff" : "var(--color-text-secondary)",
+                fontWeight: 600,
+                fontSize: "0.82rem",
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {connectionsQuery.isLoading && (
           <div
             style={{
               display: "flex",
@@ -368,7 +411,7 @@ Digital Seal: ${period.sealNumber}
             <Spinner />
           </div>
         )}
-        {registeredFirmsQuery.isError && (
+        {connectionsQuery.isError && (
           <div
             style={{
               padding: "0.75rem 1rem",
@@ -383,18 +426,18 @@ Digital Seal: ${period.sealNumber}
           >
             <AlertTriangle size={16} style={{ flexShrink: 0 }} />
             <span>
-              Could not load registered firms. Please try again later.
+              Could not load audit firm connections. Please try again later.
             </span>
           </div>
         )}
-        {!registeredFirmsQuery.isLoading &&
-          !registeredFirmsQuery.isError &&
-          registeredFirms.length === 0 && (
-            <NoData variant="inline" label="registered audit firms" />
+        {!connectionsQuery.isLoading &&
+          !connectionsQuery.isError &&
+          connections.length === 0 && (
+            <NoData variant="inline" label="audit firm connections" />
           )}
-        {!registeredFirmsQuery.isLoading &&
-          !registeredFirmsQuery.isError &&
-          registeredFirms.length > 0 && (
+        {!connectionsQuery.isLoading &&
+          !connectionsQuery.isError &&
+          connections.length > 0 && (
             <div
               style={{
                 display: "grid",
@@ -402,31 +445,262 @@ Digital Seal: ${period.sealNumber}
                 gap: "1rem",
               }}
             >
-              {registeredFirms.map((firm) => (
-                <div
-                  key={firm.id}
-                  style={{
-                    padding: "1rem",
-                    borderRadius: "10px",
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-bg-surface)",
-                  }}
-                >
+              {connections.map((conn) => {
+                const statusStyle =
+                  conn.status === "accepted"
+                    ? {
+                        bg: "var(--color-success-dim)",
+                        color: "var(--color-success)",
+                        label: "Accepted",
+                      }
+                    : conn.status === "pending"
+                      ? {
+                          bg: "var(--color-warning-dim)",
+                          color: "var(--color-warning)",
+                          label: "Pending",
+                        }
+                      : {
+                          bg: "var(--color-bg-subtle)",
+                          color: "var(--color-text-muted)",
+                          label: "Unregistered",
+                        };
+
+                return (
                   <div
+                    key={conn.id}
+                    className={styles.firmCard}
+                    onClick={() =>
+                      navigate(
+                        `/admin/accounting/audit/firms/${conn.auditorFirm}`,
+                      )
+                    }
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        marginBottom: "0.5rem",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "0.75rem",
+                          alignItems: "center",
+                          minWidth: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "2.5rem",
+                            height: "2.5rem",
+                            borderRadius: "10px",
+                            flexShrink: 0,
+                            background:
+                              "linear-gradient(135deg, #0f172a, #3b82f6)",
+                            color: "white",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Building2 size={16} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <h4 style={{ fontWeight: 700, fontSize: "0.9rem" }}>
+                            {conn.auditorFirmName}
+                          </h4>
+                          <p
+                            style={{
+                              fontSize: "0.7rem",
+                              color: "var(--color-text-muted)",
+                            }}
+                          >
+                            {conn.requestedByEmail}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          padding: "2px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.65rem",
+                          fontWeight: 700,
+                          background: statusStyle.bg,
+                          color: statusStyle.color,
+                        }}
+                      >
+                        {statusStyle.label}
+                      </span>
+                    </div>
+                    <p
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--color-text-secondary)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                        marginBottom: "0.35rem",
+                      }}
+                    >
+                      <Users
+                        size={14}
+                        style={{
+                          flexShrink: 0,
+                          color: "var(--color-text-muted)",
+                        }}
+                      />
+                      <span>{conn.requestedByName}</span>
+                    </p>
+                    {conn.requestNote && (
+                      <p
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "var(--color-text-secondary)",
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: "0.35rem",
+                          marginBottom: "0.35rem",
+                        }}
+                      >
+                        <MapPin
+                          size={14}
+                          style={{
+                            flexShrink: 0,
+                            marginTop: "1px",
+                            color: "var(--color-text-muted)",
+                          }}
+                        />
+                        <span
+                          style={{
+                            lineHeight: 1.35,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                          }}
+                        >
+                          {conn.requestNote}
+                        </span>
+                      </p>
+                    )}
+                    {conn.createdAt && (
+                      <p
+                        style={{
+                          fontSize: "0.7rem",
+                          color: "var(--color-text-muted)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.35rem",
+                        }}
+                      >
+                        <Clock size={12} style={{ flexShrink: 0 }} />
+                        <span>
+                          {new Date(conn.createdAt).toLocaleDateString()}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+      </Card>
+
+      {/* Active Audits */}
+      <Card className="padding-lg">
+        <h3
+          style={{
+            fontWeight: 700,
+            marginBottom: "1rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <Clock size={18} style={{ color: "var(--color-warning)" }} /> Active
+          Audits
+        </h3>
+
+        {activeAuditsQuery.isLoading && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "2rem",
+            }}
+          >
+            <Spinner />
+          </div>
+        )}
+        {activeAuditsQuery.isError && (
+          <div
+            style={{
+              padding: "0.75rem 1rem",
+              borderRadius: "8px",
+              background: "var(--color-error-dim)",
+              color: "var(--color-error)",
+              fontSize: "0.85rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+            }}
+          >
+            <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+            <span>
+              Could not load active audits. Please try again later.
+            </span>
+          </div>
+        )}
+        {!activeAuditsQuery.isLoading &&
+          !activeAuditsQuery.isError &&
+          activeAudits.length === 0 && (
+            <NoData variant="inline" label="active audits" />
+          )}
+        {!activeAuditsQuery.isLoading &&
+          !activeAuditsQuery.isError &&
+          activeAudits.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.75rem",
+              }}
+            >
+              {activeAudits.map((audit) => {
+                const sc = statusConfig[audit.status] || {
+                  label: audit.status_display || audit.status,
+                  color: "var(--color-text-secondary)",
+                  bg: "var(--color-bg-subtle)",
+                  icon: <Clock size={14} />,
+                };
+                const latestDate = audit.latest_status_at || audit.submitted_at;
+                return (
+                  <div
+                    key={audit.id}
                     style={{
+                      padding: "1rem 1.25rem",
+                      borderRadius: "10px",
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-bg-subtle)",
                       display: "flex",
                       justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      marginBottom: "0.5rem",
-                      gap: "0.5rem",
+                      alignItems: "center",
+                      gap: "1rem",
+                      flexWrap: "wrap",
                     }}
                   >
                     <div
                       style={{
                         display: "flex",
-                        gap: "0.75rem",
                         alignItems: "center",
+                        gap: "1rem",
                         minWidth: 0,
+                        flex: 1,
                       }}
                     >
                       <div
@@ -435,171 +709,100 @@ Digital Seal: ${period.sealNumber}
                           height: "2.5rem",
                           borderRadius: "10px",
                           flexShrink: 0,
-                          background:
-                            "linear-gradient(135deg, #0f172a, #3b82f6)",
-                          color: "white",
+                          background: sc.bg,
+                          color: sc.color,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                         }}
                       >
-                        <Building2 size={16} />
+                        <Lock size={18} />
                       </div>
                       <div style={{ minWidth: 0 }}>
-                        <h4 style={{ fontWeight: 700, fontSize: "0.9rem" }}>
-                          {firm.name}
+                        <h4 style={{ fontWeight: 700, fontSize: "0.95rem" }}>
+                          {audit.name}
                         </h4>
-                        <p
+                        <div
                           style={{
-                            fontSize: "0.7rem",
-                            color: "var(--color-text-muted)",
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "0.5rem 1.25rem",
+                            marginTop: "0.3rem",
                           }}
                         >
-                          {firm.licenseNumber}
-                        </p>
+                          <span
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--color-text-secondary)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.3rem",
+                            }}
+                          >
+                            <Building2
+                              size={13}
+                              style={{ flexShrink: 0 }}
+                            />
+                            {audit.auditor_firm_name || "—"}
+                          </span>
+                          {audit.submitted_at && (
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.3rem",
+                              }}
+                            >
+                              <Send size={12} style={{ flexShrink: 0 }} />
+                              Submitted{" "}
+                              {new Date(
+                                audit.submitted_at,
+                              ).toLocaleDateString()}
+                            </span>
+                          )}
+                          {latestDate && latestDate !== audit.submitted_at && (
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.3rem",
+                              }}
+                            >
+                              <Clock size={12} style={{ flexShrink: 0 }} />
+                              Updated{" "}
+                              {new Date(latestDate).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <span
                       style={{
                         flexShrink: 0,
-                        padding: "2px 8px",
-                        borderRadius: "6px",
-                        fontSize: "0.65rem",
+                        padding: "4px 14px",
+                        borderRadius: "8px",
+                        fontSize: "0.72rem",
                         fontWeight: 700,
-                        background: firm.isActive
-                          ? "var(--color-success-dim)"
-                          : "var(--color-bg-subtle)",
-                        color: firm.isActive
-                          ? "var(--color-success)"
-                          : "var(--color-text-muted)",
+                        background: sc.bg,
+                        color: sc.color,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {firm.isActive ? "Active" : "Inactive"}
+                      {sc.icon} {sc.label}
                     </span>
                   </div>
-                  {firm.address && (
-                    <p
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--color-text-secondary)",
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "0.35rem",
-                        marginBottom: "0.35rem",
-                      }}
-                    >
-                      <MapPin
-                        size={14}
-                        style={{
-                          flexShrink: 0,
-                          marginTop: "1px",
-                          color: "var(--color-text-muted)",
-                        }}
-                      />
-                      <span style={{ lineHeight: 1.35 }}>{firm.address}</span>
-                    </p>
-                  )}
-                  <p
-                    style={{
-                      fontSize: "0.75rem",
-                      color: "var(--color-text-secondary)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.35rem",
-                    }}
-                  >
-                    <Users
-                      size={14}
-                      style={{
-                        flexShrink: 0,
-                        color: "var(--color-text-muted)",
-                      }}
-                    />
-                    <span>
-                      {firm.activeAuditors === 1
-                        ? "1 active auditor"
-                        : `${firm.activeAuditors} active auditors`}
-                    </span>
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
       </Card>
-
-      {/* Active Audits */}
-      {activePeriods.length > 0 && (
-        <Card className="padding-lg">
-          <h3
-            style={{
-              fontWeight: 700,
-              marginBottom: "1rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <Clock size={18} style={{ color: "var(--color-warning)" }} /> Active
-            Audits
-          </h3>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
-          >
-            {activePeriods.map((period) => {
-              const sc = statusConfig[period.status];
-              const firm = auditFirms.find((f) => f.id === period.auditorId);
-              return (
-                <div
-                  key={period.id}
-                  style={{
-                    padding: "1rem",
-                    borderRadius: "10px",
-                    border: "1px solid var(--color-border)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    background: "var(--color-bg-subtle)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "1rem",
-                    }}
-                  >
-                    <Lock size={18} style={{ color: "var(--color-warning)" }} />
-                    <div>
-                      <h4 style={{ fontWeight: 600 }}>{period.label}</h4>
-                      <p
-                        style={{
-                          fontSize: "0.75rem",
-                          color: "var(--color-text-secondary)",
-                        }}
-                      >
-                        Auditor: {firm?.name || "Unknown"} • Submitted:{" "}
-                        {period.submittedAt}
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      padding: "4px 12px",
-                      borderRadius: "8px",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      background: sc.bg,
-                      color: sc.color,
-                    }}
-                  >
-                    {sc.icon} {sc.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      )}
 
       {/* Completed / Sealed */}
       {completedPeriods.length > 0 && (
