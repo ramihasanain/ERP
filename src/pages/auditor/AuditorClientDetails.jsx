@@ -1264,6 +1264,28 @@ const AuditorClientDetails = () => {
                                 </div>
                               )}
                             </div>
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/auditor/company/${companyId}/period/${period.id}/review?name=${encodeURIComponent(period.name || '')}`,
+                                )
+                              }
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.35rem",
+                                padding: "0.4rem 0.85rem",
+                                borderRadius: "8px",
+                                border: "none",
+                                background: "var(--color-primary-600)",
+                                color: "#fff",
+                                fontWeight: 600,
+                                fontSize: "0.75rem",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <Eye size={13} /> Review
+                            </button>
                           </div>
                         </div>
                         {period.auditor_firm_name && (

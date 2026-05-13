@@ -80,6 +80,15 @@ import PermissionsManagement from "@/components/PermissionsManagement";
 import AuditorLogin from "@/pages/auditor/AuditorLogin";
 import AuditorDashboard from "@/pages/auditor/AuditorDashboard";
 import AuditorClientDetails from "@/pages/auditor/AuditorClientDetails";
+import AuditorPeriodReview from "@/pages/auditor/AuditorPeriodReview/index.jsx";
+import SummaryTab from "@/pages/auditor/AuditorPeriodReview/tabs/SummaryTab";
+import ChartOfAccountsTab from "@/pages/auditor/AuditorPeriodReview/tabs/ChartOfAccountsTab";
+import JournalEntriesTab from "@/pages/auditor/AuditorPeriodReview/tabs/JournalEntriesTab";
+import TrialBalanceTab from "@/pages/auditor/AuditorPeriodReview/tabs/TrialBalanceTab";
+import InvoicesTab from "@/pages/auditor/AuditorPeriodReview/tabs/InvoicesTab";
+import BankAccountsTab from "@/pages/auditor/AuditorPeriodReview/tabs/BankAccountsTab";
+import CustomersVendorsTab from "@/pages/auditor/AuditorPeriodReview/tabs/CustomersVendorsTab";
+import AdjustmentsTab from "@/pages/auditor/AuditorPeriodReview/tabs/AdjustmentsTab";
 import AuditorFirstLoginResetPassword from "@/pages/auditor/AuditorFirstLoginResetPassword";
 import AuditManagement from "@/components/Accounting/AuditManagement";
 import AuditFirmDetails from "@/components/Accounting/AuditFirmDetails";
@@ -89,10 +98,17 @@ import AuditorAdjustmentsPage from "@/components/AuditorAdjustmentsPage";
 import NotificationsPage from "@/components/NotificationsPage";
 import { useAuth } from "@/context/AuthContext";
 
+const getRoleName = (user) =>
+  typeof user?.role === "string" ? user.role : user?.role?.name;
+
+const isAdmin = (user) => getRoleName(user) === "admin";
+const isEmployee = (user) => !isAdmin(user) && !isAuditor(user) && !!user?.role;
+const isAuditor = (user) => getRoleName(user) === "auditor";
+
 const getDashboardPath = (user) => {
-  if (user?.role === "employee") return "/employee/dashboard";
-  if (user?.role === "auditor") return "/auditor/dashboard";
-  return "/admin/dashboard";
+  if (isAuditor(user)) return "/auditor/dashboard";
+  if (isAdmin(user)) return "/admin/dashboard";
+  return "/employee/dashboard";
 };
 
 const getEmployeeLandingPath = (user) =>
@@ -107,10 +123,10 @@ const getAuditorLandingPath = (user) =>
 
 const PublicOnlyRoute = ({ children, isAuthenticated, user }) => {
   if (isAuthenticated) {
-    if (user?.role === "employee") {
+    if (isEmployee(user)) {
       return <Navigate to={getEmployeeLandingPath(user)} replace />;
     }
-    if (user?.role === "auditor") {
+    if (isAuditor(user)) {
       return <Navigate to={getAuditorLandingPath(user)} replace />;
     }
     return <Navigate to={getDashboardPath(user)} replace />;
@@ -132,7 +148,7 @@ const ProtectedEmployeeRoute = ({ children, isAuthenticated, user }) => {
     return <Navigate to="/auth/signin" replace />;
   }
 
-  if (user?.role !== "employee") {
+  if (!isEmployee(user)) {
     return <Navigate to={getDashboardPath(user)} replace />;
   }
 
@@ -148,7 +164,7 @@ const FirstLoginResetPasswordRoute = ({ isAuthenticated, user }) => {
     return <Navigate to="/auth/signin" replace />;
   }
 
-  if (user?.role !== "employee") {
+  if (!isEmployee(user)) {
     return <Navigate to={getDashboardPath(user)} replace />;
   }
 
@@ -164,7 +180,7 @@ const ProtectedAuditorRoute = ({ children, isAuthenticated, user }) => {
     return <Navigate to="/auditor/login" replace />;
   }
 
-  if (user?.role !== "auditor") {
+  if (!isAuditor(user)) {
     return <Navigate to={getDashboardPath(user)} replace />;
   }
 
@@ -236,6 +252,23 @@ export default function AppRoutes() {
           </ProtectedAuditorRoute>
         }
       />
+      <Route
+        path="/auditor/company/:companyId/period/:periodId/review"
+        element={
+          <ProtectedAuditorRoute isAuthenticated={isAuthenticated} user={user}>
+            <AuditorPeriodReview />
+          </ProtectedAuditorRoute>
+        }
+      >
+        <Route path="summary" element={<SummaryTab />} />
+        <Route path="coa" element={<ChartOfAccountsTab />} />
+        <Route path="journal" element={<JournalEntriesTab />} />
+        <Route path="trial" element={<TrialBalanceTab />} />
+        <Route path="invoices" element={<InvoicesTab />} />
+        <Route path="bank" element={<BankAccountsTab />} />
+        <Route path="customers" element={<CustomersVendorsTab />} />
+        <Route path="adjustments" element={<AdjustmentsTab />} />
+      </Route>
 
       <Route
         path="/employee/reset-password-first-login"

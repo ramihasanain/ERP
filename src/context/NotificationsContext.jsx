@@ -206,13 +206,11 @@ export const NotificationsProvider = ({ children }) => {
 
   const notificationsQuery = useNotificationsQuery({
     enabled: enableApiQueries,
-    staleTime: 10_000,
     refetchInterval: 60_000,
   });
 
   const statsQuery = useNotificationStatsQuery({
     enabled: enableApiQueries,
-    staleTime: 10_000,
     refetchInterval: 60_000,
   });
 

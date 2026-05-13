@@ -63,23 +63,13 @@ const EmployeeDashboard = () => {
   const syncFromTodayPayload = useTimeTrackerStore(
     (s) => s.syncFromTodayPayload,
   );
-  const dashboardQuery = useCustomQuery(
-    "/api/hr/employees/dashboard/",
-    ["hr-employee-dashboard"],
-    {
-      staleTime: 1000 * 60 * 2,
-    },
-  );
-  const todayTrackerQuery = useCustomQuery(
-    "/api/hr/time-trackers/today/",
-    ["hr-time-trackers-today"],
-    {
-      staleTime: 1000 * 30,
-    },
-  );
-  const assignmentsQuery = useMyProjectAssignmentsInfiniteQuery({
-    staleTime: 1000 * 60 * 5,
-  });
+  const dashboardQuery = useCustomQuery("/api/hr/employees/dashboard/", [
+    "hr-employee-dashboard",
+  ]);
+  const todayTrackerQuery = useCustomQuery("/api/hr/time-trackers/today/", [
+    "hr-time-trackers-today",
+  ]);
+  const assignmentsQuery = useMyProjectAssignmentsInfiniteQuery();
 
   const createLeaveMutation = useCustomPost(
     "/api/hr/employees/leaves/create/",

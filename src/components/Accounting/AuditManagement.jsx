@@ -451,7 +451,6 @@ const AuditManagement = () => {
     ["auditing-connections", firmsTab],
     {
       select: normalizeConnections,
-      staleTime: 5 * 60 * 1000,
     },
   );
   const connections = connectionsQuery.data ?? [];
@@ -461,7 +460,6 @@ const AuditManagement = () => {
     ["auditing-connections", "accepted-firms"],
     {
       select: normalizeConnections,
-      staleTime: 5 * 60 * 1000,
     },
   );
   const acceptedFirms = acceptedFirmsQuery.data ?? [];
@@ -471,7 +469,6 @@ const AuditManagement = () => {
     ["auditing-periods-min"],
     {
       select: normalizeArrayResponse,
-      staleTime: 5 * 60 * 1000,
     },
   );
   const periods = periodsQuery.data ?? [];
@@ -525,7 +522,7 @@ const AuditManagement = () => {
   const sealedStatementsQuery = useCustomQuery(
     "/api/auditing/sealed-statements/",
     ["auditing-sealed-statements"],
-    { select: normalizeArrayResponse, staleTime: 5 * 60 * 1000 },
+    { select: normalizeArrayResponse },
   );
   const sealedStatements = sealedStatementsQuery.data ?? [];
 
