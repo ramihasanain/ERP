@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -9,10 +10,6 @@ import { mapPeriodLinesToRows } from '@/components/hr/payroll/payrollPeriodMappe
 import { useCustomPatch } from '@/hooks/useMutation';
 import Spinner from '@/core/Spinner';
 import ResourceLoadError from '@/core/ResourceLoadError';
-
-const RUN_PAYROLL_PATH = '/admin/hr/payroll/run';
-
-const finalizePathForPeriod = (id) => `/admin/hr/payroll/period/${id}/finalize`;
 
 const formatMoneyAmount = (value, currency = 'USD') => {
     const num = Number(value);
@@ -39,6 +36,8 @@ const parseAdjustmentAmountInput = (raw) => {
 const RunPayrollWorkflow = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const basePath = useBasePath();
+    const RUN_PAYROLL_PATH = `${basePath}/hr/payroll/run`;
     const incoming = location.state;
     const periodId = incoming?.periodId;
     const periodName = incoming?.periodName;
@@ -547,7 +546,7 @@ const RunPayrollWorkflow = () => {
                     <Button
                         className="cursor-pointer"
                         onClick={() =>
-                            navigate(finalizePathForPeriod(periodId), {
+                            navigate(`${basePath}/hr/payroll/period/${periodId}/finalize`, {
                                 state: { periodName: selectedPeriodLabel },
                             })
                         }

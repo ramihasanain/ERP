@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import { useAccounting } from '@/context/AccountingContext';
 import useCustomQuery from '@/hooks/useQuery';
@@ -144,6 +145,7 @@ const selectListData = (response) => {
 
 const FixedAssets = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { entries, openDrawer } = useAccounting();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -358,7 +360,7 @@ const FixedAssets = () => {
                     <Button
                         variant="ghost"
                         icon={<ArrowLeft size={18} />}
-                        onClick={() => navigate('/admin/accounting')}
+                        onClick={() => navigate(`${basePath}/accounting`)}
                         className="cursor-pointer shrink-0"
                     />
                     <div>

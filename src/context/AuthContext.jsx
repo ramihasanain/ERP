@@ -194,7 +194,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        const preserveTenantDomain = user?.role === 'employee';
+        const userRoleName = typeof user?.role === 'string' ? user.role : user?.role?.name;
+        const preserveTenantDomain = userRoleName !== 'admin' && userRoleName !== 'Auditor';
         setUser(null);
 
         // Best-effort: unregister the last stored FCM token for this browser session.
@@ -234,8 +235,9 @@ export const AuthProvider = ({ children }) => {
     const tokenPresent = hasAccessToken();
     const isAuthenticated = tokenPresent;
     const resolvedUser = tokenPresent ? user : null;
-    const isAdmin = resolvedUser?.role === 'admin';
-    const isEmployee = resolvedUser?.role === 'employee';
+    const resolvedRoleName = typeof resolvedUser?.role === 'string' ? resolvedUser.role : resolvedUser?.role?.name;
+    const isAdmin = resolvedRoleName === 'admin';
+    const isEmployee = !!resolvedUser?.role && !isAdmin && resolvedRoleName !== 'Auditor';
     const isLoading = isLoginLoading || registerMutation.isPending;
 
     const contextValue = useMemo(() => ({

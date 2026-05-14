@@ -6,6 +6,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 
 let dropdownDataPromise = null;
 let dropdownDataCache = null;
@@ -19,6 +20,7 @@ const VendorInvoiceForm = () => {
     const { addVendorInvoice, purchaseOrders: contextPurchaseOrders } = useProcurement();
     const { vendors: contextVendors, addEntry } = useAccounting();
     const navigate = useNavigate();
+    const basePath = useBasePath();
 
     const [formData, setFormData] = useState({
         vendorId: '',
@@ -293,7 +295,7 @@ const VendorInvoiceForm = () => {
                 lines: journalLines
             });
 
-            navigate('/admin/inventory/invoices');
+            navigate(`${basePath}/inventory/invoices`);
         } catch (error) {
             const message = error?.response?.data?.detail || error?.message || 'Failed to create vendor bill.';
             alert(message);
@@ -306,7 +308,7 @@ const VendorInvoiceForm = () => {
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
-            <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={() => navigate('/admin/inventory/invoices')} style={{ marginBottom: '1rem' }}>
+            <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={() => navigate(`${basePath}/inventory/invoices`)} style={{ marginBottom: '1rem' }}>
                 Back to Bills
             </Button>
 

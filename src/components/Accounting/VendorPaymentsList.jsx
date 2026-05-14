@@ -3,6 +3,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Search, ArrowLeft, CreditCard, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import useCustomQuery from '@/hooks/useQuery';
 import BillPaymentModal from '@/components/Procurement/BillPaymentModal';
 import VendorBillDetailsModal from '@/components/Procurement/VendorBillDetailsModal';
@@ -50,6 +51,7 @@ const buildBillsUrl = ({ name, status }) => {
 
 const VendorPaymentsList = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBillId, setSelectedBillId] = useState('');
@@ -84,7 +86,7 @@ const VendorPaymentsList = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/accounting')} className="cursor-pointer shrink-0" />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/accounting`)} className="cursor-pointer shrink-0" />
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Vendor Payment Clearances</h1>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Review posted bills and record vendor payments.</p>

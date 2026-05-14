@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Spinner from '@/core/Spinner';
@@ -28,6 +29,7 @@ const humanizeDetailKey = (key) =>
 const PeriodDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const [expandedLineId, setExpandedLineId] = useState(null);
 
     const periodQuery = useCustomQuery(
@@ -51,7 +53,7 @@ const PeriodDetails = () => {
         return (
             <Card className="padding-lg">
                 <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Missing period id.</p>
-                <Button variant="outline" className="cursor-pointer" style={{ marginTop: '1rem' }} onClick={() => navigate('/admin/hr/payroll')}>
+                <Button variant="outline" className="cursor-pointer" style={{ marginTop: '1rem' }} onClick={() => navigate(`${basePath}/hr/payroll`)}>
                     Back to Payroll
                 </Button>
             </Card>
@@ -65,13 +67,13 @@ const PeriodDetails = () => {
     if (periodQuery.isError) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/hr/payroll')}>
+                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/payroll`)}>
                     Back
                 </Button>
                 <ResourceLoadError
                     error={periodQuery.error}
                     title="Could not load payroll period"
-                    onGoBack={() => navigate('/admin/hr/payroll')}
+                    onGoBack={() => navigate(`${basePath}/hr/payroll`)}
                 />
             </div>
         );
@@ -80,13 +82,13 @@ const PeriodDetails = () => {
     if (!period) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/hr/payroll')}>
+                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/payroll`)}>
                     Back
                 </Button>
                 <ResourceLoadError
                     message="Period not found or you do not have access to it."
                     title="Period unavailable"
-                    onGoBack={() => navigate('/admin/hr/payroll')}
+                    onGoBack={() => navigate(`${basePath}/hr/payroll`)}
                 />
             </div>
         );
@@ -95,7 +97,7 @@ const PeriodDetails = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/hr/payroll')}>
+                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/payroll`)}>
                     Back
                 </Button>
                 <div style={{ flex: 1 }}>
@@ -259,7 +261,7 @@ const PeriodDetails = () => {
                                                         variant="ghost"
                                                         size="sm"
                                                         className="cursor-pointer"
-                                                        onClick={() => navigate(`/admin/hr/payroll/payslip/${line.employee_id}?periodId=${id}&lineId=${line.id}`)}
+                                                        onClick={() => navigate(`${basePath}/hr/payroll/payslip/${line.employee_id}?periodId=${id}&lineId=${line.id}`)}
                                                     >
                                                         View Payslip
                                                     </Button>

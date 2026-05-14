@@ -6,6 +6,7 @@ import { useCustomPost } from '@/hooks/useMutation';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 
 const normalizeArrayResponse = (response) => {
@@ -24,6 +25,7 @@ const collectNestedMessages = (value) => {
 
 const GoodsIssue = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const createTransaction = useCustomPost('/api/inventory/transactions/create/', [['inventory-transactions']]);
     const warehousesQuery = useCustomQuery('/api/inventory/warehouses/', ['inventory-warehouses-issue'], {
         select: (response) =>
@@ -122,7 +124,7 @@ const GoodsIssue = () => {
         try {
             await createTransaction.mutateAsync(payload);
             toast.success('Goods issue transaction created successfully.');
-            navigate('/admin/inventory/transactions');
+            navigate(`${basePath}/inventory/transactions`);
         } catch (error) {
             const errorData = error?.response?.data;
             const lineMessages = collectNestedMessages(errorData?.lines);
@@ -250,7 +252,7 @@ const GoodsIssue = () => {
                     </Button>
                 </div>
                 <div style={{ marginTop: '0.75rem' }}>
-                    <Button variant="outline" onClick={() => navigate('/admin/inventory/transactions')}>
+                    <Button variant="outline" onClick={() => navigate(`${basePath}/inventory/transactions`)}>
                         Cancel
                     </Button>
                 </div>

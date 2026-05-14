@@ -8,6 +8,7 @@ import JournalEntryDetailModal from '@/components/Accounting/JournalEntryDetailM
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { exportToCSV } from '@/utils/exportUtils';
 import useCustomQuery from '@/hooks/useQuery';
 import ResourceLoadError from '@/core/ResourceLoadError';
@@ -61,6 +62,7 @@ const JournalEntries = () => {
     const { accounts } = useAccounting();
     const { language } = useLanguage();
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const [selectedEntryId, setSelectedEntryId] = useState(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -123,7 +125,7 @@ const JournalEntries = () => {
                     <Button
                         variant="ghost"
                         icon={<ArrowLeft size={18} />}
-                        onClick={() => navigate('/admin/accounting')}
+                        onClick={() => navigate(`${basePath}/accounting`)}
                         className="cursor-pointer shrink-0"
                     />
                     <div>
@@ -145,7 +147,7 @@ const JournalEntries = () => {
                 <ResourceLoadError
                     error={journalEntriesQuery.error}
                     title={language === 'ar' ? 'تعذر تحميل قيود اليومية' : 'Could not load journal entries'}
-                    onGoBack={() => navigate('/admin/accounting')}
+                    onGoBack={() => navigate(`${basePath}/accounting`)}
                 />
             ) : (
                 <>

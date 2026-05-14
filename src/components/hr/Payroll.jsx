@@ -11,6 +11,7 @@ import {
   BarChart2,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useBasePath } from "@/hooks/useBasePath";
 import FinalSettlementsList from "@/components/hr/payroll/FinalSettlementsList";
 import Spinner from "@/core/Spinner";
 import ResourceLoadError from "@/core/ResourceLoadError";
@@ -66,6 +67,7 @@ const normalizeDashboard = (response) => {
 
 const Payroll = () => {
   const navigate = useNavigate();
+  const basePath = useBasePath();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() =>
     location.state?.activeTab === "settlements" ? "settlements" : "overview",
@@ -139,7 +141,7 @@ const Payroll = () => {
             variant="outline"
             size={actionButtonSize}
             icon={<Settings size={actionIconSize} />}
-            onClick={() => navigate("/admin/hr/payroll/components")}
+            onClick={() => navigate(`${basePath}/hr/payroll/components`)}
             className="cursor-pointer"
           >
             Components
@@ -148,7 +150,7 @@ const Payroll = () => {
             variant="outline"
             size={actionButtonSize}
             icon={<Layout size={actionIconSize} />}
-            onClick={() => navigate("/admin/hr/payroll/structures")}
+            onClick={() => navigate(`${basePath}/hr/payroll/structures`)}
             className="cursor-pointer"
           >
             Structures
@@ -157,7 +159,7 @@ const Payroll = () => {
             variant="outline"
             size={actionButtonSize}
             icon={<Percent size={actionIconSize} />}
-            onClick={() => navigate("/admin/hr/payroll/tax-slabs")}
+            onClick={() => navigate(`${basePath}/hr/payroll/tax-slabs`)}
             className="cursor-pointer"
           >
             Taxes
@@ -166,7 +168,7 @@ const Payroll = () => {
             variant="primary"
             size={actionButtonSize}
             icon={<PlayCircle size={actionIconSize} />}
-            onClick={() => navigate("/admin/hr/payroll/run")}
+            onClick={() => navigate(`${basePath}/hr/payroll/run`)}
             className="cursor-pointer"
           >
             Run Payroll
@@ -526,7 +528,7 @@ const Payroll = () => {
                                   className="cursor-pointer"
                                   onClick={() =>
                                     navigate(
-                                      `/admin/hr/payroll/period/${period.id}`,
+                                      `${basePath}/hr/payroll/period/${period.id}`,
                                     )
                                   }
                                 >

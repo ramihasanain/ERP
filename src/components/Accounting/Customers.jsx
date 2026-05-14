@@ -8,6 +8,7 @@ import { useCustomPut, useCustomRemove } from '@/hooks/useMutation';
 import { toast } from 'sonner';
 import { Search, Plus, Eye, Edit3, Save, X, Trash2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { useAccounting } from '@/context/AccountingContext';
 
 const normalizeCustomersResponse = (response) => {
@@ -31,6 +32,7 @@ const normalizeCustomersResponse = (response) => {
 
 const Customers = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { openDrawer } = useAccounting();
 
     // Edit Modal State
@@ -78,7 +80,7 @@ const Customers = () => {
                     <Button
                         variant="ghost"
                         icon={<ArrowLeft size={18} />}
-                        onClick={() => navigate('/admin/accounting')}
+                        onClick={() => navigate(`${basePath}/accounting`)}
                         className="cursor-pointer shrink-0"
                     />
                     <div>

@@ -6,15 +6,16 @@ import Button from '@/components/Shared/Button';
 import apiClient from '@/api';
 import { Play, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import useCustomQuery from '@/hooks/useQuery';
 import Spinner from '@/core/Spinner';
 import ResourceLoadError from '@/core/ResourceLoadError';
 
-const WORKFLOW_PATH = '/admin/hr/payroll/run/workflow';
-
 const RunPayroll = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const basePath = useBasePath();
+    const WORKFLOW_PATH = `${basePath}/hr/payroll/run/workflow`;
 
     const draftsQuery = useCustomQuery('/api/hr/payroll/periods/drafts/', ['hr-payroll-drafts'], {
         select: (data) => (Array.isArray(data) ? data : []),
@@ -68,7 +69,7 @@ const RunPayroll = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={20} />} onClick={() => navigate('/admin/hr/payroll')} type="button" className="cursor-pointer" />
+                    <Button variant="ghost" icon={<ArrowLeft size={20} />} onClick={() => navigate(`${basePath}/hr/payroll`)} type="button" className="cursor-pointer" />
                     <div>
                         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }}>Run Payroll</h1>
                         <p style={{ color: 'var(--color-text-secondary)', marginTop: '0.3rem' }}>
@@ -103,7 +104,7 @@ const RunPayroll = () => {
                             <ResourceLoadError
                                 error={draftsQuery.error}
                                 title="Could not load draft payroll periods"
-                                onGoBack={() => navigate('/admin/hr/payroll')}
+                                onGoBack={() => navigate(`${basePath}/hr/payroll`)}
                                 style={{ maxWidth: '100%' }}
                             />
                         </div>

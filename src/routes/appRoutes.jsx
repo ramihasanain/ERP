@@ -21,7 +21,6 @@ import BankAccounts from "@/components/Accounting/BankAccounts";
 import AddBankAccount from "@/components/Accounting/AddBankAccount";
 import FixedAssets from "@/components/Accounting/FixedAssets";
 import RegisterAsset from "@/components/Accounting/RegisterAsset";
-import CostCenters from "@/components/Accounting/CostCenters";
 import BankStatementImport from "@/components/Accounting/BankStatementImport";
 import Customers from "@/components/Accounting/Customers";
 import AddCustomer from "@/components/Accounting/AddCustomer";
@@ -59,7 +58,6 @@ import AddVendor from "@/components/Inventory/AddVendor";
 import Warehouses from "@/components/Inventory/Warehouses";
 import TransactionsList from "@/components/Inventory/TransactionsList";
 import GoodsReceipt from "@/components/Inventory/GoodsReceipt";
-import GoodsIssue from "@/components/Inventory/GoodsIssue";
 import WarehouseTransfer from "@/components/Inventory/WarehouseTransfer";
 import InventoryLayout from "@/components/Inventory/InventoryLayout";
 import Reports from "@/components/Reports/Reports";
@@ -96,6 +94,8 @@ import AccountantPaymentsPage from "@/components/Accounting/AccountantPayments/A
 import PayrollPeriodPayablesPage from "@/components/Accounting/AccountantPayments/PayrollPeriodPayablesPage";
 import AuditorAdjustmentsPage from "@/components/AuditorAdjustmentsPage";
 import NotificationsPage from "@/components/NotificationsPage";
+import RoleProtectedRoute from "@/components/app-layout/RoleProtectedRoute";
+import { MODULE_KEYS } from "@/config/rolePermissions";
 import { useAuth } from "@/context/AuthContext";
 
 const getRoleName = (user) =>
@@ -144,6 +144,7 @@ const ProtectedRoute = ({ children, isAuthenticated }) => {
 };
 
 const ProtectedEmployeeRoute = ({ children, isAuthenticated, user }) => {
+  console.log("protected", user);
   if (!isAuthenticated) {
     return <Navigate to="/auth/signin" replace />;
   }
@@ -425,6 +426,497 @@ export default function AppRoutes() {
         <Route path="payslips" element={<Payslips />} />
         <Route path="payslips/:id" element={<PayslipPreview />} />
         <Route path="my-contract" element={<MyContract />} />
+
+        {/* Accounting module */}
+        <Route
+          path="accounting"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <AccountingDashboard />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/coa"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <ChartOfAccounts />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/journal"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <JournalEntries />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/journal/new"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <NewJournalEntry />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/journal/:id"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <NewJournalEntry />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/gl"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <GeneralLedger />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/trial-balance"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <TrialBalance />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/invoices"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <Invoices />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/invoices/new"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <CreateInvoice />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/invoices/:id/edit"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <CreateInvoice />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/invoices/:id"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <InvoicePreview />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/bank"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <BankAccounts />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/bank/new"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <AddBankAccount />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/assets"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <FixedAssets />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/assets/new"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <RegisterAsset />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/customers"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <Customers />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/customers/new"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <AddCustomer />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/vendor-payments"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <VendorPaymentsList />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/products-services"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <ProductsServices />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/bank-import"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <BankStatementImport />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/audit"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <AuditManagement />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/audit/firms/:id"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <AuditFirmDetails />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/accountant-payments"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <AccountantPaymentsPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="accounting/accountant-payments/payroll/:periodId"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.ACCOUNTING}>
+              <PayrollPeriodPayablesPage />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* Auditor Changes module */}
+        <Route
+          path="auditor-adjustments"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.AUDITOR_CHANGES}>
+              <AuditorAdjustmentsPage />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* HR & Payroll module */}
+        <Route
+          path="hr"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <HRDashboard />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/organization"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <Organization />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/employees"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <EmployeeDirectory />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/employees/:id"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <EmployeeDetails />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/employees/new"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <EmployeeDetails />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/final-settlement"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <FinalSettlement />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <Payroll />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll/components"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <SalaryComponents />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll/structures"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <SalaryStructures />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll/run"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <RunPayroll />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll/run/workflow"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <RunPayrollWorkflow />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll/tax-slabs"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <TaxSlabs />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll/social-security"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <SocialSecuritySettings />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll/period/:id/finalize"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <FinalizePayrollPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll/period/:id"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <PeriodDetails />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/payroll/payslip/:id"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <PayslipPDF />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/attendance"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <Attendance />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/attendance/requests"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <LeaveRequests />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/requests"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <EmployeeRequests />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/projects"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <ProjectsManagement />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/contract-templates"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <ContractTemplates />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/contract-templates/new"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <ContractTemplates />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/contract-templates/:templateId/edit"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <ContractTemplates />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="hr/contract-templates/:templateId/preview"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.HR}>
+              <ContractTemplates />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* Inventory module */}
+        <Route
+          path="inventory"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.INVENTORY}>
+              <InventoryLayout />
+            </RoleProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<InventoryDashboard />} />
+          <Route path="items" element={<ItemsList />} />
+          <Route path="items/new" element={<AddInventoryItem />} />
+          <Route path="items/:id/edit" element={<EditInventoryItem />} />
+          <Route path="purchase-orders" element={<PurchaseOrderList />} />
+          <Route path="purchase-orders/new" element={<PurchaseOrderForm />} />
+          <Route
+            path="purchase-orders/:id/edit"
+            element={<PurchaseOrderEdit />}
+          />
+          <Route path="purchase-orders/:id" element={<PurchaseOrderForm />} />
+          <Route path="invoices" element={<VendorInvoiceList />} />
+          <Route path="invoices/new" element={<VendorInvoiceForm />} />
+          <Route path="vendors" element={<Vendors />} />
+          <Route path="vendors/new" element={<AddVendor />} />
+          <Route path="warehouses" element={<Warehouses />} />
+          <Route path="transactions" element={<TransactionsList />} />
+          <Route path="transactions/receipt" element={<GoodsReceipt />} />
+          <Route path="transactions/transfer" element={<WarehouseTransfer />} />
+        </Route>
+
+        {/* Reports module */}
+        <Route
+          path="reports"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.REPORTS}>
+              <Reports />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="reports/pnl"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.REPORTS}>
+              <ProfitAndLoss />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="reports/balance-sheet"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.REPORTS}>
+              <BalanceSheet />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="reports/tax-return"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.REPORTS}>
+              <TaxReturn />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="reports/cash-flow"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.REPORTS}>
+              <CashFlowStatement />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* Settings module */}
+        <Route
+          path="settings"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.SETTINGS}>
+              <Settings />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* Categories module */}
+        <Route
+          path="categories"
+          element={
+            <RoleProtectedRoute moduleKey={MODULE_KEYS.CATEGORIES}>
+              <CategoryManagement />
+            </RoleProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

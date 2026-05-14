@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
+import { useBasePath } from '@/hooks/useBasePath';
 import Button from '@/components/Shared/Button';
 import Card from '@/components/Shared/Card';
 import Input from '@/components/Shared/Input';
@@ -26,6 +27,7 @@ const ContractTemplatesEditorView = ({
     availableVariables,
     onInsertVariable,
 }) => {
+    const basePath = useBasePath();
     const quillContainerRef = useRef(null);
     const quillInstanceRef = useRef(null);
     const isSyncingFromStateRef = useRef(false);
@@ -83,7 +85,7 @@ const ContractTemplatesEditorView = ({
             <ResourceLoadError
                 error={templateDetailsQuery.error}
                 title="Could not load contract template"
-                onGoBack={() => navigate('/admin/hr/contract-templates')}
+                onGoBack={() => navigate(`${basePath}/hr/contract-templates`)}
                 onRefresh={() => templateDetailsQuery.refetch()}
             />
         );
@@ -101,7 +103,7 @@ const ContractTemplatesEditorView = ({
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/hr/contract-templates')} />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/contract-templates`)} />
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{isEditPage ? 'Edit Template' : 'New Template'}</h1>
                 </div>
                 <div
@@ -114,7 +116,7 @@ const ContractTemplatesEditorView = ({
                 >
                     <Button
                         variant="ghost"
-                        onClick={() => navigate('/admin/hr/contract-templates')}
+                        onClick={() => navigate(`${basePath}/hr/contract-templates`)}
                         disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
                     >
                         Cancel

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { ArrowLeft, Calendar, Check, Copy, CreditCard, FileText, Save, User, X } from 'lucide-react';
 import { toast } from 'sonner';
 import Card from '@/components/Shared/Card';
@@ -115,6 +116,7 @@ const copyText = async (value) => {
 const EmployeeDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { user, isEmployee } = useAuth();
     const isNew = !id;
     const [activeTab, setActiveTab] = useState('overview');
@@ -420,7 +422,7 @@ const EmployeeDetails = () => {
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={20} />} onClick={() => navigate('/admin/hr/employees')} type="button" />
+                    <Button variant="ghost" icon={<ArrowLeft size={20} />} onClick={() => navigate(`${basePath}/hr/employees`)} type="button" />
                     <div>
                         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }}>{isNew ? 'Add New Employee' : employeeName || 'Employee Profile'}</h1>
                         <p style={{ color: 'var(--color-text-secondary)', marginTop: '0.3rem' }}>
@@ -734,7 +736,7 @@ const EmployeeDetails = () => {
                 }}
                 onConfirm={(termination) => {
                     setIsTerminationOpen(false);
-                    navigate('/admin/hr/final-settlement', {
+                    navigate(`${basePath}/hr/final-settlement`, {
                         state: {
                             termination,
                             employee: { id, ...watchedData },
@@ -779,13 +781,13 @@ const EmployeeDetails = () => {
                         <button
                             type="button"
                             onClick={() => {
-                                const targetId = createdCredentials.id;
+                                    const targetId = createdCredentials.id;
                                 setCreatedCredentials(null);
                                 setCopiedField('');
                                 if (targetId) {
-                                    navigate(`/admin/hr/employees/${targetId}`);
+                                    navigate(`${basePath}/hr/employees/${targetId}`);
                                 } else {
-                                    navigate('/admin/hr/employees');
+                                    navigate(`${basePath}/hr/employees`);
                                 }
                             }}
                             style={{
@@ -833,9 +835,9 @@ const EmployeeDetails = () => {
                                     setCreatedCredentials(null);
                                     setCopiedField('');
                                     if (targetId) {
-                                        navigate(`/admin/hr/employees/${targetId}`);
+                                        navigate(`${basePath}/hr/employees/${targetId}`);
                                     } else {
-                                        navigate('/admin/hr/employees');
+                                        navigate(`${basePath}/hr/employees`);
                                     }
                                 }}
                             >

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
 import PurchaseOrderDetailsModal from '@/components/Procurement/PurchaseOrderDetailsModal';
 import PurchaseOrderHeaderFilters from './PurchaseOrderHeaderFilters';
@@ -9,6 +10,7 @@ import usePurchaseOrderListData from './usePurchaseOrderListData';
 
 const PurchaseOrderList = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const [filterStatus, setFilterStatus] = useState('Draft');
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -60,7 +62,7 @@ const PurchaseOrderList = () => {
                 filterStatus={filterStatus}
                 onSearchTermChange={setSearchTerm}
                 onFilterStatusChange={setFilterStatus}
-                onCreatePurchaseOrder={() => navigate('/admin/inventory/purchase-orders/new')}
+                onCreatePurchaseOrder={() => navigate(`${basePath}/inventory/purchase-orders/new`)}
             />
 
             <PurchaseOrdersListTable
@@ -68,7 +70,7 @@ const PurchaseOrderList = () => {
                 isLoading={purchaseOrdersQuery.isLoading}
                 isError={purchaseOrdersQuery.isError}
                 onView={setViewingOrderId}
-                onEdit={(id) => navigate(`/admin/inventory/purchase-orders/${id}/edit`)}
+                onEdit={(id) => navigate(`${basePath}/inventory/purchase-orders/${id}/edit`)}
                 onDelete={setDeletingOrder}
                 onApprove={(id) => handleSetStatus(id, 'approved')}
                 onReject={(id) => handleSetStatus(id, 'rejected')}

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { Check, Copy, Filter, Link2, Mail, MoreHorizontal, Search, Settings, UserPlus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import Card from '@/components/Shared/Card';
@@ -124,6 +125,7 @@ const normalizePayrollBreakdown = (response) => {
 
 const EmployeeDirectory = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -461,7 +463,7 @@ const EmployeeDirectory = () => {
                                                 ? { fontSize: '0.7rem', padding: '0.25rem 0.45rem', minHeight: 'auto' }
                                                 : undefined
                                         }
-                                        onClick={() => row.employeeId && navigate(`/admin/hr/employees/${row.employeeId}`)}
+                                        onClick={() => row.employeeId && navigate(`${basePath}/hr/employees/${row.employeeId}`)}
                                     >
                                         Renew
                                     </Button>
@@ -718,7 +720,7 @@ const EmployeeDirectory = () => {
                     >
                         Login Link
                     </Button>
-                    <Button icon={<UserPlus size={16} />} onClick={() => navigate('/admin/hr/employees/new')}>
+                    <Button icon={<UserPlus size={16} />} onClick={() => navigate(`${basePath}/hr/employees/new`)}>
                         Add Employee
                     </Button>
                 </div>
@@ -883,7 +885,7 @@ const EmployeeDirectory = () => {
                                 key={employee.id}
                                 padding={isNarrowEmployeeCards ? 'sm' : 'md'}
                                 hoverable
-                                onClick={() => navigate(`/admin/hr/employees/${employee.id}`)}
+                                onClick={() => navigate(`${basePath}/hr/employees/${employee.id}`)}
                                 style={{ cursor: 'pointer' }}
                             >
                                 <div

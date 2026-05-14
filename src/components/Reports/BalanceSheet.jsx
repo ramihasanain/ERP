@@ -5,11 +5,13 @@ import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
 import { Download, Calendar, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 
 const BALANCE_SHEET_URL = '/accounting/reports/balance-sheet/?as_of=2026-02-08&include_zero_lines=false';
 
 const BalanceSheet = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const printableRef = useRef(null);
     const [asOfDate, setAsOfDate] = useState('2026-02-08');
 
@@ -56,7 +58,7 @@ const BalanceSheet = () => {
         <div ref={printableRef} className="printable-area" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1100px', margin: '0 auto' }}>
             <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/reports')} aria-label="Back" />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/reports`)} aria-label="Back" />
                     <div>
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Balance Sheet</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Financial position.</p>

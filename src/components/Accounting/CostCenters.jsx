@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import { useAccounting } from '@/context/AccountingContext';
 import useCustomQuery from '@/hooks/useQuery';
@@ -14,6 +15,7 @@ import {
 
 const CostCenters = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { addCostCenter, updateCostCenter, deleteCostCenter, openDrawer } = useAccounting();
     const [viewMode, setViewMode] = useState('list'); // list, add, edit
     const [formData, setFormData] = useState({ name: '', code: '', budget: '' });
@@ -225,7 +227,7 @@ const CostCenters = () => {
                     <Button
                         variant="ghost"
                         icon={<ArrowLeft size={18} />}
-                        onClick={() => navigate('/admin/accounting')}
+                        onClick={() => navigate(`${basePath}/accounting`)}
                         className="cursor-pointer shrink-0"
                     />
                     <div>

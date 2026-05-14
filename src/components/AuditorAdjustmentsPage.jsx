@@ -1,163 +1,494 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
-import { useAudit } from "@/context/AuditContext";
-import { useAccounting } from "@/context/AccountingContext";
+import ConfirmationModal from "@/components/Shared/ConfirmationModal";
+import Spinner from "@/core/Spinner";
+import { useCustomQuery } from "@/hooks/useQuery";
+import { useCustomPost } from "@/hooks/useMutation";
+import { toast } from "sonner";
 import {
   Shield,
   CheckCircle,
   XCircle,
   Clock,
-  Edit3,
   FileText,
-  Building2,
   ThumbsUp,
   ThumbsDown,
   AlertTriangle,
   ArrowRight,
   GitCompare,
+  Plus,
+  Pencil,
+  Trash2,
+  Calendar,
 } from "lucide-react";
 
+const QUERY_KEY = "admin-change-requests";
+
+const statusConfig = {
+  submitted: {
+    label: "Pending",
+    icon: <Clock size={14} />,
+    bg: "var(--color-warning-dim)",
+    color: "var(--color-warning)",
+  },
+  approved: {
+    label: "Approved",
+    icon: <CheckCircle size={14} />,
+    bg: "var(--color-success-dim)",
+    color: "var(--color-success)",
+  },
+  rejected: {
+    label: "Rejected",
+    icon: <XCircle size={14} />,
+    bg: "var(--color-error-dim)",
+    color: "var(--color-error)",
+  },
+};
+
+const typeLabels = {
+  account: "Account",
+  journal_entry: "Journal Entry",
+  journal_line: "Journal Line",
+  invoice: "Invoice",
+};
+
+const actionIcons = {
+  create: <Plus size={12} />,
+  update: <Pencil size={12} />,
+  delete: <Trash2 size={12} />,
+};
+
+const actionLabels = {
+  create: "Create",
+  update: "Update",
+  delete: "Delete",
+};
+
+const formatValue = (val) => {
+  if (val === null || val === undefined) return "—";
+  if (typeof val === "string" || typeof val === "number") return String(val);
+  if (Array.isArray(val)) {
+    return val
+      .map((item, i) => {
+        if (typeof item === "object") {
+          const parts = Object.entries(item)
+            .filter(([, v]) => v !== "" && v !== "0.00" && v !== 0)
+            .map(([k, v]) => `${k}: ${v}`);
+          return `[${i + 1}] ${parts.join(", ")}`;
+        }
+        return String(item);
+      })
+      .join("\n");
+  }
+  if (typeof val === "object") {
+    return Object.entries(val)
+      .map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`)
+      .join("\n");
+  }
+  return String(val);
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  try {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
+const PayloadComparison = ({ original, proposed, action }) => {
+  const allKeys = useMemo(() => {
+    const keys = new Set([
+      ...Object.keys(original || {}),
+      ...Object.keys(proposed || {}),
+    ]);
+    return [...keys];
+  }, [original, proposed]);
+
+  if (action === "create") {
+    return (
+      <div
+        style={{
+          padding: "0.75rem",
+          borderRadius: "10px",
+          background: "var(--color-bg-body)",
+          border: "1px solid var(--color-border)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "0.65rem",
+            fontWeight: 600,
+            color: "var(--color-success)",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            marginBottom: "0.5rem",
+          }}
+        >
+          Proposed Values
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          {allKeys.map((key) => (
+            <div
+              key={key}
+              style={{
+                display: "flex",
+                gap: "0.75rem",
+                fontSize: "0.82rem",
+                padding: "0.35rem 0.5rem",
+                borderRadius: "6px",
+                background:
+                  "color-mix(in srgb, var(--color-success) 10%, var(--color-bg-card))",
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 600,
+                  color: "var(--color-text-secondary)",
+                  minWidth: "100px",
+                }}
+              >
+                {key}
+              </span>
+              <span
+                style={{
+                  color: "var(--color-success)",
+                  fontFamily: "monospace",
+                  fontSize: "0.8rem",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-all",
+                }}
+              >
+                {formatValue(proposed?.[key])}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        padding: "0.75rem",
+        borderRadius: "10px",
+        background: "var(--color-bg-body)",
+        border: "1px solid var(--color-border)",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr auto 1fr",
+          gap: "0.5rem",
+          marginBottom: "0.5rem",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "0.65rem",
+            fontWeight: 600,
+            color: "var(--color-error)",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+          }}
+        >
+          Original
+        </div>
+        <div />
+        <div
+          style={{
+            fontSize: "0.65rem",
+            fontWeight: 600,
+            color: "var(--color-success)",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+          }}
+        >
+          Proposed
+        </div>
+      </div>
+      {allKeys.map((key) => {
+        const oldVal = formatValue(original?.[key]);
+        const newVal = formatValue(proposed?.[key]);
+        const changed = oldVal !== newVal;
+        return (
+          <div
+            key={key}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto 1fr",
+              gap: "0.5rem",
+              alignItems: "start",
+              marginBottom: "0.35rem",
+            }}
+          >
+            <div
+              style={{
+                padding: "0.35rem 0.5rem",
+                borderRadius: "6px",
+                background: changed
+                  ? "color-mix(in srgb, var(--color-error) 12%, var(--color-bg-card))"
+                  : "var(--color-bg-card)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "0.65rem",
+                  fontWeight: 600,
+                  color: "var(--color-text-muted)",
+                  marginBottom: "0.15rem",
+                }}
+              >
+                {key}
+              </div>
+              <div
+                style={{
+                  fontFamily: "monospace",
+                  fontSize: "0.8rem",
+                  color: changed ? "var(--color-error)" : "var(--color-text-main)",
+                  textDecoration: changed ? "line-through" : "none",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-all",
+                }}
+              >
+                {oldVal}
+              </div>
+            </div>
+            <ArrowRight
+              size={14}
+              style={{
+                color: "var(--color-text-muted)",
+                marginTop: "1.2rem",
+                flexShrink: 0,
+              }}
+            />
+            <div
+              style={{
+                padding: "0.35rem 0.5rem",
+                borderRadius: "6px",
+                background: changed
+                  ? "color-mix(in srgb, var(--color-success) 12%, var(--color-bg-card))"
+                  : "var(--color-bg-card)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "0.65rem",
+                  fontWeight: 600,
+                  color: "var(--color-text-muted)",
+                  marginBottom: "0.15rem",
+                }}
+              >
+                {key}
+              </div>
+              <div
+                style={{
+                  fontFamily: "monospace",
+                  fontSize: "0.8rem",
+                  color: changed ? "var(--color-success)" : "var(--color-text-main)",
+                  fontWeight: changed ? 700 : 400,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-all",
+                }}
+              >
+                {newVal}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const AuditorAdjustmentsPage = () => {
-  const {
-    auditChanges,
-    approveChange,
-    rejectChange,
-    getPendingChanges,
-    clientCompanies,
-  } = useAudit();
-  const { updateAccount, updateEntry, entries, setInvoices } = useAccounting();
-  const [filter, setFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [periodFilter, setPeriodFilter] = useState("");
   const [adminNotes, setAdminNotes] = useState({});
+  const [bulkNote, setBulkNote] = useState("");
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "warning",
+    confirmText: "Confirm",
+    onConfirm: null,
+  });
 
-  const filtered =
-    filter === "all"
-      ? auditChanges
-      : auditChanges.filter((c) => c.status === filter);
-  const pending = getPendingChanges();
+  // Build query URL with filters
+  const queryParams = new URLSearchParams();
+  if (statusFilter !== "all") queryParams.set("status", statusFilter);
+  if (periodFilter) queryParams.set("period", periodFilter);
+  const paramStr = queryParams.toString();
+  const requestUrl = `/api/auditing/change-requests/${paramStr ? `?${paramStr}` : ""}`;
 
-  const statusConfig = {
-    pending: {
-      label: "Pending",
-      icon: <Clock size={14} />,
-      bg: "var(--color-warning-dim)",
-      color: "var(--color-warning)",
-    },
-    approved: {
-      label: "Approved",
-      icon: <CheckCircle size={14} />,
-      bg: "var(--color-success-dim)",
-      color: "var(--color-success)",
-    },
-    rejected: {
-      label: "Rejected",
-      icon: <XCircle size={14} />,
-      bg: "var(--color-error-dim)",
-      color: "var(--color-error)",
-    },
+  const {
+    data: crData,
+    isPending: crLoading,
+    isError: crError,
+    refetch,
+  } = useCustomQuery(requestUrl, [QUERY_KEY, statusFilter, periodFilter]);
+
+  const { data: periodsData } = useCustomQuery(
+    "/api/auditing/periods/?min=true",
+    ["auditing-periods-min"],
+  );
+
+  const changeRequests = useMemo(() => crData?.data ?? [], [crData]);
+  const summary = crData?.summary ?? { submitted: 0, approved: 0, rejected: 0 };
+  const periods = periodsData ?? [];
+  const totalChanges = summary.submitted + summary.approved + summary.rejected;
+
+  const submittedIds = useMemo(
+    () => changeRequests.filter((c) => c.status === "submitted").map((c) => c.id),
+    [changeRequests],
+  );
+
+  // Mutations
+  const approveMutation = useCustomPost(
+    (data) => `/api/auditing/change-requests/${data.id}/approve/`,
+    [QUERY_KEY],
+  );
+
+  const rejectMutation = useCustomPost(
+    (data) => `/api/auditing/change-requests/${data.id}/reject/`,
+    [QUERY_KEY],
+  );
+
+  const approveAllMutation = useCustomPost(
+    "/api/auditing/change-requests/approve-all/",
+    [QUERY_KEY],
+  );
+
+  const rejectAllMutation = useCustomPost(
+    "/api/auditing/change-requests/reject-all/",
+    [QUERY_KEY],
+  );
+
+  const closeModal = () =>
+    setConfirmModal((prev) => ({ ...prev, isOpen: false, onConfirm: null }));
+
+  const handleApprove = (change) => {
+    const note = adminNotes[change.id] || "";
+    setConfirmModal({
+      isOpen: true,
+      title: "Approve Change Request",
+      message: `Are you sure you want to approve "${change.title}"?`,
+      type: "success",
+      confirmText: "Approve",
+      onConfirm: () => {
+        approveMutation.mutate(
+          { id: change.id, body: { admin_note: note } },
+          {
+            onSuccess: () => {
+              toast.success("Change request approved");
+              setAdminNotes((prev) => ({ ...prev, [change.id]: "" }));
+              refetch();
+            },
+            onError: () => toast.error("Failed to approve change request"),
+          },
+        );
+        closeModal();
+      },
+    });
   };
 
-  const typeLabels = {
-    account: "Account",
-    journal_entry: "Journal Entry",
-    journal_line: "Journal Line",
-    invoice: "Invoice",
-  };
-
-  // Apply the actual data change when admin approves
-  const applyChangeToData = (change) => {
-    try {
-      if (change.entityType === "account") {
-        if (change.field === "name") {
-          updateAccount(change.entityId, { name: change.newValue });
-        } else if (
-          change.field === "deleted" ||
-          change.field === "new account"
-        ) {
-          // For new accounts and deletions - already handled or skipped
-        }
-      } else if (change.entityType === "journal_entry") {
-        if (change.field === "description") {
-          updateEntry(change.entityId, { description: change.newValue });
-        } else if (change.field === "deleted") {
-          updateEntry(change.entityId, { status: "Deleted" });
-        }
-      } else if (change.entityType === "journal_line") {
-        // Parse field like "debit (Cash)" or "credit (Revenue)"
-        const isDebit = change.field.startsWith("debit");
-        const accountMatch = change.field.match(/\((.+)\)/);
-        const accountName = accountMatch ? accountMatch[1] : "";
-        const entry = entries?.find((e) => e.id === change.entityId);
-        if (entry && accountName) {
-          const newLines = entry.lines.map((line) => {
-            if (line.account === accountName) {
-              return isDebit
-                ? { ...line, debit: parseFloat(change.newValue) || 0 }
-                : { ...line, credit: parseFloat(change.newValue) || 0 };
-            }
-            return line;
-          });
-          updateEntry(change.entityId, { lines: newLines });
-        }
-      } else if (change.entityType === "invoice") {
-        if (change.field === "deleted") {
-          setInvoices((prev) =>
-            (prev || []).filter((i) => i.id !== change.entityId),
-          );
-        } else {
-          const fieldMap = {
-            customer: "customerName",
-            total: "total",
-            status: "status",
-            date: "date",
-          };
-          const dataField = fieldMap[change.field] || change.field;
-          const val =
-            change.field === "total"
-              ? parseFloat(change.newValue) || 0
-              : change.newValue;
-          setInvoices((prev) =>
-            (prev || []).map((i) =>
-              i.id === change.entityId ? { ...i, [dataField]: val } : i,
-            ),
-          );
-        }
-      }
-    } catch (err) {
-      console.error("Failed to apply change:", err);
+  const handleReject = (change) => {
+    const note = adminNotes[change.id] || "";
+    if (!note.trim()) {
+      toast.error("Please enter a rejection reason");
+      return;
     }
-  };
-
-  const handleApprove = (changeId) => {
-    const change = auditChanges.find((c) => c.id === changeId);
-    if (change) applyChangeToData(change);
-    approveChange(changeId, adminNotes[changeId] || "Approved");
-    setAdminNotes((prev) => ({ ...prev, [changeId]: "" }));
-  };
-
-  const handleReject = (changeId) => {
-    if (!(adminNotes[changeId] || "").trim())
-      return alert("Please enter rejection reason");
-    rejectChange(changeId, adminNotes[changeId]);
-    setAdminNotes((prev) => ({ ...prev, [changeId]: "" }));
+    setConfirmModal({
+      isOpen: true,
+      title: "Reject Change Request",
+      message: `Are you sure you want to reject "${change.title}"?`,
+      type: "danger",
+      confirmText: "Reject",
+      onConfirm: () => {
+        rejectMutation.mutate(
+          { id: change.id, body: { admin_note: note } },
+          {
+            onSuccess: () => {
+              toast.success("Change request rejected");
+              setAdminNotes((prev) => ({ ...prev, [change.id]: "" }));
+              refetch();
+            },
+            onError: () => toast.error("Failed to reject change request"),
+          },
+        );
+        closeModal();
+      },
+    });
   };
 
   const handleApproveAll = () => {
-    if (!confirm(`Approve all ${pending.length} pending changes?`)) return;
-    pending.forEach((c) => {
-      applyChangeToData(c);
-      approveChange(c.id, "Batch approved");
+    if (!submittedIds.length) return;
+    setBulkNote("");
+    setConfirmModal({
+      isOpen: true,
+      title: "Approve All Pending",
+      message: `Approve all ${submittedIds.length} pending change requests?`,
+      type: "success",
+      confirmText: "Approve All",
+      onConfirm: () => {
+        approveAllMutation.mutate(
+          { ids: submittedIds, admin_note: bulkNote || "Approved in bulk." },
+          {
+            onSuccess: () => {
+              toast.success(`${submittedIds.length} change requests approved`);
+              setBulkNote("");
+              refetch();
+            },
+            onError: () => toast.error("Failed to approve change requests"),
+          },
+        );
+        closeModal();
+      },
     });
   };
 
   const handleRejectAll = () => {
-    const reason = prompt("Enter rejection reason for all pending changes:");
-    if (!reason) return;
-    pending.forEach((c) => rejectChange(c.id, reason));
+    if (!submittedIds.length) return;
+    setBulkNote("");
+    setConfirmModal({
+      isOpen: true,
+      title: "Reject All Pending",
+      message: `Reject all ${submittedIds.length} pending change requests?`,
+      type: "danger",
+      confirmText: "Reject All",
+      onConfirm: () => {
+        rejectAllMutation.mutate(
+          { ids: submittedIds, admin_note: bulkNote || "Rejected in bulk." },
+          {
+            onSuccess: () => {
+              toast.success(`${submittedIds.length} change requests rejected`);
+              setBulkNote("");
+              refetch();
+            },
+            onError: () => toast.error("Failed to reject change requests"),
+          },
+        );
+        closeModal();
+      },
+    });
   };
 
-  const getCompanyName = (companyId) =>
-    clientCompanies?.find((c) => c.id === companyId)?.name || "Unknown";
+  const isMutating =
+    approveMutation.isPending ||
+    rejectMutation.isPending ||
+    approveAllMutation.isPending ||
+    rejectAllMutation.isPending;
 
   return (
     <div style={{ padding: "1.5rem", maxWidth: "1100px", margin: "0 auto" }}>
@@ -168,6 +499,8 @@ const AuditorAdjustmentsPage = () => {
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "1.5rem",
+          flexWrap: "wrap",
+          gap: "1rem",
         }}
       >
         <div>
@@ -181,7 +514,7 @@ const AuditorAdjustmentsPage = () => {
               color: "var(--color-text-main)",
             }}
           >
-            <GitCompare size={24} /> Auditor Change Report
+            <GitCompare size={24} /> Auditor Change Requests
           </h1>
           <p
             style={{
@@ -189,11 +522,11 @@ const AuditorAdjustmentsPage = () => {
               fontSize: "0.85rem",
             }}
           >
-            Review all changes made by auditors. Compare old and new values
-            before approving.
+            Review all change requests submitted by auditors. Compare original
+            and proposed values before approving.
           </p>
         </div>
-        {pending.length > 0 && (
+        {submittedIds.length > 0 && (
           <div
             style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}
           >
@@ -210,13 +543,14 @@ const AuditorAdjustmentsPage = () => {
                 gap: "0.5rem",
               }}
             >
-              <AlertTriangle size={16} /> {pending.length} Pending
+              <AlertTriangle size={16} /> {submittedIds.length} Pending
             </div>
             <Button
               size="sm"
               style={{ background: "var(--color-success)" }}
               icon={<ThumbsUp size={14} />}
               onClick={handleApproveAll}
+              disabled={isMutating}
             >
               Approve All
             </Button>
@@ -229,6 +563,7 @@ const AuditorAdjustmentsPage = () => {
               }}
               icon={<ThumbsDown size={14} />}
               onClick={handleRejectAll}
+              disabled={isMutating}
             >
               Reject All
             </Button>
@@ -247,23 +582,23 @@ const AuditorAdjustmentsPage = () => {
       >
         {[
           {
-            label: "Total Changes",
-            value: auditChanges.length,
+            label: "Total",
+            value: totalChanges,
             color: "var(--color-text-secondary)",
           },
           {
             label: "Pending",
-            value: auditChanges.filter((c) => c.status === "pending").length,
+            value: summary.submitted,
             color: "var(--color-warning)",
           },
           {
             label: "Approved",
-            value: auditChanges.filter((c) => c.status === "approved").length,
+            value: summary.approved,
             color: "var(--color-success)",
           },
           {
             label: "Rejected",
-            value: auditChanges.filter((c) => c.status === "rejected").length,
+            value: summary.rejected,
             color: "var(--color-error)",
           },
         ].map((s, i) => (
@@ -292,38 +627,112 @@ const AuditorAdjustmentsPage = () => {
         ))}
       </div>
 
-      {/* Filter */}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
-        {[
-          { id: "all", label: "All" },
-          { id: "pending", label: "Pending" },
-          { id: "approved", label: "Approved" },
-          { id: "rejected", label: "Rejected" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setFilter(tab.id)}
+      {/* Filters */}
+      <div
+        style={{
+          display: "flex",
+          gap: "0.75rem",
+          marginBottom: "1.5rem",
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Period filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <Calendar size={15} style={{ color: "var(--color-text-muted)" }} />
+          <select
+            value={periodFilter}
+            onChange={(e) => setPeriodFilter(e.target.value)}
             style={{
-              padding: "0.45rem 1rem",
+              padding: "0.45rem 0.75rem",
               borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              background:
-                filter === tab.id
-                  ? "var(--color-primary-600)"
-                  : "var(--color-bg-body)",
-              color: filter === tab.id ? "#fff" : "var(--color-text-secondary)",
-              fontWeight: 600,
+              border: "1px solid var(--color-border)",
+              background: "var(--color-bg-surface)",
+              color: "var(--color-text-main)",
               fontSize: "0.82rem",
+              cursor: "pointer",
+              minWidth: "160px",
             }}
           >
-            {tab.label}
-          </button>
-        ))}
+            <option value="">All Periods</option>
+            {periods.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div
+          style={{
+            width: "1px",
+            height: "24px",
+            background: "var(--color-border)",
+          }}
+        />
+
+        {/* Status tabs */}
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          {[
+            { id: "all", label: "All" },
+            { id: "submitted", label: "Pending" },
+            { id: "approved", label: "Approved" },
+            { id: "rejected", label: "Rejected" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setStatusFilter(tab.id)}
+              style={{
+                padding: "0.45rem 1rem",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                background:
+                  statusFilter === tab.id
+                    ? "var(--color-primary-600)"
+                    : "var(--color-bg-body)",
+                color:
+                  statusFilter === tab.id
+                    ? "#fff"
+                    : "var(--color-text-secondary)",
+                fontWeight: 600,
+                fontSize: "0.82rem",
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Changes List */}
-      {filtered.length === 0 ? (
+      {/* Loading / Error */}
+      {crLoading && <Spinner size={36} />}
+      {crError && (
+        <Card className="padding-lg" style={{ textAlign: "center" }}>
+          <AlertTriangle
+            size={40}
+            style={{ color: "var(--color-error)", marginBottom: "0.75rem" }}
+          />
+          <p style={{ fontWeight: 500, color: "var(--color-text-main)" }}>
+            Failed to load change requests
+          </p>
+          <p
+            style={{
+              fontSize: "0.85rem",
+              color: "var(--color-text-secondary)",
+              marginBottom: "1rem",
+            }}
+          >
+            Something went wrong. Please try again.
+          </p>
+          <Button size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {!crLoading && !crError && changeRequests.length === 0 && (
         <Card className="padding-lg" style={{ textAlign: "center" }}>
           <GitCompare
             size={40}
@@ -333,7 +742,7 @@ const AuditorAdjustmentsPage = () => {
             }}
           />
           <p style={{ fontWeight: 500, color: "var(--color-text-main)" }}>
-            No changes found
+            No change requests found
           </p>
           <p
             style={{
@@ -341,13 +750,16 @@ const AuditorAdjustmentsPage = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Changes will appear when auditors modify accounting data.
+            Change requests will appear when auditors submit modifications.
           </p>
         </Card>
-      ) : (
+      )}
+
+      {/* Change Requests List */}
+      {!crLoading && !crError && changeRequests.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {filtered.map((change) => {
-            const sc = statusConfig[change.status];
+          {changeRequests.map((change) => {
+            const sc = statusConfig[change.status] || statusConfig.submitted;
             return (
               <Card
                 key={change.id}
@@ -357,7 +769,7 @@ const AuditorAdjustmentsPage = () => {
                   overflow: "hidden",
                 }}
               >
-                {/* Header */}
+                {/* Card Header */}
                 <div style={{ padding: "1rem 1.25rem" }}>
                   <div
                     style={{
@@ -374,10 +786,11 @@ const AuditorAdjustmentsPage = () => {
                           alignItems: "center",
                           gap: "0.5rem",
                           marginBottom: "0.25rem",
+                          flexWrap: "wrap",
                         }}
                       >
-                        <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>
-                          {change.field}
+                        <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>
+                          {change.title}
                         </span>
                         <span
                           style={{
@@ -405,114 +818,106 @@ const AuditorAdjustmentsPage = () => {
                             color: "var(--color-primary-400)",
                           }}
                         >
-                          {typeLabels[change.entityType] || change.entityType}
+                          {typeLabels[change.target_area] || change.target_area}
+                        </span>
+                        <span
+                          style={{
+                            padding: "2px 8px",
+                            borderRadius: "4px",
+                            fontSize: "0.6rem",
+                            fontWeight: 600,
+                            background: "var(--color-bg-body)",
+                            color: "var(--color-text-secondary)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.25rem",
+                          }}
+                        >
+                          {actionIcons[change.action]} {actionLabels[change.action] || change.action}
                         </span>
                       </div>
+                      {change.description && (
+                        <p
+                          style={{
+                            fontSize: "0.82rem",
+                            color: "var(--color-text-secondary)",
+                            margin: "0.25rem 0 0.5rem",
+                          }}
+                        >
+                          {change.description}
+                        </p>
+                      )}
                       <div
                         style={{
                           display: "flex",
                           gap: "1rem",
                           fontSize: "0.73rem",
                           color: "var(--color-text-muted)",
+                          flexWrap: "wrap",
                         }}
                       >
-                        <span>
-                          <Shield size={11} /> {change.auditorName}
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.25rem",
+                          }}
+                        >
+                          <Shield size={11} /> {change.auditor_name}
                         </span>
-                        <span>
-                          <Building2 size={11} />{" "}
-                          {getCompanyName(change.companyId)}
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.25rem",
+                          }}
+                        >
+                          <Clock size={11} /> {formatDate(change.created_at)}
                         </span>
-                        <span>
-                          <Clock size={11} /> {change.createdAt}
-                        </span>
-                        <span>
-                          <FileText size={11} /> {change.entityId}
-                        </span>
+                        {change.target_object_id && (
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.25rem",
+                            }}
+                          >
+                            <FileText size={11} /> {change.target_object_id.slice(0, 8)}…
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* OLD vs NEW Comparison */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr auto 1fr",
-                      gap: "0.75rem",
-                      alignItems: "center",
-                      padding: "0.75rem",
-                      borderRadius: "10px",
-                      background: "var(--color-bg-body)",
-                      border: "1px solid var(--color-border)",
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontSize: "0.65rem",
-                          fontWeight: 600,
-                          color: "var(--color-error)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                          marginBottom: "0.35rem",
-                        }}
-                      >
-                        Old Value
-                      </div>
-                      <div
-                        style={{
-                          padding: "0.5rem 0.75rem",
-                          borderRadius: "6px",
-                          background:
-                            "color-mix(in srgb, var(--color-error) 20%, var(--color-bg-card))",
-                          color: "var(--color-error)",
-                          fontFamily: "monospace",
-                          fontSize: "0.9rem",
-                          fontWeight: 600,
-                          textDecoration: "line-through",
-                          wordBreak: "break-all",
-                        }}
-                      >
-                        {change.oldValue}
-                      </div>
+                  {/* Auditor Note */}
+                  {change.auditor_note && (
+                    <div
+                      style={{
+                        padding: "0.5rem 0.75rem",
+                        borderRadius: "6px",
+                        background:
+                          "color-mix(in srgb, var(--color-info) 12%, var(--color-bg-card))",
+                        fontSize: "0.8rem",
+                        color: "var(--color-text-secondary)",
+                        marginBottom: "0.75rem",
+                      }}
+                    >
+                      <strong style={{ color: "var(--color-info)" }}>
+                        Auditor Note:
+                      </strong>{" "}
+                      {change.auditor_note}
                     </div>
-                    <ArrowRight
-                      size={18}
-                      style={{ color: "var(--color-text-muted)" }}
-                    />
-                    <div>
-                      <div
-                        style={{
-                          fontSize: "0.65rem",
-                          fontWeight: 600,
-                          color: "var(--color-success)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                          marginBottom: "0.35rem",
-                        }}
-                      >
-                        New Value
-                      </div>
-                      <div
-                        style={{
-                          padding: "0.5rem 0.75rem",
-                          borderRadius: "6px",
-                          background:
-                            "color-mix(in srgb, var(--color-success) 20%, var(--color-bg-card))",
-                          color: "var(--color-success)",
-                          fontFamily: "monospace",
-                          fontSize: "0.9rem",
-                          fontWeight: 700,
-                          wordBreak: "break-all",
-                        }}
-                      >
-                        {change.newValue}
-                      </div>
-                    </div>
-                  </div>
+                  )}
 
-                  {/* Admin decision note */}
-                  {change.adminNotes && change.status !== "pending" && (
+                  {/* Payload Comparison */}
+                  <PayloadComparison
+                    original={change.original_payload}
+                    proposed={change.proposed_payload}
+                    action={change.action}
+                  />
+
+                  {/* Admin decision note (for reviewed items) */}
+                  {change.admin_note && change.status !== "submitted" && (
                     <div
                       style={{
                         marginTop: "0.75rem",
@@ -525,10 +930,15 @@ const AuditorAdjustmentsPage = () => {
                         fontSize: "0.8rem",
                         display: "flex",
                         justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "0.5rem",
                       }}
                     >
                       <span>
-                        <strong>Admin:</strong> {change.adminNotes}
+                        <strong>
+                          {change.admin_reviewer_name || "Admin"}:
+                        </strong>{" "}
+                        {change.admin_note}
                       </span>
                       <span
                         style={{
@@ -536,14 +946,14 @@ const AuditorAdjustmentsPage = () => {
                           color: "var(--color-text-muted)",
                         }}
                       >
-                        Reviewed: {change.reviewedAt}
+                        Reviewed: {formatDate(change.reviewed_at)}
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* Approve/Reject for pending */}
-                {change.status === "pending" && (
+                {/* Approve/Reject actions for submitted items */}
+                {change.status === "submitted" && (
                   <div
                     style={{
                       padding: "0.75rem 1.25rem",
@@ -589,16 +999,18 @@ const AuditorAdjustmentsPage = () => {
                           color: "var(--color-error)",
                         }}
                         icon={<ThumbsDown size={14} />}
-                        onClick={() => handleReject(change.id)}
+                        onClick={() => handleReject(change)}
+                        disabled={isMutating}
                       >
-                        Reject Change
+                        Reject
                       </Button>
                       <Button
                         style={{ background: "var(--color-success)" }}
                         icon={<ThumbsUp size={14} />}
-                        onClick={() => handleApprove(change.id)}
+                        onClick={() => handleApprove(change)}
+                        disabled={isMutating}
                       >
-                        Approve Change
+                        Approve
                       </Button>
                     </div>
                   </div>
@@ -608,6 +1020,18 @@ const AuditorAdjustmentsPage = () => {
           })}
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText={confirmModal.confirmText}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={closeModal}
+        disabled={isMutating}
+      />
     </div>
   );
 };

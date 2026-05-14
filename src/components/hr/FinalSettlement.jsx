@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -39,6 +40,7 @@ const normalizeEmployeeFromApiState = (e) => ({
 const FinalSettlement = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const basePath = useBasePath();
 
     const [termination, setTermination] = useState(null);
     const [employee, setEmployee] = useState(null);
@@ -120,7 +122,7 @@ const FinalSettlement = () => {
             return;
         }
 
-        navigate('/admin/hr/employees');
+        navigate(`${basePath}/hr/employees`);
     }, [location.state, navigate]);
 
     useEffect(() => {
@@ -155,7 +157,7 @@ const FinalSettlement = () => {
         try {
             await finalizeTermination.mutateAsync({});
             toast.success('Termination finalized.');
-            navigate('/admin/hr/payroll', { state: { activeTab: 'settlements' } });
+            navigate(`${basePath}/hr/payroll`, { state: { activeTab: 'settlements' } });
         } catch (e) {
             const msg = e?.response?.data?.detail || e?.message || 'Finalize failed.';
             toast.error(typeof msg === 'string' ? msg : 'Finalize failed.');

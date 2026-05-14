@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useBasePath } from "@/hooks/useBasePath";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import Input from "@/components/Shared/Input";
@@ -141,6 +142,7 @@ const downloadExcelFile = ({ filename, sheetName, rows }) => {
 
 const TrialBalance = () => {
   const navigate = useNavigate();
+  const basePath = useBasePath();
   const [filters, setFilters] = useState({
     asOf: getTodayIsoDate(),
     isActive: "true",
@@ -276,7 +278,7 @@ const TrialBalance = () => {
           <Button
             variant="ghost"
             icon={<ArrowLeft size={18} />}
-            onClick={() => navigate("/admin/accounting")}
+            onClick={() => navigate(`${basePath}/accounting`)}
             className="cursor-pointer shrink-0"
           />
           <div>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useBasePath } from "@/hooks/useBasePath";
 import { toast } from "sonner";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
@@ -89,6 +90,7 @@ const ConnectionBadge = ({ status }) => {
 const AuditFirmDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const basePath = useBasePath();
 
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -137,7 +139,7 @@ const AuditFirmDetails = () => {
           <Button
             variant="ghost"
             icon={<ArrowLeft size={18} />}
-            onClick={() => navigate("/admin/accounting/audit")}
+            onClick={() => navigate(`${basePath}/accounting/audit`)}
             className="cursor-pointer shrink-0"
           />
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Firm Details</h1>
@@ -176,7 +178,7 @@ const AuditFirmDetails = () => {
         <Button
           variant="ghost"
           icon={<ArrowLeft size={18} />}
-          onClick={() => navigate("/admin/accounting/audit")}
+          onClick={() => navigate(`${basePath}/accounting/audit`)}
           className="cursor-pointer shrink-0"
         />
         <div style={{ flex: 1 }}>

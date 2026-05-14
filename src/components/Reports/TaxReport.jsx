@@ -5,9 +5,11 @@ import Input from '@/components/Shared/Input';
 import { useAccounting } from '@/context/AccountingContext';
 import { ArrowLeft, Download, Filter, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 
 const TaxReport = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { invoices, taxJurisdictions, taxRules } = useAccounting();
 
     // Filter State
@@ -86,7 +88,7 @@ const TaxReport = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/reports')}>Back</Button>
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/reports`)}>Back</Button>
                     <div>
                         <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Tax Return Report</h1>
                         <p style={{ color: 'var(--color-text-secondary)' }}>VAT/GST Summary for the selected period.</p>

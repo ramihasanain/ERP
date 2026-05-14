@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Spinner from '@/core/Spinner';
@@ -99,6 +100,7 @@ const resolveCategoryValue = (value, categoryOptions) => {
 
 const InventoryItemForm = ({ isEdit = false }) => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { id } = useParams();
     const [formData, setFormData] = useState(defaultFormData);
     const [initialPayload, setInitialPayload] = useState(null);
@@ -209,7 +211,7 @@ const InventoryItemForm = ({ isEdit = false }) => {
                 await createProduct.mutateAsync(payload);
                 toast.success('Item created successfully.');
             }
-            navigate('/admin/inventory/items');
+            navigate(`${basePath}/inventory/items`);
         } catch (error) {
             const message = getApiErrorMessage(error, isEdit ? 'Failed to update item.' : 'Failed to create item.');
             toast.error(message);
@@ -221,7 +223,7 @@ const InventoryItemForm = ({ isEdit = false }) => {
 
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
-            <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={() => navigate('/admin/inventory/items')} style={{ marginBottom: '1rem' }}>
+            <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={() => navigate(`${basePath}/inventory/items`)} style={{ marginBottom: '1rem' }}>
                 Back to Items
             </Button>
 

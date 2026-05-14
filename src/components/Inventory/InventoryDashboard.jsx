@@ -4,9 +4,11 @@ import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
 import { Package, AlertTriangle, ArrowUpRight, ArrowDownLeft, TrendingUp, DollarSign, ArrowRightLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 
 const InventoryDashboard = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const dashboardQuery = useCustomQuery('/api/inventory/dashboard/', ['inventory-dashboard']);
     const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
 
@@ -31,7 +33,7 @@ const InventoryDashboard = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* KPI Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
-                <div onClick={() => navigate('/admin/inventory/reports/valuation')} style={{ cursor: 'pointer' }}>
+                <div onClick={() => navigate(`${basePath}/inventory/reports/valuation`)} style={{ cursor: 'pointer' }}>
                     <KPICard
                         title="Total Inventory Value"
                         value={`${totalInventoryValue.toLocaleString()} ${totalInventoryCurrency}`}
@@ -39,10 +41,10 @@ const InventoryDashboard = () => {
                         color="primary"
                     />
                 </div>
-                <div onClick={() => navigate('/admin/inventory/items')} style={{ cursor: 'pointer' }}>
+                <div onClick={() => navigate(`${basePath}/inventory/items`)} style={{ cursor: 'pointer' }}>
                     <KPICard title="Total Items" value={totalItems} icon={<Package size={24} />} color="primary" />
                 </div>
-                <div onClick={() => navigate('/admin/inventory/items?filter=low_stock')} style={{ cursor: 'pointer' }}>
+                <div onClick={() => navigate(`${basePath}/inventory/items?filter=low_stock`)} style={{ cursor: 'pointer' }}>
                     <KPICard
                         title="Low Stock Alerts"
                         value={lowStockAlerts}
@@ -50,7 +52,7 @@ const InventoryDashboard = () => {
                         color={lowStockAlerts > 0 ? "danger" : "success"}
                     />
                 </div>
-                <div onClick={() => navigate('/admin/inventory/transactions')} style={{ cursor: 'pointer' }}>
+                <div onClick={() => navigate(`${basePath}/inventory/transactions`)} style={{ cursor: 'pointer' }}>
                     <KPICard title="Movements (Today)" value={movementsToday} icon={<TrendingUp size={24} />} color="secondary" />
                 </div>
             </div>
@@ -120,7 +122,7 @@ const InventoryDashboard = () => {
                             </tbody>
                         </table>
                         <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                            <button onClick={() => navigate('/admin/inventory/transactions')} style={{ background: 'none', border: 'none', color: 'var(--color-primary-600)', fontWeight: 600, cursor: 'pointer' }}>View All</button>
+                            <button onClick={() => navigate(`${basePath}/inventory/transactions`)} style={{ background: 'none', border: 'none', color: 'var(--color-primary-600)', fontWeight: 600, cursor: 'pointer' }}>View All</button>
                         </div>
                     </Card>
 

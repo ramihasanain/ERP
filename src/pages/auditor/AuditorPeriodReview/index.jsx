@@ -8,9 +8,16 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { toast } from "sonner";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
+import ConfirmationModal from "@/components/Shared/ConfirmationModal";
 import { useAudit } from "@/context/AuditContext";
+import {
+  useChangeRequests,
+  useApproveAndSeal,
+  useRequestRevision,
+} from "@/hooks/useChangeRequests";
 import {
   ArrowLeft,
   List,
@@ -48,6 +55,17 @@ const AuditorPeriodReview = () => {
 
   const [reviewNotes, setReviewNotes] = useState("");
   const [editModal, setEditModal] = useState(null);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
+
+  const { changeRequests, summary } = useChangeRequests(periodId);
+  const approveAndSeal = useApproveAndSeal(periodId);
+  const requestRevision = useRequestRevision(periodId);
+
+  const hasDrafts = summary.draft > 0;
+  const hasChangeRequests = changeRequests.length > 0;
+  const approvedByAdmin = summary.approved_by_admin !== false;
+  const actionsDisabled = hasDrafts || !hasChangeRequests || !approvedByAdmin;
 
   const basePath = `/auditor/company/${companyId}/period/${periodId}/review`;
 
@@ -461,6 +479,23 @@ const AuditorPeriodReview = () => {
                 marginBottom: "1rem",
               }}
             />
+            {actionsDisabled && (
+              <p
+                style={{
+                  fontSize: "0.8rem",
+                  color: "var(--color-warning)",
+                  fontWeight: 500,
+                  textAlign: "right",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                {!hasChangeRequests
+                  ? "No change requests found for this period."
+                  : !approvedByAdmin
+                    ? "Admin approval is required before you can approve or request revision."
+                    : `${summary.draft} draft change request(s) must be submitted before you can approve or request revision.`}
+              </p>
+            )}
             <div
               style={{
                 display: "flex",
@@ -475,17 +510,16 @@ const AuditorPeriodReview = () => {
                   color: "var(--color-error)",
                 }}
                 icon={<ThumbsDown size={16} />}
-                onClick={() => {
-                  if (!reviewNotes.trim()) return;
-                  navigate(-1);
-                }}
+                disabled={actionsDisabled || requestRevision.isPending || !reviewNotes.trim()}
+                onClick={() => setShowRevisionModal(true)}
               >
-                Request Revision
+                {requestRevision.isPending ? "Submitting…" : "Request Revision"}
               </Button>
               <Button
                 style={{ background: "var(--color-success)" }}
                 icon={<ThumbsUp size={16} />}
-                onClick={() => navigate(-1)}
+                disabled={actionsDisabled || approveAndSeal.isPending}
+                onClick={() => setShowApproveModal(true)}
               >
                 Approve & Seal
               </Button>
@@ -493,6 +527,60 @@ const AuditorPeriodReview = () => {
           </Card>
         </div>
       </div>
+
+      {/* Request Revision Confirmation */}
+      <ConfirmationModal
+        isOpen={showRevisionModal}
+        title="Request Revision"
+        message={`Are you sure you want to request a revision for "${periodName}"? The period will be sent back for corrections.`}
+        type="danger"
+        confirmText={requestRevision.isPending ? "Submitting…" : "Request Revision"}
+        disabled={requestRevision.isPending}
+        onCancel={() => setShowRevisionModal(false)}
+        onConfirm={() => {
+          requestRevision.mutate(
+            { notes: reviewNotes.trim() },
+            {
+              onSuccess: () => {
+                toast.success("Revision requested successfully.");
+                setShowRevisionModal(false);
+                navigate(-1);
+              },
+              onError: () => {
+                toast.error("Failed to request revision. Please try again.");
+                setShowRevisionModal(false);
+              },
+            },
+          );
+        }}
+      />
+
+      {/* Approve & Seal Confirmation */}
+      <ConfirmationModal
+        isOpen={showApproveModal}
+        title="Approve & Seal Period"
+        message={`Are you sure you want to approve and seal "${periodName}"? This action is final and cannot be undone.`}
+        type="success"
+        confirmText={approveAndSeal.isPending ? "Approving…" : "Approve & Seal"}
+        disabled={approveAndSeal.isPending}
+        onCancel={() => setShowApproveModal(false)}
+        onConfirm={() => {
+          approveAndSeal.mutate(
+            { notes: reviewNotes.trim() },
+            {
+              onSuccess: () => {
+                toast.success("Period approved and sealed successfully.");
+                setShowApproveModal(false);
+                navigate(-1);
+              },
+              onError: () => {
+                toast.error("Failed to approve and seal. Please try again.");
+                setShowApproveModal(false);
+              },
+            },
+          );
+        }}
+      />
 
       {/* Edit Modal */}
       {editModal && (

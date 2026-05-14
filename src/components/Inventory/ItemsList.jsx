@@ -8,6 +8,7 @@ import useCustomQuery from '@/hooks/useQuery';
 import { useCustomRemove } from '@/hooks/useMutation';
 import { Search, Plus, Edit, Trash2, Package, Tag, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 
 const normalizeArrayResponse = (response) => {
@@ -90,6 +91,7 @@ const buildProductsUrl = (categoryId) => {
 
 const ItemsList = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
@@ -165,7 +167,7 @@ const ItemsList = () => {
                     <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>Items & Services</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Manage your product master data and services.</p>
                 </div>
-                <Button variant="primary" icon={<Plus size={18} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/items/new')} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
+                <Button variant="primary" icon={<Plus size={18} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate(`${basePath}/inventory/items/new`)} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
                     Add New Item
                 </Button>
             </div>
@@ -249,7 +251,7 @@ const ItemsList = () => {
                                         </div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button type="button" onClick={() => navigate(`/admin/inventory/items/${item.id}/edit`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }} title="Edit">
+                                        <button type="button" onClick={() => navigate(`${basePath}/inventory/items/${item.id}/edit`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }} title="Edit">
                                             <Edit size={16} />
                                         </button>
                                         <button type="button" onClick={() => setDeleteTarget(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger-500)' }} title="Delete">

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import Spinner from '@/core/Spinner';
 import { useProcurement } from '@/context/ProcurementContext';
@@ -12,6 +13,7 @@ import { defaultFormData, emptyLineItem } from './utils';
 const PurchaseOrderForm = () => {
     const { addPurchaseOrder, updatePurchaseOrder, purchaseOrders, submitPO, approvePO, rejectPO } = useProcurement();
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { id } = useParams();
     const isEdit = Boolean(id);
     const { createPurchaseOrder, vendorsQuery, productsQuery } = usePurchaseOrderFormData();
@@ -101,7 +103,7 @@ const PurchaseOrderForm = () => {
                 toast.success('Purchase order created successfully.');
             }
 
-            navigate('/admin/inventory/purchase-orders');
+            navigate(`${basePath}/inventory/purchase-orders`);
         } catch (error) {
             const message = error?.response?.data?.detail || 'Failed to save purchase order.';
             toast.error(message);
@@ -110,19 +112,19 @@ const PurchaseOrderForm = () => {
 
     const handleSubmission = () => {
         submitPO(id);
-        navigate('/admin/inventory/purchase-orders');
+        navigate(`${basePath}/inventory/purchase-orders`);
     };
 
     const handleApproval = () => {
         approvePO(id);
-        navigate('/admin/inventory/purchase-orders');
+        navigate(`${basePath}/inventory/purchase-orders`);
     };
 
     const handleRejection = () => {
         const reason = window.prompt('Reason for rejection:');
         if (!reason) return;
         rejectPO(id, reason);
-        navigate('/admin/inventory/purchase-orders');
+        navigate(`${basePath}/inventory/purchase-orders`);
     };
 
     const po = purchaseOrders.find((item) => item.id === id);
@@ -135,7 +137,7 @@ const PurchaseOrderForm = () => {
             <PurchaseOrderFormHeader
                 isEdit={isEdit}
                 totalValue={totalValue}
-                onBack={() => navigate('/admin/inventory/purchase-orders')}
+                onBack={() => navigate(`${basePath}/inventory/purchase-orders`)}
             />
 
             <PurchaseOrderFormCard
@@ -150,7 +152,7 @@ const PurchaseOrderForm = () => {
                 onLineChange={handleLineChange}
                 onAddLine={addLine}
                 onRemoveLine={removeLine}
-                onCancel={() => navigate('/admin/inventory/purchase-orders')}
+                onCancel={() => navigate(`${basePath}/inventory/purchase-orders`)}
                 onSubmit={handleSubmit}
                 onSubmission={handleSubmission}
                 onApproval={handleApproval}

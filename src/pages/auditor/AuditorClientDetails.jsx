@@ -1227,8 +1227,9 @@ const AuditorClientDetails = () => {
                           <div
                             style={{
                               display: "flex",
+                              flexDirection: "column",
                               gap: "1rem",
-                              alignItems: "center",
+                              alignItems: "flex-end",
                             }}
                           >
                             <div
@@ -1264,10 +1265,11 @@ const AuditorClientDetails = () => {
                                 </div>
                               )}
                             </div>
+                            {/* {(period.status === "submitted" || period.status === "in_review") && ( */}
                             <button
                               onClick={() =>
                                 navigate(
-                                  `/auditor/company/${companyId}/period/${period.id}/review?name=${encodeURIComponent(period.name || '')}`,
+                                  `/auditor/company/${companyId}/period/${period.id}/review?name=${encodeURIComponent(period.name || "")}`,
                                 )
                               }
                               style={{
@@ -1286,6 +1288,7 @@ const AuditorClientDetails = () => {
                             >
                               <Eye size={13} /> Review
                             </button>
+                            {/* )} */}
                           </div>
                         </div>
                         {period.auditor_firm_name && (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
+import { useBasePath } from '@/hooks/useBasePath';
 import Button from '@/components/Shared/Button';
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';
@@ -21,17 +22,19 @@ const ContractTemplatesListView = ({
     onCloseDeleteModal,
     onConfirmDelete,
     isDeletingTemplate,
-}) => (
+}) => {
+    const basePath = useBasePath();
+    return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/hr')} />
+                <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr`)} />
                 <div>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Contract Templates</h1>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Create and manage employment contract formats.</p>
                 </div>
             </div>
-            <Button icon={<Plus size={18} />} onClick={() => navigate('/admin/hr/contract-templates/new')}>
+            <Button icon={<Plus size={18} />} onClick={() => navigate(`${basePath}/hr/contract-templates/new`)}>
                 New Template
             </Button>
         </div>
@@ -73,6 +76,7 @@ const ContractTemplatesListView = ({
             onConfirmDelete={onConfirmDelete}
         />
     </div>
-);
+    );
+};
 
 export default ContractTemplatesListView;

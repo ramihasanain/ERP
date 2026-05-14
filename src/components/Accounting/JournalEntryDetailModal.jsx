@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import Modal from '@/components/Shared/Modal';
 import Button from '@/components/Shared/Button';
@@ -12,6 +13,7 @@ const normalizeEntry = (response) => {
 
 const JournalEntryDetailModal = ({ isOpen, entryId, onClose }) => {
   const navigate = useNavigate();
+  const basePath = useBasePath();
   const detailUrl = entryId ? `/accounting/journal-entries/${entryId}/` : '';
 
   const detailQuery = useCustomQuery(detailUrl, ['journal-entry', entryId], {
@@ -25,7 +27,7 @@ const JournalEntryDetailModal = ({ isOpen, entryId, onClose }) => {
   const handleEdit = () => {
     if (!entryId) return;
     onClose();
-    navigate(`/admin/accounting/journal/${entryId}`);
+    navigate(`${basePath}/accounting/journal/${entryId}`);
   };
 
   useEffect(() => {

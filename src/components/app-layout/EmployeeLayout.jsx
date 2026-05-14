@@ -2,14 +2,73 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
-import { Moon, Sun, Bell, User, LogOut } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  LogOut,
+  LayoutDashboard,
+  ClipboardList,
+  Receipt,
+  FileSignature,
+  Layers,
+  Shield,
+  Users,
+  Package,
+  FileText,
+  Settings,
+  Tags,
+} from "lucide-react";
 import { useTimeTrackerStore } from "@/store/timeTrackerStore";
 import { clearTenantDomain } from "@/services/auth";
+import { useRoleAccess } from "@/hooks/useRoleAccess";
+import { MODULE_KEYS } from "@/config/rolePermissions";
+
+const baseNavItems = [
+  { to: "/employee/dashboard", label: "Dashboard", module: null },
+  { to: "/employee/requests", label: "My Requests", module: null },
+  { to: "/employee/payslips", label: "Payslips", module: null },
+  { to: "/employee/my-contract", label: "My Contract", module: null },
+  {
+    to: "/employee/accounting",
+    label: "Accounting",
+    module: MODULE_KEYS.ACCOUNTING,
+  },
+  {
+    to: "/employee/auditor-adjustments",
+    label: "Auditor Changes",
+    module: MODULE_KEYS.AUDITOR_CHANGES,
+  },
+  { to: "/employee/hr", label: "HR & Payroll", module: MODULE_KEYS.HR },
+  {
+    to: "/employee/inventory",
+    label: "Inventory",
+    module: MODULE_KEYS.INVENTORY,
+  },
+  { to: "/employee/reports", label: "Reports", module: MODULE_KEYS.REPORTS },
+  { to: "/employee/settings", label: "Settings", module: MODULE_KEYS.SETTINGS },
+  {
+    to: "/employee/categories",
+    label: "Categories",
+    module: MODULE_KEYS.CATEGORIES,
+  },
+];
+
+const navLinkStyle = ({ isActive }) => ({
+  fontWeight: isActive ? 700 : 500,
+  color: isActive ? "var(--color-text-main)" : "var(--color-text-secondary)",
+  textDecoration: "none",
+  paddingBottom: "0.25rem",
+  borderBottom: isActive
+    ? "2px solid var(--color-primary-600)"
+    : "2px solid transparent",
+  whiteSpace: "nowrap",
+});
 
 const EmployeeHeader = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { canAccessModule } = useRoleAccess();
   const activeActivity = useTimeTrackerStore((s) => s.activeActivity);
   const stop = useTimeTrackerStore((s) => s.stop);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -51,6 +110,10 @@ const EmployeeHeader = () => {
     navigate("/auth/signin");
   };
 
+  const navItems = baseNavItems.filter(
+    (item) => item.module === null || canAccessModule(item.module),
+  );
+
   return (
     <header
       style={{
@@ -89,72 +152,12 @@ const EmployeeHeader = () => {
         </span>
       </div>
 
-      <nav style={{ display: "flex", gap: "2rem" }}>
-        <NavLink
-          to="/employee/dashboard"
-          end
-          style={({ isActive }) => ({
-            fontWeight: isActive ? 700 : 500,
-            color: isActive
-              ? "var(--color-text-main)"
-              : "var(--color-text-secondary)",
-            textDecoration: "none",
-            paddingBottom: "0.25rem",
-            borderBottom: isActive
-              ? "2px solid var(--color-primary-600)"
-              : "2px solid transparent",
-          })}
-        >
-          Dashboard
-        </NavLink>
-        <NavLink
-          to="/employee/requests"
-          style={({ isActive }) => ({
-            fontWeight: isActive ? 700 : 500,
-            color: isActive
-              ? "var(--color-text-main)"
-              : "var(--color-text-secondary)",
-            textDecoration: "none",
-            paddingBottom: "0.25rem",
-            borderBottom: isActive
-              ? "2px solid var(--color-primary-600)"
-              : "2px solid transparent",
-          })}
-        >
-          My Requests
-        </NavLink>
-        <NavLink
-          to="/employee/payslips"
-          style={({ isActive }) => ({
-            fontWeight: isActive ? 700 : 500,
-            color: isActive
-              ? "var(--color-text-main)"
-              : "var(--color-text-secondary)",
-            textDecoration: "none",
-            paddingBottom: "0.25rem",
-            borderBottom: isActive
-              ? "2px solid var(--color-primary-600)"
-              : "2px solid transparent",
-          })}
-        >
-          Payslips
-        </NavLink>
-        <NavLink
-          to="/employee/my-contract"
-          style={({ isActive }) => ({
-            fontWeight: isActive ? 700 : 500,
-            color: isActive
-              ? "var(--color-text-main)"
-              : "var(--color-text-secondary)",
-            textDecoration: "none",
-            paddingBottom: "0.25rem",
-            borderBottom: isActive
-              ? "2px solid var(--color-primary-600)"
-              : "2px solid transparent",
-          })}
-        >
-          My Contract
-        </NavLink>
+      <nav style={{ display: "flex", gap: "2rem", overflowX: "auto" }}>
+        {navItems.map((item) => (
+          <NavLink key={item.to} to={item.to} style={navLinkStyle}>
+            {item.label}
+          </NavLink>
+        ))}
       </nav>
 
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>

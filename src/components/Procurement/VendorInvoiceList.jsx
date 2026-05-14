@@ -3,6 +3,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Plus, Eye, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import VendorBillDetailsModal from '@/components/Procurement/VendorBillDetailsModal';
 import useCustomQuery from '@/hooks/useQuery';
 import Spinner from '@/core/Spinner';
@@ -41,6 +42,7 @@ const buildBillsUrl = ({ name, status }) => {
 
 const VendorInvoiceList = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
     const [filterStatus, setFilterStatus] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
@@ -79,7 +81,7 @@ const VendorInvoiceList = () => {
                     <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>Vendor Invoices (Bills)</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Manage supplier bills and payments</p>
                 </div>
-                <Button variant="primary" icon={<Plus size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/invoices/new')} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
+                <Button variant="primary" icon={<Plus size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate(`${basePath}/inventory/invoices/new`)} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
                     Record New Bill
                 </Button>
             </div>

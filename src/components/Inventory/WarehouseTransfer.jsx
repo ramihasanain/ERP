@@ -6,6 +6,7 @@ import { useCustomPost } from '@/hooks/useMutation';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 
 const normalizeArrayResponse = (response) => {
@@ -17,6 +18,7 @@ const normalizeArrayResponse = (response) => {
 
 const WarehouseTransfer = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const createTransaction = useCustomPost('/api/inventory/transactions/create/', [['inventory-transactions']]);
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
@@ -110,7 +112,7 @@ const WarehouseTransfer = () => {
         try {
             await createTransaction.mutateAsync(payload);
             toast.success('Warehouse transfer transaction created successfully.');
-            navigate('/admin/inventory/transactions');
+            navigate(`${basePath}/inventory/transactions`);
         } catch (error) {
             const message = getApiErrorMessage(error, 'Failed to create warehouse transfer transaction.');
             toast.error(message);
@@ -264,7 +266,7 @@ const WarehouseTransfer = () => {
                     </Button>
                 </div>
                 <div style={{ marginTop: '0.75rem' }}>
-                    <Button variant="outline" onClick={() => navigate('/admin/inventory/transactions')}>
+                    <Button variant="outline" onClick={() => navigate(`${basePath}/inventory/transactions`)}>
                         Cancel
                     </Button>
                 </div>

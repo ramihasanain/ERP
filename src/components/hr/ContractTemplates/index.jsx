@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMatch, useNavigate, useParams } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import { post } from '@/api';
 import { useCustomQuery } from '@/hooks/useQuery';
@@ -11,10 +12,11 @@ import { formatTemplateDate, humanizeTag } from './utils';
 
 const ContractTemplates = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { templateId } = useParams();
-    const isNewPage = Boolean(useMatch('/admin/hr/contract-templates/new'));
-    const isEditPage = Boolean(useMatch('/admin/hr/contract-templates/:templateId/edit'));
-    const isPreviewPage = Boolean(useMatch('/admin/hr/contract-templates/:templateId/preview'));
+    const isNewPage = Boolean(useMatch(`${basePath}/hr/contract-templates/new`));
+    const isEditPage = Boolean(useMatch(`${basePath}/hr/contract-templates/:templateId/edit`));
+    const isPreviewPage = Boolean(useMatch(`${basePath}/hr/contract-templates/:templateId/preview`));
 
     const [previewHtml, setPreviewHtml] = useState('');
     const [previewEmployee, setPreviewEmployee] = useState('');
@@ -118,7 +120,7 @@ const ContractTemplates = () => {
                     body: formData.body,
                 });
                 toast.success('Template updated successfully.');
-                navigate('/admin/hr/contract-templates');
+                navigate(`${basePath}/hr/contract-templates`);
             } catch (error) {
                 const message =
                     error?.response?.data?.detail ||
@@ -146,7 +148,7 @@ const ContractTemplates = () => {
             toast.error(typeof message === 'string' ? message : 'Could not create contract template.');
             return;
         }
-        navigate('/admin/hr/contract-templates');
+        navigate(`${basePath}/hr/contract-templates`);
     };
 
     const handlePreviewRender = useCallback(async (selectedTemplateId) => {

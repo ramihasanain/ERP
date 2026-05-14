@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import Button from '@/components/Shared/Button';
 import { Plus, ArrowLeft } from 'lucide-react';
 
 const ChartOfAccountsHeader = ({ t, onOpenModal }) => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
 
     return (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -12,7 +14,7 @@ const ChartOfAccountsHeader = ({ t, onOpenModal }) => {
                 <Button
                     variant="ghost"
                     icon={<ArrowLeft size={18} />}
-                    onClick={() => navigate('/admin/accounting')}
+                    onClick={() => navigate(`${basePath}/accounting`)}
                     className="cursor-pointer shrink-0"
                 />
                 <div>

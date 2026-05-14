@@ -5,6 +5,7 @@ import Pagination from '@/core/Pagination';
 import { X, Calendar, ArrowRight, ArrowLeft, Filter, Search, Tag, Info, List, Link as LinkIcon, Monitor, User, DollarSign, Target, Activity, FileText, Landmark, Download, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useBasePath } from '@/hooks/useBasePath';
 import useCustomQuery from '@/hooks/useQuery';
 import { exportToCSV } from '@/utils/exportUtils';
 
@@ -14,6 +15,7 @@ const FinancialDrawer = () => {
         costCenters, bankAccounts, getAccountBalance, getAllChildAccountIds
     } = useAccounting();
     const { language } = useLanguage();
+    const basePath = useBasePath();
     const { isOpen, entityType, entityId } = drawerState;
     const [activeTab, setActiveTab] = useState('overview');
     const [transactionsPage, setTransactionsPage] = useState(1);
@@ -705,7 +707,7 @@ const FinancialDrawer = () => {
                 <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid var(--color-border)', display: 'flex', gap: '1rem', background: 'var(--color-bg-surface)' }}>
                     <Button variant="outline" fullWidth onClick={closeDrawer} size="lg">{t.done}</Button>
                     {entityType === 'Journal' && (
-                        <Button variant="primary" fullWidth onClick={() => window.location.href = `/admin/accounting/journal/${entityId}`} size="lg">
+                        <Button variant="primary" fullWidth onClick={() => window.location.href = `${basePath}/accounting/journal/${entityId}`} size="lg">
                             {t.goToEntry}
                         </Button>
                     )}

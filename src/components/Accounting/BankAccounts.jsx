@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { useAccounting } from '@/context/AccountingContext';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPut } from '@/hooks/useMutation';
@@ -14,6 +15,7 @@ import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 
 const BankAccounts = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { openDrawer } = useAccounting();
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [fromAccountId, setFromAccountId] = useState('');
@@ -136,7 +138,7 @@ const BankAccounts = () => {
                     <Button
                         variant="ghost"
                         icon={<ArrowLeft size={18} />}
-                        onClick={() => navigate('/admin/accounting')}
+                        onClick={() => navigate(`${basePath}/accounting`)}
                         className="cursor-pointer shrink-0"
                     />
                     <div>

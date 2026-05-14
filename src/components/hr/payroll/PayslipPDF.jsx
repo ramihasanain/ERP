@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useBasePath } from "@/hooks/useBasePath";
 import Button from "@/components/Shared/Button";
 import Card from "@/components/Shared/Card";
 import Spinner from "@/core/Spinner";
@@ -50,6 +51,7 @@ const formatArabicDate = (value) => {
 const PayslipPDF = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const basePath = useBasePath();
   const [searchParams] = useSearchParams();
   const periodId = searchParams.get("periodId");
   const lineId = searchParams.get("lineId");
@@ -136,7 +138,7 @@ const PayslipPDF = () => {
           variant="outline"
           className="cursor-pointer"
           style={{ marginTop: "1rem" }}
-          onClick={() => navigate("/admin/hr/payroll")}
+          onClick={() => navigate(`${basePath}/hr/payroll`)}
         >
           Back to Payroll
         </Button>
@@ -153,7 +155,7 @@ const PayslipPDF = () => {
       <ResourceLoadError
         error={payslipQuery.error}
         title="Could not load payslip"
-        onGoBack={() => navigate("/admin/hr/payroll")}
+        onGoBack={() => navigate(`${basePath}/hr/payroll`)}
       />
     );
   }

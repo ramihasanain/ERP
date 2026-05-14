@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { useAccounting } from '@/context/AccountingContext';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPatch, useCustomPost, useCustomRemove } from '@/hooks/useMutation';
@@ -52,6 +53,7 @@ const normalizeFormSnapshot = (formData) => JSON.stringify({
 
 const ProductsServices = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { updateProductOrService, deleteProductOrService, taxRules } = useAccounting();
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -403,7 +405,7 @@ const ProductsServices = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/accounting')} className="cursor-pointer shrink-0" />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/accounting`)} className="cursor-pointer shrink-0" />
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Products & Services</h1>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Manage your catalog of billable items.</p>

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import SelectWithLoadMore from '@/core/SelectWithLoadMore';
@@ -21,6 +22,7 @@ const SAMPLE_DATA = [
 
 const BankStatementImport = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const fileInputRef = useRef(null);
 
     const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
@@ -223,7 +225,7 @@ const BankStatementImport = () => {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/accounting')} className="cursor-pointer shrink-0" />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/accounting`)} className="cursor-pointer shrink-0" />
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Bank Statement Import</h1>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Download the template, fill it, and upload to import transactions.</p>
@@ -316,7 +318,7 @@ const BankStatementImport = () => {
                         </p>
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                             <Button variant="outline" onClick={resetUpload}>Import Another</Button>
-                            <Button onClick={() => navigate('/admin/accounting/journal')}>View Journal Entries</Button>
+                            <Button onClick={() => navigate(`${basePath}/accounting/journal`)}>View Journal Entries</Button>
                         </div>
                     </div>
                 ) : (

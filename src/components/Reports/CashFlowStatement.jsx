@@ -5,11 +5,13 @@ import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
 import { Download, ArrowLeft, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 
 const CASH_FLOW_URL = '/accounting/reports/cash-flow/?start_date=2026-5-1&end_date=2026-5-30';
 
 const CashFlowStatement = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const printableRef = useRef(null);
     const [startDate, setStartDate] = useState('2026-05-01');
     const [endDate, setEndDate] = useState('2026-05-30');
@@ -48,7 +50,7 @@ const CashFlowStatement = () => {
         <div ref={printableRef} className="printable-area" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
             <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/reports')} aria-label="Back" />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/reports`)} aria-label="Back" />
                     <div>
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Cash Flow Statement</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>{data.company_name} • {data.start_date} to {data.end_date}</p>

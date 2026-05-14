@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useBasePath } from "@/hooks/useBasePath";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import Card from "@/components/Shared/Card";
@@ -316,6 +317,7 @@ const PayCategoryModal = ({
 const PayrollPeriodPayablesPage = () => {
   const { periodId } = useParams();
   const navigate = useNavigate();
+  const basePath = useBasePath();
   const [payCategory, setPayCategory] = useState(null);
 
   const periodQuery = useCustomQuery(
@@ -391,7 +393,7 @@ const PayrollPeriodPayablesPage = () => {
           variant="outline"
           className="cursor-pointer"
           style={{ marginTop: "1rem" }}
-          onClick={() => navigate("/admin/accounting/accountant-payments")}
+          onClick={() => navigate(`${basePath}/accounting/accountant-payments`)}
         >
           Back
         </Button>
@@ -410,14 +412,14 @@ const PayrollPeriodPayablesPage = () => {
           variant="ghost"
           className="cursor-pointer"
           icon={<ArrowLeft size={18} />}
-          onClick={() => navigate("/admin/accounting/accountant-payments")}
+          onClick={() => navigate(`${basePath}/accounting/accountant-payments`)}
         >
           Back
         </Button>
         <ResourceLoadError
           error={payablesQuery.error}
           title="Could not load payables"
-          onGoBack={() => navigate("/admin/accounting/accountant-payments")}
+          onGoBack={() => navigate(`${basePath}/accounting/accountant-payments`)}
           onRefresh={() => payablesQuery.refetch()}
         />
       </div>
@@ -440,7 +442,7 @@ const PayrollPeriodPayablesPage = () => {
           variant="ghost"
           className="cursor-pointer shrink-0"
           icon={<ArrowLeft size={18} />}
-          onClick={() => navigate("/admin/accounting/accountant-payments")}
+          onClick={() => navigate(`${basePath}/accounting/accountant-payments`)}
         >
           Back
         </Button>

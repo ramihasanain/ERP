@@ -4,6 +4,7 @@ import Button from '@/components/Shared/Button';
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';
 import ResourceLoadError from '@/core/ResourceLoadError';
+import { useBasePath } from '@/hooks/useBasePath';
 
 const ContractTemplatesPreviewView = ({
     templateDetailsQuery,
@@ -15,13 +16,14 @@ const ContractTemplatesPreviewView = ({
     onPrint,
     isRenderingPreview,
 }) => {
+    const basePath = useBasePath();
     if (templateDetailsQuery.isLoading) return <Spinner />;
     if (templateDetailsQuery.isError) {
         return (
             <ResourceLoadError
                 error={templateDetailsQuery.error}
                 title="Could not load contract template"
-                onGoBack={() => navigate('/admin/hr/contract-templates')}
+                onGoBack={() => navigate(`${basePath}/hr/contract-templates`)}
                 onRefresh={() => templateDetailsQuery.refetch()}
             />
         );
@@ -47,7 +49,7 @@ const ContractTemplatesPreviewView = ({
                         minWidth: 0,
                     }}
                 >
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/hr/contract-templates')} />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/contract-templates`)} />
                     <div>
                         <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Contract Preview</h1>
                         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{previewTemplateName}</p>

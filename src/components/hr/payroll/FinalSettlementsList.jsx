@@ -2,11 +2,13 @@ import React, { useMemo, useState } from 'react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { FileText, Download, Eye, Search } from 'lucide-react';
 import useCustomQuery from '@/hooks/useQuery';
 
 const FinalSettlementsList = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const [searchTerm, setSearchTerm] = useState('');
 
     const { data, isLoading, isError, refetch } = useCustomQuery('/api/hr/terminations/?status=finalized', ['hr-terminations', 'finalized']);
@@ -121,7 +123,7 @@ const FinalSettlementsList = () => {
                                                 icon={<Eye size={16} />}
                                                 title="View Details"
                                                 onClick={() =>
-                                                    navigate('/admin/hr/final-settlement', {
+                                                    navigate(`${basePath}/hr/final-settlement`, {
                                                         state: {
                                                             settlement: {
                                                                 id: row.id,

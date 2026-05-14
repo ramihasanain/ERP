@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useBasePath } from "@/hooks/useBasePath";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import { toast } from "sonner";
@@ -293,6 +294,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
 
 const AccountantPaymentsPage = () => {
   const navigate = useNavigate();
+  const basePath = useBasePath();
   const [activeTab, setActiveTab] = useState("payroll");
   const [terminationToPay, setTerminationToPay] = useState(null);
 
@@ -333,7 +335,7 @@ const AccountantPaymentsPage = () => {
         <Button
           variant="ghost"
           icon={<ArrowLeft size={18} />}
-          onClick={() => navigate("/admin/accounting")}
+          onClick={() => navigate(`${basePath}/accounting`)}
           className="cursor-pointer shrink-0"
         />
         <div className={styles.pageHeader} style={{ flex: 1, paddingBottom: 0 }}>
@@ -414,7 +416,7 @@ const AccountantPaymentsPage = () => {
             <ResourceLoadError
               error={dashboardQuery.error}
               title="Could not load payroll dashboard"
-              onGoBack={() => navigate("/admin/accounting")}
+              onGoBack={() => navigate(`${basePath}/accounting`)}
               onRefresh={() => dashboardQuery.refetch()}
             />
           )}
@@ -568,7 +570,7 @@ const AccountantPaymentsPage = () => {
                                   className="cursor-pointer"
                                   onClick={() =>
                                     navigate(
-                                      `/admin/accounting/accountant-payments/payroll/${period.id}`,
+                                      `${basePath}/accounting/accountant-payments/payroll/${period.id}`,
                                     )
                                   }
                                 >
@@ -593,7 +595,7 @@ const AccountantPaymentsPage = () => {
             <ResourceLoadError
               error={terminationsQuery.error}
               title="Could not load finalized terminations"
-              onGoBack={() => navigate("/admin/accounting")}
+              onGoBack={() => navigate(`${basePath}/accounting`)}
               onRefresh={() => terminationsQuery.refetch()}
             />
           )}

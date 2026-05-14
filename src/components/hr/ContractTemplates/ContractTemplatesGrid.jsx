@@ -2,8 +2,11 @@ import React from 'react';
 import { Edit3, Eye, FileText, Star, Trash2 } from 'lucide-react';
 import Button from '@/components/Shared/Button';
 import Card from '@/components/Shared/Card';
+import { useBasePath } from '@/hooks/useBasePath';
 
-const ContractTemplatesGrid = ({ templates, navigate, onDeleteClick }) => (
+const ContractTemplatesGrid = ({ templates, navigate, onDeleteClick }) => {
+    const basePath = useBasePath();
+    return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
         {templates.length === 0 && (
             <Card className="padding-lg" style={{ gridColumn: '1 / -1' }}>
@@ -106,7 +109,7 @@ const ContractTemplatesGrid = ({ templates, navigate, onDeleteClick }) => (
                         size="sm"
                         variant="outline"
                         icon={<Eye size={14} />}
-                        onClick={() => navigate(`/admin/hr/contract-templates/${template.id}/preview`)}
+                        onClick={() => navigate(`${basePath}/hr/contract-templates/${template.id}/preview`)}
                         style={{ flex: 1 }}
                     >
                         Preview
@@ -115,7 +118,7 @@ const ContractTemplatesGrid = ({ templates, navigate, onDeleteClick }) => (
                         size="sm"
                         variant="outline"
                         icon={<Edit3 size={14} />}
-                        onClick={() => navigate(`/admin/hr/contract-templates/${template.id}/edit`)}
+                        onClick={() => navigate(`${basePath}/hr/contract-templates/${template.id}/edit`)}
                         style={{ flex: 1 }}
                     >
                         Edit
@@ -132,6 +135,7 @@ const ContractTemplatesGrid = ({ templates, navigate, onDeleteClick }) => (
             </Card>
         ))}
     </div>
-);
+    );
+};
 
 export default ContractTemplatesGrid;

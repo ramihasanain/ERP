@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import Button from '@/components/Shared/Button';
@@ -9,12 +10,12 @@ import useCustomQuery from '@/hooks/useQuery';
 import FinalizePayrollStep from '@/components/hr/payroll/FinalizePayrollStep';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 
-const RUN_PAYROLL_PATH = '/admin/hr/payroll/run';
-const WORKFLOW_PATH = '/admin/hr/payroll/run/workflow';
-
 const FinalizePayrollPage = () => {
     const { id: periodId } = useParams();
     const navigate = useNavigate();
+    const basePath = useBasePath();
+    const RUN_PAYROLL_PATH = `${basePath}/hr/payroll/run`;
+    const WORKFLOW_PATH = `${basePath}/hr/payroll/run/workflow`;
     const location = useLocation();
     const queryClient = useQueryClient();
 
@@ -43,7 +44,7 @@ const FinalizePayrollPage = () => {
                 queryClient.invalidateQueries({ queryKey: ['hr-payroll-period-workflow', periodId] }),
             ]);
             toast.success('Payroll finalized and journal entries posted.');
-            navigate('/admin/accounting/journal');
+            navigate(`${basePath}/accounting/journal`);
         },
         onError: (err) => {
             const msg = getApiErrorMessage(err, 'Could not finalize payroll.');

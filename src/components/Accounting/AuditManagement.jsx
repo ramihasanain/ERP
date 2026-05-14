@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useBasePath } from "@/hooks/useBasePath";
 import { toast } from "sonner";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
@@ -439,6 +440,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
 
 const AuditManagement = () => {
   const navigate = useNavigate();
+  const basePath = useBasePath();
   const { AUDIT_STATUSES } = useAudit();
   const [selectedFirmId, setSelectedFirmId] = useState("");
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
@@ -539,7 +541,7 @@ const AuditManagement = () => {
           <Button
             variant="ghost"
             icon={<ArrowLeft size={18} />}
-            onClick={() => navigate("/admin/accounting")}
+            onClick={() => navigate(`${basePath}/accounting`)}
             className="cursor-pointer shrink-0"
           />
           <div>
@@ -792,7 +794,7 @@ const AuditManagement = () => {
                     className={styles.firmCard}
                     onClick={() =>
                       navigate(
-                        `/admin/accounting/audit/firms/${conn.auditorFirm}`,
+                        `${basePath}/accounting/audit/firms/${conn.auditorFirm}`,
                       )
                     }
                   >

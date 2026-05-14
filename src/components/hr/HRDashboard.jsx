@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Users, UserPlus, FileText, DollarSign, Briefcase, Clock, Calendar, CreditCard, FolderOpen, FileSignature } from 'lucide-react';
 
 const HRDashboard = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -15,7 +17,7 @@ const HRDashboard = () => {
                     <p style={{ color: 'var(--color-text-secondary)' }}>Manage your workforce and compensation.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button icon={<UserPlus size={18} />} onClick={() => navigate('/admin/hr/employees/new')}>Add Employee</Button>
+                    <Button icon={<UserPlus size={18} />} onClick={() => navigate(`${basePath}/hr/employees/new`)}>Add Employee</Button>
                 </div>
             </div>
 
@@ -23,7 +25,7 @@ const HRDashboard = () => {
                 <Card
                     className="padding-md hoverable"
                     style={{ width: '240px', cursor: 'pointer' }}
-                    onClick={() => navigate('/admin/hr/organization')}
+                    onClick={() => navigate(`${basePath}/hr/organization`)}
                 >
                     <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
                         <Users size={24} />
@@ -35,7 +37,7 @@ const HRDashboard = () => {
                 <Card
                     className="padding-md hoverable"
                     style={{ width: '240px', cursor: 'pointer' }}
-                    onClick={() => navigate('/admin/hr/employees')}
+                    onClick={() => navigate(`${basePath}/hr/employees`)}
                 >
                     <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
                         <Users size={24} />
@@ -47,7 +49,7 @@ const HRDashboard = () => {
                 <Card
                     className="padding-md hoverable"
                     style={{ width: '240px', cursor: 'pointer' }}
-                    onClick={() => navigate('/admin/hr/payroll')}
+                    onClick={() => navigate(`${basePath}/hr/payroll`)}
                 >
                     <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
                         <CreditCard size={24} />
@@ -59,7 +61,7 @@ const HRDashboard = () => {
                 <Card
                     className="padding-md hoverable"
                     style={{ width: '240px', cursor: 'pointer' }}
-                    onClick={() => navigate('/admin/hr/requests')}
+                    onClick={() => navigate(`${basePath}/hr/requests`)}
                 >
                     <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
                         <FileText size={24} />
@@ -71,7 +73,7 @@ const HRDashboard = () => {
                 <Card
                     className="padding-md hoverable"
                     style={{ width: '240px', cursor: 'pointer' }}
-                    onClick={() => navigate('/admin/hr/projects')}
+                    onClick={() => navigate(`${basePath}/hr/projects`)}
                 >
                     <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
                         <FolderOpen size={24} />
@@ -83,7 +85,7 @@ const HRDashboard = () => {
                 <Card
                     className="padding-md hoverable"
                     style={{ width: '240px', cursor: 'pointer' }}
-                    onClick={() => navigate('/admin/hr/contract-templates')}
+                    onClick={() => navigate(`${basePath}/hr/contract-templates`)}
                 >
                     <div style={{ marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
                         <FileSignature size={24} />

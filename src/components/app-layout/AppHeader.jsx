@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { LogOut, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCompanyName } from '@/hooks/useCompanyName';
+import { getRoleName } from '@/config/rolePermissions';
 import HeaderSearchField from '@/components/app-layout/HeaderSearchField';
 import HeaderIconTools from '@/components/app-layout/HeaderIconTools';
 import classes from '@/components/app-layout/Sidebar.module.css';
@@ -63,15 +64,17 @@ const AppHeader = ({ isNarrowLayout = false, onOpenMobileNav }) => {
     const narrowHeaderPad = { padding: '0 0.75rem', height: '3rem' };
     const wideHeaderPad = { padding: '0 2rem', height: '4rem' };
 
+    const roleName = getRoleName(user);
+
     const avatarStyle = {
         width: isNarrowLayout ? '1.5rem' : '2rem',
         height: isNarrowLayout ? '1.5rem' : '2rem',
-        background: user?.role === 'admin' ? 'color-mix(in srgb, var(--color-primary-600) 22%, var(--color-bg-card))' : 'var(--color-success-dim)',
+        background: roleName === 'admin' ? 'color-mix(in srgb, var(--color-primary-600) 22%, var(--color-bg-card))' : 'var(--color-success-dim)',
         borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: user?.role === 'admin' ? 'var(--color-primary-500)' : 'var(--color-success)',
+        color: roleName === 'admin' ? 'var(--color-primary-500)' : 'var(--color-success)',
         fontWeight: 500,
         fontSize: isNarrowLayout ? '0.7rem' : '0.86rem',
     };
@@ -110,7 +113,7 @@ const AppHeader = ({ isNarrowLayout = false, onOpenMobileNav }) => {
                             <span style={{ ...compactProfileNameStyle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
                                 {user?.name || 'User'}
                             </span>
-                            <span style={compactProfileRoleStyle}>{user?.role || 'Guest'}</span>
+                            <span style={compactProfileRoleStyle}>{roleName || 'Guest'}</span>
                         </div>
                         <button type="button" onClick={handleSignOut} title="Sign Out" style={signOutBtnStyle}>
                             <LogOut size={14} />
@@ -134,7 +137,7 @@ const AppHeader = ({ isNarrowLayout = false, onOpenMobileNav }) => {
                     <div style={avatarStyle}>{user?.initials || 'U'}</div>
                     <div style={profileTextColStyle}>
                         <span style={compactProfileNameStyle}>{user?.name || 'User'}</span>
-                        <span style={compactProfileRoleStyle}>{user?.role || 'Guest'}</span>
+                        <span style={compactProfileRoleStyle}>{roleName || 'Guest'}</span>
                     </div>
                     <button type="button" onClick={handleSignOut} title="Sign Out" style={signOutBtnStyle}>
                         <LogOut size={16} />

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';
@@ -10,6 +11,7 @@ import { emptyLine } from './utils';
 
 const PurchaseOrderEdit = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const { id } = useParams();
     const [vendorId, setVendorId] = useState('');
     const [orderDate, setOrderDate] = useState('');
@@ -93,7 +95,7 @@ const PurchaseOrderEdit = () => {
         try {
             await updatePurchaseOrder.mutateAsync(payload);
             toast.success('Purchase order updated successfully.');
-            navigate('/admin/inventory/purchase-orders');
+            navigate(`${basePath}/inventory/purchase-orders`);
         } catch (error) {
             const message = error?.response?.data?.detail || 'Failed to update purchase order.';
             toast.error(message);
@@ -103,7 +105,7 @@ const PurchaseOrderEdit = () => {
         try {
             await updatePurchaseOrderStatus.mutateAsync({ status: 'pending_approval' });
             toast.success('Purchase order marked as pending approval.');
-            navigate('/admin/inventory/purchase-orders');
+            navigate(`${basePath}/inventory/purchase-orders`);
         } catch (error) {
             const message = error?.response?.data?.detail || 'Failed to update purchase order status.';
             toast.error(message);
@@ -119,7 +121,7 @@ const PurchaseOrderEdit = () => {
                 orderNumber={orderQuery.data?.number}
                 totalAmount={totalAmount}
                 currency={currency}
-                onBack={() => navigate('/admin/inventory/purchase-orders')}
+                onBack={() => navigate(`${basePath}/inventory/purchase-orders`)}
             />
 
             {isLoading && (
@@ -152,7 +154,7 @@ const PurchaseOrderEdit = () => {
                     onLineChange={handleLineChange}
                     onAddLine={addLine}
                     onRemoveLine={removeLine}
-                    onCancel={() => navigate('/admin/inventory/purchase-orders')}
+                    onCancel={() => navigate(`${basePath}/inventory/purchase-orders`)}
                     onSave={handleSave}
                     onMarkPendingApproval={handleMarkPendingApproval}
                     isStatusUpdating={updatePurchaseOrderStatus.isPending}

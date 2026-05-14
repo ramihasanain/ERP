@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import { post } from '@/api';
 import { useAccounting } from '@/context/AccountingContext';
@@ -108,6 +109,7 @@ const useWindowWidth = () => {
 
 const NewJournalEntry = () => {
   const navigate = useNavigate();
+  const basePath = useBasePath();
   const queryClient = useQueryClient();
   const { id } = useParams();
   const { getAccountBalance, getPeriodStatus } = useAccounting();
@@ -323,7 +325,7 @@ const NewJournalEntry = () => {
       }
 
       toast.success(successMessage);
-      navigate('/admin/accounting/journal');
+      navigate(`${basePath}/accounting/journal`);
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed to save journal entry.');
     }
@@ -394,7 +396,7 @@ const NewJournalEntry = () => {
           <Button
             variant="ghost"
             icon={<ArrowLeft size={18} />}
-            onClick={() => navigate('/admin/accounting/journal')}
+            onClick={() => navigate(`${basePath}/accounting/journal`)}
             className="cursor-pointer shrink-0"
           />
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{id ? (isPosted ? 'View Journal Entry' : 'Edit Journal Entry') : 'New Journal Entry'}</h1>

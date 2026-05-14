@@ -5,11 +5,13 @@ import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
 import { Download, Calendar, FileCheck, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 
 const TAX_RETURN_URL = '/accounting/reports/tax-return/?period_start=2026-01-01&period_end=2026-03-31';
 
 const TaxReturn = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const printableRef = useRef(null);
     const [periodStart, setPeriodStart] = useState('2026-01-01');
     const [periodEnd, setPeriodEnd] = useState('2026-03-31');
@@ -51,7 +53,7 @@ const TaxReturn = () => {
         <div ref={printableRef} className="printable-area" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '800px', margin: '0 auto' }}>
             <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/reports')} aria-label="Back" />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/reports`)} aria-label="Back" />
                     <div>
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Tax Return (VAT/GST)</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Tax liability report for government filing.</p>

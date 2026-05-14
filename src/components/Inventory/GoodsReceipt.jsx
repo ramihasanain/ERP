@@ -7,6 +7,7 @@ import { useCustomPost } from '@/hooks/useMutation';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 
 const normalizeArrayResponse = (response) => {
@@ -19,6 +20,7 @@ const normalizeArrayResponse = (response) => {
 const GoodsReceipt = () => {
     const { addEntry } = useAccounting();
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const createTransaction = useCustomPost('/api/inventory/transactions/create/', [['inventory-transactions']]);
     const warehousesQuery = useCustomQuery('/api/inventory/warehouses/', ['inventory-warehouses-grn'], {
         select: (response) =>
@@ -189,7 +191,7 @@ const GoodsReceipt = () => {
             addEntry(journalEntry);
 
             toast.success('Goods receipt transaction created successfully.');
-            navigate('/admin/inventory/transactions');
+            navigate(`${basePath}/inventory/transactions`);
         } catch (error) {
             const message = getApiErrorMessage(error, 'Failed to create goods receipt transaction.');
             toast.error(message);

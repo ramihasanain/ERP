@@ -132,6 +132,7 @@ const coerceCompensationCurrencyToId = (raw, currencies) => {
         (c) => normalizeCurrencyCode(c?.code) === nestedCode,
       );
       if (hit) return getCurrencyItemId(hit);
+      if (!list.length) return nestedCode;
     }
     return "";
   }
@@ -139,7 +140,8 @@ const coerceCompensationCurrencyToId = (raw, currencies) => {
   if (!s) return "";
   if (looksLikeUuid(s)) return s;
   const code = normalizeCurrencyCode(s);
-  if (!code || !list.length) return "";
+  if (!code) return "";
+  if (!list.length) return code;
   const hit = list.find((c) => normalizeCurrencyCode(c?.code) === code);
   return hit ? getCurrencyItemId(hit) : "";
 };
@@ -544,7 +546,7 @@ const ContractSalaryTab = ({ employeeId }) => {
       template: contractRaw.template || "",
       structure: compRaw.structure || "",
       basic_salary: compRaw.basic_salary || "",
-      currency: coerceCompensationCurrencyToId(compRaw.currency, []),
+      currency: coerceCompensationCurrencyToId(compRaw.currency, currencies),
       transportation: compRaw.transportation || "",
       housing: compRaw.housing || "",
       other_allowances: compRaw.other_allowances || "",
@@ -999,35 +1001,39 @@ const ContractSalaryTab = ({ employeeId }) => {
               <Controller
                 name="currency"
                 control={contractForm.control}
-                render={({ field }) => (
-                  <SelectWithLoadMore
-                    id="contract-salary-currency"
-                    label="Currency"
-                    value={String(field.value ?? "").trim()}
-                    onChange={(next) =>
-                      field.onChange(
-                        next != null && next !== "" ? String(next).trim() : "",
-                      )
-                    }
-                    options={currencySelectOptions}
-                    disabled={currenciesFailed}
-                    isInitialLoading={
-                      currenciesInitialLoading && !currenciesQuery.data
-                    }
-                    hasMore={
-                      Boolean(currenciesHasNextPage) && !currenciesFailed
-                    }
-                    onLoadMore={() => fetchNextCurrenciesPage()}
-                    isLoadingMore={isFetchingNextCurrenciesPage}
-                    paginationError={
-                      currenciesFailed
-                        ? "Failed to load currencies."
-                        : isFetchNextCurrenciesPageError
-                          ? "Could not load more currencies. Scroll down to retry."
-                          : null
-                    }
-                  />
-                )}
+                render={({ field }) => {
+                  return (
+                    <SelectWithLoadMore
+                      id="contract-salary-currency"
+                      label="Currency"
+                      value={String(field.value ?? "").trim()}
+                      onChange={(next) =>
+                        field.onChange(
+                          next != null && next !== ""
+                            ? String(next).trim()
+                            : "",
+                        )
+                      }
+                      options={currencySelectOptions}
+                      disabled={currenciesFailed}
+                      isInitialLoading={
+                        currenciesInitialLoading && !currenciesQuery.data
+                      }
+                      hasMore={
+                        Boolean(currenciesHasNextPage) && !currenciesFailed
+                      }
+                      onLoadMore={() => fetchNextCurrenciesPage()}
+                      isLoadingMore={isFetchingNextCurrenciesPage}
+                      paginationError={
+                        currenciesFailed
+                          ? "Failed to load currencies."
+                          : isFetchNextCurrenciesPageError
+                            ? "Could not load more currencies. Scroll down to retry."
+                            : null
+                      }
+                    />
+                  );
+                }}
               />
             </div>
 

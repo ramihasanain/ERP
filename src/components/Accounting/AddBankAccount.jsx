@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -11,6 +12,7 @@ import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 
 const AddBankAccount = () => {
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const banksQuery = useCustomQuery('/accounting/banks/', ['accounting-banks'], {
         select: (response) => {
             if (Array.isArray(response?.data)) return response.data;
@@ -97,7 +99,7 @@ const AddBankAccount = () => {
                 <Button
                     variant="ghost"
                     icon={<ArrowLeft size={18} />}
-                    onClick={() => navigate('/admin/accounting')}
+                    onClick={() => navigate(`${basePath}/accounting`)}
                     className="cursor-pointer shrink-0"
                 />
                 <div>

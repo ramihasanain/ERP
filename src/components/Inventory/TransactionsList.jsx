@@ -7,6 +7,7 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Search, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '@/hooks/useBasePath';
 
 const TRANSACTION_TYPE_OPTIONS = [
     { value: '', label: 'All types' },
@@ -56,6 +57,7 @@ const buildTransactionsUrl = ({
 const TransactionsList = () => {
     const { warehouses } = useInventory();
     const navigate = useNavigate();
+    const basePath = useBasePath();
     const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
     const [typeFilter, setTypeFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
@@ -108,10 +110,10 @@ const TransactionsList = () => {
                     <p style={{ color: 'var(--color-text-secondary)' }}>Track all stock movements.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
-                    <Button variant="outline" icon={<ArrowLeft size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/transactions/receipt')}>
+                    <Button variant="outline" icon={<ArrowLeft size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate(`${basePath}/inventory/transactions/receipt`)}>
                         Goods Receipt
                     </Button>
-                    <Button variant="outline" icon={<ArrowRight size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate('/admin/inventory/transactions/transfer')}>
+                    <Button variant="outline" icon={<ArrowRight size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate(`${basePath}/inventory/transactions/transfer`)}>
                         Transfer
                     </Button>
                 </div>
