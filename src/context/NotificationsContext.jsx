@@ -202,7 +202,7 @@ export const NotificationsProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
   const [localNotifications, setLocalNotifications] = useState([]);
 
-  const enableApiQueries = isAuthenticated && user?.role !== "auditor";
+  const enableApiQueries = isAuthenticated && user?.role.name !== "Auditor";
 
   const notificationsQuery = useNotificationsQuery({
     enabled: enableApiQueries,

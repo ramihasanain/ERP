@@ -41,19 +41,19 @@ const AuditorLogin = () => {
       if (data.user?.reset_password_required) {
         toast.success(
           "Please change your password before continuing.",
-          successToastOptions
+          successToastOptions,
         );
         navigate("/auditor/reset-password-first-login", {
           replace: true,
           state: { accessToken: data.access },
         });
       } else {
-        const user = persistLoginResponse(data, "auditor", {
+        const user = persistLoginResponse(data, "Auditor", {
           loginBaseUrl: PUBLIC_API_URL,
         });
         toast.success(
           `Welcome back, ${user?.name || "Auditor"}!`,
-          successToastOptions
+          successToastOptions,
         );
         navigate("/auditor/dashboard", { replace: true });
       }

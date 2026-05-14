@@ -58,9 +58,10 @@ const SignIn = () => {
       );
       const roleName =
         typeof user.role === "string" ? user.role : user.role?.name;
-      if (roleName === "admin") {
+      console.log(roleName);
+      if (roleName === "admin" || roleName === "Admin") {
         navigate("/admin/dashboard");
-      } else if (roleName === "auditor") {
+      } else if (roleName === "Auditor") {
         navigate("/auditor/dashboard");
       } else if (user.reset_password_required) {
         navigate("/employee/reset-password-first-login");

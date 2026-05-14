@@ -72,7 +72,7 @@ const AuditorDashboard = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { currentAuditor, getAuditorPeriods, AUDIT_STATUSES } = useAudit();
-
+  console.log(currentAuditor);
   const [selectedCompanyId] = useState("all");
   const [companiesTab, setCompaniesTab] = useState("pending");
   const [requestAction, setRequestAction] = useState(null);

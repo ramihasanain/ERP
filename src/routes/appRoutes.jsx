@@ -103,7 +103,7 @@ const getRoleName = (user) =>
 
 const isAdmin = (user) => getRoleName(user) === "admin";
 const isEmployee = (user) => !isAdmin(user) && !isAuditor(user) && !!user?.role;
-const isAuditor = (user) => getRoleName(user) === "auditor";
+const isAuditor = (user) => getRoleName(user) === "Auditor";
 
 const getDashboardPath = (user) => {
   if (isAuditor(user)) return "/auditor/dashboard";
