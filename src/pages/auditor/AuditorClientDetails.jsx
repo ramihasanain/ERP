@@ -96,7 +96,8 @@ const AuditorClientDetails = () => {
   const holders = d?.shareholders || [];
   const attachments = d?.attachments || [];
   const periods_api = d?.audit_periods || [];
-  const currency = co?.base_currency || "USD";
+  const fin = d?.financial_overview || {};
+  const currency = fin?.currency || co?.base_currency || "USD";
   const totalBankBalance = banks.reduce(
     (s, b) => s + (Number(b.current_balance) || 0),
     0,
@@ -231,6 +232,8 @@ const AuditorClientDetails = () => {
                       {co?.industry}
                       {overview?.company_information?.legal_form &&
                         ` • ${overview.company_information.legal_form}`}
+                      {fin.foundation_date &&
+                        ` • Founded ${new Date(fin.foundation_date).getFullYear()}`}
                     </p>
                     <p style={{ opacity: 0.6, fontSize: "0.8rem" }}>
                       {overview?.contact_details?.ceo &&
@@ -240,7 +243,7 @@ const AuditorClientDetails = () => {
                     </p>
                   </div>
                 </div>
-                <div style={{ textAlign: "right" }}>
+                <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.35rem" }}>
                   <span
                     style={{
                       padding: "4px 12px",
@@ -251,14 +254,17 @@ const AuditorClientDetails = () => {
                       color: "#34d399",
                     }}
                   >
-                    {currency}
+                    ACTIVE
+                  </span>
+                  <span style={{ fontSize: "0.8rem", opacity: 0.7 }}>
+                    {fin.active_employees ?? 0} employees
                   </span>
                 </div>
               </div>
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gridTemplateColumns: "repeat(4, 1fr)",
                   gap: "1rem",
                   marginTop: "1.25rem",
                   paddingTop: "1rem",
@@ -267,14 +273,21 @@ const AuditorClientDetails = () => {
               >
                 {[
                   {
-                    label: "Bank Accounts",
-                    value: banks.length,
+                    label: "Capital",
+                    value: fin.capital != null ? `${Number(fin.capital).toLocaleString()} ${currency}` : "—",
                   },
                   {
-                    label: "Total Bank Balance",
-                    value: `${totalBankBalance.toLocaleString()} ${currency}`,
+                    label: "Annual Revenue",
+                    value: fin.annual_revenue != null ? `${Number(fin.annual_revenue).toLocaleString()} ${currency}` : "—",
                   },
-                  { label: "Audit Periods", value: periods_api.length },
+                  {
+                    label: "Bank Balance",
+                    value: `${Number(fin.bank_balance || 0).toLocaleString()} ${currency}`,
+                  },
+                  {
+                    label: "Audit Periods",
+                    value: fin.audit_periods_count ?? periods_api.length,
+                  },
                 ].map((s, i) => (
                   <div key={i} style={{ textAlign: "center" }}>
                     <div
