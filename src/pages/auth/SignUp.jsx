@@ -4,18 +4,38 @@ import AuthLayout from '@/components/app-layout/AuthLayout';
 import Input from '@/components/Shared/Input';
 import Button from '@/components/Shared/Button';
 import { User, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { successToastOptions } from '@/utils/toastOptions';
+import { errorToastOptions, successToastOptions } from '@/utils/toastOptions';
+import { useCustomPost } from '@/hooks/useMutation';
+import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_EXISTS_MESSAGE = 'This email already exists. Please sign in or use a different email.';
+
+const validateEmail = (value) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed) return 'Email is required';
+    if (trimmed !== trimmed.toLowerCase()) return 'Email must be in lowercase';
+    if (!EMAIL_PATTERN.test(trimmed)) return 'Enter a valid email address';
+    return true;
+};
+
+const emailExistsInResponse = (response) => {
+    if (response?.exists === true) return true;
+    if (response?.data?.exists === true) return true;
+    return false;
+};
 
 const SignUp = () => {
     const navigate = useNavigate();
-    const { isLoading } = useAuth();
+    const checkEmailMutation = useCustomPost('/register/check-email/');
     const [showPassword, setShowPassword] = useState(false);
     const {
         control,
         handleSubmit,
+        setError,
+        clearErrors,
         formState: { errors },
     } = useForm({
         defaultValues: {
@@ -27,12 +47,31 @@ const SignUp = () => {
     });
 
     const onSubmit = async (values) => {
+        const email = values.email.trim().toLowerCase();
+        clearErrors('email');
+
+        let response;
+        try {
+            response = await checkEmailMutation.mutateAsync({ email });
+        } catch (error) {
+            const message = getApiErrorMessage(error, 'Could not verify this email. Please try again.');
+            setError('email', { type: 'server', message });
+            toast.error(message, errorToastOptions);
+            return;
+        }
+
+        if (emailExistsInResponse(response)) {
+            setError('email', { type: 'server', message: EMAIL_EXISTS_MESSAGE });
+            toast.error(EMAIL_EXISTS_MESSAGE, errorToastOptions);
+            return;
+        }
+
         toast.success('Great start. Complete onboarding to finish account setup.', successToastOptions);
         navigate('/onboarding', {
             state: {
                 signupData: {
                     full_name: values.fullName,
-                    email: values.email,
+                    email,
                     password: values.password,
                     company_name: values.companyName || values.fullName,
                 },
@@ -81,7 +120,7 @@ const SignUp = () => {
                 <Controller
                     name="email"
                     control={control}
-                    rules={{ required: 'Email is required' }}
+                    rules={{ validate: validateEmail }}
                     render={({ field }) => (
                         <Input
                             {...field}
@@ -90,6 +129,7 @@ const SignUp = () => {
                             placeholder="name@company.com"
                             startIcon={<Mail size={18} />}
                             error={errors.email?.message}
+                            onChange={(e) => field.onChange(e.target.value.toLowerCase())}
                             required
                         />
                     )}
@@ -132,7 +172,7 @@ const SignUp = () => {
                     )}
                 />
 
-                <Button type="submit" size="lg" isLoading={isLoading} icon={<ArrowRight size={18} />}>
+                <Button type="submit" size="lg" isLoading={checkEmailMutation.isPending} icon={<ArrowRight size={18} />}>
                     Create Account
                 </Button>
             </form>

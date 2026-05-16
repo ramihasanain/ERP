@@ -9,6 +9,13 @@ import { useCustomQuery } from '@/hooks/useQuery';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { errorToastOptions, successToastOptions } from '@/utils/toastOptions';
+import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import {
+    mapRegisterApiErrors,
+    validateOnboardingStep,
+} from '@/pages/onboarding/onboardingValidation';
+
+const COMPANY_INFO_STEP = 1;
 
 const steps = [
     { id: 1, title: 'Company Info', component: StepCompanyInfo },
@@ -30,6 +37,7 @@ const OnboardingWizard = () => {
         language: '',
         modules: [],
     });
+    const [stepErrors, setStepErrors] = useState({});
 
     const bootstrapQuery = useCustomQuery('/shared/bootstrap-data/', ['signup-bootstrap-data']);
 
@@ -87,30 +95,52 @@ const OnboardingWizard = () => {
     }, [options]);
 
     const handleNext = async () => {
+        const validationErrors = validateOnboardingStep(currentStep, formData);
+        if (Object.keys(validationErrors).length > 0) {
+            setStepErrors((prev) => ({ ...prev, ...validationErrors }));
+            const firstMessage = Object.values(validationErrors)[0];
+            if (firstMessage) toast.error(firstMessage, errorToastOptions);
+            return;
+        }
+
+        setStepErrors((prev) => {
+            const next = { ...prev };
+            Object.keys(validationErrors).forEach((key) => {
+                delete next[key];
+            });
+            return next;
+        });
+
         if (currentStep < steps.length) {
             setCurrentStep((curr) => curr + 1);
-        } else {
-            try {
-                await register({
-                    ...signupData,
-                    company_name: formData.companyName || signupData.company_name || signupData.full_name,
-                    industry: formData.industry,
-                    country: formData.country,
-                    base_currency: formData.currency,
-                    default_language: formData.language,
-                    selected_modules: formData.modules,
-                });
-                toast.success('Account created successfully. Welcome to your workspace!', successToastOptions);
-                navigate('/admin/dashboard');
-            } catch (err) {
-                const message =
-                    err?.response?.data?.detail ||
-                    err?.response?.data?.error ||
-                    err?.response?.data?.message ||
-                    err?.message ||
-                    'Registration failed. Please verify your setup details and try again.';
-                toast.error(message, errorToastOptions);
+            return;
+        }
+
+        try {
+            await register({
+                ...signupData,
+                company_name: formData.companyName || signupData.company_name || signupData.full_name,
+                industry: formData.industry,
+                country: formData.country,
+                base_currency: formData.currency,
+                default_language: formData.language,
+                selected_modules: formData.modules,
+            });
+            toast.success('Account created successfully. Welcome to your workspace!', successToastOptions);
+            navigate('/admin/dashboard');
+        } catch (err) {
+            const apiErrors = mapRegisterApiErrors(err?.response?.data);
+            if (Object.keys(apiErrors).length > 0) {
+                setStepErrors((prev) => ({ ...prev, ...apiErrors }));
             }
+
+            setCurrentStep(COMPANY_INFO_STEP);
+
+            const message = getApiErrorMessage(
+                err,
+                'Registration failed. Please verify your setup details and try again.'
+            );
+            toast.error(message, errorToastOptions);
         }
     };
 
@@ -122,15 +152,15 @@ const OnboardingWizard = () => {
 
     const updateData = (key, value) => {
         setFormData((prev) => ({ ...prev, [key]: value }));
+        setStepErrors((prev) => {
+            if (!prev[key]) return prev;
+            const next = { ...prev };
+            delete next[key];
+            return next;
+        });
     };
 
     const CurrentComponent = steps.find(s => s.id === currentStep)?.component || StepCompanyInfo;
-    const canContinue =
-        currentStep === 1
-            ? Boolean(formData.companyName && formData.industry && formData.country)
-            : currentStep === 2
-                ? Boolean(formData.currency && formData.language)
-                : formData.modules.length > 0;
 
     if (!signupData) {
         return (
@@ -194,6 +224,7 @@ const OnboardingWizard = () => {
                     data={formData}
                     updateData={updateData}
                     options={options}
+                    errors={stepErrors}
                 />
             </div>
 
@@ -205,7 +236,7 @@ const OnboardingWizard = () => {
                 >
                     Back
                 </Button>
-                <Button onClick={handleNext} isLoading={isLoading} disabled={!canContinue || isLoading}>
+                <Button onClick={handleNext} isLoading={isLoading} disabled={isLoading}>
                     {currentStep === steps.length ? 'Finish Setup' : 'Continue'}
                 </Button>
             </div>

@@ -1,6 +1,21 @@
 import React from 'react';
 
-const StepRegionalSettings = ({ data, updateData, options }) => {
+const fieldErrorStyle = {
+    fontSize: '0.875rem',
+    color: 'var(--color-error)',
+    marginTop: '0.25rem',
+};
+
+const selectStyle = (hasError) => ({
+    width: '100%',
+    padding: '0.5rem',
+    borderRadius: 'var(--radius-md)',
+    border: hasError ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
+    background: 'var(--color-bg-surface)',
+    color: 'var(--color-text-main)',
+});
+
+const StepRegionalSettings = ({ data, updateData, options, errors = {} }) => {
     const currencies = options?.currencies || [];
     const languages = options?.languages || [];
 
@@ -16,7 +31,7 @@ const StepRegionalSettings = ({ data, updateData, options }) => {
                 <select
                     value={data.currency}
                     onChange={(e) => updateData('currency', e.target.value)}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
+                    style={selectStyle(Boolean(errors.currency))}
                 >
                     <option value="">Select Currency...</option>
                     {currencies.map((currency) => (
@@ -25,6 +40,7 @@ const StepRegionalSettings = ({ data, updateData, options }) => {
                         </option>
                     ))}
                 </select>
+                {errors.currency && <span style={fieldErrorStyle}>{errors.currency}</span>}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
@@ -32,7 +48,7 @@ const StepRegionalSettings = ({ data, updateData, options }) => {
                 <select
                     value={data.language}
                     onChange={(e) => updateData('language', e.target.value)}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
+                    style={selectStyle(Boolean(errors.language))}
                 >
                     <option value="">Select Language...</option>
                     {languages.map((language) => (
@@ -41,6 +57,7 @@ const StepRegionalSettings = ({ data, updateData, options }) => {
                         </option>
                     ))}
                 </select>
+                {errors.language && <span style={fieldErrorStyle}>{errors.language}</span>}
             </div>
 
             <div

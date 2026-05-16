@@ -8,7 +8,13 @@ const fallbackModulesList = [
     { id: 'inventory', name: 'Inventory', icon: <Package />, desc: 'Stock, Warehouses, POs' },
 ];
 
-const StepModules = ({ data, updateData, options }) => {
+const fieldErrorStyle = {
+    fontSize: '0.875rem',
+    color: 'var(--color-error)',
+    marginTop: '0.25rem',
+};
+
+const StepModules = ({ data, updateData, options, errors = {} }) => {
     const modulesList = (options?.modules?.length
         ? options.modules.map((module) => ({
             id: module.value,
@@ -34,6 +40,7 @@ const StepModules = ({ data, updateData, options }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Select Modules</h3>
             <p style={{ color: 'var(--color-text-secondary)' }}>Choose the apps you want to start with.</p>
+            {errors.modules && <span style={fieldErrorStyle}>{errors.modules}</span>}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {modulesList.map((mod) => {

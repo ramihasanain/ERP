@@ -2,7 +2,22 @@ import React from 'react';
 import Input from '@/components/Shared/Input';
 import { Building2, Globe } from 'lucide-react';
 
-const StepCompanyInfo = ({ data, updateData, options }) => {
+const fieldErrorStyle = {
+    fontSize: '0.875rem',
+    color: 'var(--color-error)',
+    marginTop: '0.25rem',
+};
+
+const selectStyle = (hasError) => ({
+    height: '2.5rem',
+    padding: '0 0.75rem',
+    borderRadius: 'var(--radius-md)',
+    border: hasError ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
+    background: 'var(--color-bg-surface)',
+    color: 'var(--color-text-main)',
+});
+
+const StepCompanyInfo = ({ data, updateData, options, errors = {} }) => {
     const industries = options?.industries || [];
     const countries = options?.countries || [];
 
@@ -16,21 +31,18 @@ const StepCompanyInfo = ({ data, updateData, options }) => {
                 value={data.companyName}
                 onChange={(e) => updateData('companyName', e.target.value)}
                 startIcon={<Building2 size={18} />}
+                error={errors.companyName}
+                required
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>Industry</label>
+                <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>
+                    Industry
+                </label>
                 <select
                     value={data.industry}
                     onChange={(e) => updateData('industry', e.target.value)}
-                    style={{
-                        height: '2.5rem',
-                        padding: '0 0.75rem',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--color-border)',
-                        background: 'var(--color-bg-surface)',
-                        color: 'var(--color-text-main)'
-                    }}
+                    style={selectStyle(Boolean(errors.industry))}
                 >
                     <option value="">Select Industry...</option>
                     {industries.map((industry) => (
@@ -39,24 +51,31 @@ const StepCompanyInfo = ({ data, updateData, options }) => {
                         </option>
                     ))}
                 </select>
+                {errors.industry && <span style={fieldErrorStyle}>{errors.industry}</span>}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>Country</label>
+                <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>
+                    Country
+                </label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <Globe size={18} style={{ position: 'absolute', left: '0.75rem', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
+                    <Globe
+                        size={18}
+                        style={{
+                            position: 'absolute',
+                            left: '0.75rem',
+                            color: 'var(--color-text-muted)',
+                            pointerEvents: 'none',
+                        }}
+                    />
                     <select
                         value={data.country}
                         onChange={(e) => updateData('country', e.target.value)}
                         style={{
+                            ...selectStyle(Boolean(errors.country)),
                             width: '100%',
-                            height: '2.5rem',
                             paddingLeft: '2.5rem',
                             paddingRight: '0.75rem',
-                            borderRadius: 'var(--radius-md)',
-                            border: '1px solid var(--color-border)',
-                            background: 'var(--color-bg-surface)',
-                            color: 'var(--color-text-main)'
                         }}
                     >
                         <option value="">Select Country...</option>
@@ -67,6 +86,7 @@ const StepCompanyInfo = ({ data, updateData, options }) => {
                         ))}
                     </select>
                 </div>
+                {errors.country && <span style={fieldErrorStyle}>{errors.country}</span>}
             </div>
         </div>
     );
