@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/context/LanguageContext';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Download, Lock, RotateCcw, Search, Shield, X } from 'lucide-react';
@@ -36,8 +38,6 @@ const FilterChip = ({ active, onClick, label, icon }) => (
 );
 
 const ChartOfAccountsFilters = ({
-    t,
-    language,
     searchTerm,
     setSearchTerm,
     filterType,
@@ -50,6 +50,9 @@ const ChartOfAccountsFilters = ({
     onCollapseAll,
     onResetFilters,
 }) => {
+    const { t } = useTranslation('accounting');
+    const { dir } = useLanguage();
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -70,7 +73,7 @@ const ChartOfAccountsFilters = ({
                     </div>
                     <input
                         type="text"
-                        placeholder={t.searchPlaceholder}
+                        placeholder={t('chartOfAccounts.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(event) => setSearchTerm(event.target.value)}
                         style={{
@@ -82,7 +85,7 @@ const ChartOfAccountsFilters = ({
                             outline: 'none',
                             fontWeight: 500,
                             color: 'var(--color-text-main)',
-                            direction: language === 'ar' ? 'rtl' : 'ltr',
+                            direction: dir,
                         }}
                     />
                     {searchTerm && (
@@ -102,13 +105,13 @@ const ChartOfAccountsFilters = ({
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <Button variant="outline" onClick={() => exportToCSV(accountsForExport, 'CoA')} icon={<Download size={16} />}>
-                        {t.export}
+                        {t('chartOfAccounts.export')}
                     </Button>
                     <Button variant="ghost" onClick={onExpandAll} size="sm">
-                        {t.expandAll}
+                        {t('chartOfAccounts.expandAll')}
                     </Button>
                     <Button variant="ghost" onClick={onCollapseAll} size="sm">
-                        {t.collapseAll}
+                        {t('chartOfAccounts.collapseAll')}
                     </Button>
                 </div>
             </div>
@@ -118,7 +121,7 @@ const ChartOfAccountsFilters = ({
                     <FilterChip
                         active={filterType === 'All'}
                         onClick={() => setFilterType('All')}
-                        label={t.allTypes}
+                        label={t('chartOfAccounts.allTypes')}
                     />
                     {accountTypes.map((type) => (
                         <FilterChip
@@ -131,17 +134,17 @@ const ChartOfAccountsFilters = ({
                 </div>
 
                 <div style={chipWrapperStyle}>
-                    <FilterChip active={filterSource === 'All'} onClick={() => setFilterSource('All')} label={t.allSources} />
+                    <FilterChip active={filterSource === 'All'} onClick={() => setFilterSource('All')} label={t('chartOfAccounts.allSources')} />
                     <FilterChip
                         active={filterSource === 'System'}
                         onClick={() => setFilterSource('System')}
-                        label={t.systemOnly}
+                        label={t('chartOfAccounts.systemOnly')}
                         icon={<Lock size={12} />}
                     />
                     <FilterChip
                         active={filterSource === 'Custom'}
                         onClick={() => setFilterSource('Custom')}
-                        label={t.customOnly}
+                        label={t('chartOfAccounts.customOnly')}
                         icon={<Shield size={12} />}
                     />
                 </div>
@@ -154,7 +157,7 @@ const ChartOfAccountsFilters = ({
                         size="sm"
                         style={{ color: 'var(--color-danger-600)' }}
                     >
-                        {t.reset}
+                        {t('chartOfAccounts.reset')}
                     </Button>
                 )}
             </div>

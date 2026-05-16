@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/context/LanguageContext";
 import { useBasePath } from "@/hooks/useBasePath";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
@@ -14,6 +16,7 @@ import {
   Percent,
   Users,
   ArrowUpRight,
+  ArrowUpLeft,
   DollarSign,
   ShoppingCart,
   Package,
@@ -22,6 +25,7 @@ import {
   Upload,
   Shield,
   ArrowLeft,
+  ArrowRight,
   Hammer,
   Map,
   Box,
@@ -31,8 +35,8 @@ import {
   Wallet,
 } from "lucide-react";
 
-const normalizeRecentTransactionsResponse = (response) => ({
-  title: response?.title || "Recent Transactions",
+const normalizeRecentTransactionsResponse = (response, recentTransactionsTitle) => ({
+  title: response?.title || recentTransactionsTitle,
   items: Array.isArray(response?.items) ? response.items : [],
 });
 
@@ -93,9 +97,9 @@ const getTransactionColors = (transaction) => {
   };
 };
 
-const formatTransactionAmount = (amount, currency) => {
+const formatTransactionAmount = (amount, currency, locale) => {
   const numericAmount = Number(amount ?? 0);
-  const absoluteAmount = Math.abs(numericAmount).toLocaleString(undefined, {
+  const absoluteAmount = Math.abs(numericAmount).toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -105,7 +109,146 @@ const formatTransactionAmount = (amount, currency) => {
   return `${sign}${absoluteAmount}${currencySuffix}`;
 };
 
+const MONTH_INDEX = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+};
+
+const translateShortDateLabel = (value, locale) => {
+  const match = String(value || "").trim().match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
+  if (!match) return value;
+
+  const monthIndex = MONTH_INDEX[match[1].toLowerCase()];
+  if (monthIndex === undefined) return value;
+
+  const date = new Date(2026, monthIndex, Number(match[2]));
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "2-digit",
+  }).format(date);
+};
+
+const translateRecentTransactionWhen = (whenPart, t, locale) => {
+  const trimmed = String(whenPart || "").trim();
+  if (!trimmed) return trimmed;
+
+  const todayMatch = trimmed.match(/^today,\s*(.+)$/i);
+  if (todayMatch) {
+    return t("dashboard.recentTransactionItems.timeToday", {
+      time: todayMatch[1].trim(),
+    });
+  }
+
+  const yesterdayMatch = trimmed.match(/^yesterday,\s*(.+)$/i);
+  if (yesterdayMatch) {
+    return t("dashboard.recentTransactionItems.timeYesterday", {
+      time: yesterdayMatch[1].trim(),
+    });
+  }
+
+  const datedMatch = trimmed.match(/^([A-Za-z]{3}\s+\d{1,2}),\s*(.+)$/i);
+  if (datedMatch) {
+    return t("dashboard.recentTransactionItems.timeOnDate", {
+      date: translateShortDateLabel(datedMatch[1], locale),
+      time: datedMatch[2].trim(),
+    });
+  }
+
+  return trimmed;
+};
+
+const translateRecentTransaction = (transaction, t, locale) => {
+  const title = String(transaction?.title || "").trim();
+  const subtitle = String(transaction?.subtitle || "").trim();
+  const kind = String(transaction?.kind || "").toLowerCase();
+  const statusCode = String(
+    transaction?.status_code || transaction?.status || "",
+  )
+    .trim()
+    .toLowerCase();
+
+  let translatedTitle = title;
+  let translatedSubtitle = subtitle;
+
+  const newAssetMatch = title.match(/^new asset:\s*(.+)$/i);
+  if (newAssetMatch) {
+    translatedTitle = t("dashboard.recentTransactionItems.newAsset", {
+      name: newAssetMatch[1].trim(),
+    });
+  }
+
+  const goodsIssueMatch = title.match(/^goods issue\s*-\s*(.+)$/i);
+  if (goodsIssueMatch) {
+    translatedTitle = t("dashboard.recentTransactionItems.goodsIssue", {
+      reference: goodsIssueMatch[1].trim(),
+    });
+  }
+
+  const fixedAssetSubtitleMatch = subtitle.match(
+    /^fixed assets\s*-\s*(.+?)\s*-\s*(.+)$/i,
+  );
+  if (fixedAssetSubtitleMatch) {
+    translatedSubtitle = t("dashboard.recentTransactionItems.fixedAssetsSubtitle", {
+      name: fixedAssetSubtitleMatch[1].trim(),
+      when: translateRecentTransactionWhen(
+        fixedAssetSubtitleMatch[2],
+        t,
+        locale,
+      ),
+    });
+  }
+
+  const vendorSubtitleMatch = subtitle.match(
+    /^vendor:\s*(.+?)\s*-\s*(.+?)\s*-\s*(.+)$/i,
+  );
+  if (vendorSubtitleMatch) {
+    translatedSubtitle = t("dashboard.recentTransactionItems.vendorSubtitle", {
+      vendor: vendorSubtitleMatch[1].trim(),
+      detail: vendorSubtitleMatch[2].trim(),
+      when: translateRecentTransactionWhen(vendorSubtitleMatch[3], t, locale),
+    });
+  }
+
+  if (kind === "journal_entry" && translatedSubtitle === subtitle) {
+    const journalSubtitleMatch = subtitle.match(/^(.+?)\s*-\s*(.+)$/i);
+    if (journalSubtitleMatch) {
+      translatedSubtitle = t("dashboard.recentTransactionItems.journalSubtitle", {
+        account: journalSubtitleMatch[1].trim(),
+        when: translateRecentTransactionWhen(journalSubtitleMatch[2], t, locale),
+      });
+    }
+  }
+
+  const statusKey = statusCode ? `common:status.${statusCode}` : "";
+  const translatedStatus =
+    statusKey && t(statusKey, { defaultValue: "" })
+      ? t(statusKey)
+      : transaction?.status || t("common:status.posted");
+
+  return {
+    ...transaction,
+    title: translatedTitle,
+    subtitle: translatedSubtitle,
+    status: translatedStatus,
+  };
+};
+
 const AccountingDashboard = () => {
+  const { t, i18n } = useTranslation(['accounting', 'common']);
+  const { dir } = useLanguage();
+  const isRtl = dir === "rtl";
+  const BackIcon = isRtl ? ArrowRight : ArrowLeft;
+  const ViewAllIcon = isRtl ? ArrowUpLeft : ArrowUpRight;
   const navigate = useNavigate();
   const basePath = useBasePath();
   const [isRecentTransactionsOpen, setIsRecentTransactionsOpen] =
@@ -113,13 +256,19 @@ const AccountingDashboard = () => {
   const recentTransactionsQuery = useCustomQuery(
     "/api/shared/dashboard/recent-transactions/",
     ["shared-dashboard-recent-transactions"],
-    { select: normalizeRecentTransactionsResponse },
+    { select: (response) => normalizeRecentTransactionsResponse(response, t('dashboard.recentTransactions')) },
   );
 
-  const recentTransactionsTitle =
-    recentTransactionsQuery.data?.title || "Recent Transactions";
+  const recentTransactionsTitle = t("dashboard.recentTransactions");
   const recentTransactions = recentTransactionsQuery.data?.items ?? [];
-  const previewTransactions = recentTransactions.slice(0, 4);
+  const translatedTransactions = useMemo(
+    () =>
+      recentTransactions.map((transaction) =>
+        translateRecentTransaction(transaction, t, i18n.language),
+      ),
+    [recentTransactions, t, i18n.language],
+  );
+  const previewTransactions = translatedTransactions.slice(0, 4);
 
   useEffect(() => {
     if (!isRecentTransactionsOpen) return undefined;
@@ -153,9 +302,10 @@ const AccountingDashboard = () => {
         >
           <Button
             variant="ghost"
-            icon={<ArrowLeft size={18} />}
+            icon={<BackIcon size={18} />}
             onClick={() => navigate(`${basePath}/dashboard`)}
             className="cursor-pointer shrink-0"
+            aria-label={t("common:actions.back")}
           />
           <div>
             <h1
@@ -165,10 +315,10 @@ const AccountingDashboard = () => {
                 color: "var(--color-text-main)",
               }}
             >
-              Accounting
+              {t('dashboard.title')}
             </h1>
             <p style={{ color: "var(--color-text-secondary)" }}>
-              Manage your general ledger, accounts, and transactions.
+              {t('dashboard.subtitle')}
             </p>
           </div>
         </div>
@@ -178,7 +328,7 @@ const AccountingDashboard = () => {
             onClick={() => navigate("journal/new")}
             className="cursor-pointer"
           >
-            New Journal Entry
+            {t('dashboard.newJournalEntry')}
           </Button>
         </div>
       </div>
@@ -201,7 +351,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Chart of Accounts
+            {t('dashboard.cards.chartOfAccounts.title')}
           </h3>
           <p
             style={{
@@ -209,7 +359,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Manage account structure.
+            {t('dashboard.cards.chartOfAccounts.description')}
           </p>
         </Card>
 
@@ -230,7 +380,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            General Ledger
+            {t('dashboard.cards.generalLedger.title')}
           </h3>
           <p
             style={{
@@ -238,7 +388,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            View account history.
+            {t('dashboard.cards.generalLedger.description')}
           </p>
         </Card>
 
@@ -259,7 +409,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Journal Entries
+            {t('dashboard.cards.journalEntries.title')}
           </h3>
           <p
             style={{
@@ -267,7 +417,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            View & edit entries.
+            {t('dashboard.cards.journalEntries.description')}
           </p>
         </Card>
 
@@ -288,7 +438,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Sales Invoices
+            {t('dashboard.cards.salesInvoices.title')}
           </h3>
           <p
             style={{
@@ -296,7 +446,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Manage billing & revenue.
+            {t('dashboard.cards.salesInvoices.description')}
           </p>
         </Card>
 
@@ -317,7 +467,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Products & Services
+            {t('dashboard.cards.productsServices.title')}
           </h3>
           <p
             style={{
@@ -325,7 +475,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Manage your catalog.
+            {t('dashboard.cards.productsServices.description')}
           </p>
         </Card>
 
@@ -346,7 +496,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Customers
+            {t('dashboard.cards.customers.title')}
           </h3>
           <p
             style={{
@@ -354,7 +504,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Manage client profiles.
+            {t('dashboard.cards.customers.description')}
           </p>
         </Card>
 
@@ -375,7 +525,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Bank & Cash
+            {t('dashboard.cards.bankCash.title')}
           </h3>
           <p
             style={{
@@ -383,7 +533,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Treasury management.
+            {t('dashboard.cards.bankCash.description')}
           </p>
         </Card>
 
@@ -404,7 +554,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Fixed Assets
+            {t('dashboard.cards.fixedAssets.title')}
           </h3>
           <p
             style={{
@@ -412,7 +562,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Track depreciation.
+            {t('dashboard.cards.fixedAssets.description')}
           </p>
         </Card>
 
@@ -433,7 +583,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Trial Balance
+            {t('dashboard.cards.trialBalance.title')}
           </h3>
           <p
             style={{
@@ -441,7 +591,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Debit/Credit totals.
+            {t('dashboard.cards.trialBalance.description')}
           </p>
         </Card>
 
@@ -462,7 +612,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Accountant Payment
+            {t('dashboard.cards.accountantPayment.title')}
           </h3>
           <p
             style={{
@@ -470,7 +620,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Payroll payables and bank disbursements.
+            {t('dashboard.cards.accountantPayment.description')}
           </p>
         </Card>
 
@@ -491,7 +641,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Reports Center
+            {t('dashboard.cards.reportsCenter.title')}
           </h3>
           <p
             style={{
@@ -499,7 +649,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            P&L, Balance Sheet.
+            {t('dashboard.cards.reportsCenter.description')}
           </p>
         </Card>
         <Card
@@ -526,7 +676,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Vendor Payments
+            {t('dashboard.cards.vendorPayments.title')}
           </h3>
           <p
             style={{
@@ -534,7 +684,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Approval workflow.
+            {t('dashboard.cards.vendorPayments.description')}
           </p>
           <div
             style={{
@@ -547,7 +697,7 @@ const AccountingDashboard = () => {
               display: "inline-block",
             }}
           >
-            Approvals Needed
+            {t('dashboard.approvalsNeeded')}
           </div>
         </Card>
 
@@ -568,7 +718,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Bank Import
+            {t('dashboard.cards.bankImport.title')}
           </h3>
           <p
             style={{
@@ -576,7 +726,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Import bank statements.
+            {t('dashboard.cards.bankImport.description')}
           </p>
         </Card>
 
@@ -607,7 +757,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-main)",
             }}
           >
-            Audit Management
+            {t('dashboard.cards.auditManagement.title')}
           </h3>
           <p
             style={{
@@ -615,7 +765,7 @@ const AccountingDashboard = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            External audit & seal.
+            {t('dashboard.cards.auditManagement.description')}
           </p>
         </Card>
       </div>
@@ -642,12 +792,12 @@ const AccountingDashboard = () => {
           <Button
             variant="ghost"
             size="sm"
-            icon={<ArrowUpRight size={16} />}
+            icon={<ViewAllIcon size={16} />}
             onClick={() => setIsRecentTransactionsOpen(true)}
-            disabled={recentTransactions.length === 0}
+            disabled={translatedTransactions.length === 0}
             className="cursor-pointer"
           >
-            View All
+            {t('dashboard.viewAll')}
           </Button>
         </div>
 
@@ -656,13 +806,13 @@ const AccountingDashboard = () => {
 
           {recentTransactionsQuery.isError && (
             <div style={{ padding: "1rem 0", color: "var(--color-error)" }}>
-              Could not load recent transactions.
+              {t('dashboard.loadTransactionsFailed')}
             </div>
           )}
 
           {!recentTransactionsQuery.isPending &&
             !recentTransactionsQuery.isError &&
-            recentTransactions.length === 0 && (
+            translatedTransactions.length === 0 && (
               <div
                 style={{
                   padding: "1rem 0",
@@ -670,7 +820,7 @@ const AccountingDashboard = () => {
                   color: "var(--color-text-muted)",
                 }}
               >
-                No recent transactions.
+                {t('dashboard.noRecentTransactions')}
               </div>
             )}
 
@@ -688,6 +838,7 @@ const AccountingDashboard = () => {
                   amount={formatTransactionAmount(
                     transaction.amount,
                     transaction.currency,
+                    i18n.language,
                   )}
                   status={transaction.status}
                   {...colors}
@@ -700,7 +851,8 @@ const AccountingDashboard = () => {
       {isRecentTransactionsOpen && (
         <RecentTransactionsModal
           title={recentTransactionsTitle}
-          transactions={recentTransactions}
+          transactions={translatedTransactions}
+          locale={i18n.language}
           onClose={() => setIsRecentTransactionsOpen(false)}
         />
       )}
@@ -708,7 +860,10 @@ const AccountingDashboard = () => {
   );
 };
 
-const RecentTransactionsModal = ({ title, transactions, onClose }) => (
+const RecentTransactionsModal = ({ title, transactions, locale, onClose }) => {
+  const { t } = useTranslation(['accounting', 'common']);
+
+  return (
   <div
     role="presentation"
     onClick={onClose}
@@ -769,7 +924,7 @@ const RecentTransactionsModal = ({ title, transactions, onClose }) => (
               color: "var(--color-text-secondary)",
             }}
           >
-            Showing {transactions.length} transactions
+            {t('dashboard.showingTransactions', { count: transactions.length })}
           </p>
         </div>
         <Button
@@ -800,6 +955,7 @@ const RecentTransactionsModal = ({ title, transactions, onClose }) => (
               amount={formatTransactionAmount(
                 transaction.amount,
                 transaction.currency,
+                locale,
               )}
               status={transaction.status}
               {...colors}
@@ -809,7 +965,8 @@ const RecentTransactionsModal = ({ title, transactions, onClose }) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 const TransactionItem = ({
   icon,
@@ -820,7 +977,12 @@ const TransactionItem = ({
   bg,
   iconColor,
   status,
-}) => (
+}) => {
+  const { t } = useTranslation("common");
+  const { dir } = useLanguage();
+  const isRtl = dir === "rtl";
+
+  return (
   <div
     style={{
       display: "flex",
@@ -864,7 +1026,7 @@ const TransactionItem = ({
         </div>
       </div>
     </div>
-    <div style={{ textAlign: "right" }}>
+    <div style={{ textAlign: isRtl ? "left" : "right" }}>
       <span
         style={{
           display: "block",
@@ -885,10 +1047,11 @@ const TransactionItem = ({
           fontWeight: 600,
         }}
       >
-        {status || "Posted"}
+        {status || t('status.posted')}
       </span>
     </div>
   </div>
-);
+  );
+};
 
 export default AccountingDashboard;

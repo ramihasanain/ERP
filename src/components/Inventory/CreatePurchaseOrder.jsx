@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -33,7 +34,7 @@ const CreatePurchaseOrder = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)}>Back</Button>
+                <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)}>{t('actions.back', { ns: 'common' })}</Button>
                 <div>
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>New Purchase Order</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Order stock from suppliers.</p>
@@ -126,7 +127,7 @@ const CreatePurchaseOrder = () => {
                     </div>
 
                     <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-                        <Button variant="ghost" onClick={() => navigate(-1)}>Cancel</Button>
+                        <Button variant="ghost" onClick={() => navigate(-1)}>{t('actions.cancel', { ns: 'common' })}</Button>
                         <Button icon={<Save size={18} />}>Create Order</Button>
                     </div>
                 </div>

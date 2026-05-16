@@ -1,0 +1,94 @@
+{
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "create": "Erstellen",
+    "update": "Aktualisieren",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "submit": "Absenden",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "reset": "Zurücksetzen",
+    "export": "Exportieren",
+    "import": "Importieren",
+    "refresh": "Aktualisieren",
+    "view": "Anzeigen",
+    "download": "Herunterladen",
+    "upload": "Hochladen",
+    "discard": "Verwerfen",
+    "apply": "Anwenden",
+    "clear": "Leeren",
+    "yes": "Ja",
+    "no": "Nein",
+    "loading": "Wird geladen...",
+    "retry": "Erneut versuchen"
+  },
+  "status": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "pending": "Ausstehend",
+    "approved": "Genehmigt",
+    "rejected": "Abgelehnt",
+    "draft": "Entwurf",
+    "posted": "Gebucht",
+    "cancelled": "Storniert",
+    "completed": "Abgeschlossen",
+    "all": "Alle"
+  },
+  "table": {
+    "noData": "Keine Daten verfügbar",
+    "noResults": "Keine Ergebnisse gefunden",
+    "actions": "Aktionen",
+    "showing": "{{from}}–{{to}} von {{total}} angezeigt",
+    "rowsPerPage": "Zeilen pro Seite"
+  },
+  "empty": {
+    "title": "Noch nichts hier",
+    "description": "Erstellen Sie Ihren ersten Eintrag."
+  },
+  "language": {
+    "label": "Sprache",
+    "ariaLabel": "Sprache auswählen",
+    "listboxLabel": "Sprachen"
+  },
+  "theme": {
+    "light": "Heller Modus",
+    "dark": "Dunkler Modus"
+  },
+  "user": "Benutzer",
+  "guest": "Gast",
+  "notAvailable": "—",
+  "pagination": {
+    "pageOf": "Seite {{current}} von {{total}}",
+    "prev": "Zurück",
+    "next": "Weiter"
+  },
+  "resourceLoadError": {
+    "title": "Diese Seite kann nicht geladen werden",
+    "fallback": "Die Daten konnten nicht geladen werden. Möglicherweise haben Sie keinen Zugriff oder die Ressource ist nicht verfügbar.",
+    "goBack": "Zurück",
+    "refresh": "Seite aktualisieren"
+  },
+  "noData": {
+    "title": "Keine Daten verfügbar",
+    "titleWithLabel": "Noch kein {{label}}",
+    "description": "Derzeit sind keine Daten vorhanden.",
+    "descriptionWithLabel": "Derzeit sind keine {{label}}-Daten vorhanden."
+  },
+  "header": {
+    "openNav": "Navigationsmenü öffnen",
+    "menu": "Menü"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "employee": "Mitarbeiter",
+    "accountant": "Buchhalter",
+    "manager": "Manager"
+  }
+}

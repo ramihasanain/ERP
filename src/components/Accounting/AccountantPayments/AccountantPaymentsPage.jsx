@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
 import { useBasePath } from "@/hooks/useBasePath";
 import Card from "@/components/Shared/Card";
@@ -49,10 +50,18 @@ const getStatusBadgeStyles = (status) => {
   };
 };
 
-const humanizeStatus = (status) => {
+const getPayrollStatusLabel = (status, t) => {
   const normalized = String(status ?? "").toLowerCase();
   if (!normalized) return "—";
-  if (normalized === "partially_paid") return "Partially Paid";
+  if (normalized === "partially_paid") {
+    return t("accountantPayments.status.partiallyPaid");
+  }
+  if (normalized === "posted") {
+    return t("accountantPayments.status.posted");
+  }
+  if (normalized === "paid") {
+    return t("accountantPayments.status.paid");
+  }
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
@@ -75,6 +84,7 @@ const formatDate = (value) => {
 };
 
 const TerminationPayModal = ({ row, onClose, onPaid }) => {
+  const { t } = useTranslation(["accounting", "common"]);
   const [bankSearchTerm, setBankSearchTerm] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
 
@@ -119,13 +129,15 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
     if (!employeeId || !bankAccountId) return;
     try {
       await payMutation.mutateAsync({ bank_account_id: bankAccountId });
-      toast.success("Termination payment recorded.");
+      toast.success(t("accountantPayments.terminationModal.successToast"));
       onPaid?.();
       onClose();
     } catch (e) {
       const detail = e?.response?.data?.detail;
       toast.error(
-        typeof detail === "string" ? detail : "Payment failed.",
+        typeof detail === "string"
+          ? detail
+          : t("accountantPayments.terminationModal.errorToast"),
       );
     }
   };
@@ -169,7 +181,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
           type="button"
           onClick={onClose}
           className="cursor-pointer"
-          aria-label="Close"
+          aria-label={t("common:actions.close")}
           style={{
             position: "absolute",
             top: "0.75rem",
@@ -190,7 +202,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
           id="pay-termination-title"
           style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0 2rem 1rem 0" }}
         >
-          Pay termination
+          {t("accountantPayments.terminationModal.title")}
         </h3>
 
         <div
@@ -209,7 +221,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Employee
+              {t("accountantPayments.terminationModal.employee")}
             </div>
             <div style={{ fontWeight: 600 }}>{row.employee_name || "—"}</div>
           </div>
@@ -221,7 +233,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Net payable
+              {t("accountantPayments.terminationModal.netPayable")}
             </div>
             <div style={{ fontWeight: 600 }}>{formatMoneyAmount(row.net_payable, "USD")}</div>
           </div>
@@ -233,7 +245,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Date
+              {t("accountantPayments.terminationModal.date")}
             </div>
             <div style={{ fontWeight: 600 }}>{formatDate(row.date)}</div>
           </div>
@@ -248,7 +260,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
               marginBottom: "0.5rem",
             }}
           >
-            Bank account
+            {t("accountantPayments.terminationModal.bankAccount")}
           </label>
           <SearchableSelectBackend
             value={bankAccountId}
@@ -256,8 +268,8 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
             options={bankOptions}
             searchTerm={bankSearchTerm}
             onSearchChange={setBankSearchTerm}
-            placeholder="Search bank accounts..."
-            emptyLabel="No bank accounts found"
+            placeholder={t("accountantPayments.terminationModal.searchBankPlaceholder")}
+            emptyLabel={t("accountantPayments.terminationModal.noBankAccounts")}
             getOptionLabel={(option) =>
               [
                 option?.account_code,
@@ -275,7 +287,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
           <Button variant="outline" className="cursor-pointer" onClick={onClose}>
-            Cancel
+            {t("common:actions.cancel")}
           </Button>
           <Button
             variant="primary"
@@ -284,7 +296,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
             isLoading={payMutation.isPending}
             onClick={handlePay}
           >
-            Pay
+            {t("accountantPayments.termination.pay")}
           </Button>
         </div>
       </Card>
@@ -293,6 +305,7 @@ const TerminationPayModal = ({ row, onClose, onPaid }) => {
 };
 
 const AccountantPaymentsPage = () => {
+  const { t } = useTranslation(["accounting", "common"]);
   const navigate = useNavigate();
   const basePath = useBasePath();
   const [activeTab, setActiveTab] = useState("payroll");
@@ -341,10 +354,10 @@ const AccountantPaymentsPage = () => {
         <div className={styles.pageHeader} style={{ flex: 1, paddingBottom: 0 }}>
           <div>
             <h2 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-              Accountant Payment
+              {t("accountantPayments.title")}
             </h2>
             <p style={{ color: "var(--color-text-secondary)" }}>
-              Record payroll disbursements by period and category.
+              {t("accountantPayments.subtitle")}
             </p>
           </div>
         </div>
@@ -380,7 +393,7 @@ const AccountantPaymentsPage = () => {
           }}
         >
           <BarChart2 size={18} />
-          Payroll Payment
+          {t("accountantPayments.tabs.payroll")}
         </button>
         <button
           type="button"
@@ -405,7 +418,7 @@ const AccountantPaymentsPage = () => {
           }}
         >
           <List size={18} />
-          Termination Payment
+          {t("accountantPayments.tabs.termination")}
         </button>
       </div>
 
@@ -415,7 +428,7 @@ const AccountantPaymentsPage = () => {
           {payrollError && (
             <ResourceLoadError
               error={dashboardQuery.error}
-              title="Could not load payroll dashboard"
+              title={t("accountantPayments.payroll.loadFailed")}
               onGoBack={() => navigate(`${basePath}/accounting`)}
               onRefresh={() => dashboardQuery.refetch()}
             />
@@ -429,7 +442,7 @@ const AccountantPaymentsPage = () => {
                   marginTop: "0.25rem",
                 }}
               >
-                Payroll Periods
+                {t("accountantPayments.payroll.periodsTitle")}
               </h3>
               <Card className="padding-none">
                 <div className="overflow-x-auto">
@@ -455,7 +468,7 @@ const AccountantPaymentsPage = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Period Name
+                          {t("accountantPayments.payroll.colPeriodName")}
                         </th>
                         <th
                           style={{
@@ -464,7 +477,7 @@ const AccountantPaymentsPage = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Status
+                          {t("accountantPayments.payroll.colStatus")}
                         </th>
                         <th
                           style={{
@@ -473,17 +486,7 @@ const AccountantPaymentsPage = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Employees
-                        </th>
-                        <th
-                          style={{
-                            padding: "0.75rem 1rem",
-                            color: "var(--color-text-secondary)",
-                            fontWeight: 600,
-                            textAlign: "right",
-                          }}
-                        >
-                          Total Net
+                          {t("accountantPayments.payroll.colEmployees")}
                         </th>
                         <th
                           style={{
@@ -493,7 +496,17 @@ const AccountantPaymentsPage = () => {
                             textAlign: "right",
                           }}
                         >
-                          Actions
+                          {t("accountantPayments.payroll.colTotalNet")}
+                        </th>
+                        <th
+                          style={{
+                            padding: "0.75rem 1rem",
+                            color: "var(--color-text-secondary)",
+                            fontWeight: 600,
+                            textAlign: "right",
+                          }}
+                        >
+                          {t("accountantPayments.payroll.colActions")}
                         </th>
                       </tr>
                     </thead>
@@ -508,13 +521,13 @@ const AccountantPaymentsPage = () => {
                               textAlign: "center",
                             }}
                           >
-                            No payroll periods yet.
+                            {t("accountantPayments.payroll.noPeriods")}
                           </td>
                         </tr>
                       ) : (
                         periodRows.map((period) => {
                           const badgeStyles = getStatusBadgeStyles(period.status);
-                          const statusLabel = humanizeStatus(period.status);
+                          const statusLabel = getPayrollStatusLabel(period.status, t);
                           return (
                             <tr
                               key={period.id}
@@ -574,7 +587,7 @@ const AccountantPaymentsPage = () => {
                                     )
                                   }
                                 >
-                                  View Details
+                                  {t("accountantPayments.payroll.viewDetails")}
                                 </Button>
                               </td>
                             </tr>
@@ -594,7 +607,7 @@ const AccountantPaymentsPage = () => {
           {terminationError && (
             <ResourceLoadError
               error={terminationsQuery.error}
-              title="Could not load finalized terminations"
+              title={t("accountantPayments.termination.loadFailed")}
               onGoBack={() => navigate(`${basePath}/accounting`)}
               onRefresh={() => terminationsQuery.refetch()}
             />
@@ -608,7 +621,7 @@ const AccountantPaymentsPage = () => {
                   marginTop: "0.25rem",
                 }}
               >
-                Termination Payments
+                {t("accountantPayments.termination.title")}
               </h3>
               <Card className="padding-none">
                 <div className="overflow-x-auto">
@@ -635,7 +648,7 @@ const AccountantPaymentsPage = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Employee
+                          {t("accountantPayments.termination.colEmployee")}
                         </th>
                         <th
                           style={{
@@ -644,7 +657,7 @@ const AccountantPaymentsPage = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Termination Type
+                          {t("accountantPayments.termination.colTerminationType")}
                         </th>
                         <th
                           style={{
@@ -653,26 +666,7 @@ const AccountantPaymentsPage = () => {
                             fontWeight: 600,
                           }}
                         >
-                          Date
-                        </th>
-                        <th
-                          style={{
-                            padding: "0.75rem 1rem",
-                            color: "var(--color-text-secondary)",
-                            fontWeight: 600,
-                            textAlign: "right",
-                          }}
-                        >
-                          Net Payable
-                        </th>
-                        <th
-                          style={{
-                            padding: "0.75rem 1rem",
-                            color: "var(--color-text-secondary)",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Status
+                          {t("accountantPayments.termination.colDate")}
                         </th>
                         <th
                           style={{
@@ -682,7 +676,26 @@ const AccountantPaymentsPage = () => {
                             textAlign: "right",
                           }}
                         >
-                          Actions
+                          {t("accountantPayments.termination.colNetPayable")}
+                        </th>
+                        <th
+                          style={{
+                            padding: "0.75rem 1rem",
+                            color: "var(--color-text-secondary)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {t("accountantPayments.termination.colStatus")}
+                        </th>
+                        <th
+                          style={{
+                            padding: "0.75rem 1rem",
+                            color: "var(--color-text-secondary)",
+                            fontWeight: 600,
+                            textAlign: "right",
+                          }}
+                        >
+                          {t("accountantPayments.termination.colActions")}
                         </th>
                       </tr>
                     </thead>
@@ -697,7 +710,7 @@ const AccountantPaymentsPage = () => {
                               textAlign: "center",
                             }}
                           >
-                            No finalized terminations found.
+                            {t("accountantPayments.termination.noRows")}
                           </td>
                         </tr>
                       ) : (
@@ -754,7 +767,7 @@ const AccountantPaymentsPage = () => {
                                     className="cursor-pointer"
                                     onClick={() => setTerminationToPay(row)}
                                   >
-                                    Pay
+                                    {t("accountantPayments.termination.pay")}
                                   </Button>
                                 ) : (
                                   <span style={{ color: "var(--color-text-muted)" }}>—</span>

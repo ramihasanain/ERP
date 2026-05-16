@@ -1,17 +1,14 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Search } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 
 const FILTERS = ['All', 'Active', 'On Hold', 'Completed'];
 
-const ProjectsHeaderFilters = ({
-    searchTerm,
-    onSearchTermChange,
-    filterStatus,
-    onFilterStatusChange,
-    onCreateProject,
-}) => (
+const ProjectsHeaderFilters = () => {
+    const { t } = useTranslation(['hr', 'common']);
+    return (
     <>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -84,6 +81,7 @@ const ProjectsHeaderFilters = ({
             </div>
         </Card>
     </>
-);
+    );
+};
 
 export default ProjectsHeaderFilters;

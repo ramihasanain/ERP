@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, FileText } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPatch } from '@/hooks/useMutation';
 import { toast } from 'sonner';
+import translateApiError from '@/utils/translateApiError';
 
 const toTitleCase = (value = '') =>
     String(value)
@@ -56,6 +58,7 @@ const normalizeBillDetails = (bill) => {
 };
 
 const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
+    const { t } = useTranslation(['procurement', 'common']);
     const billDetailsQuery = useCustomQuery(
         billId ? `/api/purchasing/bills/${billId}/` : '/api/purchasing/bills/',
         ['purchasing-bill-details', billId],
@@ -166,11 +169,10 @@ const VendorBillDetailsModal = ({ billId, isOpen, onClose }) => {
             setIsSubmittingPost(true);
             await updateBillAccountMutation.mutateAsync(payload);
             setIsPostedLocked(true);
-            toast.success('Bill sent to finance successfully.');
+            toast.success(t('vendorBillDetails.sendSuccess'));
             onClose();
         } catch (error) {
-            const message = error?.response?.data?.detail || error?.message || 'Failed to send bill to finance.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'procurement:vendorBillDetails.sendFailed'));
         } finally {
             setIsSubmittingPost(false);
         }

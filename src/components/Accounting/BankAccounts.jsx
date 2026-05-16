@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import translateApiError from '@/utils/translateApiError';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { useAccounting } from '@/context/AccountingContext';
@@ -14,6 +16,7 @@ import { toast } from 'sonner';
 import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 
 const BankAccounts = () => {
+    const { t } = useTranslation(['accounting', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const { openDrawer } = useAccounting();
@@ -48,12 +51,12 @@ const BankAccounts = () => {
         e.preventDefault();
 
         if (!fromAccountId || !toAccountId) {
-            toast.error('Please select both from and to accounts.');
+            toast.error(t('bankAccounts.selectAccounts'));
             return;
         }
 
         if (!transferAmount || Number(transferAmount) <= 0) {
-            toast.error('Please enter a valid transfer amount.');
+            toast.error(t('bankAccounts.invalidAmount'));
             return;
         }
 
@@ -65,13 +68,13 @@ const BankAccounts = () => {
                 to_account: toAccountId,
                 amount: Number(transferAmount).toFixed(2),
                 date: transferDate,
-                description: transferDescription || 'Internal transfer',
+                description: transferDescription || t('bankAccounts.internalTransfer'),
             });
 
-            toast.success('Funds transferred successfully!');
+            toast.success(t('bankAccounts.transferSuccess'));
             closeTransferModal();
         } catch (error) {
-            toast.error(getApiErrorMessage(error, 'Failed to transfer funds.'));
+            toast.error(translateApiError(error, 'accounting:bankAccounts.transferFailed'));
         } finally {
             setIsTransferSubmitting(false);
         }
@@ -123,7 +126,7 @@ const BankAccounts = () => {
 
     const bankAccounts = (bankAccountsQuery.data ?? []).map((account) => ({
         ...account,
-        type: account.account_type === 'cash' ? 'Cash' : 'Bank',
+        type: account.account_type === 'cash' ? 'cash' : 'bank',
         accountNumber: account.account_number || '',
         currency: account.currency_code || '',
         currentBalance: Number(account.current_balance ?? 0),
@@ -142,33 +145,33 @@ const BankAccounts = () => {
                         className="cursor-pointer shrink-0"
                     />
                     <div>
-                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Bank & Cash</h1>
-                        <p style={{ color: 'var(--color-text-secondary)' }}>Treasury management and reconciliation.</p>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('bankAccounts.title')}</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{t('bankAccounts.subtitle')}</p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
                     <Button icon={<ArrowRightLeft size={18} />} onClick={() => {
                         resetTransferForm();
                         setShowTransferModal(true);
-                    }} className="cursor-pointer">Transfer Funds</Button>
-                    <Button icon={<Plus size={18} />} onClick={() => navigate('new')} className="cursor-pointer">Add Account</Button>
+                    }} className="cursor-pointer">{t('bankAccounts.transferFunds')}</Button>
+                    <Button icon={<Plus size={18} />} onClick={() => navigate('new')} className="cursor-pointer">{t('bankAccounts.addAccount')}</Button>
                 </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                 {bankAccountsQuery.isPending && (
                     <Card className="padding-lg">
-                        <p style={{ color: 'var(--color-text-secondary)' }}>Loading accounts...</p>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{t('bankAccounts.loadingAccounts')}</p>
                     </Card>
                 )}
                 {bankAccountsQuery.isError && (
                     <Card className="padding-lg">
-                        <p style={{ color: 'var(--color-danger-600)' }}>Failed to load bank accounts.</p>
+                        <p style={{ color: 'var(--color-danger-600)' }}>{t('bankAccounts.loadFailed')}</p>
                     </Card>
                 )}
                 {!bankAccountsQuery.isPending && !bankAccountsQuery.isError && bankAccounts.length === 0 && (
                     <Card className="padding-lg">
-                        <p style={{ color: 'var(--color-text-secondary)' }}>No accounts found.</p>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{t('bankAccounts.noAccounts')}</p>
                     </Card>
                 )}
                 {bankAccounts.map(account => (
@@ -176,7 +179,7 @@ const BankAccounts = () => {
                         key={account.id}
                         className="padding-lg"
                         style={{
-                            borderLeft: `4px solid ${account.type === 'Bank' ? 'var(--color-primary-600)' : 'var(--color-slate-500)'}`,
+                            borderLeft: `4px solid ${account.type === 'bank' ? 'var(--color-primary-600)' : 'var(--color-slate-500)'}`,
                             position: 'relative'
                         }}
                     >
@@ -185,7 +188,7 @@ const BankAccounts = () => {
                                 onClick={() => openEditModal(account)}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '4px', color: 'var(--color-slate-400)' }}
                                 className="erp-table-row-hover"
-                                title="Edit Account"
+                                title={t('bankAccounts.editAccount')}
                             >
                                 <Edit3 size={16} />
                             </button>
@@ -194,7 +197,7 @@ const BankAccounts = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', marginTop: '0.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <div style={{ padding: '0.5rem', background: 'var(--color-bg-subtle)', borderRadius: '0.5rem' }}>
-                                    <Landmark size={24} color={account.type === 'Bank' ? 'var(--color-primary-600)' : 'var(--color-slate-600)'} />
+                                    <Landmark size={24} color={account.type === 'bank' ? 'var(--color-primary-600)' : 'var(--color-slate-600)'} />
                                 </div>
                                 <div>
                                     <h3 style={{ fontWeight: 600 }}>{account.name}</h3>
@@ -206,11 +209,14 @@ const BankAccounts = () => {
                             {account.currency} {account.currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
-                            Opening: {account.currency} {account.openingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {t('bankAccounts.openingBalance', {
+                                currency: account.currency,
+                                amount: account.openingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                            })}
                         </div>
                         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: account.isActive ? 'var(--color-success)' : 'var(--color-danger-600)' }}></span>
-                            {account.isActive ? 'Active' : 'Inactive'}
+                            {account.isActive ? t('common:status.active') : t('common:status.inactive')}
                         </p>
                         <Button
                             variant="outline"
@@ -219,7 +225,7 @@ const BankAccounts = () => {
                             onClick={() => openDrawer('Bank', account.id)}
                             style={{ width: '100%', justifyContent: 'center' }}
                         >
-                            View Activity
+                            {t('bankAccounts.viewActivity')}
                         </Button>
                     </Card>
                 ))}
@@ -238,7 +244,7 @@ const BankAccounts = () => {
                 <div style={modalOverlayStyle}>
                     <Card className="padding-lg" style={{ width: '500px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Transfer Funds</h3>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{t('bankAccounts.transferTitle')}</h3>
                             <button onClick={closeTransferModal} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                                 <X size={20} />
                             </button>
@@ -247,7 +253,7 @@ const BankAccounts = () => {
                         <form onSubmit={handleTransfer} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>From Account</label>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>{t('bankAccounts.fromAccount')}</label>
                                     <select
                                         value={fromAccountId}
                                         onChange={handleFromAccountChange}
@@ -260,7 +266,7 @@ const BankAccounts = () => {
                                             color: 'var(--color-text-main)'
                                         }}
                                     >
-                                        <option value="">Select from account</option>
+                                        <option value="">{t('bankAccounts.selectFromAccount')}</option>
                                         {bankAccounts.map((account) => (
                                             <option
                                                 key={`from-${account.id}`}
@@ -293,7 +299,7 @@ const BankAccounts = () => {
                                             color: 'var(--color-text-main)'
                                         }}
                                     >
-                                        <option value="">Select to account</option>
+                                        <option value="">{t('bankAccounts.selectToAccount')}</option>
                                         {bankAccounts.map((account) => (
                                             <option
                                                 key={`to-${account.id}`}
@@ -312,12 +318,12 @@ const BankAccounts = () => {
                             </div>
                             {conflictSide && (
                                 <p style={{ color: 'var(--color-danger-600)', fontSize: '0.8rem', marginTop: '-0.5rem' }}>
-                                    You selected the same account on both sides. The other side was reset to default.
+                                    {t('bankAccounts.sameAccountConflict')}
                                 </p>
                             )}
 
                             <Input
-                                label="Amount (JOD)"
+                                label={t('bankAccounts.amountLabel')}
                                 type="number"
                                 placeholder="0.00"
                                 value={transferAmount}
@@ -325,23 +331,23 @@ const BankAccounts = () => {
                                 required
                             />
                             <Input
-                                label="Date"
+                                label={t('bankAccounts.date')}
                                 type="date"
                                 value={transferDate}
                                 onChange={(e) => setTransferDate(e.target.value)}
                                 required
                             />
                             <Input
-                                label="Description / Reference"
-                                placeholder="e.g., Petty Cash Replenishment"
+                                label={t('bankAccounts.descriptionReference')}
+                                placeholder={t('bankAccounts.descriptionPlaceholder')}
                                 value={transferDescription}
                                 onChange={(e) => setTransferDescription(e.target.value)}
                             />
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                                <Button variant="ghost" type="button" onClick={closeTransferModal}>Cancel</Button>
+                                <Button variant="ghost" type="button" onClick={closeTransferModal}>{t('common.cancel')}</Button>
                                 <Button type="submit" disabled={isTransferSubmitting}>
-                                    {isTransferSubmitting ? 'Transferring...' : 'Complete Transfer'}
+                                    {isTransferSubmitting ? t('bankAccounts.transferring') : t('bankAccounts.completeTransfer')}
                                 </Button>
                             </div>
                         </form>
@@ -353,6 +359,7 @@ const BankAccounts = () => {
 };
 
 const EditBankModal = ({ account, onClose }) => {
+    const { t } = useTranslation(['accounting', 'common']);
     const updateBankAccountMutation = useCustomPut(
         `/accounting/bank-accounts/${account.id}/`,
         [['accounting-bank-accounts'], ['accounting-bank-account', account.id]]
@@ -436,10 +443,10 @@ const EditBankModal = ({ account, onClose }) => {
                 opening_balance: Number(formData.balance || 0).toFixed(2),
                 is_active: true,
             });
-            toast.success('Bank account updated successfully.');
+            toast.success(t('bankAccounts.updateSuccess'));
             onClose();
         } catch (error) {
-            toast.error(getApiErrorMessage(error, 'Failed to update bank account.'));
+            toast.error(translateApiError(error, 'accounting:bankAccounts.updateFailed'));
         }
     };
 
@@ -447,7 +454,7 @@ const EditBankModal = ({ account, onClose }) => {
         <div style={modalOverlayStyle}>
             <Card className="padding-xl" style={{ width: '450px', borderRadius: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Edit Account Details</h3>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{t('bankAccounts.editAccountDetails')}</h3>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                         <X size={20} />
                     </button>
@@ -455,7 +462,7 @@ const EditBankModal = ({ account, onClose }) => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Account Type</label>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('bankAccounts.accountType')}</label>
                         <select
                             value={formData.type}
                             onChange={e =>
@@ -469,14 +476,14 @@ const EditBankModal = ({ account, onClose }) => {
                             }
                             style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                         >
-                            <option value="bank">Bank Account</option>
-                            <option value="cash">Cash Account (Safe/Box)</option>
+                            <option value="bank">{t('bankAccounts.bankAccountOption')}</option>
+                            <option value="cash">{t('bankAccounts.cashAccountOption')}</option>
                         </select>
                     </div>
 
                     {isBankType && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Select Bank</label>
+                            <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('bankAccounts.selectBank')}</label>
                             <select
                                 value={formData.bank}
                                 onChange={e =>
@@ -489,7 +496,7 @@ const EditBankModal = ({ account, onClose }) => {
                                 style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                                 disabled={banksQuery.isPending}
                             >
-                                <option value="">{banksQuery.isPending ? 'Loading banks...' : 'Select Bank...'}</option>
+                                <option value="">{banksQuery.isPending ? t('bankAccounts.loadingBanks') : t('bankAccounts.selectBankPlaceholder')}</option>
                                 {bankOptions.map((bank) => (
                                     <option key={bank.id} value={bank.id}>
                                         {bank.name}
@@ -501,22 +508,22 @@ const EditBankModal = ({ account, onClose }) => {
 
                     {isBankType && !formData.bank && (
                         <Input
-                            label="Custom Bank Name"
-                            placeholder="e.g., Arab Bank"
+                            label={t('bankAccounts.customBankName')}
+                            placeholder={t('bankAccounts.customBankPlaceholder')}
                             value={formData.customBankName}
                             onChange={e => setFormData({ ...formData, customBankName: e.target.value })}
                         />
                     )}
 
                     <Input
-                        label={formData.type === 'cash' ? 'Cash Box Name' : 'Account Name'}
+                        label={formData.type === 'cash' ? t('bankAccounts.cashBoxName') : t('bankAccounts.accountName')}
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                     />
 
                     {isBankType && (
                         <Input
-                            label="Account Number / IBAN"
+                            label={t('bankAccounts.accountNumberIban')}
                             value={formData.accountNumber}
                             onChange={e => setFormData({ ...formData, accountNumber: e.target.value })}
                         />
@@ -525,22 +532,22 @@ const EditBankModal = ({ account, onClose }) => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <SelectWithLoadMore
                             id={`edit-bank-account-currency-${account.id}`}
-                            label="Currency"
+                            label={t('bankAccounts.currency')}
                             value={formData.currency}
                             onChange={(next) => setFormData({ ...formData, currency: next })}
                             options={currencySelectOptions}
                             emptyOptionLabel={
-                                currenciesQuery.isPending ? 'Loading currencies...' : 'Select currency...'
+                                currenciesQuery.isPending ? t('bankAccounts.loadingCurrencies') : t('bankAccounts.selectCurrency')
                             }
                             disabled={currenciesQuery.isPending || currenciesQuery.isError}
                             isInitialLoading={currenciesQuery.isPending}
                             paginationError={
-                                currenciesQuery.isError ? 'Failed to load currencies.' : null
+                                currenciesQuery.isError ? t('bankAccounts.loadCurrenciesFailed') : null
                             }
                             hasMore={false}
                         />
                         <Input
-                            label="Current Balance"
+                            label={t('bankAccounts.currentBalance')}
                             type="number"
                             value={formData.balance}
                             onChange={e => setFormData({ ...formData, balance: e.target.value })}
@@ -548,9 +555,9 @@ const EditBankModal = ({ account, onClose }) => {
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                        <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
                         <Button icon={<Save size={16} />} onClick={handleSubmit} disabled={updateBankAccountMutation.isPending}>
-                            {updateBankAccountMutation.isPending ? 'Saving...' : 'Save Changes'}
+                            {updateBankAccountMutation.isPending ? t('bankAccounts.saving') : t('bankAccounts.saveChanges')}
                         </Button>
                     </div>
                 </div>

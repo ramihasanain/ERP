@@ -1,10 +1,13 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Edit3, Eye, FileText, Star, Trash2 } from 'lucide-react';
 import Button from '@/components/Shared/Button';
 import Card from '@/components/Shared/Card';
 import { useBasePath } from '@/hooks/useBasePath';
 
 const ContractTemplatesGrid = ({ templates, navigate, onDeleteClick }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const basePath = useBasePath();
     return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
@@ -120,9 +123,7 @@ const ContractTemplatesGrid = ({ templates, navigate, onDeleteClick }) => {
                         icon={<Edit3 size={14} />}
                         onClick={() => navigate(`${basePath}/hr/contract-templates/${template.id}/edit`)}
                         style={{ flex: 1 }}
-                    >
-                        Edit
-                    </Button>
+                    >{t('common:actions.edit')}</Button>
                     {!template.isDefault && (
                         <button
                             onClick={() => onDeleteClick(template)}

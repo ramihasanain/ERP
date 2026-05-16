@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import translateApiError from '@/utils/translateApiError';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
@@ -144,6 +146,7 @@ const selectListData = (response) => {
 };
 
 const FixedAssets = () => {
+    const { t } = useTranslation(['accounting', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const { entries, openDrawer } = useAccounting();
@@ -191,7 +194,7 @@ const FixedAssets = () => {
     const assetAccounts = (fixedAssetsQuery.data ?? []).map((asset) => ({
         id: asset.account_id || asset.id,
         assetId: asset.id,
-        name: asset.name || 'Unnamed Asset',
+        name: asset.name || t('fixedAssets.unnamedAsset'),
         description: asset.description || '',
         code: asset.account_code || '',
         icon: asset.icon || 'box',
@@ -208,7 +211,7 @@ const FixedAssets = () => {
         .filter(account => account.is_active !== false)
         .map(account => ({
             id: account.account_id || account.id,
-            name: account.name || account.account_name || 'Unnamed Account',
+            name: account.name || account.account_name || t('fixedAssets.unnamedAccount'),
             code: account.account_code || '',
             type: 'Asset',
         }));
@@ -310,20 +313,20 @@ const FixedAssets = () => {
         if (editingId) {
             try {
                 await updateAssetMutation.mutateAsync(buildAssetUpdatePayload(assetForm));
-                toast.success('Fixed asset updated successfully.');
+                toast.success(t('fixedAssets.updateSuccess'));
                 closeAssetModal();
             } catch (error) {
-                toast.error(getErrorMessage(error, 'Failed to update fixed asset.'));
+                toast.error(getErrorMessage(error, t('fixedAssets.updateFailed')));
             }
 
             return;
         } else {
             try {
                 await createAssetMutation.mutateAsync(buildAssetCreatePayload(assetForm));
-                toast.success('Fixed asset created successfully.');
+                toast.success(t('fixedAssets.createSuccess'));
                 closeAssetModal();
             } catch (error) {
-                toast.error(getErrorMessage(error, 'Failed to create fixed asset.'));
+                toast.error(getErrorMessage(error, t('fixedAssets.createFailed')));
             }
 
             return;
@@ -333,23 +336,23 @@ const FixedAssets = () => {
     const handleRequestDelete = (account) => {
         setDeletingAsset({
             id: account.assetId || account.id,
-            name: account.name || 'this asset',
+            name: account.name || t('fixedAssets.deleteFallbackName'),
         });
     };
 
     const handleConfirmDelete = async () => {
         const assetId = deletingAsset?.id;
         if (!assetId) {
-            toast.error('No asset selected.');
+            toast.error(t('fixedAssets.noSelection'));
             return;
         }
 
         try {
             await deleteAssetMutation.mutateAsync(assetId);
-            toast.success('Fixed asset deleted successfully.');
+            toast.success(t('fixedAssets.deleteSuccess'));
             setDeletingAsset(null);
         } catch (error) {
-            toast.error(getErrorMessage(error, 'Failed to delete fixed asset.'));
+            toast.error(getErrorMessage(error, t('fixedAssets.deleteFailed')));
         }
     };
 
@@ -364,25 +367,25 @@ const FixedAssets = () => {
                         className="cursor-pointer shrink-0"
                     />
                     <div>
-                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Fixed Assets</h1>
-                        <p style={{ color: 'var(--color-text-secondary)' }}>Track assets, depreciation, and book value.</p>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('fixedAssets.title')}</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{t('fixedAssets.subtitle')}</p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
-                    <Button icon={<Plus size={18} />} onClick={openCreateModal} className="cursor-pointer">New Asset Category</Button>
+                    <Button icon={<Plus size={18} />} onClick={openCreateModal} className="cursor-pointer">{t('fixedAssets.newAssetCategory')}</Button>
                 </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '1.5rem', minWidth: 0 }}>
                 {fixedAssetsQuery.isPending && (
                     <Card className="padding-lg" style={{ gridColumn: '1 / -1' }}>
-                        <p style={{ color: 'var(--color-text-secondary)' }}>Loading fixed assets...</p>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{t('fixedAssets.loading')}</p>
                     </Card>
                 )}
 
                 {fixedAssetsQuery.isError && (
                     <Card className="padding-lg" style={{ gridColumn: '1 / -1' }}>
-                        <p style={{ color: 'var(--color-danger-600)' }}>Failed to load fixed assets.</p>
+                        <p style={{ color: 'var(--color-danger-600)' }}>{t('fixedAssets.loadFailed')}</p>
                     </Card>
                 )}
 
@@ -417,7 +420,7 @@ const FixedAssets = () => {
                                                 color: 'var(--color-text-secondary)'
                                             }}>
                                                 <Percent size={12} />
-                                                <span>{account.depreciationRate}% Depr. Rate</span>
+                                                <span>{t('fixedAssets.deprRate', { rate: account.depreciationRate })}</span>
                                             </div>
                                         )}
                                     </div>
@@ -430,7 +433,7 @@ const FixedAssets = () => {
                                             background: 'none', border: 'none', cursor: 'pointer',
                                             color: 'var(--color-primary-600)', padding: '0.25rem'
                                         }}
-                                        title="View Activity"
+                                        title={t('fixedAssets.viewActivity')}
                                     >
                                         <Eye size={16} />
                                     </button>
@@ -440,7 +443,7 @@ const FixedAssets = () => {
                                             background: 'none', border: 'none', cursor: 'pointer',
                                             color: 'var(--color-text-muted)', padding: '0.25rem'
                                         }}
-                                        title="Edit Category"
+                                        title={t('fixedAssets.editCategory')}
                                     >
                                         <Wrench size={16} />
                                     </button>
@@ -450,7 +453,7 @@ const FixedAssets = () => {
                                             background: 'none', border: 'none', cursor: 'pointer',
                                             color: 'var(--color-danger-600)', padding: '0.25rem'
                                         }}
-                                        title="Delete Asset"
+                                        title={t('fixedAssets.deleteAsset')}
                                     >
                                         <Trash2 size={16} />
                                     </button>
@@ -458,14 +461,14 @@ const FixedAssets = () => {
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                                <span style={{ color: 'var(--color-text-muted)' }}>Original Cost</span>
-                                <span style={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{originalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })} JOD</span>
+                                <span style={{ color: 'var(--color-text-muted)' }}>{t('fixedAssets.originalCost')}</span>
+                                <span style={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{originalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t('fixedAssets.currencyJod')}</span>
                             </div>
 
                             <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.5rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
-                                <span style={{ fontWeight: 600 }}>Net Book Value</span>
+                                <span style={{ fontWeight: 600 }}>{t('fixedAssets.netBookValue')}</span>
                                 <span style={{ fontWeight: 700, color: 'var(--color-primary-600)', overflowWrap: 'anywhere' }}>
-                                    {netBookValue.toLocaleString(undefined, { minimumFractionDigits: 2 })} JOD
+                                    {netBookValue.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t('fixedAssets.currencyJod')}
                                 </span>
                             </div>
                         </Card>
@@ -474,7 +477,7 @@ const FixedAssets = () => {
 
                 {!fixedAssetsQuery.isPending && !fixedAssetsQuery.isError && assetAccounts.length === 0 && (
                     <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
-                        No Fixed Asset categories found. Click "New Asset Category" to start.
+                        {t('fixedAssets.emptyState')}
                     </div>
                 )}
             </div>
@@ -488,48 +491,48 @@ const FixedAssets = () => {
                 }}>
                     <div style={{ background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '500px', padding: '1.5rem', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--color-border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                            <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>{editingId ? 'Edit Asset Category' : 'Register New Asset'}</h3>
+                            <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>{editingId ? t('fixedAssets.editAssetCategory') : t('fixedAssets.registerNewAsset')}</h3>
                             <button onClick={closeAssetModal} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {editingId && assetDetailsQuery.isPending && (
                                 <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                                    Loading asset details...
+                                    {t('fixedAssets.loadingDetails')}
                                 </p>
                             )}
 
                             <Input
-                                label="Asset Name"
-                                placeholder="e.g. Heavy Machinery"
+                                label={t('fixedAssets.assetName')}
+                                placeholder={t('fixedAssets.assetNamePlaceholder')}
                                 value={assetForm.name}
                                 onChange={e => setAssetForm({ ...assetForm, name: e.target.value })}
                             />
 
                             <Input
-                                label="Description"
-                                placeholder="Description of this asset class"
+                                label={t('fixedAssets.description')}
+                                placeholder={t('fixedAssets.descriptionPlaceholder')}
                                 value={assetForm.description}
                                 onChange={e => setAssetForm({ ...assetForm, description: e.target.value })}
                             />
 
                             <Input
-                                label="Comment (Optional)"
-                                placeholder="Any note for this asset"
+                                label={t('fixedAssets.commentOptional')}
+                                placeholder={t('fixedAssets.commentPlaceholder')}
                                 value={assetForm.comment}
                                 onChange={e => setAssetForm({ ...assetForm, comment: e.target.value })}
                             />
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
                                 <Input
-                                    label="Depr. Rate (%)"
+                                    label={t('fixedAssets.deprRateLabel')}
                                     type="number"
                                     placeholder="20"
                                     value={assetForm.depreciationRate}
                                     onChange={e => setAssetForm({ ...assetForm, depreciationRate: e.target.value })}
                                 />
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Select Icon</label>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>{t('fixedAssets.selectIcon')}</label>
                                     <IconPicker
                                         selectedIcon={toPickerIconName(assetForm.icon)}
                                         onSelect={(icon) => setAssetForm({ ...assetForm, icon: iconKeyByPickerName[icon] || icon })}
@@ -539,20 +542,20 @@ const FixedAssets = () => {
 
                             <div style={{ background: 'var(--color-bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
                                 <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <DollarSign size={16} /> Purchase Details
+                                    <DollarSign size={16} /> {t('fixedAssets.purchaseDetails')}
                                 </h4>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                         <Input
-                                            label="Purchase Cost"
+                                            label={t('fixedAssets.purchaseCost')}
                                             type="number"
                                             placeholder="0.00"
                                             value={assetForm.purchaseCost}
                                             onChange={e => setAssetForm({ ...assetForm, purchaseCost: e.target.value })}
                                         />
                                         <Input
-                                            label="Purchase Date"
+                                            label={t('fixedAssets.purchaseDate')}
                                             type="date"
                                             value={assetForm.purchaseDate}
                                             onChange={e => setAssetForm({ ...assetForm, purchaseDate: e.target.value })}
@@ -560,7 +563,7 @@ const FixedAssets = () => {
                                     </div>
 
                                     <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Paid From (Source Account)</label>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>{t('fixedAssets.paidFrom')}</label>
                                         <select
                                             style={{
                                                 width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)',
@@ -571,17 +574,17 @@ const FixedAssets = () => {
                                             value={assetForm.sourceAccountId}
                                             onChange={e => setAssetForm({ ...assetForm, sourceAccountId: e.target.value })}
                                         >
-                                            <option value="">-- Leave Empty for Opening Balance --</option>
+                                            <option value="">{t('fixedAssets.openingBalanceOption')}</option>
 
-                                            <optgroup label="Bank & Cash">
+                                            <optgroup label={t('fixedAssets.bankCashGroup')}>
                                                 {bankAccountsQuery.isPending && (
-                                                    <option disabled value="">Loading bank accounts...</option>
+                                                    <option disabled value="">{t('fixedAssets.loadingBankAccounts')}</option>
                                                 )}
                                                 {bankAccountsQuery.isError && (
-                                                    <option disabled value="">Failed to load bank accounts</option>
+                                                    <option disabled value="">{t('fixedAssets.loadBankAccountsFailed')}</option>
                                                 )}
                                                 {!bankAccountsQuery.isPending && !bankAccountsQuery.isError && sourceAccounts.length === 0 && (
-                                                    <option disabled value="">No bank accounts found</option>
+                                                    <option disabled value="">{t('fixedAssets.noBankAccounts')}</option>
                                                 )}
                                                 {sourceAccounts.map(acc => (
                                                     <option key={acc.id} value={acc.id}>
@@ -591,20 +594,20 @@ const FixedAssets = () => {
                                             </optgroup>
                                         </select>
                                         <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
-                                            Select the account used to pay for this asset. Leave empty only for Opening Balance entries.
+                                            {t('fixedAssets.sourceAccountHint')}
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                                <Button variant="outline" onClick={closeAssetModal}>Cancel</Button>
+                                <Button variant="outline" onClick={closeAssetModal}>{t('common.cancel')}</Button>
                                 <Button
                                     onClick={handleSaveAsset}
                                     disabled={isSubmitDisabled}
                                     isLoading={updateAssetMutation.isPending || createAssetMutation.isPending}
                                 >
-                                    {editingId ? 'Save Changes' : 'Register Asset'}
+                                    {editingId ? t('fixedAssets.saveChanges') : t('fixedAssets.registerAsset')}
                                 </Button>
                             </div>
                         </div>
@@ -637,9 +640,9 @@ const FixedAssets = () => {
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' }}>
                             <AlertTriangle size={20} color="var(--color-danger-600)" />
                             <div>
-                                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Delete asset</h3>
+                                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{t('fixedAssets.deleteTitle')}</h3>
                                 <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
-                                    Are you sure you want to delete <strong>{deletingAsset.name}</strong>? This action cannot be undone.
+                                    {t('fixedAssets.deleteMessage', { name: deletingAsset.name })}
                                 </p>
                             </div>
                         </div>
@@ -651,7 +654,7 @@ const FixedAssets = () => {
                                 disabled={deleteAssetMutation.isPending}
                                 className="cursor-pointer"
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </Button>
                             <Button
                                 variant="danger"
@@ -660,7 +663,7 @@ const FixedAssets = () => {
                                 disabled={deleteAssetMutation.isPending}
                                 className="cursor-pointer"
                             >
-                                Delete
+                                {t('common.delete')}
                             </Button>
                         </div>
                     </div>

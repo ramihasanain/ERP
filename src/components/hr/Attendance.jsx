@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
-import { Clock, Calendar, CheckCircle, XCircle, LogIn, LogOut } from 'lucide-react';
+import Input from '@/components/Shared/Input';
+import { Clock, CheckCircle, LogIn, LogOut, Filter } from 'lucide-react';
 import { useAttendance } from '@/context/AttendanceContext';
 
 const Attendance = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const { attendanceLogs, clockIn, clockOut } = useAttendance();
     const today = new Date().toISOString().split('T')[0];
 
@@ -29,8 +33,8 @@ const Attendance = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Attendance</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Track your daily attendance and work hours.</p>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('attendance.title')}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{t('attendance.subtitle')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <div style={{ padding: '0.5rem 1rem', background: 'var(--color-slate-100)', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
@@ -54,18 +58,18 @@ const Attendance = () => {
                         <h2 style={{ marginTop: '1rem', fontSize: '1.5rem', fontWeight: 700 }}>
                             {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </h2>
-                        <p style={{ color: 'var(--color-text-secondary)' }}>Current Time</p>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{t('attendance.currentTime')}</p>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
                         {!todayLog?.checkIn ? (
-                            <Button size="lg" icon={<LogIn size={20} />} onClick={() => clockIn(currentEmployeeId)}>Clock In</Button>
+                            <Button size="lg" icon={<LogIn size={20} />} onClick={() => clockIn(currentEmployeeId)}>{t('attendance.clockIn')}</Button>
                         ) : !todayLog?.checkOut ? (
-                            <Button size="lg" variant="outline" icon={<LogOut size={20} />} onClick={() => clockOut(currentEmployeeId)}>Clock Out</Button>
+                            <Button size="lg" variant="outline" icon={<LogOut size={20} />} onClick={() => clockOut(currentEmployeeId)}>{t('attendance.clockOut')}</Button>
                         ) : (
                             <div style={{ padding: '1rem', background: 'var(--color-success-bg)', color: 'var(--color-success)', borderRadius: 'var(--radius-md)', width: '100%' }}>
                                 <CheckCircle size={20} style={{ marginBottom: '0.5rem' }} />
-                                <div style={{ fontWeight: 600 }}>Shift Completed</div>
+                                <div style={{ fontWeight: 600 }}>{t('attendance.shiftCompleted')}</div>
                             </div>
                         )}
                     </div>
@@ -73,11 +77,11 @@ const Attendance = () => {
                     {todayLog && (
                         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-around', fontSize: '0.9rem' }}>
                             <div>
-                                <div style={{ color: 'var(--color-text-secondary)' }}>Clock In</div>
+                                <div style={{ color: 'var(--color-text-secondary)' }}>{t('attendance.checkIn')}</div>
                                 <div style={{ fontWeight: 600 }}>{todayLog.checkIn}</div>
                             </div>
                             <div>
-                                <div style={{ color: 'var(--color-text-secondary)' }}>Clock Out</div>
+                                <div style={{ color: 'var(--color-text-secondary)' }}>{t('attendance.checkOut')}</div>
                                 <div style={{ fontWeight: 600 }}>{todayLog.checkOut || '--:--'}</div>
                             </div>
                         </div>
@@ -87,11 +91,11 @@ const Attendance = () => {
                 {/* Recent Logs */}
                 <Card className="padding-lg">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Recent Activity</h3>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('attendance.recentActivity')}</h3>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                             <Filter size={14} color="var(--color-text-muted)" />
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>From:</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{t('attendance.from')}</span>
                                 <Input
                                     type="date"
                                     value={dateFrom}
@@ -100,7 +104,7 @@ const Attendance = () => {
                                 />
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>To:</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{t('attendance.to')}</span>
                                 <Input
                                     type="date"
                                     value={dateTo}
@@ -115,7 +119,7 @@ const Attendance = () => {
                                     onClick={() => { setDateFrom(''); setDateTo(''); }}
                                     style={{ fontSize: '0.75rem', padding: '0.25rem' }}
                                 >
-                                    Reset
+                                    {t('common:actions.reset')}
                                 </Button>
                             )}
                         </div>
@@ -124,10 +128,10 @@ const Attendance = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                <th style={{ textAlign: 'left', padding: '1rem' }}>Date</th>
-                                <th style={{ textAlign: 'left', padding: '1rem' }}>Check In</th>
-                                <th style={{ textAlign: 'left', padding: '1rem' }}>Check Out</th>
-                                <th style={{ textAlign: 'right', padding: '1rem' }}>Status</th>
+                                <th style={{ textAlign: 'left', padding: '1rem' }}>{t('attendance.date')}</th>
+                                <th style={{ textAlign: 'left', padding: '1rem' }}>{t('attendance.checkIn')}</th>
+                                <th style={{ textAlign: 'left', padding: '1rem' }}>{t('attendance.checkOut')}</th>
+                                <th style={{ textAlign: 'right', padding: '1rem' }}>{t('attendance.status')}</th>
                             </tr>
                         </thead>
                         <tbody>

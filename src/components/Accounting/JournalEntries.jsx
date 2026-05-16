@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -6,7 +7,6 @@ import { Search, Plus, Download, Lock, Unlock, ShieldAlert, ArrowLeft } from 'lu
 import JournalEntryList from '@/components/Accounting/JournalEntryList';
 import JournalEntryDetailModal from '@/components/Accounting/JournalEntryDetailModal';
 import { useAccounting } from '@/context/AccountingContext';
-import { useLanguage } from '@/context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { exportToCSV } from '@/utils/exportUtils';
@@ -14,16 +14,25 @@ import useCustomQuery from '@/hooks/useQuery';
 import ResourceLoadError from '@/core/ResourceLoadError';
 
 const PeriodStatusCard = () => {
+    const { t } = useTranslation('accounting');
     const { accountingPeriods, togglePeriodStatus } = useAccounting();
 
-    // Sort periods desc
+    const getPeriodStatusLabel = (status) => {
+        const map = {
+            Open: t('journalEntries.periodOpen'),
+            'Soft Lock': t('journalEntries.periodSoftLock'),
+            'Hard Lock': t('journalEntries.periodHardLock'),
+        };
+        return map[status] || status;
+    };
+
     const sortedPeriods = [...accountingPeriods].sort((a, b) => b.month.localeCompare(a.month));
 
     return (
         <Card className="padding-md" style={{ marginBottom: '1.5rem', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <ShieldAlert size={18} /> Accounting Periods
+                    <ShieldAlert size={18} /> {t('journalEntries.accountingPeriods')}
                 </h3>
             </div>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -40,14 +49,14 @@ const PeriodStatusCard = () => {
                                 color: p.status === 'Open' ? 'var(--color-success-600)' :
                                     p.status === 'Soft Lock' ? 'var(--color-warning-600)' : 'var(--color-danger-600)'
                             }}>
-                                {p.status}
+                                {getPeriodStatusLabel(p.status)}
                             </div>
                         </div>
                         <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => togglePeriodStatus(p.month)}
-                            title="Toggle Status (Admin)"
+                            title={t('journalEntries.toggleStatus')}
                         >
                             {p.status === 'Open' ? <Unlock size={16} /> : <Lock size={16} />}
                         </Button>
@@ -59,8 +68,8 @@ const PeriodStatusCard = () => {
 };
 
 const JournalEntries = () => {
+    const { t } = useTranslation('accounting');
     const { accounts } = useAccounting();
-    const { language } = useLanguage();
     const navigate = useNavigate();
     const basePath = useBasePath();
     const [selectedEntryId, setSelectedEntryId] = useState(null);
@@ -95,17 +104,17 @@ const JournalEntries = () => {
                 const isDebit = Number(line.debit) > 0;
 
                 fullLedger.push({
-                    'Date': entry.date,
-                    'Reference': entry.reference || entry.id,
-                    'Entry Description': entry.description,
-                    'Account Code': line.account,
-                    'Account Name': account?.name || 'Unknown',
-                    'Line Description': line.description || '',
-                    'Debit (+)': isDebit ? line.debit : 0,
-                    'Credit (-)': !isDebit ? line.credit : 0,
-                    'Sign': isDebit ? '+' : '-',
-                    'Direction': isDebit ? (language === 'ar' ? 'مدين' : 'Debit') : (language === 'ar' ? 'دائن' : 'Credit'),
-                    'Source': entry.sourceType || 'Manual'
+                    [t('journalEntries.exportDate')]: entry.date,
+                    [t('journalEntries.exportReference')]: entry.reference || entry.id,
+                    [t('journalEntries.exportEntryDescription')]: entry.description,
+                    [t('journalEntries.exportAccountCode')]: line.account,
+                    [t('journalEntries.exportAccountName')]: account?.name || t('journalEntries.unknownAccount'),
+                    [t('journalEntries.exportLineDescription')]: line.description || '',
+                    [t('journalEntries.exportDebit')]: isDebit ? line.debit : 0,
+                    [t('journalEntries.exportCredit')]: !isDebit ? line.credit : 0,
+                    [t('journalEntries.exportSign')]: isDebit ? '+' : '-',
+                    [t('journalEntries.exportDirection')]: isDebit ? t('journalEntries.debit') : t('journalEntries.credit'),
+                    [t('journalEntries.exportSource')]: entry.sourceType || t('journalEntries.manual'),
                 });
             });
         });
@@ -129,16 +138,16 @@ const JournalEntries = () => {
                         className="cursor-pointer shrink-0"
                     />
                     <div>
-                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{language === 'ar' ? 'القيود اليومية' : 'Journal Entries'}</h1>
-                        <p style={{ color: 'var(--color-text-secondary)' }}>{language === 'ar' ? 'مراجعة وإدارة قيود اليومية اليدوية والآلية.' : 'Review and manage manual and system journal entries.'}</p>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('journalEntries.title')}</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{t('journalEntries.subtitle')}</p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
                     <Button variant="outline" icon={<Download size={16} />} onClick={handleDetailedExport} className="cursor-pointer">
-                        {language === 'ar' ? 'تصدير تفصيلي' : 'Detailed Export'}
+                        {t('journalEntries.detailedExport')}
                     </Button>
                     <Button icon={<Plus size={16} />} onClick={() => navigate('new')} className="cursor-pointer">
-                        {language === 'ar' ? 'قيد جديد' : 'New Entry'}
+                        {t('journalEntries.newEntry')}
                     </Button>
                 </div>
             </div>
@@ -146,7 +155,7 @@ const JournalEntries = () => {
             {journalEntriesQuery.isError ? (
                 <ResourceLoadError
                     error={journalEntriesQuery.error}
-                    title={language === 'ar' ? 'تعذر تحميل قيود اليومية' : 'Could not load journal entries'}
+                    title={t('journalEntries.loadFailed')}
                     onGoBack={() => navigate(`${basePath}/accounting`)}
                 />
             ) : (
@@ -155,12 +164,12 @@ const JournalEntries = () => {
 
                     <Card className="padding-none" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{language === 'ar' ? 'كل القيود' : 'All Entries'}</h2>
+                            <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t('journalEntries.allEntries')}</h2>
                             <div style={{ width: '240px' }}>
                                 <Input
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder={language === 'ar' ? 'بحث برقم القيد...' : "Search journal no..."}
+                                    placeholder={t('journalEntries.searchPlaceholder')}
                                     startIcon={<Search size={16} />}
                                     style={{ fontSize: '0.875rem' }}
                                 />
@@ -169,7 +178,7 @@ const JournalEntries = () => {
 
                         {journalEntriesQuery.isLoading ? (
                             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                Loading journal entries...
+                                {t('journalEntries.loading')}
                             </div>
                         ) : (
                             <JournalEntryList entries={entries} onViewEntry={openDetailModal} />

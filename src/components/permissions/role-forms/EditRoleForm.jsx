@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { put } from '@/api';
@@ -7,7 +8,7 @@ import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import useCustomQuery from '@/hooks/useQuery';
 import { ArrowLeft, Save } from 'lucide-react';
-import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import translateApiError from '@/utils/translateApiError';
 import RolePermissionMatrix from './RolePermissionMatrix';
 import {
     applyGroupPermToggle,
@@ -26,6 +27,7 @@ import {
  * }} props
  */
 const EditRoleForm = ({ embedded = false, roleSummary, onClose }) => {
+    const { t } = useTranslation(['permissions', 'common']);
     const queryClient = useQueryClient();
     const roleId = roleSummary.id;
 
@@ -131,7 +133,7 @@ const EditRoleForm = ({ embedded = false, roleSummary, onClose }) => {
     const handleSave = async () => {
         if (!roleName.trim()) return;
         if (!normalizedRoleModules.length) {
-            toast.error('Role permissions are still loading or unavailable.');
+            toast.error(t('rolePermsUnavailable'));
             return;
         }
         if (!isDirty) return;
@@ -144,10 +146,10 @@ const EditRoleForm = ({ embedded = false, roleSummary, onClose }) => {
                 description: roleDesc,
                 permissions,
             });
-            toast.success('Role saved');
+            toast.success(t('roleSavedToast'));
             onClose();
         } catch (e) {
-            toast.error(getApiErrorMessage(e, 'Could not save role'));
+            toast.error(translateApiError(e, 'permissions:roleSaveFailed'));
         }
     };
 
@@ -156,24 +158,24 @@ const EditRoleForm = ({ embedded = false, roleSummary, onClose }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={onClose} />
-                    <h2 style={{ fontSize: embedded ? '1.25rem' : '1.5rem', fontWeight: 700, margin: 0 }}>Edit Role</h2>
+                    <h2 style={{ fontSize: embedded ? '1.25rem' : '1.5rem', fontWeight: 700, margin: 0 }}>{t('editRole')}</h2>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    <Button variant="ghost" onClick={onClose}>{t('common:actions.cancel')}</Button>
                     <Button
                         icon={<Save size={16} />}
                         onClick={handleSave}
                         disabled={!canSave}
                     >
-                        Save Role
+                        {t('saveRole')}
                     </Button>
                 </div>
             </div>
 
             <Card className="padding-md">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
-                    <Input label="Role Name *" value={roleName} onChange={(e) => setRoleName(e.target.value)} placeholder="e.g. Finance Manager" />
-                    <Input label="Description" value={roleDesc} onChange={(e) => setRoleDesc(e.target.value)} placeholder="Brief description of this role" />
+                    <Input label={t('roleNameRequired')} value={roleName} onChange={(e) => setRoleName(e.target.value)} placeholder={t('roleNamePlaceholder')} />
+                    <Input label={t('description')} value={roleDesc} onChange={(e) => setRoleDesc(e.target.value)} placeholder={t('descriptionPlaceholder')} />
                 </div>
             </Card>
 
@@ -186,8 +188,8 @@ const EditRoleForm = ({ embedded = false, roleSummary, onClose }) => {
                 matrixError={matrixError}
                 matrixErrorObj={roleDetailQuery.error}
                 matrixRefetch={() => roleDetailQuery.refetch()}
-                matrixErrorTitle="Role could not be loaded"
-                matrixEmptyMessage="No permission rows returned for this role."
+                matrixErrorTitle={t('matrix.roleLoadError')}
+                matrixEmptyMessage={t('matrix.noPermissionRows')}
             />
         </div>
     );

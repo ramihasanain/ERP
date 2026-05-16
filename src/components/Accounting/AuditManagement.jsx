@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
+import { useTranslation, Trans } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
 import { useBasePath } from "@/hooks/useBasePath";
 import { toast } from "sonner";
@@ -56,13 +57,8 @@ const normalizeConnections = (response) =>
     .map(normalizeConnection)
     .filter((c) => c.id);
 
-const CONNECTION_TABS = [
-  { id: "accepted", label: "Accepted" },
-  { id: "pending", label: "Pending" },
-  { id: "un_registred", label: "Unregistered" },
-];
-
 const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
+  const { t } = useTranslation('accounting');
   const [note, setNote] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -103,7 +99,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
         formData.append("attachment_categories", category);
       });
       await submitMutation.mutateAsync(formData);
-      toast.success("Period submitted for audit successfully");
+      toast.success(t('auditManagement.submitModal.success'));
       setNote("");
       setAttachments([]);
       onClose();
@@ -119,7 +115,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
         }
       }
       toast.error(
-        typeof data === "string" ? data : "Failed to submit period for audit",
+        typeof data === "string" ? data : t('auditManagement.submitModal.failed'),
       );
     } finally {
       setSubmitting(false);
@@ -184,7 +180,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
             </div>
             <div>
               <h3 style={{ fontWeight: 700, fontSize: "1.05rem" }}>
-                Submit for Audit
+                {t('auditManagement.submitModal.title')}
               </h3>
               <p
                 style={{
@@ -192,7 +188,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
                   color: "var(--color-text-secondary)",
                 }}
               >
-                {firmName && `To: ${firmName}`}
+                {firmName && t('auditManagement.submitModal.toFirm', { firmName })}
               </p>
             </div>
           </div>
@@ -231,9 +227,10 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
               style={{ color: "var(--color-warning)", flexShrink: 0 }}
             />
             <span>
-              Once submitted, you will <strong>not be able to modify</strong>{" "}
-              any accounting entries in this period until the auditor completes
-              their review.
+              <Trans
+                i18nKey="accounting:auditManagement.submitModal.warning"
+                components={{ strong: <strong /> }}
+              />
             </span>
           </div>
 
@@ -247,12 +244,12 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
                 marginBottom: "0.4rem",
               }}
             >
-              Note to Auditor
+              {t('auditManagement.submitModal.noteLabel')}
             </label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="e.g. Please review January 2025 financials."
+              placeholder={t('auditManagement.submitModal.notePlaceholder')}
               rows={3}
               style={{
                 width: "100%",
@@ -279,7 +276,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
               }}
             >
               <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>
-                Attachments
+                {t('auditManagement.submitModal.attachments')}
               </label>
               <button
                 type="button"
@@ -298,7 +295,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
                   gap: "0.3rem",
                 }}
               >
-                <Plus size={14} /> Add Files
+                <Plus size={14} /> {t('auditManagement.submitModal.addFiles')}
               </button>
               <input
                 ref={fileInputRef}
@@ -328,7 +325,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
                   size={24}
                   style={{ marginBottom: "0.35rem", opacity: 0.4 }}
                 />
-                <p>No attachments added yet (optional).</p>
+                <p>{t('auditManagement.submitModal.noAttachments')}</p>
               </div>
             ) : (
               <div
@@ -375,7 +372,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
                       type="text"
                       value={item.category}
                       onChange={(e) => updateCategory(index, e.target.value)}
-                      placeholder="Category"
+                      placeholder={t('auditManagement.submitModal.categoryPlaceholder')}
                       style={{
                         padding: "0.3rem 0.5rem",
                         borderRadius: "6px",
@@ -422,7 +419,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
           }}
         >
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t('auditManagement.submitModal.cancel')}
           </Button>
           <Button
             icon={<Send size={16} />}
@@ -430,7 +427,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
             isLoading={submitting}
             disabled={submitting}
           >
-            Submit for Audit
+            {t('auditManagement.submitModal.submit')}
           </Button>
         </div>
       </div>
@@ -439,6 +436,7 @@ const SubmitAuditModal = ({ isOpen, onClose, periodId, firmId, firmName }) => {
 };
 
 const AuditManagement = () => {
+    const { t } = useTranslation('accounting');
   const navigate = useNavigate();
   const basePath = useBasePath();
   const { AUDIT_STATUSES } = useAudit();
@@ -482,44 +480,56 @@ const AuditManagement = () => {
   );
   const activeAudits = activeAuditsQuery.data ?? [];
 
-  const statusConfig = {
-    [AUDIT_STATUSES.OPEN]: {
-      label: "Open",
-      color: "var(--color-text-secondary)",
-      bg: "var(--color-bg-subtle)",
-      icon: <Eye size={14} />,
-    },
-    [AUDIT_STATUSES.SUBMITTED]: {
-      label: "Submitted for Audit",
-      color: "var(--color-warning)",
-      bg: "var(--color-warning-dim)",
-      icon: <Clock size={14} />,
-    },
-    [AUDIT_STATUSES.IN_REVIEW]: {
-      label: "Under Review",
-      color: "var(--color-primary-600)",
-      bg: "color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))",
-      icon: <Eye size={14} />,
-    },
-    [AUDIT_STATUSES.REVISION]: {
-      label: "Revision Needed",
-      color: "var(--color-error)",
-      bg: "var(--color-error-dim)",
-      icon: <RotateCcw size={14} />,
-    },
-    [AUDIT_STATUSES.APPROVED]: {
-      label: "Approved",
-      color: "var(--color-success)",
-      bg: "var(--color-success-dim)",
-      icon: <CheckCircle size={14} />,
-    },
-    [AUDIT_STATUSES.SEALED]: {
-      label: "Sealed ✦",
-      color: "var(--color-secondary-400)",
-      bg: "color-mix(in srgb, var(--color-secondary-600) 18%, var(--color-bg-card))",
-      icon: <Lock size={14} />,
-    },
-  };
+  const connectionTabs = useMemo(
+    () => [
+      { id: "accepted", label: t('auditManagement.tabs.accepted') },
+      { id: "pending", label: t('auditManagement.tabs.pending') },
+      { id: "un_registred", label: t('auditManagement.tabs.unregistered') },
+    ],
+    [t],
+  );
+
+  const statusConfig = useMemo(
+    () => ({
+      [AUDIT_STATUSES.OPEN]: {
+        label: t('auditManagement.status.open'),
+        color: "var(--color-text-secondary)",
+        bg: "var(--color-bg-subtle)",
+        icon: <Eye size={14} />,
+      },
+      [AUDIT_STATUSES.SUBMITTED]: {
+        label: t('auditManagement.status.submitted'),
+        color: "var(--color-warning)",
+        bg: "var(--color-warning-dim)",
+        icon: <Clock size={14} />,
+      },
+      [AUDIT_STATUSES.IN_REVIEW]: {
+        label: t('auditManagement.status.inReview'),
+        color: "var(--color-primary-600)",
+        bg: "color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))",
+        icon: <Eye size={14} />,
+      },
+      [AUDIT_STATUSES.REVISION]: {
+        label: t('auditManagement.status.revision'),
+        color: "var(--color-error)",
+        bg: "var(--color-error-dim)",
+        icon: <RotateCcw size={14} />,
+      },
+      [AUDIT_STATUSES.APPROVED]: {
+        label: t('auditManagement.status.approved'),
+        color: "var(--color-success)",
+        bg: "var(--color-success-dim)",
+        icon: <CheckCircle size={14} />,
+      },
+      [AUDIT_STATUSES.SEALED]: {
+        label: t('auditManagement.status.sealed'),
+        color: "var(--color-secondary-400)",
+        bg: "color-mix(in srgb, var(--color-secondary-600) 18%, var(--color-bg-card))",
+        icon: <Lock size={14} />,
+      },
+    }),
+    [AUDIT_STATUSES, t],
+  );
 
   const sealedStatementsQuery = useCustomQuery(
     "/api/auditing/sealed-statements/",
@@ -546,7 +556,7 @@ const AuditManagement = () => {
           />
           <div>
             <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-              Audit Management
+              {t('auditManagement.title')}
             </h1>
             <p
               style={{
@@ -554,7 +564,7 @@ const AuditManagement = () => {
                 fontSize: "0.9rem",
               }}
             >
-              Submit financial periods for external audit and track status.
+              {t('auditManagement.subtitle')}
             </p>
           </div>
         </div>
@@ -593,7 +603,7 @@ const AuditManagement = () => {
           </div>
           <div>
             <h3 style={{ fontWeight: 700, fontSize: "1.1rem" }}>
-              Submit Period for Audit
+              {t('auditManagement.submitPeriod.title')}
             </h3>
             <p
               style={{
@@ -601,8 +611,7 @@ const AuditManagement = () => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Select a completed period and assign an audit firm. Once
-              submitted, accounts will be locked.
+              {t('auditManagement.submitPeriod.description')}
             </p>
           </div>
         </div>
@@ -617,7 +626,7 @@ const AuditManagement = () => {
                 marginBottom: "0.4rem",
               }}
             >
-              Period
+              {t('auditManagement.submitPeriod.periodLabel')}
             </label>
             <select
               value={selectedPeriodId}
@@ -631,7 +640,7 @@ const AuditManagement = () => {
                 color: "var(--color-text-main)",
               }}
             >
-              <option value="">Select period...</option>
+              <option value="">{t('auditManagement.submitPeriod.periodPlaceholder')}</option>
               {periods.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -649,7 +658,7 @@ const AuditManagement = () => {
                 marginBottom: "0.4rem",
               }}
             >
-              Audit Firm
+              {t('auditManagement.submitPeriod.firmLabel')}
             </label>
             <select
               value={selectedFirmId}
@@ -663,7 +672,7 @@ const AuditManagement = () => {
                 color: "var(--color-text-main)",
               }}
             >
-              <option value="">Select auditing firm...</option>
+              <option value="">{t('auditManagement.submitPeriod.firmPlaceholder')}</option>
               {acceptedFirms.map((f) => (
                 <option key={f.id} value={f.auditorFirm}>
                   {f.auditorFirmName}
@@ -677,7 +686,7 @@ const AuditManagement = () => {
             icon={<FileText size={16} />}
             onClick={() => setShowProfileModal(true)}
           >
-            Company Profile
+            {t('auditManagement.submitPeriod.companyProfile')}
           </Button>
 
           <Button
@@ -685,7 +694,7 @@ const AuditManagement = () => {
             onClick={() => setShowSubmitModal(true)}
             disabled={!selectedPeriodId || !selectedFirmId}
           >
-            Submit for Audit
+            {t('auditManagement.submitPeriod.submitButton')}
           </Button>
         </div>
       </Card>
@@ -695,11 +704,11 @@ const AuditManagement = () => {
         <h3
           style={{ fontWeight: 700, marginBottom: "1rem", fontSize: "1.1rem" }}
         >
-          Registered Audit Firms
+          {t('auditManagement.firms.title')}
         </h3>
 
         <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
-          {CONNECTION_TABS.map((tab) => (
+          {connectionTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setFirmsTab(tab.id)}
@@ -749,14 +758,14 @@ const AuditManagement = () => {
           >
             <AlertTriangle size={16} style={{ flexShrink: 0 }} />
             <span>
-              Could not load audit firm connections. Please try again later.
+              {t('auditManagement.firms.loadFailed')}
             </span>
           </div>
         )}
         {!connectionsQuery.isLoading &&
           !connectionsQuery.isError &&
           connections.length === 0 && (
-            <NoData variant="inline" label="audit firm connections" />
+            <NoData variant="inline" label={t('auditManagement.firms.noDataLabel')} />
           )}
         {!connectionsQuery.isLoading &&
           !connectionsQuery.isError &&
@@ -774,18 +783,18 @@ const AuditManagement = () => {
                     ? {
                         bg: "var(--color-success-dim)",
                         color: "var(--color-success)",
-                        label: "Accepted",
+                        label: t('auditManagement.firms.statusAccepted'),
                       }
                     : conn.status === "pending"
                       ? {
                           bg: "var(--color-warning-dim)",
                           color: "var(--color-warning)",
-                          label: "Pending",
+                          label: t('auditManagement.firms.statusPending'),
                         }
                       : {
                           bg: "var(--color-bg-subtle)",
                           color: "var(--color-text-muted)",
-                          label: "Unregistered",
+                          label: t('auditManagement.firms.statusUnregistered'),
                         };
 
                 return (
@@ -945,8 +954,7 @@ const AuditManagement = () => {
             gap: "0.5rem",
           }}
         >
-          <Clock size={18} style={{ color: "var(--color-warning)" }} /> Active
-          Audits
+          <Clock size={18} style={{ color: "var(--color-warning)" }} /> {t('auditManagement.activeAudits.title')}
         </h3>
 
         {activeAuditsQuery.isLoading && (
@@ -974,13 +982,13 @@ const AuditManagement = () => {
             }}
           >
             <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-            <span>Could not load active audits. Please try again later.</span>
+            <span>{t('auditManagement.activeAudits.loadFailed')}</span>
           </div>
         )}
         {!activeAuditsQuery.isLoading &&
           !activeAuditsQuery.isError &&
           activeAudits.length === 0 && (
-            <NoData variant="inline" label="active audits" />
+            <NoData variant="inline" label={t('auditManagement.activeAudits.noDataLabel')} />
           )}
         {!activeAuditsQuery.isLoading &&
           !activeAuditsQuery.isError &&
@@ -1074,10 +1082,9 @@ const AuditManagement = () => {
                               }}
                             >
                               <Send size={12} style={{ flexShrink: 0 }} />
-                              Submitted{" "}
-                              {new Date(
-                                audit.submitted_at,
-                              ).toLocaleDateString()}
+                              {t('auditManagement.activeAudits.submitted', {
+                                date: new Date(audit.submitted_at).toLocaleDateString(),
+                              })}
                             </span>
                           )}
                           {latestDate && latestDate !== audit.submitted_at && (
@@ -1091,8 +1098,9 @@ const AuditManagement = () => {
                               }}
                             >
                               <Clock size={12} style={{ flexShrink: 0 }} />
-                              Updated{" "}
-                              {new Date(latestDate).toLocaleDateString()}
+                              {t('auditManagement.activeAudits.updated', {
+                                date: new Date(latestDate).toLocaleDateString(),
+                              })}
                             </span>
                           )}
                         </div>
@@ -1133,7 +1141,7 @@ const AuditManagement = () => {
             gap: "0.5rem",
           }}
         >
-          <Stamp size={18} style={{ color: "#7c3aed" }} /> Sealed Statements
+          <Stamp size={18} style={{ color: "#7c3aed" }} /> {t('auditManagement.sealedStatements.title')}
         </h3>
 
         {sealedStatementsQuery.isLoading && (
@@ -1162,14 +1170,14 @@ const AuditManagement = () => {
           >
             <AlertTriangle size={16} style={{ flexShrink: 0 }} />
             <span>
-              Could not load sealed statements. Please try again later.
+              {t('auditManagement.sealedStatements.loadFailed')}
             </span>
           </div>
         )}
         {!sealedStatementsQuery.isLoading &&
           !sealedStatementsQuery.isError &&
           sealedStatements.length === 0 && (
-            <NoData variant="inline" label="sealed statements" />
+            <NoData variant="inline" label={t('auditManagement.sealedStatements.noDataLabel')} />
           )}
         {!sealedStatementsQuery.isLoading &&
           !sealedStatementsQuery.isError &&
@@ -1268,10 +1276,9 @@ const AuditManagement = () => {
                               }}
                             >
                               <Lock size={12} style={{ flexShrink: 0 }} />
-                              Sealed{" "}
-                              {new Date(
-                                statement.sealed_at,
-                              ).toLocaleDateString()}
+                              {t('auditManagement.sealedStatements.sealed', {
+                                date: new Date(statement.sealed_at).toLocaleDateString(),
+                              })}
                             </span>
                           )}
                           {statement.approved_by_admin_at && (
@@ -1288,10 +1295,9 @@ const AuditManagement = () => {
                                 size={12}
                                 style={{ flexShrink: 0 }}
                               />
-                              Approved{" "}
-                              {new Date(
-                                statement.approved_by_admin_at,
-                              ).toLocaleDateString()}
+                              {t('auditManagement.sealedStatements.approved', {
+                                date: new Date(statement.approved_by_admin_at).toLocaleDateString(),
+                              })}
                             </span>
                           )}
                         </div>

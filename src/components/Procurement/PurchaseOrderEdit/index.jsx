@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
@@ -8,8 +9,10 @@ import PurchaseOrderEditHeader from './PurchaseOrderEditHeader';
 import PurchaseOrderEditFormCard from './PurchaseOrderEditFormCard';
 import usePurchaseOrderEditData from './usePurchaseOrderEditData';
 import { emptyLine } from './utils';
+import translateApiError from '@/utils/translateApiError';
 
 const PurchaseOrderEdit = () => {
+    const { t } = useTranslation(['procurement', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const { id } = useParams();
@@ -83,32 +86,30 @@ const PurchaseOrderEdit = () => {
         };
 
         if (!payload.vendor_id || !payload.order_date || !payload.expected_date) {
-            toast.error('Vendor, order date, and expected date are required.');
+            toast.error(t('poForm.requiredFields'));
             return;
         }
 
         if (payload.lines.length === 0) {
-            toast.error('Please add at least one line item.');
+            toast.error(t('poForm.addLineItem'));
             return;
         }
 
         try {
             await updatePurchaseOrder.mutateAsync(payload);
-            toast.success('Purchase order updated successfully.');
+            toast.success(t('poForm.updateSuccess'));
             navigate(`${basePath}/inventory/purchase-orders`);
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to update purchase order.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'procurement:poForm.saveFailed'));
         }
     };
     const handleMarkPendingApproval = async () => {
         try {
             await updatePurchaseOrderStatus.mutateAsync({ status: 'pending_approval' });
-            toast.success('Purchase order marked as pending approval.');
+            toast.success(t('poForm.pendingApprovalSuccess'));
             navigate(`${basePath}/inventory/purchase-orders`);
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to update purchase order status.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'procurement:poForm.statusUpdateFailed'));
         }
     };
 

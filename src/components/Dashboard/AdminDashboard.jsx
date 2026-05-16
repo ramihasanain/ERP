@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useLayoutEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -30,22 +31,16 @@ import Spinner from "@/core/Spinner";
 import useCustomQuery from "@/hooks/useQuery";
 import styles from "./AdminDashboard.module.css";
 
-const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const formatChartMonthLabel = (year, month, locale) => {
+  const dt = new Date(Number(year), Number(month) - 1, 1);
+  return new Intl.DateTimeFormat(locale, { month: 'short', year: '2-digit' }).format(dt);
+};
+const formatChartWeekLabel = (dateKey, locale) => {
+  const dt = new Date(dateKey);
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(dt);
+};
 
-const aggregateData = (data, mode) => {
+const aggregateData = (data, mode, locale) => {
   if (mode === "daily")
     return data.map((d) => ({ label: d.date.slice(5), ...d }));
   const groups = {};
@@ -69,10 +64,9 @@ const aggregateData = (data, mode) => {
     let label = key;
     if (mode === "monthly") {
       const [y, m] = key.split("-");
-      label = `${MONTH_NAMES[parseInt(m) - 1]} ${y.slice(2)}`;
+      label = formatChartMonthLabel(y, m, locale);
     } else if (mode === "weekly") {
-      const dt = new Date(key);
-      label = `${dt.getDate()} ${MONTH_NAMES[dt.getMonth()]}`;
+      label = formatChartWeekLabel(key, locale);
     }
     return { label, revenue: val.revenue, expenses: val.expenses };
   });
@@ -87,22 +81,25 @@ const DEPARTMENT_COLORS = {
   sales: "#8b5cf6",
 };
 
-const formatNumber = (value) =>
-  Number(value ?? 0).toLocaleString(undefined, {
+const formatNumber = (value, locale) =>
+  Number(value ?? 0).toLocaleString(locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
-const formatCurrency = (value, currency) => {
+const formatCurrency = (value, currency, locale) => {
   const numericValue = Number(value ?? 0);
-  if (!currency) return formatNumber(numericValue);
-  return `${formatNumber(numericValue)} ${currency}`;
+  if (!currency) return formatNumber(numericValue, locale);
+  return `${formatNumber(numericValue, locale)} ${currency}`;
 };
 
-const formatCompactCurrency = (value, currency) => {
+const formatCompactCurrency = (value, currency, locale) => {
   const numericValue = Number(value ?? 0);
-  if (!currency)
-    return numericValue >= 1000 ? `${numericValue / 1000}k` : `${numericValue}`;
-  return `${numericValue >= 1000 ? `${numericValue / 1000}k` : `${numericValue}`} ${currency}`;
+  const compact =
+    numericValue >= 1000
+      ? formatNumber(numericValue / 1000, locale) + "k"
+      : formatNumber(numericValue, locale);
+  if (!currency) return compact;
+  return `${compact} ${currency}`;
 };
 const isPositiveTrend = (trend) => {
   if (!trend || typeof trend !== "string") return undefined;
@@ -110,8 +107,64 @@ const isPositiveTrend = (trend) => {
   if (trend.includes("-")) return false;
   return undefined;
 };
-const resolveActivityColor = (label = "") =>
-  DEPARTMENT_COLORS[label.trim().toLowerCase()] || DEFAULT_DEPARTMENT_COLOR;
+
+const normalizeLabelKey = (value = "") =>
+  String(value).trim().toLowerCase().replace(/\s+/g, " ");
+
+const THIS_MONTH_TREND_PATTERN = /^this\s+month\s+([\d.,]+)\s*([+-])?\s*$/i;
+
+const DEPARTMENT_LABEL_KEYS = {
+  finance: "dashboard:admin.deptFinance",
+  accounting: "dashboard:admin.deptFinance",
+  "finance & accounting": "dashboard:admin.financeAndAccounting",
+  "finance and accounting": "dashboard:admin.financeAndAccounting",
+  hr: "dashboard:admin.deptHumanResources",
+  "human resources": "dashboard:admin.deptHumanResources",
+  inventory: "dashboard:admin.deptInventory",
+  "inventory & warehouse": "dashboard:admin.inventoryAndWarehouse",
+  sales: "dashboard:admin.deptSales",
+  "sales & crm": "dashboard:admin.salesAndCrm",
+  general: "dashboard:admin.deptGeneral",
+};
+
+const translateDashboardTrend = (t, trend) => {
+  if (!trend || typeof trend !== "string") return trend;
+  const trimmed = trend.trim();
+  const monthMatch = trimmed.match(THIS_MONTH_TREND_PATTERN);
+  if (monthMatch) {
+    const [, count, sign] = monthMatch;
+    if (sign === "+") return t("dashboard:admin.trendThisMonthUp", { count });
+    if (sign === "-") return t("dashboard:admin.trendThisMonthDown", { count });
+    return t("dashboard:admin.trendThisMonth", { count });
+  }
+  return trimmed;
+};
+
+const translateDepartmentLabel = (t, label) => {
+  const key = DEPARTMENT_LABEL_KEYS[normalizeLabelKey(label)];
+  return key ? t(key) : label || t("dashboard:admin.general");
+};
+
+const ACTIVITY_COLOR_ALIASES = {
+  finance: "finance",
+  accounting: "finance",
+  "finance & accounting": "finance",
+  "finance and accounting": "finance",
+  hr: "hr",
+  "human resources": "hr",
+  inventory: "inventory",
+  "inventory & warehouse": "inventory",
+  sales: "sales",
+  "sales & crm": "sales",
+};
+
+const resolveActivityColor = (label = "") => {
+  const normalized = normalizeLabelKey(label);
+  const deptKey =
+    ACTIVITY_COLOR_ALIASES[normalized] ||
+    ACTIVITY_COLOR_ALIASES[normalized.split(" ")[0]];
+  return DEPARTMENT_COLORS[deptKey] || DEFAULT_DEPARTMENT_COLOR;
+};
 
 const useElementWidth = () => {
   const [node, setNode] = useState(null);
@@ -141,6 +194,7 @@ const useElementWidth = () => {
 // ── Main Component ─────────────────────────────────────
 
 const AdminDashboard = () => {
+  const { t, i18n } = useTranslation(["dashboard", "common"]);
   const navigate = useNavigate();
   const [chartFilter, setChartFilter] = useState("monthly");
   const [dateFrom, setDateFrom] = useState("");
@@ -155,6 +209,7 @@ const AdminDashboard = () => {
     useElementWidth();
   const dashboardCurrency =
     data?.revenue_vs_expenses?.currency || data?.total_revenue?.currency;
+  const locale = i18n.language;
 
   const revenueSeriesData = useMemo(() => {
     const series = data?.revenue_vs_expenses?.series || [];
@@ -176,27 +231,27 @@ const AdminDashboard = () => {
           ? "daily"
           : chartFilter
         : chartFilter;
-    return aggregateData(filtered, effectiveMode);
-  }, [chartFilter, dateFrom, dateTo, revenueSeriesData]);
+    return aggregateData(filtered, effectiveMode, i18n.language);
+  }, [chartFilter, dateFrom, dateTo, revenueSeriesData, i18n.language]);
 
   const expenseBreakdown = useMemo(() => {
     const segments = data?.expense_breakdown?.segments || [];
     return segments.map((segment) => ({
-      name: segment?.label || "Unknown",
+      name: segment?.label || t('dashboard:admin.unknown'),
       value: Number(segment?.value ?? 0),
     }));
-  }, [data?.expense_breakdown?.segments]);
+  }, [data?.expense_breakdown?.segments, t]);
 
   const recentActivity = useMemo(() => {
     const items = data?.recent_activity?.items || [];
     return items.map((item, index) => ({
       id: `${item?.message || "activity"}-${index}`,
       text: item?.message || "-",
-      dept: item?.label || "General",
+      dept: translateDepartmentLabel(t, item?.label),
       time: item?.age_label || "",
       color: resolveActivityColor(item?.label),
     }));
-  }, [data?.recent_activity?.items]);
+  }, [data?.recent_activity?.items, t]);
 
   const dateInputStyle = {
     padding: "0.35rem 0.5rem",
@@ -231,7 +286,7 @@ const AdminDashboard = () => {
     return (
       <Card className="padding-lg">
         <p style={{ color: "var(--color-error)" }}>
-          Failed to load dashboard data.
+          {t('dashboard:admin.loadFailed')}
         </p>
       </Card>
     );
@@ -248,51 +303,52 @@ const AdminDashboard = () => {
             color: "var(--color-text-main)",
           }}
         >
-          Dashboard
+          {t('dashboard:admin.title')}
         </h1>
         <p
           style={{ color: "var(--color-text-secondary)", marginTop: "0.25rem" }}
         >
-          Company overview across all departments
+          {t('dashboard:admin.subtitle')}
         </p>
       </div>
 
       {/* ── Top KPI Row ── */}
       <div className={styles.kpiGrid}>
         <KpiCard
-          label={data?.total_revenue?.title || "Total Revenue"}
+          label={t('dashboard:admin.totalRevenue')}
           value={formatCurrency(
             data?.total_revenue?.value,
             data?.total_revenue?.currency,
+            locale,
           )}
-          change={data?.total_revenue?.trend}
+          change={translateDashboardTrend(t, data?.total_revenue?.trend)}
           up={isPositiveTrend(data?.total_revenue?.trend)}
           icon={<DollarSign size={20} />}
           accent="#10b981"
         />
         <KpiCard
-          label={data?.employees?.title || "Employees"}
-          value={formatNumber(data?.employees?.value)}
-          change={data?.employees?.trend}
+          label={t('dashboard:admin.employees')}
+          value={formatNumber(data?.employees?.value, locale)}
+          change={translateDashboardTrend(t, data?.employees?.trend)}
           up={isPositiveTrend(data?.employees?.trend)}
           icon={<Users size={20} />}
           accent="#3b82f6"
         />
         <KpiCard
-          label={data?.inventory_items?.title || "Inventory Items"}
-          value={formatNumber(data?.inventory_items?.value)}
+          label={t('dashboard:admin.inventoryItems')}
+          value={formatNumber(data?.inventory_items?.value, locale)}
           change={
             typeof data?.inventory_items?.low_stock === "number"
-              ? `${data.inventory_items.low_stock} low stock`
+              ? t('dashboard:admin.lowStock', { count: data.inventory_items.low_stock })
               : undefined
           }
           icon={<Package size={20} />}
           accent="#f59e0b"
         />
         <KpiCard
-          label={data?.open_orders?.title || "Open Orders"}
-          value={formatNumber(data?.open_orders?.value)}
-          change={data?.open_orders?.trend}
+          label={t('dashboard:admin.openOrders')}
+          value={formatNumber(data?.open_orders?.value, locale)}
+          change={translateDashboardTrend(t, data?.open_orders?.trend)}
           up={isPositiveTrend(data?.open_orders?.trend)}
           icon={<ShoppingCart size={20} />}
           accent="#8b5cf6"
@@ -321,7 +377,7 @@ const AdminDashboard = () => {
                 color: "var(--color-text-main)",
               }}
             >
-              {data?.revenue_vs_expenses?.title || "Revenue vs Expenses"}
+              {t('dashboard:admin.revenueVsExpenses')}
             </h3>
             <div
               style={{
@@ -362,10 +418,10 @@ const AdminDashboard = () => {
                   }}
                 >
                   {f === "weekly"
-                    ? "Weekly"
+                    ? t('dashboard:admin.weekly')
                     : f === "monthly"
-                      ? "Monthly"
-                      : "Yearly"}
+                      ? t('dashboard:admin.monthly')
+                      : t('dashboard:admin.yearly')}
                 </button>
               ))}
             </div>
@@ -386,7 +442,7 @@ const AdminDashboard = () => {
                 fontWeight: 500,
               }}
             >
-              From
+              {t('dashboard:admin.from')}
             </span>
             <input
               type="date"
@@ -401,7 +457,7 @@ const AdminDashboard = () => {
                 fontWeight: 500,
               }}
             >
-              To
+              {t('dashboard:admin.to')}
             </span>
             <input
               type="date"
@@ -426,7 +482,7 @@ const AdminDashboard = () => {
                   color: "var(--color-text-muted)",
                 }}
               >
-                Clear
+                {t('common:actions.clear')}
               </button>
             )}
           </div>
@@ -478,7 +534,7 @@ const AdminDashboard = () => {
                   contentStyle={chartTooltipStyle}
                   labelStyle={{ color: "var(--color-text-main)" }}
                   formatter={(value, name) => [
-                    formatCurrency(value, dashboardCurrency),
+                    formatCurrency(value, dashboardCurrency, locale),
                     name,
                   ]}
                 />
@@ -486,7 +542,7 @@ const AdminDashboard = () => {
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  name="Revenue"
+                  name={t("dashboard:admin.revenue")}
                   stroke="#10b981"
                   strokeWidth={2.5}
                   fill="url(#revGrad)"
@@ -494,7 +550,7 @@ const AdminDashboard = () => {
                 <Area
                   type="monotone"
                   dataKey="expenses"
-                  name="Expenses"
+                  name={t("dashboard:admin.expenses")}
                   stroke="#ef4444"
                   strokeWidth={2.5}
                   fill="url(#expGrad)"
@@ -527,43 +583,50 @@ const AdminDashboard = () => {
       <div className={styles.deptGrid}>
         {/* Finance & Accounting */}
         <DeptCard
-          title={data?.finance_and_accounting?.title || "Finance & Accounting"}
+          title={t('dashboard:admin.financeAndAccounting')}
           accent="#10b981"
           icon={<Wallet size={20} />}
           onClick={() => navigate("/admin/accounting")}
           stats={[
             {
-              label: "Cash Balance",
+              label: t('dashboard:admin.cashBalance'),
               value: formatCurrency(
                 data?.finance_and_accounting?.cash_balance,
                 data?.finance_and_accounting?.cash_balance_currency ||
                   data?.finance_and_accounting?.currency,
+                locale,
               ),
             },
             {
-              label: "Receivables",
+              label: t('dashboard:admin.receivables'),
               value: formatCurrency(
                 data?.finance_and_accounting?.receivables,
                 data?.finance_and_accounting?.receivables_currency ||
                   data?.finance_and_accounting?.currency,
+                locale,
               ),
             },
             {
-              label: "Payables",
+              label: t('dashboard:admin.payables'),
               value: formatCurrency(
                 data?.finance_and_accounting?.payables,
                 data?.finance_and_accounting?.payables_currency ||
                   data?.finance_and_accounting?.currency,
+                locale,
               ),
             },
             {
-              label: "Net Profit",
+              label: t('dashboard:admin.netProfit'),
               value: formatCurrency(
                 data?.finance_and_accounting?.net_profit,
                 data?.finance_and_accounting?.net_profit_currency ||
                   data?.finance_and_accounting?.currency,
+                locale,
               ),
-              trend: data?.finance_and_accounting?.net_profit_trend,
+              trend: translateDashboardTrend(
+                t,
+                data?.finance_and_accounting?.net_profit_trend,
+              ),
               up: isPositiveTrend(
                 data?.finance_and_accounting?.net_profit_trend,
               ),
@@ -573,28 +636,29 @@ const AdminDashboard = () => {
 
         {/* Human Resources */}
         <DeptCard
-          title={data?.human_resources?.title || "Human Resources"}
+          title={t('dashboard:admin.humanResources')}
           accent="#3b82f6"
           icon={<UserCheck size={20} />}
           onClick={() => navigate("/admin/hr")}
           stats={[
             {
-              label: "Total Employees",
-              value: formatNumber(data?.human_resources?.total_employees),
+              label: t('dashboard:admin.totalEmployees'),
+              value: formatNumber(data?.human_resources?.total_employees, locale),
             },
             {
-              label: "On Leave Today",
-              value: formatNumber(data?.human_resources?.on_leave_today),
+              label: t('dashboard:admin.onLeaveToday'),
+              value: formatNumber(data?.human_resources?.on_leave_today, locale),
             },
             {
-              label: "Open Positions",
-              value: formatNumber(data?.human_resources?.open_positions),
+              label: t('dashboard:admin.openPositions'),
+              value: formatNumber(data?.human_resources?.open_positions, locale),
             },
             {
-              label: "Payroll (Monthly)",
+              label: t('dashboard:admin.payrollMonthly'),
               value: formatCurrency(
                 data?.human_resources?.payroll_monthly,
                 data?.human_resources?.payroll_monthly_currency,
+                locale,
               ),
             },
           ]}
@@ -602,35 +666,36 @@ const AdminDashboard = () => {
 
         {/* Inventory & Warehouse */}
         <DeptCard
-          title={
-            data?.inventory_and_warehouse?.title || "Inventory & Warehouse"
-          }
+          title={t('dashboard:admin.inventoryAndWarehouse')}
           accent="#f59e0b"
           icon={<Package size={20} />}
           onClick={() => navigate("/admin/inventory")}
           stats={[
             {
-              label: "Total Items",
-              value: formatNumber(data?.inventory_and_warehouse?.total_items),
+              label: t('dashboard:admin.totalItems'),
+              value: formatNumber(data?.inventory_and_warehouse?.total_items, locale),
             },
             {
-              label: "Stock Value",
+              label: t('dashboard:admin.stockValue'),
               value: formatCurrency(
                 data?.inventory_and_warehouse?.stock_value,
                 data?.inventory_and_warehouse?.stock_value_currency,
+                locale,
               ),
             },
             {
-              label: "Low Stock Items",
+              label: t('dashboard:admin.lowStockItems'),
               value: formatNumber(
                 data?.inventory_and_warehouse?.low_stock_items,
+                locale,
               ),
               color: "#ef4444",
             },
             {
-              label: "Pending POs",
+              label: t('dashboard:admin.pendingPOs'),
               value: formatNumber(
                 data?.inventory_and_warehouse?.pending_purchase_orders,
+                locale,
               ),
             },
           ]}
@@ -638,35 +703,40 @@ const AdminDashboard = () => {
 
         {/* Sales & CRM */}
         <DeptCard
-          title={data?.sales_and_crm?.title || "Sales & CRM"}
+          title={t('dashboard:admin.salesAndCrm')}
           accent="#8b5cf6"
           icon={<ShoppingCart size={20} />}
           onClick={() => navigate("/admin/sales")}
           stats={[
             {
-              label: "Active Orders",
-              value: formatNumber(data?.sales_and_crm?.active_orders),
+              label: t('dashboard:admin.activeOrders'),
+              value: formatNumber(data?.sales_and_crm?.active_orders, locale),
             },
             {
-              label: "Monthly Sales",
+              label: t('dashboard:admin.monthlySales'),
               value: formatCurrency(
                 data?.sales_and_crm?.monthly_sales,
                 data?.sales_and_crm?.monthly_sales_currency ||
                   data?.sales_and_crm?.currency,
+                locale,
               ),
-              trend: data?.sales_and_crm?.monthly_sales_trend,
+              trend: translateDashboardTrend(
+                t,
+                data?.sales_and_crm?.monthly_sales_trend,
+              ),
               up: isPositiveTrend(data?.sales_and_crm?.monthly_sales_trend),
             },
             {
-              label: "Customers",
-              value: formatNumber(data?.sales_and_crm?.customers),
+              label: t('dashboard:admin.customers'),
+              value: formatNumber(data?.sales_and_crm?.customers, locale),
             },
             {
-              label: "Avg. Order Value",
+              label: t('dashboard:admin.avgOrderValue'),
               value: formatCurrency(
                 data?.sales_and_crm?.avg_order_value,
                 data?.sales_and_crm?.avg_order_value_currency ||
                   data?.sales_and_crm?.currency,
+                locale,
               ),
             },
           ]}
@@ -676,10 +746,23 @@ const AdminDashboard = () => {
       {/* ── Recent Activity ── */}
       <Card className="padding-lg">
         <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>
-          {data?.recent_activity?.title || "Recent Activity"}
+          {t('dashboard:admin.recentActivity')}
         </h3>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {recentActivity.map((item) => (
+          {recentActivity.length === 0 ? (
+            <p
+              style={{
+                margin: 0,
+                padding: "1rem 0",
+                textAlign: "center",
+                color: "var(--color-text-muted)",
+                fontSize: "0.9rem",
+              }}
+            >
+              {t("dashboard:admin.noRecentActivity")}
+            </p>
+          ) : (
+          recentActivity.map((item) => (
             <div
               key={item.id}
               style={{
@@ -738,7 +821,8 @@ const AdminDashboard = () => {
                 </span>
               </div>
             </div>
-          ))}
+          ))
+          )}
         </div>
       </Card>
     </div>

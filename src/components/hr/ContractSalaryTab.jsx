@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Plus, RefreshCw, Eye, FileText, Trash2 } from "lucide-react";
@@ -149,6 +150,8 @@ const coerceCompensationCurrencyToId = (raw, currencies) => {
 
 /** Resolve compensation currency for the contract form (uuid preferred). */
 const resolveCompensationCurrencyFormValue = (compRaw, currencies) => {
+    const { t } = useTranslation(['hr', 'common']);
+
   const comp = asObject(compRaw);
   return (
     coerceCompensationCurrencyToId(comp.currency, currencies) ||
@@ -203,6 +206,7 @@ const formatMoney = (value, currency = "JOD") => {
 const formatDateDisplay = (value) => formatDate(value) || "-";
 
 const getTodayIsoDate = () => {
+
   const t = new Date();
   const y = t.getFullYear();
   const m = String(t.getMonth() + 1).padStart(2, "0");
@@ -212,6 +216,7 @@ const getTodayIsoDate = () => {
 
 /** YYYY-MM-DD for display in copy (avoids timezone shifts on date-only strings). */
 const toIsoDateDisplay = (value) => {
+
   if (!value) return "";
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value.trim())) {
     return value.trim().slice(0, 10);
@@ -300,6 +305,7 @@ const getHtmlCopyContent = (html) => {
 };
 
 const parseStructureComponents = (description) => {
+
   if (!description || typeof description !== "string") return [];
   return description
     .split(/\r?\n/)
@@ -312,6 +318,7 @@ const parseStructureComponents = (description) => {
 };
 
 const ContractSalaryTab = ({ employeeId }) => {
+
   const prevEmployeeIdRef = useRef(employeeId);
   const [isRenewalModalOpen, setIsRenewalModalOpen] = useState(false);
   const [isSalaryModalOpen, setIsSalaryModalOpen] = useState(false);
@@ -596,7 +603,7 @@ const ContractSalaryTab = ({ employeeId }) => {
       options.successMessageCreate || "Contract and compensation created.";
     const currencyId = String(values.currency ?? "").trim();
     if (!currencyId || !looksLikeUuid(currencyId)) {
-      toast.error("Please select a currency.");
+      toast.error(t('contractSalary.selectCurrency'));
       return false;
     }
 
@@ -641,7 +648,7 @@ const ContractSalaryTab = ({ employeeId }) => {
 
   const submitSalaryIncrease = async (values) => {
     if (!employeeId) {
-      toast.error("Employee is required to record a salary increase.");
+      toast.error(t('contractSalary.employeeRequiredIncrease'));
       return;
     }
     try {
@@ -650,7 +657,7 @@ const ContractSalaryTab = ({ employeeId }) => {
         new_basic_salary: formatApiDecimalAmount(values.new_basic_salary),
         reason: values.reason?.trim() || "",
       });
-      toast.success("Salary increase saved.");
+      toast.success(t('contractSalary.increaseSaved'));
       setIsSalaryModalOpen(false);
       salaryIncreaseForm.reset(salaryIncreaseDefaults);
     } catch (error) {
@@ -660,7 +667,7 @@ const ContractSalaryTab = ({ employeeId }) => {
 
   const submitEvaluation = async (values) => {
     if (!employeeId) {
-      toast.error("Employee is required to save a performance evaluation.");
+      toast.error(t('contractSalary.employeeRequiredEval'));
       return;
     }
     try {
@@ -674,7 +681,7 @@ const ContractSalaryTab = ({ employeeId }) => {
         initiative: Number(values.initiative),
         comments: values.comments?.trim() || "",
       });
-      toast.success("Performance evaluation saved.");
+      toast.success(t('contractSalary.evalSaved'));
       setIsEvaluationModalOpen(false);
       evaluationForm.reset(evaluationDefaults);
     } catch (error) {
@@ -686,7 +693,7 @@ const ContractSalaryTab = ({ employeeId }) => {
     if (!contractToDelete?.id) return;
     try {
       await deleteContractMutation.mutateAsync(contractToDelete.id);
-      toast.success("Contract entry deleted.");
+      toast.success(t('contractSalary.entryDeleted'));
       setContractToDelete(null);
     } catch (error) {
       toast.error(getErrorMessage(error, "Could not delete contract entry."));
@@ -695,7 +702,7 @@ const ContractSalaryTab = ({ employeeId }) => {
 
   const handleGenerateTemplate = async () => {
     if (!selectedTemplateId) {
-      toast.error("Please select a contract template first.");
+      toast.error(t('contractSalary.selectTemplate'));
       return;
     }
 
@@ -711,7 +718,7 @@ const ContractSalaryTab = ({ employeeId }) => {
       }
       setRenderedContractHtml(html);
       setRenderedTemplateId(selectedTemplateId);
-      toast.success("Contract template generated.");
+      toast.success(t('contractSalary.templateGenerated'));
     } catch (error) {
       toast.error(
         getErrorMessage(error, "Could not render contract template."),
@@ -723,10 +730,11 @@ const ContractSalaryTab = ({ employeeId }) => {
     const contentToCopy = getHtmlCopyContent(renderedContractHtml);
     if (!contentToCopy) return;
     await navigator.clipboard.writeText(contentToCopy);
-    toast.success("Copied to clipboard.");
+    toast.success(t('contractSalary.copied'));
   };
 
   const handlePrintRenderedTemplate = () => {
+
     if (!renderedContractHtml) return;
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
@@ -1383,9 +1391,7 @@ const ContractSalaryTab = ({ employeeId }) => {
                             id: row?.id || row?.contract_id,
                           })
                         }
-                      >
-                        Delete
-                      </Button>
+                      >{t('common:actions.delete')}</Button>
                     </td>
                   </tr>
                 ))
@@ -1652,9 +1658,7 @@ const ContractSalaryTab = ({ employeeId }) => {
               type="button"
               variant="ghost"
               onClick={() => setIsRenewalModalOpen(false)}
-            >
-              Cancel
-            </Button>
+            >{t('common:actions.cancel')}</Button>
             <Button
               type="button"
               onClick={handleConfirmRenewal}
@@ -1750,15 +1754,11 @@ const ContractSalaryTab = ({ employeeId }) => {
               type="button"
               variant="outline"
               onClick={() => setIsSalaryModalOpen(false)}
-            >
-              Cancel
-            </Button>
+            >{t('common:actions.cancel')}</Button>
             <Button
               type="submit"
               isLoading={createSalaryIncreaseMutation.isPending}
-            >
-              Save
-            </Button>
+            >{t('common:actions.save')}</Button>
           </div>
         </form>
       </Modal>
@@ -1878,15 +1878,11 @@ const ContractSalaryTab = ({ employeeId }) => {
               type="button"
               variant="outline"
               onClick={() => setIsEvaluationModalOpen(false)}
-            >
-              Cancel
-            </Button>
+            >{t('common:actions.cancel')}</Button>
             <Button
               type="submit"
               isLoading={createEvaluationMutation.isPending}
-            >
-              Save
-            </Button>
+            >{t('common:actions.save')}</Button>
           </div>
         </form>
       </Modal>

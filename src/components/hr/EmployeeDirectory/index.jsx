@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { Check, Copy, Filter, Link2, Mail, MoreHorizontal, Search, Settings, UserPlus, Users } from 'lucide-react';
@@ -51,6 +52,8 @@ const normalizePositions = (response) =>
     }));
 
 const humanizeStatus = (status) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     if (!status) return 'Unknown';
     return status.charAt(0).toUpperCase() + status.slice(1);
 };
@@ -124,6 +127,7 @@ const normalizePayrollBreakdown = (response) => {
 };
 
 const EmployeeDirectory = () => {
+
     const navigate = useNavigate();
     const basePath = useBasePath();
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -166,10 +170,10 @@ const EmployeeDirectory = () => {
         try {
             await navigator.clipboard.writeText(employeeLoginUrl);
             setIsCopied(true);
-            toast.success('Employee login link copied.');
+            toast.success(t('employeeDirectory.loginLinkCopied'));
             setTimeout(() => setIsCopied(false), 1600);
         } catch {
-            toast.error('Could not copy the link.');
+            toast.error(t('employeeDirectory.loginLinkCopyFailed'));
         }
     };
 
@@ -710,7 +714,7 @@ const EmployeeDirectory = () => {
                             onChange={(event) => setSearchTerm(event.target.value)}
                         />
                     </div>
-                    <Button variant="outline" icon={<Settings size={16} />} onClick={() => setIsSettingsModalOpen(true)} title="Evaluation Settings" />
+                    <Button variant="outline" icon={<Settings size={16} />} onClick={() => setIsSettingsModalOpen(true)} title={t('evaluationSettings.title')} />
                     <Button
                         variant="outline"
                         icon={<Link2 size={16} />}
@@ -1058,9 +1062,7 @@ const EmployeeDirectory = () => {
                     )}
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
-                        <Button variant="ghost" onClick={() => setIsLinkModalOpen(false)} className="cursor-pointer">
-                            Close
-                        </Button>
+                        <Button variant="ghost" onClick={() => setIsLinkModalOpen(false)} className="cursor-pointer">{t('common:actions.close')}</Button>
                     </div>
                 </div>
 

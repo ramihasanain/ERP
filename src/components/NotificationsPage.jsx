@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { useNotifications } from '@/context/NotificationsContext';
-import { Bell, CheckCheck, Trash2, Filter, Check, X } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const notifUnreadBg = 'color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-surface))';
 const notifUnreadHover = 'color-mix(in srgb, var(--color-primary-600) 22%, var(--color-bg-surface))';
-const notifReadHover = 'color-mix(in srgb, var(--color-text-main) 6%, var(--color-bg-surface))';
 
 const typeColors = {
     invoice: { bg: 'color-mix(in srgb, var(--color-info) 22%, var(--color-bg-card))', color: 'var(--color-info)' },
@@ -23,9 +23,10 @@ const typeColors = {
 };
 
 const NotificationsPage = () => {
+    const { t, i18n } = useTranslation(['notifications', 'common']);
     const navigate = useNavigate();
     const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
-    const [filter, setFilter] = useState('all'); // all | unread | read
+    const [filter, setFilter] = useState('all');
     const hoverTimersRef = useRef(new Map());
 
     const filtered = notifications.filter(n => {
@@ -37,44 +38,45 @@ const NotificationsPage = () => {
     const getTimeAgo = (timestamp) => {
         const diff = Date.now() - new Date(timestamp).getTime();
         const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins}m ago`;
+        if (mins < 1) return t('notifications:time.justNow');
+        if (mins < 60) return t('notifications:time.minutesAgo', { count: mins });
         const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours}h ago`;
+        if (hours < 24) return t('notifications:time.hoursAgo', { count: hours });
         const days = Math.floor(hours / 24);
-        if (days < 7) return `${days}d ago`;
-        return new Date(timestamp).toLocaleDateString();
+        if (days < 7) return t('notifications:time.daysAgo', { count: days });
+        return new Date(timestamp).toLocaleDateString(i18n.language);
     };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Notifications</h1>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-text-main)' }}>{t('notifications:title')}</h1>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
-                        {unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}.` : 'All caught up!'}
+                        {unreadCount > 0
+                            ? t('notifications:unreadSummary', { count: unreadCount })
+                            : t('notifications:allCaughtUp')}
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     {unreadCount > 0 && (
                         <Button variant="outline" size="sm" icon={<CheckCheck size={14} />} onClick={markAllAsRead}>
-                            Mark All Read
+                            {t('notifications:markAllRead')}
                         </Button>
                     )}
                     {notifications.length > 0 && (
                         <Button variant="ghost" size="sm" icon={<Trash2 size={14} />} onClick={clearAll} style={{ color: 'var(--color-error)' }}>
-                            Clear All
+                            {t('notifications:clearAll')}
                         </Button>
                     )}
                 </div>
             </div>
 
-            {/* Filter Tabs */}
             <div style={{ display: 'flex', gap: '0', borderBottom: '2px solid var(--color-border)' }}>
                 {[
-                    { id: 'all', label: `All (${notifications.length})` },
-                    { id: 'unread', label: `Unread (${unreadCount})` },
-                    { id: 'read', label: `Read (${notifications.length - unreadCount})` }
+                    { id: 'all', label: t('notifications:allTab', { count: notifications.length }) },
+                    { id: 'unread', label: t('notifications:unreadTab', { count: unreadCount }) },
+                    { id: 'read', label: t('notifications:readTab', { count: notifications.length - unreadCount }) }
                 ].map(tab => (
                     <button key={tab.id} onClick={() => setFilter(tab.id)} style={{
                         padding: '0.75rem 1.5rem', border: 'none', background: 'transparent', cursor: 'pointer',
@@ -87,13 +89,12 @@ const NotificationsPage = () => {
                 ))}
             </div>
 
-            {/* Notifications List */}
             {filtered.length === 0 ? (
                 <Card className="padding-lg" style={{ textAlign: 'center' }}>
                     <Bell size={48} style={{ color: 'var(--color-text-muted)', marginBottom: '1rem' }} />
-                    <h3 style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>No notifications</h3>
+                    <h3 style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>{t('notifications:noNotifications')}</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
-                        {filter === 'unread' ? 'All caught up! No unread notifications.' : 'Your notification inbox is empty.'}
+                        {filter === 'unread' ? t('notifications:emptyUnread') : t('notifications:emptyInbox')}
                     </p>
                 </Card>
             ) : (
@@ -103,16 +104,16 @@ const NotificationsPage = () => {
                         const scheduleSeen = () => {
                             if (notif.read) return;
                             if (hoverTimersRef.current.has(notif.id)) return;
-                            const t = window.setTimeout(() => {
+                            const timer = window.setTimeout(() => {
                                 hoverTimersRef.current.delete(notif.id);
                                 markAsRead(notif.id);
                             }, 250);
-                            hoverTimersRef.current.set(notif.id, t);
+                            hoverTimersRef.current.set(notif.id, timer);
                         };
 
                         const cancelSeen = () => {
-                            const t = hoverTimersRef.current.get(notif.id);
-                            if (t) window.clearTimeout(t);
+                            const timer = hoverTimersRef.current.get(notif.id);
+                            if (timer) window.clearTimeout(timer);
                             hoverTimersRef.current.delete(notif.id);
                         };
 
@@ -140,7 +141,6 @@ const NotificationsPage = () => {
                                     e.currentTarget.style.background = notif.read ? 'transparent' : notifUnreadBg;
                                 }}
                             >
-                                {/* Icon */}
                                 <div style={{
                                     width: '2.75rem', height: '2.75rem', borderRadius: '12px',
                                     background: tc.bg, color: tc.color,
@@ -150,7 +150,6 @@ const NotificationsPage = () => {
                                     {notif.icon}
                                 </div>
 
-                                {/* Content */}
                                 <div style={{ flex: 1 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                         <div>
@@ -188,7 +187,7 @@ const NotificationsPage = () => {
                                         </span>
                                         {!notif.read ? (
                                             <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-                                                Hover 1s to mark as seen
+                                                {t('notifications:hoverToMarkSeen')}
                                             </span>
                                         ) : null}
                                         <button
@@ -200,7 +199,7 @@ const NotificationsPage = () => {
                                                 marginLeft: 'auto'
                                             }}
                                         >
-                                            <X size={12} /> Remove
+                                            <X size={12} /> {t('notifications:remove')}
                                         </button>
                                     </div>
                                     {!notif.read && notif.link ? (
@@ -219,7 +218,7 @@ const NotificationsPage = () => {
                                                     fontSize: '0.78rem',
                                                 }}
                                             >
-                                                Open
+                                                {t('notifications:open')}
                                             </button>
                                         </div>
                                     ) : null}

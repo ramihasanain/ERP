@@ -1,8 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
-import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import translateApiError from '@/utils/translateApiError';
 
 const isHtmlLike = (value) => {
     if (typeof value !== 'string') return false;
@@ -34,22 +35,29 @@ const getResponseContentType = (error) => {
 const ResourceLoadError = ({
     error,
     message: messageProp,
-    title = 'This page cannot be loaded',
-    fallbackMessage = 'We could not load the data. You may not have access, or the resource may be unavailable.',
+    title,
+    fallbackMessage,
     onGoBack,
     onRefresh,
-    goBackLabel = 'Go back',
-    refreshLabel = 'Refresh page',
+    goBackLabel,
+    refreshLabel,
     style,
 }) => {
+    const { t } = useTranslation('common');
+
+    const resolvedTitle = title ?? t('resourceLoadError.title');
+    const resolvedFallback = fallbackMessage ?? t('resourceLoadError.fallback');
+    const resolvedGoBackLabel = goBackLabel ?? t('resourceLoadError.goBack');
+    const resolvedRefreshLabel = refreshLabel ?? t('resourceLoadError.refresh');
+
     const contentType = getResponseContentType(error).toLowerCase();
-    const rawMessage = messageProp?.trim() || getApiErrorMessage(error, '');
+    const rawMessage = messageProp?.trim() || translateApiError(error, '');
     const backendLooksHtml =
         contentType.includes('text/html') ||
         contentType.includes('application/xhtml+xml') ||
         isHtmlLike(rawMessage);
     const safeBackendMessage = backendLooksHtml ? '' : rawMessage;
-    const bodyText = safeBackendMessage || fallbackMessage;
+    const bodyText = safeBackendMessage || resolvedFallback;
 
     const handleBack =
         onGoBack ||
@@ -80,7 +88,7 @@ const ResourceLoadError = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', color: 'var(--color-error)' }}>
                     <AlertTriangle size={22} aria-hidden />
-                    <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}>{title}</h2>
+                    <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}>{resolvedTitle}</h2>
                 </div>
                 <p
                     style={{
@@ -96,10 +104,10 @@ const ResourceLoadError = ({
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', marginTop: '0.25rem' }}>
                     <Button type="button" variant="outline" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={handleBack}>
-                        {goBackLabel}
+                        {resolvedGoBackLabel}
                     </Button>
                     <Button type="button" variant="primary" className="cursor-pointer" icon={<RefreshCw size={18} />} onClick={handleRefresh}>
-                        {refreshLabel}
+                        {resolvedRefreshLabel}
                     </Button>
                 </div>
             </div>

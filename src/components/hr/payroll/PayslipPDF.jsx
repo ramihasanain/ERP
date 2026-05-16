@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useBasePath } from "@/hooks/useBasePath";
 import Button from "@/components/Shared/Button";
@@ -15,6 +16,8 @@ const formatMoney = (value, currency = "USD") => {
 };
 
 const toTitleCase = (value) => {
+    const { t } = useTranslation(['hr', 'common']);
+
   if (!value) return "—";
   const text = String(value).replace(/_/g, " ");
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -38,6 +41,7 @@ const formatDate = (value) => {
 };
 
 const formatArabicDate = (value) => {
+
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
@@ -49,6 +53,7 @@ const formatArabicDate = (value) => {
 };
 
 const PayslipPDF = () => {
+
   const { id } = useParams();
   const navigate = useNavigate();
   const basePath = useBasePath();
@@ -66,6 +71,7 @@ const PayslipPDF = () => {
   );
 
   const handlePrint = () => {
+
     window.print();
   };
 
@@ -185,9 +191,7 @@ const PayslipPDF = () => {
           variant="ghost"
           icon={<ArrowLeft size={18} />}
           onClick={() => navigate(-1)}
-        >
-          Back
-        </Button>
+        >{t('common:actions.back')}</Button>
         <div style={{ display: "flex", gap: "1rem" }}>
           <Button
             variant="primary"

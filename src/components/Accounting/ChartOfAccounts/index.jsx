@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { useLanguage } from '@/context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import { useCustomPost } from '@/hooks/useMutation';
 import useCustomQuery from '@/hooks/useQuery';
 import ChartOfAccountsHeader from './ChartOfAccountsHeader';
@@ -8,9 +8,10 @@ import ChartOfAccountsFilters from './ChartOfAccountsFilters';
 import ChartOfAccountsTable from './ChartOfAccountsTable';
 import NewAccountModal from './NewAccountModal';
 import { collectParentIds, flattenAccounts, normalizeTreeResponse } from './chartOfAccounts.data';
+import translateApiError from '@/utils/translateApiError';
 
 const ChartOfAccounts = () => {
-    const { language } = useLanguage();
+    const { t } = useTranslation('accounting');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('All');
     const [filterSource, setFilterSource] = useState('All');
@@ -131,69 +132,23 @@ const ChartOfAccounts = () => {
         [allAccounts]
     );
 
-    const t = useMemo(
-        () =>
-            language === 'ar'
-                ? {
-                    title: 'شجرة الحسابات',
-                    subtitle: 'هيكلة وتنظيم الحسابات المالية بدقة.',
-                    newAccount: 'حساب جديد',
-                    searchPlaceholder: 'بحث بالاسم أو الكود...',
-                    export: 'تصدير',
-                    expandAll: 'توسيع الكل',
-                    collapseAll: 'طي الكل',
-                    colCode: 'الكود',
-                    colName: 'اسم الحساب',
-                    colType: 'النوع',
-                    modalAdd: 'إضافة حساب جديد',
-                    discard: 'إلغاء',
-                    save: 'حفظ الحساب',
-                    allTypes: 'كل الأنواع',
-                    allSources: 'كل المصادر',
-                    systemOnly: 'حسابات النظام',
-                    customOnly: 'حسابات مخصصة',
-                    reset: 'إعادة ضبط',
-                }
-                : {
-                    title: 'Chart of Accounts',
-                    subtitle: 'Architect your financial hierarchy with precision.',
-                    newAccount: 'New Account',
-                    searchPlaceholder: 'Search by name or code...',
-                    export: 'Export',
-                    expandAll: 'Expand All',
-                    collapseAll: 'Collapse All',
-                    colCode: 'Code',
-                    colName: 'Account Name',
-                    colType: 'Type',
-                    modalAdd: 'Create New Account',
-                    discard: 'Discard',
-                    save: 'Save Account',
-                    allTypes: 'All Types',
-                    allSources: 'All Sources',
-                    systemOnly: 'System Accounts',
-                    customOnly: 'Custom Accounts',
-                    reset: 'Reset',
-                },
-        [language]
-    );
-
     useEffect(() => {
         if (treeQuery.error) {
-            toast.error(language === 'ar' ? 'فشل تحميل شجرة الحسابات' : 'Failed to load chart of accounts tree.');
+            toast.error(t('chartOfAccounts.loadTreeFailed'));
         }
-    }, [language, treeQuery.error]);
+    }, [t, treeQuery.error]);
 
     useEffect(() => {
         if (accountTypesQuery.error) {
-            toast.error(language === 'ar' ? 'فشل تحميل أنواع الحسابات' : 'Failed to load account types.');
+            toast.error(t('chartOfAccounts.loadTypesFailed'));
         }
-    }, [accountTypesQuery.error, language]);
+    }, [accountTypesQuery.error, t]);
 
     useEffect(() => {
         if (parentAccountsQuery.error && isModalOpen) {
-            toast.error(language === 'ar' ? 'فشل تحميل الحسابات الأب' : 'Failed to load parent accounts.');
+            toast.error(t('chartOfAccounts.loadParentsFailed'));
         }
-    }, [isModalOpen, language, parentAccountsQuery.error]);
+    }, [isModalOpen, t, parentAccountsQuery.error]);
 
     const toggleExpand = (id) => {
         setExpandedNodes((prev) => {
@@ -210,11 +165,10 @@ const ChartOfAccounts = () => {
     const handleCreateAccount = async (payload) => {
         try {
             await createAccountMutation.mutateAsync(payload);
-            toast.success(language === 'ar' ? 'تم إنشاء الحساب بنجاح' : 'Account created successfully.');
+            toast.success(t('chartOfAccounts.createSuccess'));
             setIsModalOpen(false);
         } catch (error) {
-            const fallback = language === 'ar' ? 'فشل إنشاء الحساب' : 'Failed to create account.';
-            toast.error(error?.response?.data?.message || fallback);
+            toast.error(translateApiError(error, 'accounting:chartOfAccounts.createFailed'));
         }
     };
 
@@ -228,11 +182,9 @@ const ChartOfAccounts = () => {
     return (
         <section data-module="chart-of-accounts">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                <ChartOfAccountsHeader t={t} onOpenModal={() => setIsModalOpen(true)} />
+                <ChartOfAccountsHeader onOpenModal={() => setIsModalOpen(true)} />
 
                 <ChartOfAccountsFilters
-                    t={t}
-                    language={language}
                     searchTerm={searchTerm}
                     setSearchTerm={setSearchTerm}
                     filterType={filterType}
@@ -247,8 +199,6 @@ const ChartOfAccounts = () => {
                 />
 
                 <ChartOfAccountsTable
-                    t={t}
-                    language={language}
                     nodes={treeNodes}
                     searchTerm={searchTerm}
                     expandedNodes={expandedNodes}
@@ -260,8 +210,6 @@ const ChartOfAccounts = () => {
 
                 <NewAccountModal
                     open={isModalOpen}
-                    t={t}
-                    language={language}
                     accountTypes={accountTypes}
                     parentOptions={parentOptions}
                     onAccountTypeChange={setSelectedModalType}

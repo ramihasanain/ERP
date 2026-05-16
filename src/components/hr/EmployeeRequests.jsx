@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { CheckCircle, XCircle, FileText, Calendar, User, Search, Filter } from 'lucide-react';
@@ -50,15 +51,16 @@ const formatRequestedDate = (iso) => {
     return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-const requestTypeLabel = (type) => {
+const requestTypeLabel = (type, tr) => {
     if (!type) return '—';
-    const t = String(type).toLowerCase();
-    if (t === 'leave') return 'Leave';
-    if (t === 'document') return 'Document';
+    const key = String(type).toLowerCase();
+    if (key === 'leave') return tr('employeeRequests.leave');
+    if (key === 'document') return tr('employeeRequests.document');
     return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
 const EmployeeRequests = () => {
+    const { t } = useTranslation(['hr', 'common']);
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
@@ -158,23 +160,23 @@ const EmployeeRequests = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Employee Requests</h1>
-                <p style={{ color: 'var(--color-text-secondary)' }}>Manage leave applications and document requests.</p>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('employeeRequests.title')}</h1>
+                <p style={{ color: 'var(--color-text-secondary)' }}>{t('employeeRequests.subtitle')}</p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
                 <Card className="padding-md">
-                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Pending Requests</div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{t('employeeRequests.pending')}</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-warning)' }}>{summary.pending}</div>
                 </Card>
                 <Card className="padding-md">
-                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Approved This Month</div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{t('employeeRequests.approvedThisMonth')}</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success)' }}>
                         {summary.approved_this_month}
                     </div>
                 </Card>
                 <Card className="padding-md">
-                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Rejected</div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{t('employeeRequests.rejected')}</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-error)' }}>{summary.rejected}</div>
                 </Card>
             </div>
@@ -341,7 +343,7 @@ const EmployeeRequests = () => {
                                             ) : (
                                                 <FileText size={16} color="var(--color-secondary-600)" />
                                             )}
-                                            {requestTypeLabel(req.request_type)}
+                                            {requestTypeLabel(req.request_type, t)}
                                         </div>
                                     </td>
                                     <td style={{ padding: '1rem 1rem' }}>{req.details || '—'}</td>

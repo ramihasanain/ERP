@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Modal from '@/components/Shared/Modal';
 import Spinner from '@/core/Spinner';
 import { getPaymentTermsLabel } from './utils';

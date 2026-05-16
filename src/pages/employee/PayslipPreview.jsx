@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
-import { ArrowLeft, Printer, Download, Share2 } from "lucide-react";
+import { ArrowLeft, Printer, Download } from "lucide-react";
 import { useEmployeeCompanyName } from "@/hooks/useEmployeeCompanyName";
 
 const PayslipPreview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation(["employee", "common"]);
   const companyName = useEmployeeCompanyName();
   const [payslip, setPayslip] = useState(null);
 
   useEffect(() => {
-    // Mock data fetch
     setPayslip({
       id: id,
       month: "February 2026",
@@ -41,7 +42,7 @@ const PayslipPreview = () => {
     });
   }, [id]);
 
-  if (!payslip) return <div>Loading...</div>;
+  if (!payslip) return <div>{t("employee:payslipPreview.loading")}</div>;
 
   const totalEarnings = payslip.earnings.reduce(
     (acc, curr) => acc + curr.amount,
@@ -68,21 +69,23 @@ const PayslipPreview = () => {
           icon={<ArrowLeft size={18} />}
           onClick={() => navigate("/employee/payslips")}
         >
-          Back
+          {t("employee:payslipPreview.back")}
         </Button>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-            Payslip for {payslip.month}
+            {t("employee:payslipPreview.title", { month: payslip.month })}
           </h1>
           <p style={{ color: "var(--color-text-secondary)" }}>
-            Reference: #PAY-{id}-2026
+            {t("employee:payslipPreview.reference", { id })}
           </p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <Button variant="outline" icon={<Printer size={18} />}>
-            Print
+            {t("employee:payslipPreview.print")}
           </Button>
-          <Button icon={<Download size={18} />}>Download PDF</Button>
+          <Button icon={<Download size={18} />}>
+            {t("employee:payslipPreview.downloadPdf")}
+          </Button>
         </div>
       </div>
 
@@ -90,7 +93,6 @@ const PayslipPreview = () => {
         className="padding-xl"
         style={{ border: "1px solid var(--color-border)" }}
       >
-        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -117,7 +119,7 @@ const PayslipPreview = () => {
                 fontSize: "0.875rem",
               }}
             >
-              123 Tech Park, Silicon Valley, CA
+              {t("employee:payslipPreview.companyAddress")}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -128,7 +130,7 @@ const PayslipPreview = () => {
                 marginBottom: "0.25rem",
               }}
             >
-              Payslip
+              {t("employee:payslipPreview.payslip")}
             </div>
             <div style={{ color: "var(--color-text-secondary)" }}>
               {payslip.period}
@@ -136,7 +138,6 @@ const PayslipPreview = () => {
           </div>
         </div>
 
-        {/* Employee Info */}
         <div
           style={{
             display: "grid",
@@ -155,8 +156,7 @@ const PayslipPreview = () => {
                 marginBottom: "0.75rem",
               }}
             >
-              {" "}
-              Details
+              {t("employee:payslipPreview.details")}
             </h4>
             <div
               style={{
@@ -194,7 +194,7 @@ const PayslipPreview = () => {
                 marginBottom: "0.75rem",
               }}
             >
-              Bank Details
+              {t("employee:payslipPreview.bankDetails")}
             </h4>
             <div
               style={{
@@ -216,7 +216,6 @@ const PayslipPreview = () => {
           </div>
         </div>
 
-        {/* Earnings & Deductions Table */}
         <div
           style={{
             display: "grid",
@@ -227,7 +226,6 @@ const PayslipPreview = () => {
             marginBottom: "2rem",
           }}
         >
-          {/* Earnings */}
           <div style={{ borderRight: "1px solid var(--color-border)" }}>
             <div
               style={{
@@ -239,7 +237,7 @@ const PayslipPreview = () => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Earnings
+              {t("employee:payslipPreview.earnings")}
             </div>
             <div style={{ padding: "1rem" }}>
               {payslip.earnings.map((item, index) => (
@@ -269,13 +267,12 @@ const PayslipPreview = () => {
                   fontWeight: 700,
                 }}
               >
-                <span>Total Earnings</span>
+                <span>{t("employee:payslipPreview.totalEarnings")}</span>
                 <span>${totalEarnings.toFixed(2)}</span>
               </div>
             </div>
           </div>
 
-          {/* Deductions */}
           <div>
             <div
               style={{
@@ -287,7 +284,7 @@ const PayslipPreview = () => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Deductions
+              {t("employee:payslipPreview.deductions")}
             </div>
             <div style={{ padding: "1rem" }}>
               {payslip.deductions.map((item, index) => (
@@ -319,7 +316,7 @@ const PayslipPreview = () => {
                   fontWeight: 700,
                 }}
               >
-                <span>Total Deductions</span>
+                <span>{t("employee:payslipPreview.totalDeductions")}</span>
                 <span style={{ color: "var(--color-error)" }}>
                   -${totalDeductions.toFixed(2)}
                 </span>
@@ -328,12 +325,12 @@ const PayslipPreview = () => {
           </div>
         </div>
 
-        {/* Net Pay — theme-aware panel (primary-50 alone reads as a bright strip in dark mode) */}
         <div
           style={{
             background:
               "color-mix(in srgb, var(--color-primary-600) 18%, var(--color-bg-card))",
-            border: "1px solid color-mix(in srgb, var(--color-primary-500) 35%, var(--color-border))",
+            border:
+              "1px solid color-mix(in srgb, var(--color-primary-500) 35%, var(--color-border))",
             padding: "1.5rem",
             borderRadius: "var(--radius-md)",
             display: "flex",
@@ -350,7 +347,7 @@ const PayslipPreview = () => {
                 textTransform: "uppercase",
               }}
             >
-              Net Pay
+              {t("employee:payslipPreview.netPay")}
             </div>
             <div
               style={{
@@ -358,7 +355,7 @@ const PayslipPreview = () => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Total amount paid to employee
+              {t("employee:payslipPreview.netPayDescription")}
             </div>
           </div>
           <div
@@ -380,8 +377,7 @@ const PayslipPreview = () => {
             color: "var(--color-text-muted)",
           }}
         >
-          This is a computer-generated document and does not require a
-          signature.
+          {t("employee:payslipPreview.footer")}
         </div>
       </Card>
     </div>

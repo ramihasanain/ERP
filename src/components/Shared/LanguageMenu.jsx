@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Globe, ChevronDown, Check } from 'lucide-react';
 import { useLanguage, languages } from '@/context/LanguageContext';
 import pill from '@/components/Shared/toolbarPill.module.css';
@@ -10,6 +11,7 @@ const ORDER = ['en', 'ar', 'de'];
  * @param {{ align?: 'start' | 'end'; size?: 'sm' | 'md'; className?: string }} props
  */
 const LanguageMenu = ({ align = 'end', size = 'sm', className = '' }) => {
+    const { t } = useTranslation('common');
     const { language, changeLanguage } = useLanguage();
     const [open, setOpen] = useState(false);
     const wrapRef = useRef(null);
@@ -59,7 +61,7 @@ const LanguageMenu = ({ align = 'end', size = 'sm', className = '' }) => {
                 onClick={() => setOpen((v) => !v)}
                 aria-haspopup="listbox"
                 aria-expanded={open}
-                aria-label="Language"
+                aria-label={t('language.ariaLabel')}
             >
                 <Globe size={size === 'md' ? 17 : 16} strokeWidth={2} aria-hidden />
                 <span className={styles.code}>{code}</span>
@@ -71,7 +73,7 @@ const LanguageMenu = ({ align = 'end', size = 'sm', className = '' }) => {
                 />
             </button>
             {open ? (
-                <ul className={menuClass} role="listbox" aria-label="Languages">
+                <ul className={menuClass} role="listbox" aria-label={t('language.listboxLabel')}>
                     {ORDER.map((key) => {
                         const lang = languages[key];
                         const active = language === key;

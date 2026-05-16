@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useHR } from '@/context/HRContext';
 import { get } from '@/api';
@@ -14,6 +15,8 @@ import {
 import useProjectsManagementData from './useProjectsManagementData';
 
 const ProjectsManagement = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const { employees } = useHR();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
@@ -33,6 +36,7 @@ const ProjectsManagement = () => {
     };
 
     const resetForm = () => {
+
         setShowForm(false);
         setEditingProject(null);
         setInitialEditFormData(null);
@@ -76,13 +80,14 @@ const ProjectsManagement = () => {
     );
 
     const handleSubmit = () => {
+
         if (!formData.name.trim() || !formData.startDate || !formData.endDate) {
-            toast.error('Please fill in all required project fields.');
+            toast.error(t('projects.fillRequired'));
             return;
         }
 
         if (formData.startDate >= formData.endDate) {
-            toast.error('Start date must be before end date.');
+            toast.error(t('projects.dateOrder'));
             return;
         }
 

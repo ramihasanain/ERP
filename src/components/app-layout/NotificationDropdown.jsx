@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useBasePath } from "@/hooks/useBasePath";
 import { useNotifications } from "@/context/NotificationsContext";
@@ -30,21 +31,22 @@ const notifMessageClampStyle = {
   WebkitBoxOrient: "vertical",
 };
 
-const getTimeAgo = (timestamp) => {
+const getTimeAgo = (timestamp, t) => {
   const diff = Date.now() - new Date(timestamp).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("time.justNow");
+  if (mins < 60) return t("time.minutesAgo", { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t("time.hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return t("time.daysAgo", { count: days });
 };
 
 /**
  * @param {{ open: boolean; onRequestClose: () => void; panelAlign?: 'start' | 'end' }} props
  */
 const NotificationDropdown = ({ open, onRequestClose, panelAlign = "end" }) => {
+  const { t } = useTranslation("notifications");
   const {
     notifications,
     unreadCount,
@@ -99,7 +101,7 @@ const NotificationDropdown = ({ open, onRequestClose, panelAlign = "end" }) => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <h4 style={notifDropdownTitleStyle}>Notifications</h4>
+          <h4 style={notifDropdownTitleStyle}>{t("title")}</h4>
           {unreadCount > 0 ? (
             <span
               style={{
@@ -131,7 +133,7 @@ const NotificationDropdown = ({ open, onRequestClose, panelAlign = "end" }) => {
               gap: "0.25rem",
             }}
           >
-            <CheckCheck size={14} /> Mark all read
+            <CheckCheck size={14} /> {t("markAllReadShort")}
           </button>
         ) : null}
       </div>
@@ -149,7 +151,7 @@ const NotificationDropdown = ({ open, onRequestClose, panelAlign = "end" }) => {
             <p
               style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}
             >
-              No notifications
+              {t("noNotifications")}
             </p>
           </div>
         ) : (
@@ -268,7 +270,7 @@ const NotificationDropdown = ({ open, onRequestClose, panelAlign = "end" }) => {
                     fontWeight: 500,
                   }}
                 >
-                  {getTimeAgo(notif.timestamp)}
+                  {getTimeAgo(notif.timestamp, t)}
                 </p>
               </div>
 
@@ -315,7 +317,7 @@ const NotificationDropdown = ({ open, onRequestClose, panelAlign = "end" }) => {
               padding: "0.25rem",
             }}
           >
-            View All Notifications
+            {t("viewAll")}
           </button>
         </div>
       ) : null}

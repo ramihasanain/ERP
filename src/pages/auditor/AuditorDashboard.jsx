@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import { useAudit } from "@/context/AuditContext";
@@ -8,6 +9,7 @@ import useCustomQuery from "@/hooks/useQuery";
 import { useCustomPost } from "@/hooks/useMutation";
 import ConfirmationModal from "@/components/Shared/ConfirmationModal";
 import { toast } from "sonner";
+import { translateApiError } from "@/utils/translateApiError";
 import Spinner from "@/core/Spinner";
 import NoData from "@/core/NoData";
 import {
@@ -55,24 +57,27 @@ const normalizePortalItems = (response) =>
     .map(normalizePortalItem)
     .filter((c) => c.id);
 
-const CLIENT_COMPANIES_TABS = [
-  {
-    id: "pending",
-    label: "Pending",
-    endpoint: "/api/auditing/portal/requests/",
-  },
-  {
-    id: "approved",
-    label: "Approved",
-    endpoint: "/api/auditing/portal/companies/",
-  },
-];
-
 const AuditorDashboard = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { currentAuditor, getAuditorPeriods, AUDIT_STATUSES } = useAudit();
-  console.log(currentAuditor);
+
+  const CLIENT_COMPANIES_TABS = useMemo(
+    () => [
+      {
+        id: "pending",
+        label: t("dashboard.tabs.pending"),
+        endpoint: "/api/auditing/portal/requests/",
+      },
+      {
+        id: "approved",
+        label: t("dashboard.tabs.approved"),
+        endpoint: "/api/auditing/portal/companies/",
+      },
+    ],
+    [t],
+  );
   const [selectedCompanyId] = useState("all");
   const [companiesTab, setCompaniesTab] = useState("pending");
   const [requestAction, setRequestAction] = useState(null);
@@ -103,7 +108,6 @@ const AuditorDashboard = () => {
     if (!requestAction) return;
     const mutation =
       requestAction.type === "accept" ? acceptMutation : rejectMutation;
-    const label = requestAction.type === "accept" ? "Approved" : "Rejected";
     mutation.mutate(
       {
         id: requestAction.item.id,
@@ -112,13 +116,19 @@ const AuditorDashboard = () => {
       {
         onSuccess: () => {
           toast.success(
-            `${requestAction.item.clientName} audit request ${label.toLowerCase()} successfully.`,
+            requestAction.type === "accept"
+              ? t("dashboard.toasts.requestApproved", {
+                  name: requestAction.item.clientName,
+                })
+              : t("dashboard.toasts.requestRejected", {
+                  name: requestAction.item.clientName,
+                }),
           );
           setRequestAction(null);
         },
-        onError: () => {
+        onError: (err) => {
           toast.error(
-            `Failed to ${requestAction.type} the request. Please try again.`,
+            translateApiError(err, "auditor:dashboard.toasts.requestFailed"),
           );
         },
       },
@@ -144,7 +154,7 @@ const AuditorDashboard = () => {
             style={{ color: "var(--color-error)", marginBottom: "1rem" }}
           />
           <h2 style={{ fontWeight: 700, marginBottom: "0.5rem" }}>
-            Access Denied
+            {t("dashboard.accessDenied")}
           </h2>
           <p
             style={{
@@ -152,10 +162,10 @@ const AuditorDashboard = () => {
               marginBottom: "1rem",
             }}
           >
-            Please login through the auditor portal.
+            {t("dashboard.loginRequired")}
           </p>
           <Button onClick={() => navigate("/auditor/login")}>
-            Go to Auditor Login
+            {t("dashboard.goToLogin")}
           </Button>
         </Card>
       </div>
@@ -207,7 +217,7 @@ const AuditorDashboard = () => {
           </div>
           <div>
             <h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>
-              Auditor Portal
+              {t("dashboard.title")}
             </h1>
             <p style={{ fontSize: "0.8rem", opacity: 0.7 }}>
               <Building2 size={12} style={{ verticalAlign: "middle" }} />{" "}
@@ -221,7 +231,7 @@ const AuditorDashboard = () => {
           icon={<LogOut size={16} />}
           onClick={handleLogout}
         >
-          Sign Out
+          {t("dashboard.signOut")}
         </Button>
       </div>
 
@@ -237,27 +247,27 @@ const AuditorDashboard = () => {
         >
           {[
             {
-              label: "Pending Review",
+              label: t("dashboard.stats.pendingReview"),
               count: periods.filter(
                 (p) => p.status === AUDIT_STATUSES.SUBMITTED,
               ).length,
               color: "var(--color-warning)",
             },
             {
-              label: "In Review",
+              label: t("dashboard.stats.inReview"),
               count: periods.filter(
                 (p) => p.status === AUDIT_STATUSES.IN_REVIEW,
               ).length,
               color: "var(--color-primary-600)",
             },
             {
-              label: "Approved",
+              label: t("dashboard.stats.approved"),
               count: periods.filter((p) => p.status === AUDIT_STATUSES.APPROVED)
                 .length,
               color: "var(--color-success)",
             },
             {
-              label: "Sealed",
+              label: t("dashboard.stats.sealed"),
               count: periods.filter((p) => p.status === AUDIT_STATUSES.SEALED)
                 .length,
               color: "#7c3aed",
@@ -315,7 +325,7 @@ const AuditorDashboard = () => {
                 color: "var(--color-success)",
               }}
             >
-              ACTIVE
+              {t("dashboard.active")}
             </span>
           </div>
         </Card>
@@ -329,7 +339,7 @@ const AuditorDashboard = () => {
               fontSize: "1.1rem",
             }}
           >
-            Client Companies
+            {t("dashboard.clientCompanies")}
           </h3>
 
           <div
@@ -387,14 +397,14 @@ const AuditorDashboard = () => {
             >
               <AlertTriangle size={16} style={{ flexShrink: 0 }} />
               <span>
-                Could not load client companies. Please try again later.
+                {t("dashboard.loadError")}
               </span>
             </div>
           )}
           {!portalQuery.isLoading &&
             !portalQuery.isError &&
             portalItems.length === 0 && (
-              <NoData variant="inline" label="client companies" />
+              <NoData variant="inline" label={t("dashboard.noDataLabel")} />
             )}
           {!portalQuery.isLoading &&
             !portalQuery.isError &&
@@ -412,12 +422,12 @@ const AuditorDashboard = () => {
                       ? {
                           bg: "var(--color-success-dim)",
                           color: "var(--color-success)",
-                          label: "Approved",
+                          label: t("dashboard.tabs.approved"),
                         }
                       : {
                           bg: "var(--color-warning-dim)",
                           color: "var(--color-warning)",
-                          label: "Pending",
+                          label: t("dashboard.tabs.pending"),
                         };
 
                   return (
@@ -606,8 +616,9 @@ const AuditorDashboard = () => {
                             >
                               <FileText size={12} style={{ flexShrink: 0 }} />
                               <span>
-                                {item.auditPeriodsCount} audit period
-                                {item.auditPeriodsCount !== 1 ? "s" : ""}
+                                {t("dashboard.auditPeriods", {
+                                  count: item.auditPeriodsCount,
+                                })}
                               </span>
                             </p>
                           )}
@@ -647,7 +658,7 @@ const AuditorDashboard = () => {
                               gap: "0.35rem",
                             }}
                           >
-                            <CheckCircle size={14} /> Approve
+                            <CheckCircle size={14} /> {t("dashboard.approve")}
                           </button>
                           <button
                             onClick={() =>
@@ -673,7 +684,7 @@ const AuditorDashboard = () => {
                               gap: "0.35rem",
                             }}
                           >
-                            <ThumbsDown size={14} /> Reject
+                            <ThumbsDown size={14} /> {t("dashboard.reject")}
                           </button>
                         </div>
                       )}
@@ -698,8 +709,7 @@ const AuditorDashboard = () => {
             style={{ marginBottom: "0.5rem", opacity: 0.5 }}
           />
           <p>
-            Click on any company card above to view its full profile, accounts,
-            tax info, attachments, and audit periods.
+            {t("dashboard.tip")}
           </p>
         </Card>
       </div>
@@ -709,15 +719,19 @@ const AuditorDashboard = () => {
         type={requestAction?.type === "accept" ? "success" : "danger"}
         title={
           requestAction?.type === "accept"
-            ? "Approve Audit Request"
-            : "Reject Audit Request"
+            ? t("dashboard.modals.approveTitle")
+            : t("dashboard.modals.rejectTitle")
         }
         message={
           <div>
             <p style={{ marginBottom: "0.75rem" }}>
               {requestAction?.type === "accept"
-                ? `Are you sure you want to approve the audit request from "${requestAction?.item?.clientName}"?`
-                : `Are you sure you want to reject the audit request from "${requestAction?.item?.clientName}"?`}
+                ? t("dashboard.modals.approveMessage", {
+                    name: requestAction?.item?.clientName,
+                  })
+                : t("dashboard.modals.rejectMessage", {
+                    name: requestAction?.item?.clientName,
+                  })}
             </p>
             <label
               style={{
@@ -728,7 +742,7 @@ const AuditorDashboard = () => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Note
+              {t("dashboard.modals.note")}
             </label>
             <textarea
               value={requestAction?.note ?? ""}
@@ -739,8 +753,8 @@ const AuditorDashboard = () => {
               }
               placeholder={
                 requestAction?.type === "accept"
-                  ? "Optional note for the client..."
-                  : "Reason for rejection..."
+                  ? t("dashboard.modals.approveNotePlaceholder")
+                  : t("dashboard.modals.rejectNotePlaceholder")
               }
               style={{
                 width: "100%",
@@ -756,8 +770,12 @@ const AuditorDashboard = () => {
             />
           </div>
         }
-        confirmText={requestAction?.type === "accept" ? "Approve" : "Reject"}
-        cancelText="Cancel"
+        confirmText={
+          requestAction?.type === "accept"
+            ? t("dashboard.approve")
+            : t("dashboard.reject")
+        }
+        cancelText={t("common:actions.cancel")}
         disabled={acceptMutation.isPending || rejectMutation.isPending}
         onConfirm={handleRequestAction}
         onCancel={() => setRequestAction(null)}

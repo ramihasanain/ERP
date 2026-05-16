@@ -1,15 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Spinner from '@/core/Spinner';
 
-const ContractTemplatesVariablesPanel = ({
-    compact = false,
-    isLargeEditorLayout,
-    tagsQuery,
-    availableVariables,
-    onInsertVariable,
-}) => (
+const ContractTemplatesVariablesPanel = () => {
+    const { t } = useTranslation(['hr', 'common']);
+    return (
     <Card
         className="padding-md"
         style={
@@ -99,6 +96,7 @@ const ContractTemplatesVariablesPanel = ({
             )}
         </div>
     </Card>
-);
+    );
+};
 
 export default ContractTemplatesVariablesPanel;

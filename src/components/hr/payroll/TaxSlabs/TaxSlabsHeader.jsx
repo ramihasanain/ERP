@@ -1,8 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Plus, Save } from 'lucide-react';
 import Button from '@/components/Shared/Button';
 
-const TaxSlabsHeader = ({ isCompactLayout, isSaving, hasChanges, onBack, onAddBracket, onSave }) => (
+const TaxSlabsHeader = () => {
+    const { t } = useTranslation(['hr', 'common']);
+    return (
     <div
         style={{
             display: 'flex',
@@ -30,6 +33,7 @@ const TaxSlabsHeader = ({ isCompactLayout, isSaving, hasChanges, onBack, onAddBr
             </Button>
         </div>
     </div>
-);
+    );
+};
 
 export default TaxSlabsHeader;

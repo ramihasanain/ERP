@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import useCustomQuery from '@/hooks/useQuery';
 import Spinner from '@/core/Spinner';
 import Pagination from '@/core/Pagination';
@@ -55,6 +56,7 @@ const buildTransactionsUrl = ({
 };
 
 const TransactionsList = () => {
+    const { t } = useTranslation(['inventory', 'common']);
     const { warehouses } = useInventory();
     const navigate = useNavigate();
     const basePath = useBasePath();
@@ -106,8 +108,8 @@ const TransactionsList = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', gap: '1rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>Inventory Transactions</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Track all stock movements.</p>
+                    <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>{t('transactions.title')}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{t('transactions.subtitle')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
                     <Button variant="outline" icon={<ArrowLeft size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate(`${basePath}/inventory/transactions/receipt`)}>

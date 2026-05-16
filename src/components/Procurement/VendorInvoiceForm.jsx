@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useProcurement } from '@/context/ProcurementContext';
 import { useAccounting } from '@/context/AccountingContext';
 import { get, post } from '@/api';
@@ -16,6 +17,7 @@ const APPROVED_PURCHASE_ORDERS_ENDPOINT =
     '/api/purchasing/purchase-orders/?status=approved&vendor=&date_from=&date_to=';
 
 const VendorInvoiceForm = () => {
+    const { t } = useTranslation(['procurement', 'common']);
 
     const { addVendorInvoice, purchaseOrders: contextPurchaseOrders } = useProcurement();
     const { vendors: contextVendors, addEntry } = useAccounting();

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Search } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -11,7 +12,20 @@ const PurchaseOrderHeaderFilters = ({
     onFilterStatusChange,
     onCreatePurchaseOrder,
 }) => {
+    const { t } = useTranslation(['procurement', 'common']);
     const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
+
+    const statusLabel = (status) => {
+        const map = {
+            All: t('statusFilters.all'),
+            Draft: t('statusFilters.draft'),
+            'Pending Approval': t('statusFilters.pendingApproval'),
+            Approved: t('statusFilters.approved'),
+            Rejected: t('statusFilters.rejected'),
+            Closed: t('statusFilters.closed'),
+        };
+        return map[status] || status;
+    };
 
     useEffect(() => {
         const onResize = () => setIsNarrowScreen(window.innerWidth < 1100);
@@ -23,8 +37,8 @@ const PurchaseOrderHeaderFilters = ({
         <>
             <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', marginBottom: '2rem', gap: '1rem' }}>
             <div>
-                <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>Purchase Orders</h1>
-                <p style={{ color: 'var(--color-text-secondary)' }}>Manage procurement and vendor orders</p>
+                <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>{t('poList.title')}</h1>
+                <p style={{ color: 'var(--color-text-secondary)' }}>{t('poList.subtitle')}</p>
             </div>
             <Button
                 variant="primary"
@@ -34,7 +48,7 @@ const PurchaseOrderHeaderFilters = ({
                 className="font-medium cursor-pointer"
                 style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}
             >
-                New Purchase Order
+                {t('newPurchaseOrder')}
             </Button>
         </div>
 
@@ -46,7 +60,7 @@ const PurchaseOrderHeaderFilters = ({
                 />
                 <input
                     type="text"
-                    placeholder="Search POs or Vendors..."
+                    placeholder={t('poList.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(event) => onSearchTermChange(event.target.value)}
                     className="font-normal"
@@ -90,7 +104,7 @@ const PurchaseOrderHeaderFilters = ({
                         }}
                         className="cursor-pointer"
                     >
-                        {status}
+                        {statusLabel(status)}
                     </button>
                 ))}
             </div>

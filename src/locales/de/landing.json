@@ -1,0 +1,112 @@
+{
+  "nav": {
+    "features": "Funktionen",
+    "pricing": "Preise",
+    "signIn": "Anmelden",
+    "logIn": "Log In",
+    "getStarted": "Jetzt starten",
+    "openUserMenu": "Open user menu"
+  },
+  "hero": {
+    "badge": "v2.0 ist jetzt mit erweiterten Analysen verfügbar",
+    "title": "Einheitliche Verwaltung für",
+    "titleHighlight": "globale Unternehmen",
+    "subtitle": "Nahtlose Integration von Buchhaltung, Personal und Lager über Grenzen hinweg. Für Teams in Jordanien, KSA, Deutschland und darüber hinaus.",
+    "startTrial": "Kostenlos testen",
+    "watchDemo": "Demo ansehen",
+    "dashboardPreview": "Dashboard-Vorschau"
+  },
+  "features": {
+    "title": "Alles, was Sie für Ihr Unternehmen brauchen",
+    "subtitle": "UnifiedCore vereint alle wichtigen Geschäftsfunktionen auf einer Plattform.",
+    "accounting": {
+      "title": "Erweiterte Buchhaltung",
+      "description": "Mehrwährungsfähige, steuerkonforme Bücher für Jordanien, KSA und Deutschland."
+    },
+    "hr": {
+      "title": "Globales Personal & Lohn",
+      "description": "Verwalten Sie Teams mit länderspezifischen Arbeits- und Lohnregeln."
+    },
+    "inventory": {
+      "title": "Intelligentes Lager",
+      "description": "Echtzeit-Bestandsverfolgung über mehrere Lager und Standorte."
+    },
+    "security": {
+      "title": "Unternehmenssicherheit",
+      "description": "Rollenbasierte Zugriffskontrolle, Prüfprotokolle und Datenverschlüsselung."
+    },
+    "localization": {
+      "title": "Native Lokalisierung",
+      "description": "Integrierte RTL-Unterstützung für Arabisch und lokalisierte Datums-/Zahlenformate."
+    },
+    "analytics": {
+      "title": "Echtzeit-Analysen",
+      "description": "Umsetzbare Erkenntnisse mit anpassbaren Dashboards und Berichten."
+    }
+  },
+  "pricing": {
+    "title": "Simple, transparent pricing",
+    "subtitle": "Choose the plan that fits your business scale.",
+    "mostPopular": "Most Popular",
+    "perMonth": "/mo",
+    "contactSales": "Contact Sales",
+    "getStarted": "Jetzt starten",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "price": "$49",
+        "description": "Essential tools for small businesses.",
+        "features": {
+          "singleCompany": "Single Company",
+          "basicAccounting": "Basic Accounting",
+          "upTo5Users": "Up to 5 Users",
+          "emailSupport": "Email Support"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$99",
+        "description": "Perfect for growing companies.",
+        "features": {
+          "multiCompany": "Multi-Company (up to 3)",
+          "advancedAccountingHr": "Advanced Accounting & HR",
+          "upTo20Users": "Up to 20 Users",
+          "prioritySupport": "Priority Support",
+          "inventoryManagement": "Inventory Management"
+        }
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom",
+        "description": "For large organizations.",
+        "features": {
+          "unlimitedCompanies": "Unlimited Companies",
+          "allModules": "All Modules Included",
+          "unlimitedUsers": "Unlimited Users",
+          "accountManager": "Dedicated Account Manager",
+          "customIntegrations": "Custom Integrations",
+          "sla": "SLA"
+        }
+      }
+    }
+  },
+  "footer": {
+    "brand": "UnifiedCore",
+    "tagline": "Das komplette Betriebssystem für moderne globale Unternehmen.",
+    "product": "Produkt",
+    "resources": "Ressourcen",
+    "legal": "Rechtliches",
+    "accounting": "Buchhaltung",
+    "hrPayroll": "Personal & Lohn",
+    "inventory": "Lager",
+    "integrations": "Integrationen",
+    "documentation": "Dokumentation",
+    "apiReference": "API-Referenz",
+    "blog": "Blog",
+    "community": "Community",
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen",
+    "security": "Sicherheit",
+    "copyright": "© {{year}} UnifiedCore. All rights reserved."
+  }
+}

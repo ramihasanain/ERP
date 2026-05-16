@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -7,6 +8,8 @@ import { useAttendance } from '@/context/AttendanceContext';
 import { useHR } from '@/context/HRContext';
 
 const LeaveRequests = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const { leaveRequests, addLeaveRequest, updateLeaveStatus } = useAttendance();
     const { employees } = useHR();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,22 +24,22 @@ const LeaveRequests = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Leave Requests</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Manage employee leave applications.</p>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('leaveRequests.title')}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{t('leaveRequests.subtitle')}</p>
                 </div>
-                <Button icon={<Plus size={16} />} onClick={() => setIsModalOpen(true)}>New Request</Button>
+                <Button icon={<Plus size={16} />} onClick={() => setIsModalOpen(true)}>{t('leaveRequests.newRequest')}</Button>
             </div>
 
             <Card className="padding-lg">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                            <th style={{ textAlign: 'left', padding: '1rem' }}>Employee</th>
-                            <th style={{ textAlign: 'left', padding: '1rem' }}>Type</th>
-                            <th style={{ textAlign: 'left', padding: '1rem' }}>Dates</th>
-                            <th style={{ textAlign: 'left', padding: '1rem' }}>Reason</th>
-                            <th style={{ textAlign: 'center', padding: '1rem' }}>Status</th>
-                            <th style={{ textAlign: 'right', padding: '1rem' }}>Actions</th>
+                            <th style={{ textAlign: 'left', padding: '1rem' }}>{t('leaveRequests.employee')}</th>
+                            <th style={{ textAlign: 'left', padding: '1rem' }}>{t('leaveRequests.type')}</th>
+                            <th style={{ textAlign: 'left', padding: '1rem' }}>{t('leaveRequests.dates')}</th>
+                            <th style={{ textAlign: 'left', padding: '1rem' }}>{t('leaveRequests.reason')}</th>
+                            <th style={{ textAlign: 'center', padding: '1rem' }}>{t('leaveRequests.status')}</th>
+                            <th style={{ textAlign: 'right', padding: '1rem' }}>{t('common:table.actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -62,7 +65,7 @@ const LeaveRequests = () => {
                         {leaveRequests.length === 0 && (
                             <tr>
                                 <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                    No leave requests found.
+                                    {t('leaveRequests.noRequests')}
                                 </td>
                             </tr>
                         )}
@@ -101,6 +104,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const RequestModal = ({ isOpen, onClose, onSave, employees }) => {
+    const { t } = useTranslation(['hr', 'common']);
     const [formData, setFormData] = useState({
         employeeId: '',
         type: 'Annual Leave',
@@ -123,18 +127,18 @@ const RequestModal = ({ isOpen, onClose, onSave, employees }) => {
             background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
         }}>
             <div style={{ background: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', width: '500px', maxWidth: '90%' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>New Leave Request</h2>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem' }}>{t('leaveRequests.modalTitle')}</h2>
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Employee</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>{t('leaveRequests.employee')}</label>
                         <select
                             style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
                             value={formData.employeeId}
                             onChange={e => setFormData({ ...formData, employeeId: e.target.value })}
                             required
                         >
-                            <option value="">Select Employee</option>
+                            <option value="">{t('leaveRequests.selectEmployee')}</option>
                             {employees.map(e => (
                                 <option key={e.id} value={e.id}>{e.firstName} {e.lastName}</option>
                             ))}
@@ -142,29 +146,29 @@ const RequestModal = ({ isOpen, onClose, onSave, employees }) => {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Leave Type</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>{t('leaveRequests.leaveType')}</label>
                         <select
                             style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
                             value={formData.type}
                             onChange={e => setFormData({ ...formData, type: e.target.value })}
                         >
-                            <option>Annual Leave</option>
-                            <option>Sick Leave</option>
-                            <option>Unpaid Leave</option>
-                            <option>Compassionate Leave</option>
+                            <option>{t('leaveRequests.annualLeave')}</option>
+                            <option>{t('leaveRequests.sickLeave')}</option>
+                            <option>{t('leaveRequests.unpaidLeave')}</option>
+                            <option>{t('leaveRequests.compassionateLeave')}</option>
                         </select>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <Input label="Start Date" type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} required />
-                        <Input label="End Date" type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} required />
+                        <Input label={t('leaveRequests.startDate')} type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} required />
+                        <Input label={t('leaveRequests.endDate')} type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} required />
                     </div>
 
-                    <Input label="Reason" value={formData.reason} onChange={e => setFormData({ ...formData, reason: e.target.value })} placeholder="Why are you taking leave?" />
+                    <Input label={t('leaveRequests.reason')} value={formData.reason} onChange={e => setFormData({ ...formData, reason: e.target.value })} placeholder={t('leaveRequests.reasonPlaceholder')} />
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                        <Button variant="outline" onClick={onClose} type="button">Cancel</Button>
-                        <Button type="submit">Submit Request</Button>
+                        <Button variant="outline" onClick={onClose} type="button">{t('common:actions.cancel')}</Button>
+                        <Button type="submit">{t('leaveRequests.submitRequest')}</Button>
                     </div>
                 </form>
             </div>

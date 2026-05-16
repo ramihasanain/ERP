@@ -1,8 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from '@/components/Shared/Button';
 import Card from '@/components/Shared/Card';
 
 const ContractTemplateDeleteModal = ({ templateToDelete, isDeleting, onCancel, onConfirmDelete }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     if (!templateToDelete) return null;
 
     return (
@@ -26,12 +29,8 @@ const ContractTemplateDeleteModal = ({ templateToDelete, isDeleting, onCancel, o
                     Are you sure you want to delete <strong>{templateToDelete.name}</strong>? This action cannot be undone.
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                    <Button variant="ghost" onClick={onCancel} disabled={isDeleting}>
-                        Cancel
-                    </Button>
-                    <Button variant="danger" onClick={onConfirmDelete} isLoading={isDeleting}>
-                        Delete
-                    </Button>
+                    <Button variant="ghost" onClick={onCancel} disabled={isDeleting}>{t('common:actions.cancel')}</Button>
+                    <Button variant="danger" onClick={onConfirmDelete} isLoading={isDeleting}>{t('common:actions.delete')}</Button>
                 </div>
             </Card>
         </div>

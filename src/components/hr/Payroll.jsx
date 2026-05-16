@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from "react";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
@@ -66,6 +67,8 @@ const normalizeDashboard = (response) => {
 };
 
 const Payroll = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
   const navigate = useNavigate();
   const basePath = useBasePath();
   const location = useLocation();
@@ -130,10 +133,10 @@ const Payroll = () => {
       <div className={styles.pageHeader}>
         <div>
           <h2 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-            Payroll Dashboard
+            {t('payroll.dashboardTitle')}
           </h2>
           <p style={{ color: "var(--color-text-secondary)" }}>
-            Manage salary components, structures, and process monthly runs.
+            {t('payroll.dashboardSubtitle')}
           </p>
         </div>
         <div className={styles.pageHeaderActions}>
@@ -144,7 +147,7 @@ const Payroll = () => {
             onClick={() => navigate(`${basePath}/hr/payroll/components`)}
             className="cursor-pointer"
           >
-            Components
+            {t('payroll.componentsBtn')}
           </Button>
           <Button
             variant="outline"
@@ -153,7 +156,7 @@ const Payroll = () => {
             onClick={() => navigate(`${basePath}/hr/payroll/structures`)}
             className="cursor-pointer"
           >
-            Structures
+            {t('payroll.structuresBtn')}
           </Button>
           <Button
             variant="outline"
@@ -162,7 +165,7 @@ const Payroll = () => {
             onClick={() => navigate(`${basePath}/hr/payroll/tax-slabs`)}
             className="cursor-pointer"
           >
-            Taxes
+            {t('payroll.taxesBtn')}
           </Button>
           <Button
             variant="primary"
@@ -171,7 +174,7 @@ const Payroll = () => {
             onClick={() => navigate(`${basePath}/hr/payroll/run`)}
             className="cursor-pointer"
           >
-            Run Payroll
+            {t('payroll.runPayroll')}
           </Button>
         </div>
       </div>
@@ -207,7 +210,7 @@ const Payroll = () => {
           }}
         >
           <BarChart2 size={18} />
-          Overview
+          {t('payroll.overview')}
         </button>
         <button
           type="button"

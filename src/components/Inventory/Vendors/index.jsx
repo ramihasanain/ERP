@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import translateApiError from '@/utils/translateApiError';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
@@ -42,6 +44,7 @@ const formatApiErrorMessage = (error, fallbackMessage) => {
 };
 
 const Vendors = () => {
+    const { t } = useTranslation(['inventory', 'common']);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -138,15 +141,14 @@ const Vendors = () => {
         try {
             if (editingVendorId) {
                 await updateVendor.mutateAsync({ id: editingVendorId, ...payload });
-                toast.success('Vendor updated successfully.');
+                toast.success(t('vendors.updateSuccess'));
             } else {
                 await createVendor.mutateAsync(payload);
-                toast.success('Vendor created successfully.');
+                toast.success(t('vendors.createSuccess'));
             }
             closeFormModal();
         } catch (error) {
-            const message = formatApiErrorMessage(error, 'Failed to save vendor.');
-            toast.error(message);
+            toast.error(translateApiError(error, 'inventory:vendors.saveFailed'));
         }
     };
 
@@ -154,14 +156,13 @@ const Vendors = () => {
         if (!deleteTarget?.id) return;
         try {
             await deleteVendor.mutateAsync(deleteTarget.id);
-            toast.success('Vendor deleted successfully.');
+            toast.success(t('vendors.deleteSuccess'));
             if (viewingVendorId === deleteTarget.id) {
                 closeViewModal();
             }
             setDeleteTarget(null);
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to delete vendor.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'inventory:vendors.deleteFailed'));
         }
     };
 
@@ -195,9 +196,9 @@ const Vendors = () => {
 
             {hasError && !isLoading && (
                 <div style={{ padding: '1.5rem' }}>
-                    <p style={{ marginTop: 0, color: 'var(--color-error)' }}>Could not load vendors data.</p>
+                    <p style={{ marginTop: 0, color: 'var(--color-error)' }}>{t('vendors.loadFailed')}</p>
                     <Button variant="outline" onClick={refreshVendors}>
-                        Retry
+                        {t('common:actions.retry')}
                     </Button>
                 </div>
             )}
@@ -227,11 +228,11 @@ const Vendors = () => {
 
             <ConfirmationModal
                 isOpen={Boolean(deleteTarget)}
-                title="Delete Vendor"
+                title={t('vendors.deleteTitle')}
                 type="danger"
-                message={`Are you sure you want to delete "${deleteTarget?.name || 'this vendor'}"? This action cannot be undone.`}
-                confirmText="Delete"
-                cancelText="Cancel"
+                message={t('vendors.deleteMessage', { name: deleteTarget?.name || t('vendors.deleteFallbackName') })}
+                confirmText={t('common:actions.delete')}
+                cancelText={t('common:actions.cancel')}
                 onCancel={() => setDeleteTarget(null)}
                 onConfirm={confirmDelete}
             />

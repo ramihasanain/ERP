@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Spinner from "@/core/Spinner";
 import useCustomQuery from "@/hooks/useQuery";
@@ -29,42 +30,36 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-const COMPANY_PROFILE_TABS = [
-  { id: "overview", label: "Overview", icon: <Building2 size={14} /> },
-  { id: "tax", label: "Tax & Registration", icon: <FileCheck size={14} /> },
-  { id: "bank", label: "Bank Accounts", icon: <CreditCard size={14} /> },
-  { id: "shareholders", label: "Shareholders", icon: <PieChart size={14} /> },
-  { id: "attachments", label: "Attachments", icon: <Paperclip size={14} /> },
-  { id: "periods", label: "Audit Periods", icon: <FileText size={14} /> },
-];
+const PERIOD_STATUS_KEYS = {
+  submitted: "submitted",
+  in_review: "in_review",
+  revision: "revision",
+  approved: "approved",
+  sealed: "sealed",
+};
 
-const PERIOD_STATUS_MAP = {
+const PERIOD_STATUS_STYLES = {
   submitted: {
-    label: "Submitted",
     color: "var(--color-warning)",
     bg: "var(--color-warning-dim)",
     icon: <Clock size={14} />,
   },
   in_review: {
-    label: "In Review",
     color: "var(--color-primary-600)",
     bg: "var(--color-primary-50)",
     icon: <Eye size={14} />,
   },
   revision: {
-    label: "Revision Requested",
     color: "var(--color-error)",
     bg: "var(--color-error-dim)",
     icon: <RotateCcw size={14} />,
   },
   approved: {
-    label: "Approved",
     color: "var(--color-success)",
     bg: "var(--color-success-dim)",
     icon: <CheckCircle size={14} />,
   },
   sealed: {
-    label: "Sealed",
     color: "#7c3aed",
     bg: "#f5f3ff",
     icon: <Lock size={14} />,
@@ -79,9 +74,31 @@ const CAT_COLORS = {
 };
 
 const AuditorClientDetails = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const navigate = useNavigate();
   const { companyId } = useParams();
   const [activeTab, setActiveTab] = useState("overview");
+
+  const COMPANY_PROFILE_TABS = useMemo(
+    () => [
+      { id: "overview", label: t("clientDetails.tabs.overview"), icon: <Building2 size={14} /> },
+      { id: "tax", label: t("clientDetails.tabs.tax"), icon: <FileCheck size={14} /> },
+      { id: "bank", label: t("clientDetails.tabs.bank"), icon: <CreditCard size={14} /> },
+      { id: "shareholders", label: t("clientDetails.tabs.shareholders"), icon: <PieChart size={14} /> },
+      { id: "attachments", label: t("clientDetails.tabs.attachments"), icon: <Paperclip size={14} /> },
+      { id: "periods", label: t("clientDetails.tabs.periods"), icon: <FileText size={14} /> },
+    ],
+    [t],
+  );
+
+  const getPeriodStatus = (status) => {
+    const key = PERIOD_STATUS_KEYS[status] || "submitted";
+    const style = PERIOD_STATUS_STYLES[status] || PERIOD_STATUS_STYLES.submitted;
+    return {
+      ...style,
+      label: t(`clientDetails.periodStatus.${key}`),
+    };
+  };
 
   const companyDetailQuery = useCustomQuery(
     `/api/auditing/portal/companies/${companyId}/`,
@@ -136,7 +153,7 @@ const AuditorClientDetails = () => {
                 fontWeight: 500,
               }}
             >
-              <ArrowLeft size={18} /> Back to Dashboard
+              <ArrowLeft size={18} /> {t("clientDetails.backToDashboard")}
             </button>
           </div>
         </div>
@@ -164,7 +181,7 @@ const AuditorClientDetails = () => {
               }}
             />
             <p style={{ fontWeight: 600, marginBottom: "0.25rem" }}>
-              Failed to load company details
+              {t("clientDetails.loadError")}
             </p>
             <p
               style={{
@@ -172,7 +189,7 @@ const AuditorClientDetails = () => {
                 color: "var(--color-text-secondary)",
               }}
             >
-              Please try again later.
+              {t("clientDetails.tryAgainLater")}
             </p>
           </Card>
         )}
@@ -233,13 +250,13 @@ const AuditorClientDetails = () => {
                       {overview?.company_information?.legal_form &&
                         ` • ${overview.company_information.legal_form}`}
                       {fin.foundation_date &&
-                        ` • Founded ${new Date(fin.foundation_date).getFullYear()}`}
+                        ` • ${t("clientDetails.founded", { year: new Date(fin.foundation_date).getFullYear() })}`}
                     </p>
                     <p style={{ opacity: 0.6, fontSize: "0.8rem" }}>
                       {overview?.contact_details?.ceo &&
-                        `CEO: ${overview.contact_details.ceo}`}
+                        t("clientDetails.ceo", { name: overview.contact_details.ceo })}
                       {overview?.company_information?.registration &&
-                        ` | Reg: ${overview.company_information.registration}`}
+                        ` | ${t("clientDetails.registration", { number: overview.company_information.registration })}`}
                     </p>
                   </div>
                 </div>
@@ -254,10 +271,12 @@ const AuditorClientDetails = () => {
                       color: "#34d399",
                     }}
                   >
-                    ACTIVE
+                    {t("clientDetails.active")}
                   </span>
                   <span style={{ fontSize: "0.8rem", opacity: 0.7 }}>
-                    {fin.active_employees ?? 0} employees
+                    {t("clientDetails.employees", {
+                      count: fin.active_employees ?? 0,
+                    })}
                   </span>
                 </div>
               </div>
@@ -273,19 +292,19 @@ const AuditorClientDetails = () => {
               >
                 {[
                   {
-                    label: "Capital",
-                    value: fin.capital != null ? `${Number(fin.capital).toLocaleString()} ${currency}` : "—",
+                    label: t("clientDetails.stats.capital"),
+                    value: fin.capital != null ? `${Number(fin.capital).toLocaleString()} ${currency}` : t("common:notAvailable"),
                   },
                   {
-                    label: "Annual Revenue",
-                    value: fin.annual_revenue != null ? `${Number(fin.annual_revenue).toLocaleString()} ${currency}` : "—",
+                    label: t("clientDetails.stats.annualRevenue"),
+                    value: fin.annual_revenue != null ? `${Number(fin.annual_revenue).toLocaleString()} ${currency}` : t("common:notAvailable"),
                   },
                   {
-                    label: "Bank Balance",
+                    label: t("clientDetails.stats.bankBalance"),
                     value: `${Number(fin.bank_balance || 0).toLocaleString()} ${currency}`,
                   },
                   {
-                    label: "Audit Periods",
+                    label: t("clientDetails.stats.auditPeriods"),
                     value: fin.audit_periods_count ?? periods_api.length,
                   },
                 ].map((s, i) => (
@@ -374,32 +393,32 @@ const AuditorClientDetails = () => {
                       gap: "0.5rem",
                     }}
                   >
-                    <Building2 size={16} /> Company Information
+                    <Building2 size={16} /> {t("clientDetails.overview.companyInfo")}
                   </h4>
                   {[
                     {
                       icon: <Briefcase size={14} />,
-                      label: "Industry",
+                      label: t("clientDetails.overview.industry"),
                       value: overview?.company_information?.industry,
                     },
                     {
                       icon: <Hash size={14} />,
-                      label: "Registration",
+                      label: t("clientDetails.overview.registration"),
                       value: overview?.company_information?.registration,
                     },
                     {
                       icon: <Hash size={14} />,
-                      label: "Legal Form",
+                      label: t("clientDetails.overview.legalForm"),
                       value: overview?.company_information?.legal_form,
                     },
                     {
                       icon: <MapPin size={14} />,
-                      label: "Address",
+                      label: t("clientDetails.overview.address"),
                       value: overview?.company_information?.address,
                     },
                     {
                       icon: <Globe size={14} />,
-                      label: "Website",
+                      label: t("clientDetails.overview.website"),
                       value: overview?.company_information?.website,
                       isLink: true,
                     },
@@ -441,7 +460,7 @@ const AuditorClientDetails = () => {
                             {row.value}
                           </a>
                         ) : (
-                          row.value || "—"
+                          row.value || t("common:notAvailable")
                         )}
                       </span>
                     </div>
@@ -457,32 +476,32 @@ const AuditorClientDetails = () => {
                       gap: "0.5rem",
                     }}
                   >
-                    <Users size={16} /> Contact Details
+                    <Users size={16} /> {t("clientDetails.overview.contactDetails")}
                   </h4>
                   {[
                     {
                       icon: <Users size={14} />,
-                      label: "CEO",
+                      label: t("clientDetails.overview.ceo"),
                       value: overview?.contact_details?.ceo,
                     },
                     {
                       icon: <Users size={14} />,
-                      label: "Contact Person",
+                      label: t("clientDetails.overview.contactPerson"),
                       value: overview?.contact_details?.contact_person,
                     },
                     {
                       icon: <Phone size={14} />,
-                      label: "Phone",
+                      label: t("clientDetails.overview.phone"),
                       value: overview?.contact_details?.phone,
                     },
                     {
                       icon: <Phone size={14} />,
-                      label: "Fax",
+                      label: t("clientDetails.overview.fax"),
                       value: overview?.contact_details?.fax,
                     },
                     {
                       icon: <Mail size={14} />,
-                      label: "Email",
+                      label: t("clientDetails.overview.email"),
                       value: overview?.contact_details?.email,
                     },
                   ].map((row, i) => (
@@ -507,7 +526,7 @@ const AuditorClientDetails = () => {
                         {row.icon} {row.label}
                       </span>
                       <span style={{ fontWeight: 500 }}>
-                        {row.value || "—"}
+                        {row.value || t("common:notAvailable")}
                       </span>
                     </div>
                   ))}
@@ -527,7 +546,7 @@ const AuditorClientDetails = () => {
                     gap: "0.5rem",
                   }}
                 >
-                  <FileCheck size={16} /> Tax & Registration Information
+                  <FileCheck size={16} /> {t("clientDetails.tax.title")}
                 </h4>
                 <div
                   style={{
@@ -545,23 +564,23 @@ const AuditorClientDetails = () => {
                         color: "var(--color-primary-600)",
                       }}
                     >
-                      Tax Numbers
+                      {t("clientDetails.tax.taxNumbers")}
                     </h5>
                     {[
                       {
-                        label: "Tax Number",
+                        label: t("clientDetails.tax.taxNumber"),
                         value: taxReg?.tax_numbers?.tax_number,
                       },
                       {
-                        label: "Sales Tax Number",
+                        label: t("clientDetails.tax.salesTaxNumber"),
                         value: taxReg?.tax_numbers?.sales_tax_number,
                       },
                       {
-                        label: "Income Tax ID",
+                        label: t("clientDetails.tax.incomeTaxId"),
                         value: taxReg?.tax_numbers?.income_tax_id,
                       },
                       {
-                        label: "Tax Office",
+                        label: t("clientDetails.tax.taxOffice"),
                         value: taxReg?.tax_numbers?.tax_office,
                       },
                     ].map((row, i) => (
@@ -585,7 +604,7 @@ const AuditorClientDetails = () => {
                             fontSize: "0.8rem",
                           }}
                         >
-                          {row.value || "—"}
+                          {row.value || t("common:notAvailable")}
                         </span>
                       </div>
                     ))}
@@ -599,29 +618,31 @@ const AuditorClientDetails = () => {
                         color: "var(--color-primary-600)",
                       }}
                     >
-                      VAT & Status
+                      {t("clientDetails.tax.vatStatus")}
                     </h5>
                     {[
                       {
-                        label: "VAT Registered",
+                        label: t("clientDetails.tax.vatRegistered"),
                         value: taxReg?.vat_status?.vat_registered
-                          ? "Yes"
-                          : "No",
+                          ? t("clientDetails.tax.yes")
+                          : t("clientDetails.tax.no"),
+                        isVatRegistered: true,
                       },
                       {
-                        label: "VAT Rate",
+                        label: t("clientDetails.tax.vatRate"),
                         value:
                           taxReg?.vat_status?.vat_rate != null
                             ? `${taxReg.vat_status.vat_rate}%`
-                            : "—",
+                            : t("common:notAvailable"),
                       },
                       {
-                        label: "Last Tax Filing",
+                        label: t("clientDetails.tax.lastTaxFiling"),
                         value: taxReg?.vat_status?.last_tax_filing,
                       },
                       {
-                        label: "Tax Status",
+                        label: t("clientDetails.tax.taxStatus"),
                         value: taxReg?.vat_status?.tax_status,
+                        isTaxStatus: true,
                       },
                     ].map((row, i) => (
                       <div
@@ -641,18 +662,18 @@ const AuditorClientDetails = () => {
                           style={{
                             fontWeight: 600,
                             color:
-                              row.label === "Tax Status"
-                                ? row.value === "Compliant"
+                              row.isTaxStatus
+                                ? row.value === t("clientDetails.tax.compliant")
                                   ? "var(--color-success)"
                                   : "var(--color-warning)"
-                                : row.label === "VAT Registered"
+                                : row.isVatRegistered
                                   ? taxReg?.vat_status?.vat_registered
                                     ? "var(--color-success)"
                                     : "var(--color-error)"
                                   : "inherit",
                           }}
                         >
-                          {row.value || "—"}
+                          {row.value || t("common:notAvailable")}
                         </span>
                       </div>
                     ))}
@@ -680,7 +701,7 @@ const AuditorClientDetails = () => {
                       }}
                     />
                     <p style={{ color: "var(--color-text-muted)" }}>
-                      No bank accounts on file.
+                      {t("clientDetails.bank.empty")}
                     </p>
                   </Card>
                 ) : (
@@ -761,7 +782,7 @@ const AuditorClientDetails = () => {
                                     fontWeight: 600,
                                   }}
                                 >
-                                  Inactive
+                                  {t("clientDetails.bank.inactive")}
                                 </span>
                               )}
                             </div>
@@ -791,21 +812,21 @@ const AuditorClientDetails = () => {
                             }}
                           >
                             <div style={{ marginBottom: "0.25rem" }}>
-                              Account:{" "}
+                              {t("clientDetails.bank.account")}{" "}
                               <strong style={{ fontFamily: "monospace" }}>
                                 {bank.account_number}
                               </strong>
                             </div>
                             {bank.account_code && (
                               <div style={{ marginBottom: "0.25rem" }}>
-                                GL Code:{" "}
+                                {t("clientDetails.bank.glCode")}{" "}
                                 <strong style={{ fontFamily: "monospace" }}>
                                   {bank.account_code}
                                 </strong>
                               </div>
                             )}
                             <div>
-                              Opening Balance:{" "}
+                              {t("clientDetails.bank.openingBalance")}{" "}
                               <strong>
                                 {Number(bank.opening_balance).toLocaleString()}{" "}
                                 {bank.currency_code}
@@ -827,7 +848,7 @@ const AuditorClientDetails = () => {
                         }}
                       >
                         <span style={{ fontWeight: 600 }}>
-                          Total Balance Across All Accounts
+                          {t("clientDetails.bank.totalBalance")}
                         </span>
                         <span
                           style={{
@@ -857,7 +878,7 @@ const AuditorClientDetails = () => {
                     gap: "0.5rem",
                   }}
                 >
-                  <PieChart size={16} /> Ownership Structure
+                  <PieChart size={16} /> {t("clientDetails.shareholders.title")}
                 </h4>
                 {holders.length === 0 ? (
                   <p
@@ -867,7 +888,7 @@ const AuditorClientDetails = () => {
                       padding: "2rem 0",
                     }}
                   >
-                    No shareholder information available.
+                    {t("clientDetails.shareholders.empty")}
                   </p>
                 ) : (
                   <div
@@ -957,7 +978,7 @@ const AuditorClientDetails = () => {
                   }}
                 >
                   <h4 style={{ fontWeight: 700 }}>
-                    Documents & Attachments ({attachments.length})
+                    {t("clientDetails.attachments.title", { count: attachments.length })}
                   </h4>
                 </div>
                 {attachments.length === 0 ? (
@@ -968,7 +989,7 @@ const AuditorClientDetails = () => {
                       color: "var(--color-text-muted)",
                     }}
                   >
-                    No attachments uploaded yet.
+                    {t("clientDetails.attachments.empty")}
                   </div>
                 ) : (
                   <div style={{ overflowX: "auto" }}>
@@ -987,7 +1008,7 @@ const AuditorClientDetails = () => {
                               textAlign: "left",
                             }}
                           >
-                            Document Name
+                            {t("clientDetails.attachments.documentName")}
                           </th>
                           <th
                             style={{
@@ -995,7 +1016,7 @@ const AuditorClientDetails = () => {
                               textAlign: "left",
                             }}
                           >
-                            Category
+                            {t("clientDetails.attachments.category")}
                           </th>
                           <th
                             style={{
@@ -1003,7 +1024,7 @@ const AuditorClientDetails = () => {
                               textAlign: "left",
                             }}
                           >
-                            Period
+                            {t("clientDetails.attachments.period")}
                           </th>
                           <th
                             style={{
@@ -1011,7 +1032,7 @@ const AuditorClientDetails = () => {
                               textAlign: "left",
                             }}
                           >
-                            Uploaded By
+                            {t("clientDetails.attachments.uploadedBy")}
                           </th>
                           <th
                             style={{
@@ -1019,7 +1040,7 @@ const AuditorClientDetails = () => {
                               textAlign: "left",
                             }}
                           >
-                            Date
+                            {t("clientDetails.attachments.date")}
                           </th>
                           <th
                             style={{
@@ -1027,7 +1048,7 @@ const AuditorClientDetails = () => {
                               textAlign: "center",
                             }}
                           >
-                            Action
+                            {t("clientDetails.attachments.action")}
                           </th>
                         </tr>
                       </thead>
@@ -1135,7 +1156,7 @@ const AuditorClientDetails = () => {
                                   textDecoration: "none",
                                 }}
                               >
-                                <Download size={13} /> Download
+                                <Download size={13} /> {t("clientDetails.attachments.download")}
                               </a>
                             </td>
                           </tr>
@@ -1159,14 +1180,12 @@ const AuditorClientDetails = () => {
                 {periods_api.length === 0 ? (
                   <Card className="padding-lg" style={{ textAlign: "center" }}>
                     <p style={{ color: "var(--color-text-muted)" }}>
-                      No audit periods for this company.
+                      {t("clientDetails.periods.empty")}
                     </p>
                   </Card>
                 ) : (
                   periods_api.map((period) => {
-                    const sc =
-                      PERIOD_STATUS_MAP[period.status] ||
-                      PERIOD_STATUS_MAP.submitted;
+                    const sc = getPeriodStatus(period.status);
                     return (
                       <Card key={period.id} className="padding-md">
                         <div
@@ -1257,7 +1276,9 @@ const AuditorClientDetails = () => {
                                   size={11}
                                   style={{ verticalAlign: "middle" }}
                                 />{" "}
-                                {period.attachments_count} attachments
+                                {t("clientDetails.periods.attachments", {
+                                  count: period.attachments_count,
+                                })}
                               </div>
                               {period.submitted_change_requests > 0 && (
                                 <div style={{ marginTop: "0.15rem" }}>
@@ -1265,13 +1286,14 @@ const AuditorClientDetails = () => {
                                     size={11}
                                     style={{ verticalAlign: "middle" }}
                                   />{" "}
-                                  {period.submitted_change_requests} change
-                                  requests
+                                  {t("clientDetails.periods.changeRequests", {
+                                    count: period.submitted_change_requests,
+                                  })}
                                 </div>
                               )}
                               {period.submitted_at && (
                                 <div style={{ marginTop: "0.15rem" }}>
-                                  Submitted:{" "}
+                                  {t("clientDetails.periods.submitted")}{" "}
                                   {new Date(
                                     period.submitted_at,
                                   ).toLocaleDateString()}
@@ -1299,7 +1321,7 @@ const AuditorClientDetails = () => {
                                 cursor: "pointer",
                               }}
                             >
-                              <Eye size={13} /> Review
+                              <Eye size={13} /> {t("clientDetails.periods.review")}
                             </button>
                             {/* )} */}
                           </div>
@@ -1317,7 +1339,7 @@ const AuditorClientDetails = () => {
                               gap: "0.35rem",
                             }}
                           >
-                            <Shield size={12} /> Auditor Firm:{" "}
+                            <Shield size={12} /> {t("clientDetails.periods.auditorFirm")}{" "}
                             <strong>{period.auditor_firm_name}</strong>
                           </div>
                         )}

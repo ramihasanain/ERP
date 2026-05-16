@@ -1,0 +1,136 @@
+{
+  "title": "Reports",
+  "center": {
+    "title": "Reports Center",
+    "subtitle": "Financial insights and operational analytics."
+  },
+  "cards": {
+    "financial": {
+      "title": "Financial Statements",
+      "description": "Essential financial reports for accounting compliance and health monitoring.",
+      "balanceSheet": "Balance Sheet",
+      "profitAndLoss": "Profit & Loss (Income Statement)",
+      "cashFlow": "Cash Flow Statement",
+      "taxReturn": "Tax Return (VAT/GST)"
+    },
+    "sales": {
+      "title": "Sales & Customers",
+      "description": "Analyze revenue trends, customer growth, and outstanding debts.",
+      "salesByCustomer": "Sales by Customer",
+      "agedReceivables": "Aged Receivables",
+      "revenueByItem": "Revenue by Item"
+    },
+    "expense": {
+      "title": "Expense & Purchasing",
+      "description": "Track spending, vendor payments, and operational costs.",
+      "expenseBreakdown": "Expense Breakdown",
+      "agedPayables": "Aged Payables",
+      "purchaseHistory": "Purchase History"
+    },
+    "inventory": {
+      "title": "Inventory & Stock",
+      "description": "Monitor stock levels, valuation, and movement history.",
+      "inventoryValuation": "Inventory Valuation",
+      "lowStock": "Low Stock Alert",
+      "stockMovement": "Stock Movement Log"
+    }
+  },
+  "profitAndLoss": "Profit & Loss",
+  "profitAndLossSubtitle": "Income Statement.",
+  "balanceSheet": "Balance Sheet",
+  "balanceSheetSubtitle": "Financial position.",
+  "balanceSheetAsOf": "As of {{date}}",
+  "taxReturn": "Tax Return",
+  "taxReturnFullTitle": "Tax Return (VAT/GST)",
+  "taxReturnSubtitle": "Tax liability report for government filing.",
+  "cashFlow": "Cash Flow Statement",
+  "cashFlowPeriod": "{{company}} • {{start}} to {{end}}",
+  "generate": "Generate Report",
+  "export": "Export Report",
+  "exportPdf": "Export PDF",
+  "period": "Period",
+  "from": "From",
+  "to": "To",
+  "asOf": "As of",
+  "loadFailed": {
+    "pnl": "Failed to load profit and loss report.",
+    "balanceSheet": "Failed to load balance sheet report.",
+    "cashFlow": "Failed to load cash flow report.",
+    "taxReturn": "Failed to load tax return report."
+  },
+  "pnl": {
+    "income": "Income",
+    "totalIncome": "Total Income",
+    "cogs": "Cost of Goods Sold",
+    "totalCogs": "Total COGS",
+    "grossProfit": "Gross Profit",
+    "operatingExpenses": "Operating Expenses",
+    "totalOperatingExpenses": "Total Operating Expenses",
+    "operatingIncome": "Operating Income",
+    "netIncome": "Net Income",
+    "noLines": "No lines",
+    "reportTitle": "Profit and Loss"
+  },
+  "balanceSheetReport": {
+    "title": "Balance Sheet",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "equity": "Equity",
+    "totalAssets": "Total Assets",
+    "netIncomeCurrentYear": "Net Income (Current Year)",
+    "totalLiabEquity": "Total Liab. & Equity",
+    "total": "Total {{section}}"
+  },
+  "cashFlowReport": {
+    "operating": "Operating Activities",
+    "investing": "Investing Activities",
+    "financing": "Financing Activities",
+    "netCashOperations": "Net Cash from Operations",
+    "netCashInvesting": "Net Cash from Investing",
+    "netCashFinancing": "Net Cash from Financing",
+    "netChange": "Net Increase/Decrease in Cash",
+    "cashBeginning": "Cash at Beginning of Period",
+    "cashEnd": "Cash at End of Period"
+  },
+  "taxReturnReport": {
+    "readyTitle": "Ready for Filing",
+    "periodRange": "{{company}} • {{start}} to {{end}}",
+    "salesSection": "1. Sales (Output Tax)",
+    "totalSalesExclTax": "Total Sales (Excl. Tax)",
+    "vatCollectedInvoices": "VAT Collected from Invoices",
+    "vatCollectedNet": "VAT Collected for Net",
+    "purchasesSection": "2. Purchases (Input Tax)",
+    "totalPurchasesExclTax": "Total Purchases (Excl. Tax)",
+    "vatPaidReclaimable": "VAT Paid (Reclaimable)",
+    "netTaxPayable": "Net Tax Payable",
+    "markAsFiled": "Mark as Filed",
+    "fileReturnNow": "File Return Now"
+  },
+  "taxReport": {
+    "title": "Tax Return Report",
+    "subtitle": "VAT/GST Summary for the selected period.",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "jurisdiction": "Tax Jurisdiction",
+    "applyFilters": "Apply Filters",
+    "exportXml": "Export XML",
+    "exportPdf": "Export PDF",
+    "totalSalesExclTax": "Total Sales (Excl. Tax)",
+    "totalTaxCollected": "Total Tax Collected (Output)",
+    "netTaxPayable": "Net Tax Payable",
+    "breakdownTitle": "Tax Breakdown by Rule",
+    "ruleName": "Rule Name",
+    "netSales": "Net Sales",
+    "taxRate": "Tax Rate",
+    "taxAmount": "Tax Amount",
+    "total": "Total"
+  },
+  "aria": {
+    "back": "Back",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "periodStart": "Period start date",
+    "periodEnd": "Period end date",
+    "asOfDate": "As of date"
+  }
+}

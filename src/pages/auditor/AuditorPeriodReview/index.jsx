@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useNavigate,
   useParams,
@@ -32,24 +33,31 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from "lucide-react";
-
-const accountingTabs = [
-  { id: "summary", label: "Summary", icon: <BarChart3 size={14} /> },
-  { id: "coa", label: "Chart of Accounts", icon: <List size={14} /> },
-  { id: "journal", label: "Journal Entries", icon: <BookOpen size={14} /> },
-  { id: "trial", label: "Trial Balance", icon: <DollarSign size={14} /> },
-  { id: "invoices", label: "Invoices", icon: <FileText size={14} /> },
-  { id: "bank", label: "Bank Accounts", icon: <CreditCard size={14} /> },
-  { id: "customers", label: "Customers & Vendors", icon: <Users size={14} /> },
-  { id: "adjustments", label: "Adjustments", icon: <Edit3 size={14} /> },
-];
+import { translateApiError } from "@/utils/translateApiError";
 
 const AuditorPeriodReview = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const navigate = useNavigate();
   const location = useLocation();
   const { companyId, periodId } = useParams();
   const [searchParams] = useSearchParams();
-  const periodName = searchParams.get("name") || `Period #${periodId}`;
+  const periodName =
+    searchParams.get("name") ||
+    t("periodReview.periodFallback", { id: periodId });
+
+  const accountingTabs = useMemo(
+    () => [
+      { id: "summary", label: t("periodReview.tabs.summary"), icon: <BarChart3 size={14} /> },
+      { id: "coa", label: t("periodReview.tabs.coa"), icon: <List size={14} /> },
+      { id: "journal", label: t("periodReview.tabs.journal"), icon: <BookOpen size={14} /> },
+      { id: "trial", label: t("periodReview.tabs.trial"), icon: <DollarSign size={14} /> },
+      { id: "invoices", label: t("periodReview.tabs.invoices"), icon: <FileText size={14} /> },
+      { id: "bank", label: t("periodReview.tabs.bank"), icon: <CreditCard size={14} /> },
+      { id: "customers", label: t("periodReview.tabs.customers"), icon: <Users size={14} /> },
+      { id: "adjustments", label: t("periodReview.tabs.adjustments"), icon: <Edit3 size={14} /> },
+    ],
+    [t],
+  );
 
   const { currentAuditor, logChange, auditChanges } = useAudit();
 
@@ -97,7 +105,7 @@ const AuditorPeriodReview = () => {
           >
             <div>
               <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-                Review: {periodName}
+                {t("periodReview.title", { name: periodName })}
               </h1>
               <p
                 style={{
@@ -105,7 +113,7 @@ const AuditorPeriodReview = () => {
                   fontSize: "0.85rem",
                 }}
               >
-                {currentAuditor.name} — Full Accounting Review
+                {t("periodReview.subtitle", { auditor: currentAuditor.name })}
               </p>
             </div>
             <div style={{ display: "flex", gap: "0.75rem" }}>
@@ -113,7 +121,7 @@ const AuditorPeriodReview = () => {
                 variant="ghost"
                 onClick={() => navigate(`/auditor/company/${companyId}`)}
               >
-                <ArrowLeft size={14} /> Back
+                <ArrowLeft size={14} /> {t("periodReview.back")}
               </Button>
             </div>
           </div>
@@ -188,7 +196,7 @@ const AuditorPeriodReview = () => {
                     gap: "0.5rem",
                   }}
                 >
-                  <Edit3 size={18} /> My Changes & Admin Feedback
+                  <Edit3 size={18} /> {t("periodReview.myChanges.title")}
                 </h3>
                 <div
                   style={{
@@ -208,7 +216,7 @@ const AuditorPeriodReview = () => {
                         fontWeight: 600,
                       }}
                     >
-                      ⏳ {pendingCount} Pending
+                      ⏳ {t("periodReview.myChanges.pending", { count: pendingCount })}
                     </span>
                   )}
                   {approvedCount > 0 && (
@@ -221,7 +229,7 @@ const AuditorPeriodReview = () => {
                         fontWeight: 600,
                       }}
                     >
-                      ✅ {approvedCount} Approved
+                      ✅ {t("periodReview.myChanges.approved", { count: approvedCount })}
                     </span>
                   )}
                   {rejectedCount > 0 && (
@@ -234,7 +242,7 @@ const AuditorPeriodReview = () => {
                         fontWeight: 600,
                       }}
                     >
-                      ❌ {rejectedCount} Rejected
+                      ❌ {t("periodReview.myChanges.rejected", { count: rejectedCount })}
                     </span>
                   )}
                 </div>
@@ -247,20 +255,20 @@ const AuditorPeriodReview = () => {
                           bg: "var(--color-success-dim)",
                           color: "var(--color-success)",
                           icon: "✅",
-                          label: "Approved",
+                          label: t("changeRequests.approved"),
                         }
                       : change.status === "rejected"
                         ? {
                             bg: "var(--color-error-dim)",
                             color: "var(--color-error)",
                             icon: "❌",
-                            label: "Rejected",
+                            label: t("changeRequests.rejected"),
                           }
                         : {
                             bg: "var(--color-warning-dim)",
                             color: "var(--color-warning)",
                             icon: "⏳",
-                            label: "Pending",
+                            label: t("common:status.pending"),
                           };
                   return (
                     <div
@@ -383,7 +391,7 @@ const AuditorPeriodReview = () => {
                             border: `1px solid ${change.status === "approved" ? "#a7f3d0" : "#fecaca"}`,
                           }}
                         >
-                          <strong>Admin:</strong> {change.adminNotes}
+                          <strong>{t("periodReview.myChanges.admin")}</strong> {change.adminNotes}
                           {change.reviewedAt && (
                             <span
                               style={{
@@ -411,13 +419,19 @@ const AuditorPeriodReview = () => {
                             icon={<Edit3 size={12} />}
                             onClick={() => {
                               setEditModal({
-                                title: `Resubmit: ${change.field}`,
+                                title: t("periodReview.myChanges.resubmit", {
+                                  field: change.field,
+                                }),
                                 fields: [
                                   {
                                     key: "newValue",
-                                    label: `New Value for "${change.field}"`,
+                                    label: t("periodReview.myChanges.newValueFor", {
+                                      field: change.field,
+                                    }),
                                     value: change.newValue,
-                                    oldValue: `Rejected: ${change.newValue}`,
+                                    oldValue: t("periodReview.myChanges.rejectedValue", {
+                                      value: change.newValue,
+                                    }),
                                     type:
                                       typeof change.newValue === "number" ||
                                       !isNaN(Number(change.newValue))
@@ -439,7 +453,7 @@ const AuditorPeriodReview = () => {
                               });
                             }}
                           >
-                            Edit & Resubmit
+                            {t("periodReview.myChanges.editResubmit")}
                           </Button>
                           <span
                             style={{
@@ -447,7 +461,7 @@ const AuditorPeriodReview = () => {
                               color: "var(--color-text-muted)",
                             }}
                           >
-                            Submit a new revision for admin review
+                            {t("periodReview.myChanges.resubmitHint")}
                           </span>
                         </div>
                       )}
@@ -461,12 +475,12 @@ const AuditorPeriodReview = () => {
           {/* Auditor Notes & Actions */}
           <Card className="padding-lg" style={{ marginTop: "1.5rem" }}>
             <h3 style={{ fontWeight: 700, marginBottom: "1rem" }}>
-              Auditor's Notes & Opinion
+              {t("periodReview.notes.title")}
             </h3>
             <textarea
               value={reviewNotes}
               onChange={(e) => setReviewNotes(e.target.value)}
-              placeholder="Enter your professional opinion, observations, and recommendations..."
+              placeholder={t("periodReview.notes.placeholder")}
               style={{
                 width: "100%",
                 minHeight: "120px",
@@ -490,10 +504,12 @@ const AuditorPeriodReview = () => {
                 }}
               >
                 {!hasChangeRequests
-                  ? "No change requests found for this period."
+                  ? t("periodReview.notes.noChangeRequests")
                   : !approvedByAdmin
-                    ? "Admin approval is required before you can approve or request revision."
-                    : `${summary.draft} draft change request(s) must be submitted before you can approve or request revision.`}
+                    ? t("periodReview.notes.adminApprovalRequired")
+                    : t("periodReview.notes.draftsMustSubmit", {
+                        count: summary.draft,
+                      })}
               </p>
             )}
             <div
@@ -513,7 +529,9 @@ const AuditorPeriodReview = () => {
                 disabled={actionsDisabled || requestRevision.isPending || !reviewNotes.trim()}
                 onClick={() => setShowRevisionModal(true)}
               >
-                {requestRevision.isPending ? "Submitting…" : "Request Revision"}
+                {requestRevision.isPending
+                  ? t("periodReview.notes.submitting")
+                  : t("periodReview.notes.requestRevision")}
               </Button>
               <Button
                 style={{ background: "var(--color-success)" }}
@@ -521,7 +539,7 @@ const AuditorPeriodReview = () => {
                 disabled={actionsDisabled || approveAndSeal.isPending}
                 onClick={() => setShowApproveModal(true)}
               >
-                Approve & Seal
+                {t("periodReview.notes.approveAndSeal")}
               </Button>
             </div>
           </Card>
@@ -531,10 +549,15 @@ const AuditorPeriodReview = () => {
       {/* Request Revision Confirmation */}
       <ConfirmationModal
         isOpen={showRevisionModal}
-        title="Request Revision"
-        message={`Are you sure you want to request a revision for "${periodName}"? The period will be sent back for corrections.`}
+        title={t("periodReview.revisionModal.title")}
+        message={t("periodReview.revisionModal.message", { name: periodName })}
         type="danger"
-        confirmText={requestRevision.isPending ? "Submitting…" : "Request Revision"}
+        confirmText={
+          requestRevision.isPending
+            ? t("periodReview.notes.submitting")
+            : t("periodReview.notes.requestRevision")
+        }
+        cancelText={t("common:actions.cancel")}
         disabled={requestRevision.isPending}
         onCancel={() => setShowRevisionModal(false)}
         onConfirm={() => {
@@ -542,12 +565,14 @@ const AuditorPeriodReview = () => {
             { notes: reviewNotes.trim() },
             {
               onSuccess: () => {
-                toast.success("Revision requested successfully.");
+                toast.success(t("periodReview.revisionModal.success"));
                 setShowRevisionModal(false);
                 navigate(-1);
               },
-              onError: () => {
-                toast.error("Failed to request revision. Please try again.");
+              onError: (err) => {
+                toast.error(
+                  translateApiError(err, "auditor:periodReview.revisionModal.failed"),
+                );
                 setShowRevisionModal(false);
               },
             },
@@ -558,10 +583,15 @@ const AuditorPeriodReview = () => {
       {/* Approve & Seal Confirmation */}
       <ConfirmationModal
         isOpen={showApproveModal}
-        title="Approve & Seal Period"
-        message={`Are you sure you want to approve and seal "${periodName}"? This action is final and cannot be undone.`}
+        title={t("periodReview.approveModal.title")}
+        message={t("periodReview.approveModal.message", { name: periodName })}
         type="success"
-        confirmText={approveAndSeal.isPending ? "Approving…" : "Approve & Seal"}
+        confirmText={
+          approveAndSeal.isPending
+            ? t("periodReview.approveModal.approving")
+            : t("periodReview.approveModal.confirm")
+        }
+        cancelText={t("common:actions.cancel")}
         disabled={approveAndSeal.isPending}
         onCancel={() => setShowApproveModal(false)}
         onConfirm={() => {
@@ -569,12 +599,14 @@ const AuditorPeriodReview = () => {
             { notes: reviewNotes.trim() },
             {
               onSuccess: () => {
-                toast.success("Period approved and sealed successfully.");
+                toast.success(t("periodReview.approveModal.success"));
                 setShowApproveModal(false);
                 navigate(-1);
               },
-              onError: () => {
-                toast.error("Failed to approve and seal. Please try again.");
+              onError: (err) => {
+                toast.error(
+                  translateApiError(err, "auditor:periodReview.approveModal.failed"),
+                );
                 setShowApproveModal(false);
               },
             },
@@ -676,7 +708,7 @@ const AuditorPeriodReview = () => {
                       }}
                       autoFocus={editModal.fields.indexOf(f) === 0}
                     >
-                      <option value="">Select…</option>
+                      <option value="">{t("periodReview.editModal.select")}</option>
                       {(f.options || []).map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
@@ -710,7 +742,7 @@ const AuditorPeriodReview = () => {
                         color: "var(--color-text-muted)",
                       }}
                     >
-                      Current: <strong>{f.oldValue}</strong>
+                      {t("periodReview.editModal.current")} <strong>{f.oldValue}</strong>
                     </div>
                   )}
                 </div>
@@ -730,10 +762,10 @@ const AuditorPeriodReview = () => {
                   type="button"
                   onClick={() => setEditModal(null)}
                 >
-                  Cancel
+                  {t("common:actions.cancel")}
                 </Button>
                 <Button type="submit" icon={<Save size={14} />}>
-                  Save Changes
+                  {t("periodReview.editModal.saveChanges")}
                 </Button>
               </div>
             </form>

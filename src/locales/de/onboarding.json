@@ -1,0 +1,76 @@
+{
+  "wizard": {
+    "title": "Setup your workspace",
+    "subtitleStep": "Step {{current}} of {{total}}",
+    "noSignupTitle": "Create an account",
+    "noSignupSubtitle": "Start your 14-day free trial",
+    "noSignupMessage": "Please start from the signup form to continue onboarding.",
+    "goToSignUp": "Go to Sign Up",
+    "loadingTitle": "Setup your workspace",
+    "loadingSubtitle": "Loading onboarding data...",
+    "loadingMessage": "Preparing industries, countries, currencies, languages, and modules.",
+    "errorTitle": "Setup your workspace",
+    "errorSubtitle": "Could not load onboarding data",
+    "errorDefault": "Failed to load onboarding data.",
+    "retry": "Retry"
+  },
+  "steps": {
+    "companyInfo": "Unternehmensinformationen",
+    "regionalSettings": "Regionale Einstellungen",
+    "selectModules": "Module auswählen"
+  },
+  "companyInfo": {
+    "title": "Company Details",
+    "companyName": "Company Name",
+    "companyNamePlaceholder": "Acme Corp",
+    "industry": "Industry",
+    "selectIndustry": "Select Industry...",
+    "country": "Country",
+    "selectCountry": "Select Country..."
+  },
+  "regionalSettings": {
+    "title": "Regionale Einstellungen",
+    "baseCurrency": "Base Currency",
+    "selectCurrency": "Select Currency...",
+    "defaultLanguage": "Default Language",
+    "selectLanguage": "Select Language...",
+    "autoConfigTitle": "Auto-Configuration",
+    "autoConfigDescription": "Based on your selection of <strong>{{country}}</strong>, we will automatically apply localized tax rules, chart of accounts, and payroll policies.",
+    "yourCountry": "your country"
+  },
+  "modules": {
+    "title": "Module auswählen",
+    "subtitle": "Choose the apps you want to start with.",
+    "fallbackDesc": "ERP module",
+    "fallback": {
+      "accounting": {
+        "name": "Buchhaltung",
+        "desc": "Ledgers, Invoicing, Tax"
+      },
+      "hr": {
+        "name": "Personal & Lohn",
+        "desc": "Employees, Payroll, Leaves"
+      },
+      "inventory": {
+        "name": "Lager",
+        "desc": "Stock, Warehouses, POs"
+      }
+    }
+  },
+  "validation": {
+    "companyNameRequired": "Firmenname ist erforderlich",
+    "industryRequired": "Branche ist erforderlich",
+    "countryRequired": "Land ist erforderlich",
+    "currencyRequired": "Basiswährung ist erforderlich",
+    "languageRequired": "Standardsprache ist erforderlich",
+    "modulesRequired": "Wählen Sie mindestens ein Modul"
+  },
+  "actions": {
+    "back": "Zurück",
+    "next": "Weiter",
+    "continue": "Continue",
+    "finish": "Finish Setup"
+  },
+  "success": "Account created successfully. Welcome to your workspace!",
+  "failed": "Registration failed. Please verify your setup details and try again."
+}

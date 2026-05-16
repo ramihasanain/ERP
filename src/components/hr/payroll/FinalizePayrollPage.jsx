@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +12,8 @@ import FinalizePayrollStep from '@/components/hr/payroll/FinalizePayrollStep';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 
 const FinalizePayrollPage = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const { id: periodId } = useParams();
     const navigate = useNavigate();
     const basePath = useBasePath();
@@ -43,7 +46,7 @@ const FinalizePayrollPage = () => {
                 queryClient.invalidateQueries({ queryKey: ['hr-payroll-drafts'] }),
                 queryClient.invalidateQueries({ queryKey: ['hr-payroll-period-workflow', periodId] }),
             ]);
-            toast.success('Payroll finalized and journal entries posted.');
+            toast.success(t('payroll.finalized'));
             navigate(`${basePath}/accounting/journal`);
         },
         onError: (err) => {

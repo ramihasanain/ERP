@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { keepPreviousData } from '@tanstack/react-query';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -10,6 +11,7 @@ import { Search, Plus, Edit, Trash2, Package, Tag, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
+import translateApiError from '@/utils/translateApiError';
 
 const normalizeArrayResponse = (response) => {
     if (Array.isArray(response)) return response;
@@ -73,7 +75,7 @@ const normalizeProduct = (item) => {
         name: item?.name || '',
         sku: item?.sku || '',
         categoryLabel: toDisplayText(item?.category, ''),
-        type: isStock ? 'Stock' : 'Service',
+        type: isStock ? 'stock' : 'service',
         uom: toDisplayText(item?.unit ?? item?.uom, 'pcs'),
         purchasePrice: cost,
         reorderLevel: Number(item?.reorder_level ?? item?.reorderLevel ?? 0),
@@ -90,6 +92,7 @@ const buildProductsUrl = (categoryId) => {
 };
 
 const ItemsList = () => {
+    const { t } = useTranslation(['inventory', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
@@ -133,11 +136,10 @@ const ItemsList = () => {
         if (!deleteTarget?.id) return;
         try {
             await deleteProduct.mutateAsync(deleteTarget.id);
-            toast.success('Item deleted successfully.');
+            toast.success(t('items.deleteSuccess'));
             setDeleteTarget(null);
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to delete item.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'inventory:items.deleteFailed'));
         }
     };
 
@@ -148,9 +150,9 @@ const ItemsList = () => {
     const handleRetry = async () => {
         try {
             await Promise.all([productsQuery.refetch(), categoriesQuery.refetch()]);
-            toast.success('Data refreshed.');
+            toast.success(t('items.refreshSuccess'));
         } catch {
-            toast.error('Refresh failed. Please try again.');
+            toast.error(t('items.refreshFailed'));
         }
     };
 
@@ -164,11 +166,11 @@ const ItemsList = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', gap: '1rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>Items & Services</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Manage your product master data and services.</p>
+                    <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>{t('items.title')}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{t('items.subtitle')}</p>
                 </div>
                 <Button variant="primary" icon={<Plus size={18} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate(`${basePath}/inventory/items/new`)} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
-                    Add New Item
+                    {t('items.addNewItem')}
                 </Button>
             </div>
 
@@ -178,7 +180,7 @@ const ItemsList = () => {
                         <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
                         <input
                             type="text"
-                            placeholder="Search by name or SKU..."
+                            placeholder={t('items.searchPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="font-normal"
@@ -200,7 +202,7 @@ const ItemsList = () => {
                                 background: 'var(--color-bg-surface)', minWidth: '180px', color: 'var(--color-text-main)',
                             }}
                         >
-                            <option value="">All categories</option>
+                            <option value="">{t('items.allCategories')}</option>
                             {categoryOptions.map((cat) => (
                                 <option key={cat.id} value={cat.id}>
                                     {cat.name || cat.id}
@@ -216,9 +218,9 @@ const ItemsList = () => {
             {hasError && (
                 <Card className="padding-lg">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
-                        <p style={{ margin: 0, color: 'var(--color-error)' }}>Could not load items or categories.</p>
+                        <p style={{ margin: 0, color: 'var(--color-error)' }}>{t('items.loadFailed')}</p>
                         <Button variant="outline" type="button" onClick={handleRetry}>
-                            Retry
+                            {t('common:actions.retry')}
                         </Button>
                     </div>
                 </Card>
@@ -230,8 +232,8 @@ const ItemsList = () => {
                         <Card className="padding-lg">
                             <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
                                 {(productsQuery.data ?? []).length === 0
-                                    ? 'No products match the selected filters.'
-                                    : 'No products match your search.'}
+                                    ? t('items.noProductsFilters')
+                                    : t('items.noProductsSearch')}
                             </p>
                         </Card>
                     ) : (
@@ -239,7 +241,7 @@ const ItemsList = () => {
                             <Card
                                 key={item.id}
                                 className="padding-md"
-                                style={{ borderLeft: `4px solid ${item.type === 'Stock' ? 'var(--color-primary-500)' : 'var(--color-secondary-500)'}` }}
+                                style={{ borderLeft: `4px solid ${item.type === 'stock' ? 'var(--color-primary-500)' : 'var(--color-secondary-500)'}` }}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                                     <div>
@@ -251,10 +253,10 @@ const ItemsList = () => {
                                         </div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button type="button" onClick={() => navigate(`${basePath}/inventory/items/${item.id}/edit`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }} title="Edit">
+                                        <button type="button" onClick={() => navigate(`${basePath}/inventory/items/${item.id}/edit`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }} title={t('actions.edit', { ns: 'common' })}>
                                             <Edit size={16} />
                                         </button>
-                                        <button type="button" onClick={() => setDeleteTarget(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger-500)' }} title="Delete">
+                                        <button type="button" onClick={() => setDeleteTarget(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger-500)' }} title={t('actions.delete', { ns: 'common' })}>
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
@@ -262,28 +264,28 @@ const ItemsList = () => {
 
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', fontSize: '0.9rem', marginBottom: '1rem' }}>
                                     <div>
-                                        <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>Cost Price</div>
+                                        <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>{t('items.costPrice')}</div>
                                         <div style={{ fontWeight: 600 }}>
                                             {item.purchasePrice.toFixed(2)} {currencyLabel}
                                         </div>
                                     </div>
                                 </div>
 
-                                {item.type === 'Stock' && (
+                                {item.type === 'stock' && (
                                     <div style={{ background: 'var(--color-bg-secondary)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--color-border)' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <Package size={16} color="var(--color-text-muted)" />
-                                            <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Quantity on Hand</span>
+                                            <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>{t('items.quantityOnHand')}</span>
                                         </div>
                                         <span style={{ fontWeight: 700, fontSize: '1.1rem', color: item.totalStock <= item.reorderLevel ? 'var(--color-danger)' : 'var(--color-success)' }}>
                                             {item.totalStock} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{item.uom}</span>
                                         </span>
                                     </div>
                                 )}
-                                {item.type === 'Service' && (
+                                {item.type === 'service' && (
                                     <div style={{ background: 'var(--color-bg-secondary)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.9rem', border: '1px solid var(--color-border)' }}>
                                         <Tag size={16} />
-                                        Service Item (Non-stock)
+                                        {t('items.serviceItem')}
                                     </div>
                                 )}
                             </Card>
@@ -295,9 +297,9 @@ const ItemsList = () => {
             <ConfirmationModal
                 isOpen={Boolean(deleteTarget)}
                 type="danger"
-                title="Delete item"
-                message={`Are you sure you want to delete "${deleteTarget?.name || 'this item'}"? This action cannot be undone.`}
-                confirmText={deleteProduct.isPending ? 'Deleting…' : 'Delete'}
+                title={t('items.deleteTitle')}
+                message={t('items.deleteMessage', { name: deleteTarget?.name || t('items.deleteFallbackName') })}
+                confirmText={deleteProduct.isPending ? t('items.deleting') : t('common:actions.delete')}
                 onCancel={() => !deleteProduct.isPending && setDeleteTarget(null)}
                 onConfirm={confirmDelete}
             />

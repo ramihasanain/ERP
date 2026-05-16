@@ -1,0 +1,112 @@
+{
+  "nav": {
+    "features": "الميزات",
+    "pricing": "الأسعار",
+    "signIn": "تسجيل الدخول",
+    "logIn": "Log In",
+    "getStarted": "ابدأ الآن",
+    "openUserMenu": "Open user menu"
+  },
+  "hero": {
+    "badge": "الإصدار 2.0 متاح الآن مع تحليلات محسّنة",
+    "title": "إدارة موحّدة لـ",
+    "titleHighlight": "المؤسسات العالمية",
+    "subtitle": "دمج المحاسبة والموارد البشرية والمخزون عبر الحدود. مبني لفرق في الأردن والسعودية وألمانيا وما بعدها مع امتثال محلي.",
+    "startTrial": "ابدأ التجربة المجانية",
+    "watchDemo": "شاهد العرض",
+    "dashboardPreview": "معاينة لوحة التحكم"
+  },
+  "features": {
+    "title": "كل ما تحتاجه لإدارة أعمالك",
+    "subtitle": "يوحّد UnifiedCore جميع وظائف عملك الحيوية في منصة واحدة سلسة.",
+    "accounting": {
+      "title": "محاسبة متقدمة",
+      "description": "دفاتر متعددة العملات ومتوافقة ضريبياً للأردن والسعودية وألمانيا."
+    },
+    "hr": {
+      "title": "موارد بشرية ورواتب عالمية",
+      "description": "إدارة فرق متنوعة بقوانين عمل وقواعد رواتب خاصة بكل دولة."
+    },
+    "inventory": {
+      "title": "مخزون ذكي",
+      "description": "تتبع المخزون في الوقت الفعلي عبر مستودعات ومواقع متعددة."
+    },
+    "security": {
+      "title": "أمان المؤسسات",
+      "description": "تحكم بالوصول حسب الأدوار، سجلات تدقيق، وتشفير البيانات."
+    },
+    "localization": {
+      "title": "توطين أصلي",
+      "description": "دعم RTL مدمج للعربية وتنسيقات تواريخ وأرقام محلية."
+    },
+    "analytics": {
+      "title": "تحليلات فورية",
+      "description": "رؤى قابلة للتنفيذ مع لوحات وتقارير قابلة للتخصيص."
+    }
+  },
+  "pricing": {
+    "title": "Simple, transparent pricing",
+    "subtitle": "Choose the plan that fits your business scale.",
+    "mostPopular": "Most Popular",
+    "perMonth": "/mo",
+    "contactSales": "Contact Sales",
+    "getStarted": "ابدأ الآن",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "price": "$49",
+        "description": "Essential tools for small businesses.",
+        "features": {
+          "singleCompany": "Single Company",
+          "basicAccounting": "Basic Accounting",
+          "upTo5Users": "Up to 5 Users",
+          "emailSupport": "Email Support"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$99",
+        "description": "Perfect for growing companies.",
+        "features": {
+          "multiCompany": "Multi-Company (up to 3)",
+          "advancedAccountingHr": "Advanced Accounting & HR",
+          "upTo20Users": "Up to 20 Users",
+          "prioritySupport": "Priority Support",
+          "inventoryManagement": "Inventory Management"
+        }
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom",
+        "description": "For large organizations.",
+        "features": {
+          "unlimitedCompanies": "Unlimited Companies",
+          "allModules": "All Modules Included",
+          "unlimitedUsers": "Unlimited Users",
+          "accountManager": "Dedicated Account Manager",
+          "customIntegrations": "Custom Integrations",
+          "sla": "SLA"
+        }
+      }
+    }
+  },
+  "footer": {
+    "brand": "UnifiedCore",
+    "tagline": "نظام التشغيل الكامل للأعمال العالمية الحديثة.",
+    "product": "المنتج",
+    "resources": "الموارد",
+    "legal": "قانوني",
+    "accounting": "المحاسبة",
+    "hrPayroll": "الموارد البشرية والرواتب",
+    "inventory": "المخزون",
+    "integrations": "التكاملات",
+    "documentation": "التوثيق",
+    "apiReference": "مرجع API",
+    "blog": "المدونة",
+    "community": "المجتمع",
+    "privacy": "سياسة الخصوصية",
+    "terms": "شروط الخدمة",
+    "security": "الأمان",
+    "copyright": "© {{year}} UnifiedCore. All rights reserved."
+  }
+}

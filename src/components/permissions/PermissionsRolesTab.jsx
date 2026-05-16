@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import { usePermissions } from "@/context/PermissionsContext";
@@ -43,6 +44,7 @@ const statsFromPermissionArray = (permissions) => {
  * @param {{ onEditRole: (role: object) => void }} props
  */
 const PermissionsRolesTab = ({ onEditRole }) => {
+  const { t } = useTranslation(["permissions", "common"]);
   const { systemModules, deleteRole, getEmployeesWithRole } = usePermissions();
   const rolesQuery = useCustomQuery("/api/roles/", ["permissions", "roles"]);
   const apiRoles = useMemo(
@@ -85,9 +87,9 @@ const PermissionsRolesTab = ({ onEditRole }) => {
     return (
       <ResourceLoadError
         error={rolesQuery.error}
-        title="Roles could not be loaded"
+        title={t("rolesLoadError")}
         onRefresh={() => rolesQuery.refetch()}
-        refreshLabel="Try again"
+        refreshLabel={t("common:actions.retry")}
       />
     );
   }
@@ -98,7 +100,7 @@ const PermissionsRolesTab = ({ onEditRole }) => {
         className="padding-lg"
         style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}
       >
-        No roles returned from the server.
+        {t("noRolesFromServer")}
       </Card>
     );
   }
@@ -233,7 +235,7 @@ const PermissionsRolesTab = ({ onEditRole }) => {
                         height: "fit-content",
                       }}
                     >
-                      SYSTEM
+                      {t("systemBadge")}
                     </span>
                   )}
                 </div>
@@ -248,7 +250,7 @@ const PermissionsRolesTab = ({ onEditRole }) => {
                       marginBottom: "0.25rem",
                     }}
                   >
-                    <span>Permissions</span>
+                    <span>{t("permissions")}</span>
                     <span>
                       {totalPerms}/{maxPerms}
                     </span>
@@ -305,7 +307,7 @@ const PermissionsRolesTab = ({ onEditRole }) => {
                           gap: "0.3rem",
                         }}
                       >
-                        {permIcon[p]} {p}: {count}
+                        {permIcon[p]} {t(`permActions.${p}`)}: {count}
                       </span>
                     );
                   })}
@@ -334,7 +336,7 @@ const PermissionsRolesTab = ({ onEditRole }) => {
                     size={14}
                     style={{ verticalAlign: "middle", marginRight: "0.25rem" }}
                   />
-                  {assignedCount} employee{assignedCount !== 1 ? "s" : ""}
+                  {t("employeeCount", { count: assignedCount })}
                 </span>
                 <div
                   style={{
@@ -350,10 +352,10 @@ const PermissionsRolesTab = ({ onEditRole }) => {
                     onClick={() => onEditRole(role)}
                     disabled={isSystem}
                     title={
-                      isSystem ? "System roles cannot be edited" : undefined
+                      isSystem ? t("systemRoleNoEdit") : undefined
                     }
                   >
-                    Edit
+                    {t("common:actions.edit")}
                   </Button>
                   {!isSystem && (
                     <button

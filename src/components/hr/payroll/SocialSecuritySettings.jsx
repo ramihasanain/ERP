@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -6,11 +7,14 @@ import { usePayroll } from '@/context/PayrollContext';
 import { Save, Shield, Info, AlertTriangle } from 'lucide-react';
 
 const SocialSecuritySettings = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const { socialSecurityConfig, setSocialSecurityConfig, salaryComponents } = usePayroll();
     const [localConfig, setLocalConfig] = useState({ ...socialSecurityConfig });
     const [isSaving, setIsSaving] = useState(false);
 
     const handleSave = () => {
+
         setIsSaving(true);
         setTimeout(() => {
             setSocialSecurityConfig(localConfig);

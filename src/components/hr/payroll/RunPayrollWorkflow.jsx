@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import translateApiError from '@/utils/translateApiError';
+import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
@@ -34,6 +36,8 @@ const parseAdjustmentAmountInput = (raw) => {
 };
 
 const RunPayrollWorkflow = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const location = useLocation();
     const navigate = useNavigate();
     const basePath = useBasePath();
@@ -139,7 +143,7 @@ const RunPayrollWorkflow = () => {
                 err?.response?.data?.message ||
                 (typeof err?.message === 'string' ? err.message : null) ||
                 'Could not save payroll adjustments.';
-            toast.error(typeof message === 'string' ? message : 'Could not save payroll adjustments.');
+            toast.error(translateApiError(err, 'hr:runPayroll.adjustmentsSaveFailed'));
         }
     }, [periodId, patchLinesMutation]);
 
@@ -163,6 +167,7 @@ const RunPayrollWorkflow = () => {
     );
 
     const resolveAdjustment = (empId) => {
+
         const base = baselineAdjustments[empId] || { amount: 0, reason: '' };
         const over = adjustmentOverrides[empId];
         const amountRaw = over && over.amount !== undefined ? over.amount : base.amount;
@@ -198,6 +203,7 @@ const RunPayrollWorkflow = () => {
     };
 
     const handleImportAdjustments = (e) => {
+
         const file = e.target.files[0];
         if (!file) return;
 
@@ -262,9 +268,7 @@ const RunPayrollWorkflow = () => {
     if (periodQuery.isError) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <Button variant="ghost" icon={<ArrowLeft size={20} />} onClick={goBackToRun} type="button" className="cursor-pointer">
-                    Back
-                </Button>
+                <Button variant="ghost" icon={<ArrowLeft size={20} />} onClick={goBackToRun} type="button" className="cursor-pointer">{t('common:actions.back')}</Button>
                 <ResourceLoadError
                     error={periodQuery.error}
                     title="Could not load payroll period for review"
@@ -277,9 +281,7 @@ const RunPayrollWorkflow = () => {
     if (!period) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <Button variant="ghost" icon={<ArrowLeft size={20} />} onClick={goBackToRun} type="button" className="cursor-pointer">
-                    Back
-                </Button>
+                <Button variant="ghost" icon={<ArrowLeft size={20} />} onClick={goBackToRun} type="button" className="cursor-pointer">{t('common:actions.back')}</Button>
                 <ResourceLoadError
                     message="No payroll period data was returned."
                     title="No data for this period"
@@ -363,17 +365,6 @@ const RunPayrollWorkflow = () => {
                                 Download CSV Template
                             </Button>
 
-                            <div style={{ position: 'relative' }}>
-                                <input type="file" id="adjustment-upload-workflow" hidden accept=".csv" onChange={handleImportAdjustments} />
-                                <Button
-                                    variant="primary"
-                                    className="cursor-pointer"
-                                    icon={<Upload size={16} />}
-                                    onClick={() => document.getElementById('adjustment-upload-workflow').click()}
-                                >
-                                    Import Adjustments (CSV)
-                                </Button>
-                            </div>
                         </div>
                     </div>
 
@@ -540,9 +531,7 @@ const RunPayrollWorkflow = () => {
                 </Card>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                    <Button variant="ghost" className="cursor-pointer" onClick={goBackToRun}>
-                        Back
-                    </Button>
+                    <Button variant="ghost" className="cursor-pointer" onClick={goBackToRun}>{t('common:actions.back')}</Button>
                     <Button
                         className="cursor-pointer"
                         onClick={() =>

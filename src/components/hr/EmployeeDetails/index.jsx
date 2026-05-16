@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import translateApiError from '@/utils/translateApiError';
+import { useTranslation } from 'react-i18next';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
@@ -114,6 +116,8 @@ const copyText = async (value) => {
 };
 
 const EmployeeDetails = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const { id } = useParams();
     const navigate = useNavigate();
     const basePath = useBasePath();
@@ -313,7 +317,7 @@ const EmployeeDetails = () => {
                 const newId = result?.id || result?.uuid || '';
                 const createdEmail = result?.email || values.email.trim();
                 const temporaryPassword = result?.temporary_password || '';
-                toast.success('Employee created successfully.');
+                toast.success(t('employeeDetails.created'));
                 setCreatedCredentials({
                     id: newId,
                     email: createdEmail,
@@ -323,10 +327,10 @@ const EmployeeDetails = () => {
             }
 
             await updateEmployeeMutation.mutateAsync(payload);
-            toast.success('Employee updated successfully.');
+            toast.success(t('employeeDetails.updated'));
         } catch (error) {
             const message = getApiErrorMessage(error, 'Employee request failed.');
-            toast.error(message);
+            toast.error(translateApiError(error, 'hr:errors.generic'));
         }
     };
 
@@ -378,7 +382,7 @@ const EmployeeDetails = () => {
                 end_date: values.end_date,
                 reason: values.reason.trim(),
             });
-            toast.success('Leave request created successfully.');
+            toast.success(t('employeeDetails.leaveCreated'));
             resetLeaveForm({
                 leave_type: '',
                 start_date: '',
@@ -387,14 +391,14 @@ const EmployeeDetails = () => {
             });
         } catch (error) {
             const message = error?.response?.data?.detail || error?.message || 'Leave request failed.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'hr:errors.generic'));
         }
     };
 
     const onSubmitDocument = async (values) => {
         const file = values?.file?.[0];
         if (!file) {
-            toast.error('Please choose a file before uploading.');
+            toast.error(t('employeeDetails.chooseFile'));
             return;
         }
 
@@ -405,7 +409,7 @@ const EmployeeDetails = () => {
 
         try {
             await uploadDocumentMutation.mutateAsync(payload);
-            toast.success('Document uploaded successfully.');
+            toast.success(t('employeeDetails.documentUploaded'));
             resetDocumentForm({
                 title: '',
                 description: '',
@@ -413,7 +417,7 @@ const EmployeeDetails = () => {
             });
         } catch (error) {
             const message = error?.response?.data?.detail || error?.message || 'Document upload failed.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'hr:errors.generic'));
         }
     };
 

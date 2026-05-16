@@ -1,0 +1,28 @@
+{
+  "title": "الإشعارات",
+  "markAllRead": "تعليم الكل كمقروء",
+  "clearAll": "مسح الكل",
+  "noNotifications": "لا توجد إشعارات",
+  "unread": "غير مقروء",
+  "read": "مقروء",
+  "all": "الكل",
+  "allTab": "الكل ({{count}})",
+  "unreadTab": "غير مقروء ({{count}})",
+  "readTab": "مقروء ({{count}})",
+  "unreadSummary_one": "لديك {{count}} إشعار غير مقروء.",
+  "unreadSummary_other": "لديك {{count}} إشعارات غير مقروءة.",
+  "allCaughtUp": "لا جديد!",
+  "emptyUnread": "لا جديد! لا توجد إشعارات غير مقروءة.",
+  "emptyInbox": "صندوق الإشعارات فارغ.",
+  "hoverToMarkSeen": "مرّر المؤشر لثانية واحدة لتعليمه كمقروء",
+  "remove": "إزالة",
+  "open": "فتح",
+  "viewAll": "عرض جميع الإشعارات",
+  "markAllReadShort": "تعليم الكل كمقروء",
+  "time": {
+    "justNow": "الآن",
+    "minutesAgo": "منذ {{count}} د",
+    "hoursAgo": "منذ {{count}} س",
+    "daysAgo": "منذ {{count}} ي"
+  }
+}

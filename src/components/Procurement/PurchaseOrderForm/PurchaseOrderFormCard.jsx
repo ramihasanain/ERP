@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Save, Trash2 } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -145,7 +146,7 @@ const PurchaseOrderFormCard = ({
             </Button>
 
             <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                <Button variant="outline" onClick={onCancel} className="font-medium cursor-pointer">Cancel</Button>
+                <Button variant="outline" onClick={onCancel} className="font-medium cursor-pointer">{t('actions.cancel', { ns: 'common' })}</Button>
 
                 {status === 'Draft' && (
                     <>

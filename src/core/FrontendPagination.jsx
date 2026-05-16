@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 const getVisiblePages = (totalPages, currentPage) => {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -36,6 +38,7 @@ const FrontendPagination = ({
   /** When true, renders even when all results fit on one page. */
   alwaysVisible = false,
 }) => {
+  const { t } = useTranslation('common');
   const totalPages = Math.max(1, Math.ceil(count / pageSize));
   const safeCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
   const pages = getVisiblePages(totalPages, safeCurrentPage);
@@ -53,7 +56,7 @@ const FrontendPagination = ({
       }}
     >
       <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-        Page {safeCurrentPage} of {totalPages}
+        {t('pagination.pageOf', { current: safeCurrentPage, total: totalPages })}
       </p>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -63,7 +66,7 @@ const FrontendPagination = ({
           disabled={safeCurrentPage === 1}
           onClick={() => onPageChange?.(safeCurrentPage - 1)}
         >
-          Prev
+          {t('pagination.prev')}
         </button>
 
         {pages.map((page, index) => {
@@ -99,7 +102,7 @@ const FrontendPagination = ({
           disabled={safeCurrentPage === totalPages}
           onClick={() => onPageChange?.(safeCurrentPage + 1)}
         >
-          Next
+          {t('pagination.next')}
         </button>
       </div>
     </div>

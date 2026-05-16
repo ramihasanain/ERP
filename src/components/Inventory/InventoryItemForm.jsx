@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import Card from '@/components/Shared/Card';
@@ -7,7 +8,7 @@ import Spinner from '@/core/Spinner';
 import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
-import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import translateApiError from '@/utils/translateApiError';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -99,6 +100,7 @@ const resolveCategoryValue = (value, categoryOptions) => {
 };
 
 const InventoryItemForm = ({ isEdit = false }) => {
+    const { t } = useTranslation(['inventory', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const { id } = useParams();
@@ -206,15 +208,14 @@ const InventoryItemForm = ({ isEdit = false }) => {
         try {
             if (isEdit && id) {
                 await updateProduct.mutateAsync(payload);
-                toast.success('Item updated successfully.');
+                toast.success(t('itemForm.updateSuccess'));
             } else {
                 await createProduct.mutateAsync(payload);
-                toast.success('Item created successfully.');
+                toast.success(t('itemForm.createSuccess'));
             }
             navigate(`${basePath}/inventory/items`);
         } catch (error) {
-            const message = getApiErrorMessage(error, isEdit ? 'Failed to update item.' : 'Failed to create item.');
-            toast.error(message);
+            toast.error(translateApiError(error, isEdit ? 'inventory:itemForm.updateFailed' : 'inventory:itemForm.createFailed'));
         }
     };
 
@@ -224,17 +225,17 @@ const InventoryItemForm = ({ isEdit = false }) => {
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
             <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={() => navigate(`${basePath}/inventory/items`)} style={{ marginBottom: '1rem' }}>
-                Back to Items
+                {t('itemForm.backToItems')}
             </Button>
 
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '1.5rem' }}>{isEdit ? 'Edit Item' : 'Add New Item'}</h1>
+            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '1.5rem' }}>{isEdit ? t('itemForm.editTitle') : t('itemForm.addTitle')}</h1>
 
             {isLoading && <Spinner />}
 
             {hasError && !isLoading && (
                 <Card className="padding-md">
                     <p style={{ margin: 0, color: 'var(--color-error)' }}>
-                        Could not load {isEdit ? 'item details, categories, or units' : 'categories or units'}.
+                        {isEdit ? t('itemForm.loadFailedEdit') : t('itemForm.loadFailedCreate')}
                     </p>
                 </Card>
             )}
@@ -244,17 +245,17 @@ const InventoryItemForm = ({ isEdit = false }) => {
                     <Card className="padding-md">
                         <div style={{ display: 'grid', gridTemplateColumns: isNarrow ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
                             <div style={{ gridColumn: isNarrow ? 'span 1' : 'span 2' }}>
-                                <label style={labelStyle}>Item Name</label>
+                                <label style={labelStyle}>{t('itemForm.itemName')}</label>
                                 <input name="name" value={formData.name} onChange={handleChange} required style={inputStyle} />
                             </div>
 
                             <div>
-                                <label style={labelStyle}>SKU (Stock Keeping Unit)</label>
+                                <label style={labelStyle}>{t('itemForm.sku')}</label>
                                 <input name="sku" value={formData.sku} onChange={handleChange} required style={inputStyle} />
                             </div>
 
                             <div>
-                                <label style={labelStyle}>Category</label>
+                                <label style={labelStyle}>{t('itemForm.category')}</label>
                                 <SelectWithLoadMore
                                     id="inventory-item-category"
                                     value={formData.categoryId ?? ''}
@@ -265,7 +266,7 @@ const InventoryItemForm = ({ isEdit = false }) => {
                                         value: category.id,
                                         label: category.name || category.id,
                                     }))}
-                                    emptyOptionLabel="Select category"
+                                    emptyOptionLabel={t('itemForm.selectCategory')}
                                     isInitialLoading={categoriesQuery.isPending}
                                     disabled={categoriesQuery.isError}
                                     triggerStyle={{
@@ -281,18 +282,18 @@ const InventoryItemForm = ({ isEdit = false }) => {
                             </div>
 
                             <div>
-                                <label style={labelStyle}>Item Type</label>
+                                <label style={labelStyle}>{t('itemForm.itemType')}</label>
                                 <select name="type" value={formData.type} onChange={handleChange} style={inputStyle}>
-                                    <option value="stock_item">Stock Item</option>
-                                    <option value="service">Service (Non-stock)</option>
+                                    <option value="stock_item">{t('itemForm.stockItem')}</option>
+                                    <option value="service">{t('itemForm.serviceItem')}</option>
                                 </select>
                             </div>
 
                             <div>
-                                <label style={labelStyle}>Unit of Measure</label>
+                                <label style={labelStyle}>{t('itemForm.unitOfMeasure')}</label>
                                 <select name="uom" value={formData.uom} onChange={handleChange} style={inputStyle} required>
                                     <option value="" disabled>
-                                        Select unit
+                                        {t('itemForm.selectUnit')}
                                     </option>
                                     {unitOptions.map((unit) => (
                                         <option key={unit.id} value={unit.id}>
@@ -305,14 +306,14 @@ const InventoryItemForm = ({ isEdit = false }) => {
                             <div style={{ gridColumn: isNarrow ? 'span 1' : 'span 2', borderTop: '1px solid var(--color-border)', margin: '1rem 0' }} />
 
                             <div>
-                                <label style={labelStyle}>Cost Price (Purchase)</label>
+                                <label style={labelStyle}>{t('itemForm.costPrice')}</label>
                                 <input name="purchasePrice" type="number" step="0.01" value={formData.purchasePrice} onChange={handleChange} required style={inputStyle} />
                             </div>
 
                             {formData.type === 'stock_item' && (
                                 <>
                                     <div>
-                                        <label style={labelStyle}>Reorder Level (Low Stock Alert)</label>
+                                        <label style={labelStyle}>{t('itemForm.reorderLevel')}</label>
                                         <input name="reorderLevel" type="number" value={formData.reorderLevel} onChange={handleChange} style={inputStyle} />
                                     </div>
                                 </>
@@ -321,7 +322,7 @@ const InventoryItemForm = ({ isEdit = false }) => {
 
                         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
                             <Button type="submit" variant="primary" icon={<CheckCircle size={18} />} disabled={isBusy || isUnchanged}>
-                                {isEdit ? (isBusy ? 'Updating…' : 'Update Item') : isBusy ? 'Creating…' : 'Create Item'}
+                                {isEdit ? (isBusy ? t('itemForm.updating') : t('itemForm.updateItem')) : isBusy ? t('itemForm.creating') : t('itemForm.createItem')}
                             </Button>
                         </div>
                     </Card>

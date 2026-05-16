@@ -1,8 +1,10 @@
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import { usePeriodSummary } from "@/hooks/usePeriodSummary";
 
 const SummaryTab = () => {
+  const { t } = useTranslation("auditor");
   const { periodId } = useParams();
   const {
     summary: periodSummary,
@@ -28,7 +30,7 @@ const SummaryTab = () => {
           fontSize: "0.9rem",
         }}
       >
-        Loading summary…
+        {t("summaryTab.loading")}
       </div>
     );
   }
@@ -50,19 +52,19 @@ const SummaryTab = () => {
       >
         {[
           {
-            label: "Total Revenue",
+            label: t("summaryTab.totalRevenue"),
             value: totalRevenue,
             color: "var(--color-success)",
             bg: "var(--color-success-dim)",
           },
           {
-            label: "Total Expenses",
+            label: t("summaryTab.totalExpenses"),
             value: totalExpenses,
             color: "var(--color-error)",
             bg: "var(--color-error-dim)",
           },
           {
-            label: "Net Income",
+            label: t("summaryTab.netIncome"),
             value: netIncome,
             color: "var(--color-primary-600)",
             bg: "var(--color-primary-50)",
@@ -92,9 +94,9 @@ const SummaryTab = () => {
         }}
       >
         {[
-          { label: "Total Assets", value: totalAssets },
-          { label: "Total Liabilities", value: totalLiabilities },
-          { label: "Total Equity", value: totalEquity },
+          { label: t("summaryTab.totalAssets"), value: totalAssets },
+          { label: t("summaryTab.totalLiabilities"), value: totalLiabilities },
+          { label: t("summaryTab.totalEquity"), value: totalEquity },
         ].map((item, i) => (
           <Card key={i} className="padding-md">
             <div
@@ -120,7 +122,7 @@ const SummaryTab = () => {
             fontSize: "0.85rem",
           }}
         >
-          Quick Stats
+          {t("summaryTab.quickStats")}
         </h4>
         <div
           style={{
@@ -131,22 +133,26 @@ const SummaryTab = () => {
           }}
         >
           <div>
-            <span style={{ color: "var(--color-text-muted)" }}>Accounts:</span>{" "}
+            <span style={{ color: "var(--color-text-muted)" }}>
+              {t("summaryTab.accounts")}
+            </span>{" "}
             <strong>{quickStats?.accounts ?? 0}</strong>
           </div>
           <div>
             <span style={{ color: "var(--color-text-muted)" }}>
-              Journal Entries:
+              {t("summaryTab.journalEntries")}
             </span>{" "}
             <strong>{quickStats?.journal_entries ?? 0}</strong>
           </div>
           <div>
-            <span style={{ color: "var(--color-text-muted)" }}>Invoices:</span>{" "}
+            <span style={{ color: "var(--color-text-muted)" }}>
+              {t("summaryTab.invoices")}
+            </span>{" "}
             <strong>{quickStats?.invoices ?? 0}</strong>
           </div>
           <div>
             <span style={{ color: "var(--color-text-muted)" }}>
-              Bank Accounts:
+              {t("summaryTab.bankAccounts")}
             </span>{" "}
             <strong>{quickStats?.bank_accounts ?? 0}</strong>
           </div>

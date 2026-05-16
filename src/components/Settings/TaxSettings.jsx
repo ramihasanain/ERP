@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -9,14 +10,8 @@ import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut, useCustomRemove } from '@/hooks/useMutation';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import translateApiError from '@/utils/translateApiError';
 import { Plus, Edit3, Trash2, Eye } from 'lucide-react';
-
-const TAX_TYPE_OPTIONS = [
-    { value: 'standard', label: 'Standard' },
-    { value: 'reduced', label: 'reduced' },
-    { value: 'zero', label: 'zero' },
-    { value: 'exempt', label: 'Reverse exempt' },
-];
 
 const normalizeArrayResponse = (response) => {
     if (Array.isArray(response)) return response;
@@ -46,8 +41,6 @@ const normalizeTaxRule = (item) => {
         name: source?.name || '',
         rate_percent: source?.rate_percent ?? '',
         tax_type: source?.tax_type || 'standard',
-        sales_gl_account: source?.sales_gl_account || source?.sales_gl_account_id || '',
-        purchase_gl_account: source?.purchase_gl_account || source?.purchase_gl_account_id || '',
         is_default: Boolean(source?.is_default),
         raw: source,
     };
@@ -58,16 +51,19 @@ const normalizeTaxRulesList = (response) => ({
     country: response?.data?.country || '',
 });
 
-const normalizeAccount = (item) => ({
-    id: getEntityId(item),
-    name: item?.name || item?.display_name || item?.code || 'Unnamed account',
-    code: item?.code || '',
-});
-
-const normalizeAccounts = (response) => normalizeArrayResponse(response).map(normalizeAccount);
-
 const TaxSettings = () => {
+    const { t } = useTranslation(['settings', 'common']);
     const [isFormOpen, setIsFormOpen] = useState(false);
+
+    const taxTypeOptions = useMemo(
+        () => [
+            { value: 'standard', label: t('tax.types.standard') },
+            { value: 'reduced', label: t('tax.types.reduced') },
+            { value: 'zero', label: t('tax.types.zero') },
+            { value: 'exempt', label: t('tax.types.exempt') },
+        ],
+        [t],
+    );
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [mode, setMode] = useState('create');
     const [selectedTaxRule, setSelectedTaxRule] = useState(null);
@@ -86,10 +82,6 @@ const TaxSettings = () => {
         }
     );
 
-    const accountsQuery = useCustomQuery('/accounting/accounts/', ['accounting-accounts'], {
-        select: normalizeAccounts,
-    });
-
     const createTaxRule = useCustomPost('/api/sales/tax-rules/create/', ['tax-rules']);
     const updateTaxRule = useCustomPut((data) => `/api/sales/tax-rules/${data.id}/`, ['tax-rules', 'tax-rule-detail']);
     const deleteTaxRule = useCustomRemove((id) => `/api/sales/tax-rules/${id}/delete/`, ['tax-rules', 'tax-rule-detail']);
@@ -104,25 +96,15 @@ const TaxSettings = () => {
             name: '',
             rate_percent: '',
             tax_type: 'standard',
-            sales_gl_account: '',
-            purchase_gl_account: '',
             is_default: false,
         },
     });
 
-    const accounts = useMemo(() => accountsQuery.data || [], [accountsQuery.data]);
     const taxRules = useMemo(() => taxRulesQuery.data?.taxRules || [], [taxRulesQuery.data]);
     const taxRulesCountry = taxRulesQuery.data?.country || '';
     const selectedRuleData = taxRuleDetailsQuery.data || selectedTaxRule;
 
     const actionInProgress = createTaxRule.isPending || updateTaxRule.isPending;
-
-    const accountNameById = useMemo(() => {
-        return accounts.reduce((acc, account) => {
-            acc[account.id] = account.code ? `${account.code} - ${account.name}` : account.name;
-            return acc;
-        }, {});
-    }, [accounts]);
 
     useEffect(() => {
         if (!isFormOpen) return;
@@ -132,8 +114,6 @@ const TaxSettings = () => {
                 name: '',
                 rate_percent: '',
                 tax_type: 'standard',
-                sales_gl_account: '',
-                purchase_gl_account: '',
                 is_default: false,
             });
             return;
@@ -144,8 +124,6 @@ const TaxSettings = () => {
                 name: selectedRuleData.name || '',
                 rate_percent: selectedRuleData.rate_percent ?? '',
                 tax_type: selectedRuleData.tax_type || 'standard',
-                sales_gl_account: selectedRuleData.sales_gl_account || '',
-                purchase_gl_account: selectedRuleData.purchase_gl_account || '',
                 is_default: Boolean(selectedRuleData.is_default),
             });
         }
@@ -188,23 +166,20 @@ const TaxSettings = () => {
             name: values.name.trim(),
             rate_percent: String(values.rate_percent).trim(),
             tax_type: values.tax_type,
-            sales_gl_account: values.sales_gl_account || null,
-            purchase_gl_account: values.purchase_gl_account || null,
             is_default: Boolean(values.is_default),
         };
 
         try {
             if (mode === 'edit' && selectedTaxRule?.id) {
                 await updateTaxRule.mutateAsync({ id: selectedTaxRule.id, ...payload });
-                toast.success('Tax rule updated successfully.');
+                toast.success(t('tax.toast.updated'));
             } else {
                 await createTaxRule.mutateAsync(payload);
-                toast.success('Tax rule created successfully.');
+                toast.success(t('tax.toast.created'));
             }
             closeFormModal();
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to save tax rule.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'settings:tax.toast.saveFailed'));
         }
     };
 
@@ -212,24 +187,23 @@ const TaxSettings = () => {
         if (!selectedTaxRule?.id) return;
         try {
             await deleteTaxRule.mutateAsync(selectedTaxRule.id);
-            toast.success('Tax rule deleted successfully.');
+            toast.success(t('tax.toast.deleted'));
             setIsDeleteOpen(false);
             setSelectedTaxRule(null);
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to delete tax rule.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'settings:tax.toast.deleteFailed'));
         }
     };
 
-    const isLoading = taxRulesQuery.isLoading || accountsQuery.isLoading;
-    const hasError = taxRulesQuery.isError || accountsQuery.isError;
+    const isLoading = taxRulesQuery.isLoading;
+    const hasError = taxRulesQuery.isError;
 
     const handleRetry = async () => {
         try {
-            await Promise.all([taxRulesQuery.refetch(), accountsQuery.refetch()]);
-            toast.success('Tax rules refreshed.');
+            await taxRulesQuery.refetch();
+            toast.success(t('tax.refreshSuccess'));
         } catch {
-            toast.error('Refresh failed. Please try again.');
+            toast.error(t('tax.refreshFailed'));
         }
     };
 
@@ -239,42 +213,42 @@ const TaxSettings = () => {
         <Card className="padding-lg">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Tax Management</h3>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('tax.title')}</h3>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: 0 }}>
-                        Create and maintain tax rules for sales operations
-                        {taxRulesCountry ? ` (${taxRulesCountry})` : ''}.
+                        {taxRulesCountry
+                            ? t('tax.subtitleWithCountry', { country: taxRulesCountry })
+                            : t('tax.subtitle')}
                     </p>
                 </div>
-                <Button icon={<Plus size={16} />} onClick={openCreateModal}>Add Tax Rule</Button>
+                <Button icon={<Plus size={16} />} onClick={openCreateModal}>{t('tax.addRule')}</Button>
             </div>
 
             {isLoading && <Spinner />}
 
             {hasError && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
-                    <p style={{ margin: 0, color: 'var(--color-error)' }}>Could not load tax rules data.</p>
-                    <Button variant="outline" onClick={handleRetry}>Retry</Button>
+                    <p style={{ margin: 0, color: 'var(--color-error)' }}>{t('tax.loadFailed')}</p>
+                    <Button variant="outline" onClick={handleRetry}>{t('common:actions.retry')}</Button>
                 </div>
             )}
 
             {!isLoading && !hasError && (
                 <div style={{ border: '1px solid var(--color-border)', borderRadius: '8px', overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', minWidth: '760px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', minWidth: '560px' }}>
                         <thead style={{ background: 'var(--color-bg-table-header)' }}>
                             <tr>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Rule Name</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Rate (%)</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Type</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Sales GL / Purchase GL</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'center', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Default</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Actions</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('tax.table.ruleName')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('tax.table.rate')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('tax.table.type')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'center', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('tax.table.default')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('tax.table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {taxRules.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                                        No tax rules found.
+                                    <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                                        {t('tax.table.empty')}
                                     </td>
                                 </tr>
                             ) : (
@@ -282,31 +256,29 @@ const TaxSettings = () => {
                                     <tr key={rule.id} style={{ borderTop: '1px solid var(--color-border)' }}>
                                         <td style={{ padding: '0.75rem 1rem', fontWeight: 500 }}>{rule.name}</td>
                                         <td style={{ padding: '0.75rem 1rem' }}>{rule.rate_percent}</td>
-                                        <td style={{ padding: '0.75rem 1rem', textTransform: 'capitalize' }}>{rule.tax_type.replaceAll('_', ' ')}</td>
-                                        <td style={{ padding: '0.75rem 1rem' }}>
-                                            {(accountNameById[rule.sales_gl_account] || rule.sales_gl_account || '-')}{' / '}
-                                            {(accountNameById[rule.purchase_gl_account] || rule.purchase_gl_account || '-')}
+                                        <td style={{ padding: '0.75rem 1rem', textTransform: 'capitalize' }}>
+                                            {t(`tax.types.${rule.tax_type}`, { defaultValue: rule.tax_type.replaceAll('_', ' ') })}
                                         </td>
-                                        <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>{rule.is_default ? 'Yes' : 'No'}</td>
+                                        <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>{rule.is_default ? t('common:actions.yes') : t('common:actions.no')}</td>
                                         <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
                                             <button
                                                 onClick={() => openViewModal(rule)}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', marginRight: '0.5rem' }}
-                                                aria-label="View tax rule"
+                                                aria-label={t('tax.aria.view')}
                                             >
                                                 <Eye size={16} />
                                             </button>
                                             <button
                                                 onClick={() => openEditModal(rule)}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', marginRight: '0.5rem' }}
-                                                aria-label="Edit tax rule"
+                                                aria-label={t('tax.aria.edit')}
                                             >
                                                 <Edit3 size={16} />
                                             </button>
                                             <button
                                                 onClick={() => openDeleteModal(rule)}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)' }}
-                                                aria-label="Delete tax rule"
+                                                aria-label={t('tax.aria.delete')}
                                             >
                                                 <Trash2 size={16} />
                                             </button>
@@ -322,7 +294,13 @@ const TaxSettings = () => {
             <Modal
                 isOpen={isFormOpen}
                 onClose={closeFormModal}
-                title={mode === 'create' ? 'Add Tax Rule' : mode === 'edit' ? 'Edit Tax Rule' : 'Tax Rule Details'}
+                title={
+                    mode === 'create'
+                        ? t('tax.modal.add')
+                        : mode === 'edit'
+                          ? t('tax.modal.edit')
+                          : t('tax.modal.view')
+                }
             >
                 {(taxRuleDetailsQuery.isLoading && (mode === 'view' || mode === 'edit')) ? (
                     <Spinner />
@@ -331,11 +309,11 @@ const TaxSettings = () => {
                         <Controller
                             name="name"
                             control={control}
-                            rules={{ required: 'Rule name is required' }}
+                            rules={{ required: t('tax.form.ruleNameRequired') }}
                             render={({ field }) => (
                                 <Input
-                                    label="Rule Name"
-                                    placeholder="e.g. Standard VAT 20%"
+                                    label={t('tax.form.ruleName')}
+                                    placeholder={t('tax.form.ruleNamePlaceholder')}
                                     value={field.value}
                                     onChange={field.onChange}
                                     disabled={isReadOnlyMode}
@@ -348,10 +326,10 @@ const TaxSettings = () => {
                             <Controller
                                 name="rate_percent"
                                 control={control}
-                                rules={{ required: 'Rate is required' }}
+                                rules={{ required: t('tax.form.rateRequired') }}
                                 render={({ field }) => (
                                     <Input
-                                        label="Rate (%)"
+                                        label={t('tax.form.rate')}
                                         type="number"
                                         value={field.value}
                                         onChange={field.onChange}
@@ -366,64 +344,16 @@ const TaxSettings = () => {
                                 control={control}
                                 render={({ field }) => (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Type</label>
+                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('tax.form.type')}</label>
                                         <select
                                             value={field.value}
                                             onChange={field.onChange}
                                             disabled={isReadOnlyMode}
                                             style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
                                         >
-                                            {TAX_TYPE_OPTIONS.map((option) => (
+                                            {taxTypeOptions.map((option) => (
                                                 <option key={option.value} value={option.value}>
                                                     {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-                            />
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <Controller
-                                name="sales_gl_account"
-                                control={control}
-                                render={({ field }) => (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Sales GL Account</label>
-                                        <select
-                                            value={field.value || ''}
-                                            onChange={field.onChange}
-                                            disabled={isReadOnlyMode}
-                                            style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
-                                        >
-                                            <option value="">Select account</option>
-                                            {accounts.map((account) => (
-                                                <option key={account.id} value={account.id}>
-                                                    {account.code ? `${account.code} - ${account.name}` : account.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-                            />
-
-                            <Controller
-                                name="purchase_gl_account"
-                                control={control}
-                                render={({ field }) => (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Purchase GL Account</label>
-                                        <select
-                                            value={field.value || ''}
-                                            onChange={field.onChange}
-                                            disabled={isReadOnlyMode}
-                                            style={{ height: '2.5rem', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
-                                        >
-                                            <option value="">Select account</option>
-                                            {accounts.map((account) => (
-                                                <option key={account.id} value={account.id}>
-                                                    {account.code ? `${account.code} - ${account.name}` : account.name}
                                                 </option>
                                             ))}
                                         </select>
@@ -443,18 +373,22 @@ const TaxSettings = () => {
                                         onChange={(event) => field.onChange(event.target.checked)}
                                         disabled={isReadOnlyMode}
                                     />
-                                    Set as default tax rule
+                                    {t('tax.form.isDefault')}
                                 </label>
                             )}
                         />
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                             <Button type="button" variant="ghost" onClick={closeFormModal}>
-                                {isReadOnlyMode ? 'Close' : 'Cancel'}
+                                {isReadOnlyMode ? t('common:actions.close') : t('common:actions.cancel')}
                             </Button>
                             {!isReadOnlyMode && (
                                 <Button type="submit" disabled={actionInProgress}>
-                                    {actionInProgress ? 'Saving...' : mode === 'edit' ? 'Update Rule' : 'Create Rule'}
+                                    {actionInProgress
+                                        ? t('tax.form.saving')
+                                        : mode === 'edit'
+                                          ? t('tax.form.updateRule')
+                                          : t('tax.form.createRule')}
                                 </Button>
                             )}
                         </div>
@@ -464,15 +398,21 @@ const TaxSettings = () => {
 
             <ConfirmationModal
                 isOpen={isDeleteOpen}
-                title="Delete Tax Rule"
-                message={`Are you sure you want to delete "${selectedTaxRule?.name || 'this tax rule'}"? This action cannot be undone.`}
+                title={t('tax.delete.title')}
+                message={
+                    selectedTaxRule?.name
+                        ? t('tax.delete.message', { name: selectedTaxRule.name })
+                        : t('tax.delete.messageFallback')
+                }
                 onConfirm={confirmDelete}
                 onCancel={() => {
                     setIsDeleteOpen(false);
                     setSelectedTaxRule(null);
                 }}
                 type="danger"
-                confirmText={deleteTaxRule.isPending ? 'Deleting...' : 'Delete'}
+                confirmText={
+                    deleteTaxRule.isPending ? t('tax.delete.deleting') : t('common:actions.delete')
+                }
             />
         </Card>
     );

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 import { User } from "lucide-react";
 import btn from "@/components/Shared/Button.module.css";
@@ -11,6 +12,7 @@ import PricingSection from "@/components/landing/PricingSection";
 import Footer from "@/components/landing/Footer";
 
 const LandingPage = () => {
+  const { t } = useTranslation("landing");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef(null);
 
@@ -144,13 +146,13 @@ const LandingPage = () => {
               to="/auth/signin"
               className={clsx(btn.button, btn.surface, btn.toolbar)}
             >
-              Log In
+              {t("nav.logIn")}
             </Link>
             <Link
               to="/auth/signup"
               className={clsx(btn.button, btn.primary, btn.toolbar)}
             >
-              Get Started
+              {t("nav.getStarted")}
             </Link>
           </div>
 
@@ -159,7 +161,7 @@ const LandingPage = () => {
               type="button"
               className="landing-mobile-trigger"
               aria-expanded={isMobileMenuOpen}
-              aria-label="Open user menu"
+              aria-label={t("nav.openUserMenu")}
               onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             >
               <User size={18} />
@@ -177,14 +179,14 @@ const LandingPage = () => {
                     className={clsx(btn.button, btn.surface, btn.toolbar)}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Log In
+                    {t("nav.logIn")}
                   </Link>
                   <Link
                     to="/auth/signup"
                     className={clsx(btn.button, btn.primary, btn.toolbar)}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Get Started
+                    {t("nav.getStarted")}
                   </Link>
                 </div>
               </div>

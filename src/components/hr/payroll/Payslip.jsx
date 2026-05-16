@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Download, Printer } from 'lucide-react';
@@ -113,6 +114,8 @@ const normalizePayslipData = (apiData = {}) => {
 };
 
 const Payslip = ({ data }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const payslipData = normalizePayslipData(data);
 
     return (

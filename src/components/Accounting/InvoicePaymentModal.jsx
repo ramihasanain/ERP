@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/context/LanguageContext';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { X, Save } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
-import { useLanguage } from '@/context/LanguageContext';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost } from '@/hooks/useMutation';
 import { toast } from 'sonner';
+import translateApiError from '@/utils/translateApiError';
 
 const getCurrencyCode = (invoice) => {
     const currency = invoice?.currency;
@@ -21,8 +23,10 @@ const getCurrencyCode = (invoice) => {
 };
 
 const InvoicePaymentModal = ({ invoice, onClose }) => {
+    const { t } = useTranslation('accounting');
+    const { dir } = useLanguage();
+    const isRtl = dir === 'rtl';
     const { recordInvoicePayment } = useAccounting();
-    const { language } = useLanguage();
     const invoiceId = invoice?.id || '';
     const bankAccountsQuery = useCustomQuery(
         '/accounting/bank-accounts/',
@@ -42,7 +46,6 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
         [['sales-invoices'], ['sales-invoice-preview', invoiceId]]
     );
 
-    // Calculate remaining balance
     const totalPaid = invoice.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
     const remaining = Number(invoice.remainingBalance ?? (Number(invoice.total ?? 0) - totalPaid));
     const currencyCode = getCurrencyCode(invoice);
@@ -66,12 +69,12 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
         const paymentAmount = Number(formData.amount);
 
         if (paymentAmount <= 0) {
-            toast.error(language === 'ar' ? 'يرجى إدخال مبلغ صحيح.' : 'Please enter a valid payment amount.');
+            toast.error(t('invoicePayment.invalidAmount'));
             return;
         }
 
         if (remaining > 0 && paymentAmount > remaining) {
-            toast.error(language === 'ar' ? 'المبلغ المدخل أكبر من الرصيد المتبقي' : 'Amount exceeds remaining balance');
+            toast.error(t('invoicePayment.amountExceedsBalance'));
             return;
         }
 
@@ -91,19 +94,12 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
             await submitPaymentMutation.mutateAsync(payload);
 
             recordInvoicePayment(invoice.id, formData);
-            toast.success(language === 'ar' ? 'تم تسجيل دفعة الفاتورة بنجاح.' : 'Invoice payment recorded successfully.');
+            toast.success(t('invoicePayment.success'));
             onClose();
         } catch (error) {
-            const detail = error?.response?.data?.detail;
-            toast.error(
-                typeof detail === 'string'
-                    ? detail
-                    : (language === 'ar' ? 'تعذر تسجيل دفعة الفاتورة.' : 'Failed to record invoice payment.')
-            );
+            toast.error(translateApiError(error, 'accounting:invoicePayment.failed'));
         }
     };
-
-    const isRtl = language === 'ar';
 
     return (
         <div style={{
@@ -114,7 +110,7 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
             <Card className="padding-xl" style={{ width: '500px', maxWidth: '95%', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                        {isRtl ? `تسجيل دفعة - ${invoice.id}` : `Record Payment - ${invoice.id}`}
+                        {t('invoicePayment.title', { id: invoice.id })}
                     </h2>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-400)' }}>
                         <X size={20} />
@@ -123,11 +119,11 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
 
                 <div style={{ background: 'var(--color-bg-subtle)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', border: '1px solid var(--color-border)' }}>
                     <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>{isRtl ? 'إجمالي الفاتورة' : 'Invoice Total'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>{t('invoicePayment.invoiceTotal')}</div>
                         <div style={{ fontWeight: 700 }}>{formatMoney(invoice.total)}</div>
                     </div>
                     <div style={{ textAlign: isRtl ? 'left' : 'right' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>{isRtl ? 'الرصيد المتبقي' : 'Remaining Balance'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>{t('invoicePayment.remainingBalance')}</div>
                         <div style={{ fontWeight: 700, color: 'var(--color-primary-600)' }}>{formatMoney(remaining)}</div>
                     </div>
                 </div>
@@ -135,13 +131,13 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <Input
-                            label={isRtl ? 'المبلغ' : 'Payment Amount'}
+                            label={t('invoicePayment.paymentAmount')}
                             type="number"
                             value={formData.amount}
                             onChange={e => setFormData({ ...formData, amount: e.target.value })}
                         />
                         <Input
-                            label={isRtl ? 'التاريخ' : 'Date'}
+                            label={t('invoicePayment.date')}
                             type="date"
                             value={formData.date}
                             onChange={e => setFormData({ ...formData, date: e.target.value })}
@@ -150,7 +146,7 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
-                            {isRtl ? 'حساب الإيداع (البنك/الصندوق)' : 'Deposit To'}
+                            {t('invoicePayment.depositTo')}
                         </label>
                         <select
                             value={selectedAccountId}
@@ -161,9 +157,9 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                                 fontSize: '0.9rem', color: 'var(--color-text-main)',
                             }}
                         >
-                            <option value="" disabled>{isRtl ? 'اختر حساباً' : 'Select account'}</option>
+                            <option value="" disabled>{t('invoicePayment.selectAccount')}</option>
                             {!hasSelectedAccount && selectedAccountId && (
-                                <option value={selectedAccountId}>{isRtl ? 'الحساب الافتراضي' : 'Default bank account'}</option>
+                                <option value={selectedAccountId}>{t('invoicePayment.defaultBankAccount')}</option>
                             )}
                             {paymentAccounts.map(acc => (
                                 <option key={acc.id} value={acc.id}>{acc.name}</option>
@@ -174,7 +170,7 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
-                                {isRtl ? 'طريقة الدفع' : 'Payment Method'}
+                                {t('invoicePayment.paymentMethod')}
                             </label>
                             <select
                                 value={formData.method}
@@ -184,13 +180,13 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                                     border: '1px solid var(--color-border)', background: 'var(--color-bg-surface)', fontSize: '0.9rem', color: 'var(--color-text-main)'
                                 }}
                             >
-                                <option value="bank_transfer">{isRtl ? 'حوالة بنكية' : 'Bank Transfer'}</option>
-                                <option value="cash">{isRtl ? 'نقد' : 'Cash'}</option>
-                                <option value="check">{isRtl ? 'شيك' : 'Check'}</option>
+                                <option value="bank_transfer">{t('invoicePayment.bankTransfer')}</option>
+                                <option value="cash">{t('invoicePayment.cash')}</option>
+                                <option value="check">{t('invoicePayment.check')}</option>
                             </select>
                         </div>
                         <Input
-                            label={isRtl ? 'رقم المرجع / الشيك' : 'Reference / Check #'}
+                            label={t('invoicePayment.reference')}
                             value={formData.reference}
                             onChange={e => setFormData({ ...formData, reference: e.target.value })}
                             placeholder="e.g. 12345"
@@ -198,20 +194,20 @@ const InvoicePaymentModal = ({ invoice, onClose }) => {
                     </div>
 
                     <Input
-                        label={isRtl ? 'ملاحظات' : 'Notes'}
+                        label={t('invoicePayment.notes')}
                         value={formData.notes}
                         onChange={e => setFormData({ ...formData, notes: e.target.value })}
                         placeholder="..."
                     />
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                        <Button variant="ghost" onClick={onClose}>{isRtl ? 'إلغاء' : 'Cancel'}</Button>
+                        <Button variant="ghost" onClick={onClose}>{t('common.cancel', { ns: 'accounting' })}</Button>
                         <Button
                             icon={<Save size={16} />}
                             onClick={handleSubmit}
                             disabled={submitPaymentMutation.isPending || bankAccountsQuery.isPending || !formData.amount || !selectedAccountId}
                         >
-                            {isRtl ? 'تسجيل الدفعة' : 'Record Payment'}
+                            {t('invoicePayment.recordPayment')}
                         </Button>
                     </div>
                 </div>

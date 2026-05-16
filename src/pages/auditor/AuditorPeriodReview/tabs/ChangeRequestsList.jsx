@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import ConfirmationModal from "@/components/Shared/ConfirmationModal";
 import {
@@ -14,43 +15,43 @@ import {
   User,
 } from "lucide-react";
 
-const statusConfig = {
+const getStatusConfig = (t) => ({
   draft: {
-    label: "Draft",
+    label: t("changeRequests.draft"),
     bg: "var(--color-slate-100)",
     color: "var(--color-text-secondary)",
   },
   submitted: {
-    label: "Submitted",
+    label: t("changeRequests.submitted"),
     bg: "var(--color-warning-dim)",
     color: "var(--color-warning)",
   },
   approved: {
-    label: "Approved",
+    label: t("changeRequests.approved"),
     bg: "var(--color-success-dim)",
     color: "var(--color-success)",
   },
   rejected: {
-    label: "Rejected",
+    label: t("changeRequests.rejected"),
     bg: "var(--color-error-dim)",
     color: "var(--color-error)",
   },
-};
+});
 
-const areaConfig = {
-  journal_entry: { label: "Journal Entry", icon: BookOpen },
-  account: { label: "Account", icon: FileText },
-  invoice: { label: "Invoice", icon: Receipt },
-};
+const getAreaConfig = (t) => ({
+  journal_entry: { label: t("changeRequests.journalEntry"), icon: BookOpen },
+  account: { label: t("changeRequests.account"), icon: FileText },
+  invoice: { label: t("changeRequests.invoice"), icon: Receipt },
+});
 
-const actionConfig = {
-  create: { label: "Create", icon: Plus, color: "var(--color-success)" },
-  update: { label: "Update", icon: Pencil, color: "var(--color-primary-600)" },
-  delete: { label: "Delete", icon: Trash2, color: "var(--color-error)" },
-};
+const getActionConfig = (t) => ({
+  create: { label: t("changeRequests.create"), icon: Plus, color: "var(--color-success)" },
+  update: { label: t("changeRequests.update"), icon: Pencil, color: "var(--color-primary-600)" },
+  delete: { label: t("changeRequests.delete"), icon: Trash2, color: "var(--color-error)" },
+});
 
-const formatDate = (iso) => {
-  if (!iso) return "—";
+const formatDate = (iso, fallback = "—") => {
+  if (!iso) return fallback;
   const d = new Date(iso);
   return d.toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -59,8 +60,8 @@ const formatDate = (iso) => {
   });
 };
 
-const formatDateTime = (iso) => {
-  if (!iso) return "—";
+const formatDateTime = (iso, fallback = "—") => {
+  if (!iso) return fallback;
   const d = new Date(iso);
   return d.toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -72,28 +73,29 @@ const formatDateTime = (iso) => {
 };
 
 const SummaryCards = ({ summary }) => {
+  const { t } = useTranslation(["auditor", "common"]);
   const items = [
     {
       key: "draft",
-      label: "Draft",
+      label: t("changeRequests.draft"),
       color: "var(--color-text-secondary)",
       bg: "var(--color-slate-100)",
     },
     {
       key: "submitted",
-      label: "Submitted",
+      label: t("changeRequests.submitted"),
       color: "var(--color-warning)",
       bg: "var(--color-warning-dim)",
     },
     {
       key: "approved",
-      label: "Approved",
+      label: t("changeRequests.approved"),
       color: "var(--color-success)",
       bg: "var(--color-success-dim)",
     },
     {
       key: "rejected",
-      label: "Rejected",
+      label: t("changeRequests.rejected"),
       color: "var(--color-error)",
       bg: "var(--color-error-dim)",
     },
@@ -146,6 +148,8 @@ const SummaryCards = ({ summary }) => {
 };
 
 const PayloadPreview = ({ area, action, original, proposed }) => {
+  const { t } = useTranslation(["auditor", "common"]);
+  const notAvailable = t("common:notAvailable");
   if (area === "journal_entry" && proposed) {
     const lines = proposed.lines || [];
     return (
@@ -162,17 +166,17 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
         >
           {proposed.date && (
             <span>
-              Date: <strong>{proposed.date}</strong>
+              {t("changeRequests.date")} <strong>{proposed.date}</strong>
             </span>
           )}
           {proposed.reference && (
             <span>
-              Ref: <strong>{proposed.reference}</strong>
+              {t("changeRequests.ref")} <strong>{proposed.reference}</strong>
             </span>
           )}
           {proposed.currency && (
             <span>
-              Currency: <strong>{proposed.currency}</strong>
+              {t("changeRequests.currency")} <strong>{proposed.currency}</strong>
             </span>
           )}
         </div>
@@ -200,13 +204,13 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
                 <tr style={{ background: "var(--color-slate-50)" }}>
                   <th style={{ padding: "4px 8px", textAlign: "left" }}>#</th>
                   <th style={{ padding: "4px 8px", textAlign: "left" }}>
-                    Description
+                    {t("journalTab.description")}
                   </th>
                   <th style={{ padding: "4px 8px", textAlign: "right" }}>
-                    Debit
+                    {t("journalTab.debit")}
                   </th>
                   <th style={{ padding: "4px 8px", textAlign: "right" }}>
-                    Credit
+                    {t("journalTab.credit")}
                   </th>
                 </tr>
               </thead>
@@ -225,7 +229,7 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
                       {(line.order ?? i) + 1}
                     </td>
                     <td style={{ padding: "4px 8px" }}>
-                      {line.description || "—"}
+                      {line.description || notAvailable}
                     </td>
                     <td
                       style={{
@@ -241,7 +245,7 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
                     >
                       {Number(line.debit) > 0
                         ? Number(line.debit).toLocaleString()
-                        : "—"}
+                        : notAvailable}
                     </td>
                     <td
                       style={{
@@ -257,7 +261,7 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
                     >
                       {Number(line.credit) > 0
                         ? Number(line.credit).toLocaleString()
-                        : "—"}
+                        : notAvailable}
                     </td>
                   </tr>
                 ))}
@@ -283,7 +287,7 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
               textTransform: "uppercase",
             }}
           >
-            Changes
+            {t("changeRequests.changes")}
           </div>
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}
@@ -305,7 +309,7 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
                     textDecoration: "line-through",
                   }}
                 >
-                  {String(original[key] ?? "—")}
+                  {String(original[key] ?? notAvailable)}
                 </span>
                 <span style={{ color: "var(--color-text-muted)" }}>&rarr;</span>
                 <span
@@ -332,17 +336,17 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
           >
             {proposed.code && (
               <span>
-                Code: <strong>{proposed.code}</strong>
+                {t("changeRequests.code")} <strong>{proposed.code}</strong>
               </span>
             )}
             {proposed.name && (
               <span>
-                Name: <strong>{proposed.name}</strong>
+                {t("changeRequests.name")} <strong>{proposed.name}</strong>
               </span>
             )}
             {proposed.description && (
               <span>
-                Description: <strong>{proposed.description}</strong>
+                {t("changeRequests.description")} <strong>{proposed.description}</strong>
               </span>
             )}
           </div>
@@ -365,17 +369,17 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
         >
           {proposed.invoice_date && (
             <span>
-              Invoice Date: <strong>{proposed.invoice_date}</strong>
+              {t("changeRequests.invoiceDate")} <strong>{proposed.invoice_date}</strong>
             </span>
           )}
           {proposed.due_date && (
             <span>
-              Due Date: <strong>{proposed.due_date}</strong>
+              {t("changeRequests.dueDate")} <strong>{proposed.due_date}</strong>
             </span>
           )}
           {proposed.notes && (
             <span>
-              Notes: <strong>{proposed.notes}</strong>
+              {t("changeRequests.notes")} <strong>{proposed.notes}</strong>
             </span>
           )}
         </div>
@@ -387,9 +391,14 @@ const PayloadPreview = ({ area, action, original, proposed }) => {
 };
 
 const ChangeRequestCard = ({ cr, onDeleteDraft, isDeleting }) => {
+  const { t } = useTranslation(["auditor", "common"]);
+  const notAvailable = t("common:notAvailable");
   const [expanded, setExpanded] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isDraft = cr.status === "draft";
+  const statusConfig = getStatusConfig(t);
+  const areaConfig = getAreaConfig(t);
+  const actionConfig = getActionConfig(t);
   const sc = statusConfig[cr.status] || statusConfig.draft;
   const area = areaConfig[cr.target_area] || {
     label: cr.target_area,
@@ -500,7 +509,7 @@ const ChangeRequestCard = ({ cr, onDeleteDraft, isDeleting }) => {
               }}
             >
               <Clock size={11} />
-              {formatDate(cr.created_at)}
+              {formatDate(cr.created_at, notAvailable)}
             </span>
             <span
               style={{
@@ -510,7 +519,7 @@ const ChangeRequestCard = ({ cr, onDeleteDraft, isDeleting }) => {
               }}
             >
               <User size={11} />
-              {cr.auditor_name || "—"}
+              {cr.auditor_name || notAvailable}
             </span>
           </div>
         </div>
@@ -518,7 +527,7 @@ const ChangeRequestCard = ({ cr, onDeleteDraft, isDeleting }) => {
         {isDraft && onDeleteDraft && (
           <button
             onClick={handleDelete}
-            title="Delete draft"
+            title={t("changeRequests.deleteDraft")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -587,7 +596,7 @@ const ChangeRequestCard = ({ cr, onDeleteDraft, isDeleting }) => {
                   fontSize: "0.78rem",
                 }}
               >
-                <strong>Auditor Note:</strong> {cr.auditor_note}
+                <strong>{t("changeRequests.auditorNote")}</strong> {cr.auditor_note}
               </div>
             )}
 
@@ -606,7 +615,7 @@ const ChangeRequestCard = ({ cr, onDeleteDraft, isDeleting }) => {
                   fontSize: "0.78rem",
                 }}
               >
-                <strong>Admin Response:</strong> {cr.admin_note}
+                <strong>{t("changeRequests.adminResponse")}</strong> {cr.admin_note}
                 {cr.admin_reviewer_name && (
                   <span
                     style={{
@@ -641,15 +650,15 @@ const ChangeRequestCard = ({ cr, onDeleteDraft, isDeleting }) => {
                 flexWrap: "wrap",
               }}
             >
-              <span>Created: {formatDateTime(cr.created_at)}</span>
+              <span>{t("changeRequests.created")} {formatDateTime(cr.created_at, notAvailable)}</span>
               {cr.submitted_at && (
-                <span>Submitted: {formatDateTime(cr.submitted_at)}</span>
+                <span>{t("changeRequests.submittedAt")} {formatDateTime(cr.submitted_at, notAvailable)}</span>
               )}
               {cr.reviewed_at && (
-                <span>Reviewed: {formatDateTime(cr.reviewed_at)}</span>
+                <span>{t("changeRequests.reviewed")} {formatDateTime(cr.reviewed_at, notAvailable)}</span>
               )}
               {cr.applied_at && (
-                <span>Applied: {formatDateTime(cr.applied_at)}</span>
+                <span>{t("changeRequests.applied")} {formatDateTime(cr.applied_at, notAvailable)}</span>
               )}
             </div>
           </div>
@@ -659,9 +668,10 @@ const ChangeRequestCard = ({ cr, onDeleteDraft, isDeleting }) => {
       <ConfirmationModal
         isOpen={confirmOpen}
         type="danger"
-        title="Delete Draft"
-        message={`Are you sure you want to delete "${cr.title}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t("changeRequests.deleteDraftTitle")}
+        message={t("changeRequests.deleteDraftMessage", { title: cr.title })}
+        confirmText={t("common:actions.delete")}
+        cancelText={t("common:actions.cancel")}
         onConfirm={handleConfirmDelete}
         onCancel={() => setConfirmOpen(false)}
         disabled={isDeleting}
@@ -676,6 +686,7 @@ const ChangeRequestsList = ({
   onDeleteDraft,
   isDeleting,
 }) => {
+  const { t } = useTranslation("auditor");
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <SummaryCards summary={summary} />
@@ -698,7 +709,7 @@ const ChangeRequestsList = ({
                 fontSize: "0.85rem",
               }}
             >
-              No change requests found.
+              {t("changeRequests.empty")}
             </div>
           ) : (
             changeRequests.map((cr) => (

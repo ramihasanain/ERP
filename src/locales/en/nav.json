@@ -1,0 +1,19 @@
+{
+  "dashboard": "Dashboard",
+  "accounting": "Accounting",
+  "auditorChanges": "Auditor Changes",
+  "hrPayroll": "HR & Payroll",
+  "inventory": "Inventory",
+  "reports": "Reports",
+  "settings": "Settings",
+  "categories": "Categories",
+  "permissions": "Permissions",
+  "signOut": "Sign Out",
+  "notifications": "Notifications",
+  "search": "Search",
+  "myRequests": "My Requests",
+  "payslips": "Payslips",
+  "myContract": "My Contract",
+  "procurement": "Procurement",
+  "searchPlaceholder": "Search everywhere..."
+}

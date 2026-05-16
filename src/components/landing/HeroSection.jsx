@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Button from '@/components/Shared/Button';
 import { ArrowRight, PlayCircle } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
 const HeroSection = () => {
+    const { t } = useTranslation('landing');
     const { dir } = useLanguage();
     const isRtl = dir === 'rtl';
 
@@ -15,7 +17,6 @@ const HeroSection = () => {
             position: 'relative',
             overflow: 'hidden'
         }}>
-            {/* Background decoration — uses surface/body so dark theme stays coherent (no fixed light primary tints) */}
             <div style={{
                 position: 'absolute',
                 top: '-10%',
@@ -49,10 +50,9 @@ const HeroSection = () => {
                         borderRadius: '50%',
                         backgroundColor: 'var(--color-success)'
                     }} />
-                    v2.0 is now live with enhanced Analytics
+                    {t('hero.badge')}
                 </div>
 
-                {/* Solid theme colors only — avoid background-clip:text on a parent with mixed child fills (causes wrong blocks in light/dark) */}
                 <h1 style={{
                     fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
                     fontWeight: 800,
@@ -61,8 +61,8 @@ const HeroSection = () => {
                     letterSpacing: '-0.02em',
                     color: 'var(--color-text-main)'
                 }}>
-                    Unified Management for <br />
-                    <span style={{ color: 'var(--color-primary-600)' }}>Global Enterprise</span>
+                    {t('hero.title')} <br />
+                    <span style={{ color: 'var(--color-primary-600)' }}>{t('hero.titleHighlight')}</span>
                 </h1>
 
                 <p style={{
@@ -72,22 +72,20 @@ const HeroSection = () => {
                     margin: '0 auto 2.5rem',
                     lineHeight: 1.6
                 }}>
-                    Seamlessly integrate Accounting, HR, and Inventory across borders.
-                    Built for teams in Jordan, KSA, Germany, and beyond with native compliance.
+                    {t('hero.subtitle')}
                 </p>
 
                 <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <Link to="/auth/signup">
                         <Button size="lg" icon={<ArrowRight size={20} />} style={{ borderRadius: '2rem' }}>
-                            Start Free Trial
+                            {t('hero.startTrial')}
                         </Button>
                     </Link>
                     <Button size="lg" variant="outline" icon={<PlayCircle size={20} />} style={{ borderRadius: '2rem', borderWidth: '2px' }}>
-                        Watch Demo
+                        {t('hero.watchDemo')}
                     </Button>
                 </div>
 
-                {/* Mockup Placeholder */}
                 <div style={{
                     marginTop: '4rem',
                     borderRadius: 'var(--radius-xl)',
@@ -106,7 +104,7 @@ const HeroSection = () => {
                         justifyContent: 'center',
                         background: 'var(--color-bg-body)'
                     }}>
-                        <span style={{ color: 'var(--color-text-muted)', fontSize: '1.5rem' }}>Dashboard Preview Image</span>
+                        <span style={{ color: 'var(--color-text-muted)', fontSize: '1.5rem' }}>{t('hero.dashboardPreview')}</span>
                     </div>
                 </div>
             </div>

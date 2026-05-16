@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from "react-router-dom";
 import { useBasePath } from "@/hooks/useBasePath";
 import { useAccounting } from "@/context/AccountingContext";

@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+    const { t } = useTranslation('common');
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -42,7 +44,12 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
                     borderTopLeftRadius: 'var(--radius-lg)', borderTopRightRadius: 'var(--radius-lg)'
                 }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 500, color: 'var(--color-text-main)' }}>{title}</h3>
-                    <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label={t('actions.close')}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
+                    >
                         <X size={20} />
                     </button>
                 </div>

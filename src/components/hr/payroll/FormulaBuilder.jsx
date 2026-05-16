@@ -1,4 +1,5 @@
 import React, { useRef, useLayoutEffect, useCallback, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const buildSortedVariableCodes = (variables) =>
     [...(variables || [])]
@@ -10,6 +11,7 @@ const buildSortedVariableCodes = (variables) =>
  * Identifier ending at cursor (exclusive end index).
  */
 const findTrailingIdentifierBounds = (text, endExclusive) => {
+    const { t } = useTranslation(['hr', 'common']);
     if (endExclusive <= 0) return null;
     let i = endExclusive - 1;
     while (i >= 0 && /[A-Za-z0-9_]/.test(text[i])) {
@@ -30,6 +32,7 @@ const tryDeleteWholeVariableBeforeCursor = (text, cursorPos, sortedCodes) => {
 };
 
 const insertWithSpacing = (before, after, term) => {
+
     const needSpaceBefore = before.length > 0 && !/\s$/.test(before);
     const needSpaceAfter = after.length > 0 && !/^\s/.test(after);
     const insertion =
@@ -54,6 +57,7 @@ const ALLOWED_NAV_KEYS = new Set([
 ]);
 
 const FormulaBuilder = ({ value, onChange, variables = [] }) => {
+
     const operators = ['+', '-', '*', '/', '(', ')'];
     const textareaRef = useRef(null);
     const pendingCursorRef = useRef(null);

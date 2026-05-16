@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Modal from '@/components/Shared/Modal';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -6,6 +7,8 @@ import { Plus, Trash2, Settings } from 'lucide-react';
 import { useHR } from '@/context/HRContext';
 
 const EvaluationSettingsModal = ({ isOpen, onClose }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const { evaluationCriteria, updateEvaluationCriteria } = useHR();
     const [criteriaList, setCriteriaList] = useState([]);
 
@@ -16,7 +19,7 @@ const EvaluationSettingsModal = ({ isOpen, onClose }) => {
     }, [isOpen, evaluationCriteria]);
 
     const handleAdd = () => {
-        setCriteriaList([...criteriaList, 'New Criteria']);
+        setCriteriaList([...criteriaList, t('evaluationSettings.newCriteria')]);
     };
 
     const handleRemove = (index) => {
@@ -41,12 +44,12 @@ const EvaluationSettingsModal = ({ isOpen, onClose }) => {
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Evaluation Settings"
+            title={t('evaluationSettings.title')}
             size="md"
         >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ background: 'var(--color-primary-50)', padding: '1rem', borderRadius: 'var(--radius-md)', color: 'var(--color-primary-800)', fontSize: '0.9rem' }}>
-                    <p>Manage the criteria used for employee performance evaluations. Changes here will apply to all <strong>future</strong> evaluations.</p>
+                    <p>{t('evaluationSettings.description')}</p>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
@@ -56,7 +59,7 @@ const EvaluationSettingsModal = ({ isOpen, onClose }) => {
                                 <Input
                                     value={criteria}
                                     onChange={(e) => handleChange(index, e.target.value)}
-                                    placeholder="Enter criteria name"
+                                    placeholder={t('evaluationSettings.criteriaPlaceholder')}
                                 />
                             </div>
                             <Button
@@ -73,12 +76,12 @@ const EvaluationSettingsModal = ({ isOpen, onClose }) => {
                 </div>
 
                 <Button variant="outline" onClick={handleAdd} icon={<Plus size={16} />} style={{ alignSelf: 'flex-start' }}>
-                    Add Criteria
+                    {t('evaluationSettings.addCriteria')}
                 </Button>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
-                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                    <Button onClick={handleSave}>Save Changes</Button>
+                    <Button variant="ghost" onClick={onClose}>{t('common:actions.cancel')}</Button>
+                    <Button onClick={handleSave}>{t('evaluationSettings.saveChanges')}</Button>
                 </div>
             </div>
         </Modal>

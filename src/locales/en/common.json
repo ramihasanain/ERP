@@ -1,0 +1,94 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "discard": "Discard",
+    "apply": "Apply",
+    "clear": "Clear",
+    "yes": "Yes",
+    "no": "No",
+    "loading": "Loading...",
+    "retry": "Retry"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "draft": "Draft",
+    "posted": "Posted",
+    "cancelled": "Cancelled",
+    "completed": "Completed",
+    "all": "All"
+  },
+  "table": {
+    "noData": "No data available",
+    "noResults": "No results found",
+    "actions": "Actions",
+    "showing": "Showing {{from}}–{{to}} of {{total}}",
+    "rowsPerPage": "Rows per page"
+  },
+  "empty": {
+    "title": "Nothing here yet",
+    "description": "Get started by creating your first item."
+  },
+  "language": {
+    "label": "Language",
+    "ariaLabel": "Select language",
+    "listboxLabel": "Languages"
+  },
+  "theme": {
+    "light": "Light mode",
+    "dark": "Dark mode"
+  },
+  "user": "User",
+  "guest": "Guest",
+  "notAvailable": "—",
+  "pagination": {
+    "pageOf": "Page {{current}} of {{total}}",
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "resourceLoadError": {
+    "title": "This page cannot be loaded",
+    "fallback": "We could not load the data. You may not have access, or the resource may be unavailable.",
+    "goBack": "Go back",
+    "refresh": "Refresh page"
+  },
+  "noData": {
+    "title": "No data available",
+    "titleWithLabel": "No {{label}} yet",
+    "description": "There is no data to show right now.",
+    "descriptionWithLabel": "There is no {{label}} data to show right now."
+  },
+  "header": {
+    "openNav": "Open navigation menu",
+    "menu": "Menu"
+  },
+  "roles": {
+    "admin": "Admin",
+    "employee": "Employee",
+    "accountant": "Accountant",
+    "manager": "Manager"
+  }
+}

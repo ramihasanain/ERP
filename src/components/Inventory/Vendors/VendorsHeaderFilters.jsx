@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Search, Plus, Filter } from 'lucide-react';
@@ -12,6 +13,7 @@ const VendorsHeaderFilters = ({
     onClearFilters,
     onAddVendor,
 }) => {
+    const { t } = useTranslation(['inventory', 'common']);
     const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
 
     useEffect(() => {
@@ -32,13 +34,13 @@ const VendorsHeaderFilters = ({
         >
             <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', gap: '1rem' }}>
                 <div>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Vendors & Suppliers</h2>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('vendors.title')}</h2>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-                        {filteredCount} partners connected
+                        {t('vendors.partnersConnected', { count: filteredCount })}
                     </p>
                 </div>
                 <Button icon={<Plus size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={onAddVendor} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
-                    Add Vendor
+                    {t('vendors.addVendor')}
                 </Button>
             </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -8,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 
 const TaxReport = () => {
+    const { t } = useTranslation(['reports', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const { invoices, taxJurisdictions, taxRules } = useAccounting();
@@ -88,15 +90,15 @@ const TaxReport = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/reports`)}>Back</Button>
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/reports`)}>{t('common:actions.back')}</Button>
                     <div>
-                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Tax Return Report</h1>
-                        <p style={{ color: 'var(--color-text-secondary)' }}>VAT/GST Summary for the selected period.</p>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('taxReport.title')}</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{t('taxReport.subtitle')}</p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="outline" icon={<Download size={18} />}>Export XML</Button>
-                    <Button icon={<Download size={18} />}>Export PDF</Button>
+                    <Button variant="outline" icon={<Download size={18} />}>{t('taxReport.exportXml')}</Button>
+                    <Button icon={<Download size={18} />}>{t('taxReport.exportPdf')}</Button>
                 </div>
             </div>
 
@@ -104,7 +106,7 @@ const TaxReport = () => {
                 {/* Filters */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'end', marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '1px solid var(--color-border)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Tax Jurisdiction</label>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('taxReport.jurisdiction')}</label>
                         <select
                             value={jurisdictionId}
                             onChange={e => setJurisdictionId(e.target.value)}
@@ -117,39 +119,39 @@ const TaxReport = () => {
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <Input label="Start Date" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                        <Input label="End Date" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                        <Input label={t('taxReport.startDate')} type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                        <Input label={t('taxReport.endDate')} type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
 
-                    <Button variant="outline" icon={<Filter size={16} />} style={{ marginBottom: '2px' }}>Apply Filters</Button>
+                    <Button variant="outline" icon={<Filter size={16} />} style={{ marginBottom: '2px' }}>{t('taxReport.applyFilters')}</Button>
                 </div>
 
                 {/* Summary Cards */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
                     <div style={{ padding: '1.5rem', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Sales (Excl. Tax)</p>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{t('taxReport.totalSalesExclTax')}</p>
                         <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{activeJurisdiction?.currency} {reportData.totalNetSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
                     </div>
                     <div style={{ padding: '1.5rem', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Tax Collected (Output)</p>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{t('taxReport.totalTaxCollected')}</p>
                         <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-error)' }}>{activeJurisdiction?.currency} {reportData.totalTaxCollected.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
                     </div>
                     <div style={{ padding: '1.5rem', background: 'color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card))', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
-                        <p style={{ color: 'var(--color-primary-600)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Net Tax Payable</p>
+                        <p style={{ color: 'var(--color-primary-600)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{t('taxReport.netTaxPayable')}</p>
                         <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary-600)' }}>{activeJurisdiction?.currency} {reportData.netPayable.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
                     </div>
                 </div>
 
                 {/* Detailed Table */}
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Tax Breakdown by Rule</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>{t('taxReport.breakdownTitle')}</h3>
                 <div style={{ overflowX: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                         <thead style={{ background: 'var(--color-bg-table-header)' }}>
                             <tr>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Rule Name</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Net Sales</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Tax Rate</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Tax Amount</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('taxReport.ruleName')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('taxReport.netSales')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('taxReport.taxRate')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('taxReport.taxAmount')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -165,7 +167,7 @@ const TaxReport = () => {
                                 </tr>
                             ))}
                             <tr style={{ borderTop: '2px solid var(--color-border)', background: 'var(--color-bg-table-header)', fontWeight: 700 }}>
-                                <td style={{ padding: '0.75rem 1rem' }}>Total</td>
+                                <td style={{ padding: '0.75rem 1rem' }}>{t('taxReport.total')}</td>
                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>{reportData.totalNetSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>-</td>
                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>{reportData.totalTaxCollected.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>

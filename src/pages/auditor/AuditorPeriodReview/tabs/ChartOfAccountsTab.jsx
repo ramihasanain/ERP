@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useOutletContext } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import Spinner from "@/core/Spinner";
@@ -53,6 +54,7 @@ const labelStyle = {
 };
 
 const ChartOfAccountsTab = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const { periodId } = useParams();
   const { setEditModal } = useOutletContext();
 
@@ -77,7 +79,7 @@ const ChartOfAccountsTab = () => {
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     if (!createForm.code || !createForm.name || !createForm.account_type) {
-      toast.error("Code, name, and account type are required");
+      toast.error(t("coaTab.validationRequired"));
       return;
     }
     try {
@@ -89,21 +91,21 @@ const ChartOfAccountsTab = () => {
         is_active: true,
         ...(createForm.order ? { order: Number(createForm.order) } : {}),
       });
-      toast.success("Account creation request submitted");
+      toast.success(t("coaTab.createSuccess"));
       setCreateForm(INITIAL_CREATE_FORM);
       setShowCreateModal(false);
     } catch {
-      toast.error("Failed to submit account creation request");
+      toast.error(t("coaTab.createFailed"));
     }
   };
 
   const handleUpdate = (acc) => {
     setEditModal({
-      title: `Edit Account: ${acc.code}`,
+      title: t("coaTab.editAccount", { code: acc.code }),
       fields: [
         {
           key: "name",
-          label: "Account Name",
+          label: t("coaTab.accountName"),
           value: acc.name,
           oldValue: acc.name,
           type: "text",
@@ -113,9 +115,9 @@ const ChartOfAccountsTab = () => {
         if (!vals.name || vals.name === acc.name) return;
         try {
           await updateAccount(acc.id, vals.name);
-          toast.success("Account update request submitted");
+          toast.success(t("coaTab.updateSuccess"));
         } catch {
-          toast.error("Failed to submit account update request");
+          toast.error(t("coaTab.updateFailed"));
         }
       },
     });
@@ -125,9 +127,9 @@ const ChartOfAccountsTab = () => {
     if (!deleteTarget) return;
     try {
       await deleteAccount(deleteTarget.id, deleteTarget.name);
-      toast.success("Account deletion request submitted");
+      toast.success(t("coaTab.deleteSuccess"));
     } catch {
-      toast.error("Failed to submit account deletion request");
+      toast.error(t("coaTab.deleteFailed"));
     } finally {
       setDeleteTarget(null);
     }
@@ -149,7 +151,7 @@ const ChartOfAccountsTab = () => {
           style={{ color: "var(--color-error)", marginBottom: "0.5rem" }}
         />
         <p style={{ fontWeight: 600, marginBottom: "0.25rem" }}>
-          Failed to load chart of accounts
+          {t("coaTab.loadError")}
         </p>
         <p
           style={{
@@ -158,10 +160,10 @@ const ChartOfAccountsTab = () => {
             marginBottom: "0.75rem",
           }}
         >
-          {error?.message || "An unexpected error occurred"}
+          {error?.message || t("validation.unexpectedError")}
         </p>
         <Button size="sm" onClick={refetch}>
-          Retry
+          {t("common:actions.retry")}
         </Button>
       </Card>
     );
@@ -182,7 +184,7 @@ const ChartOfAccountsTab = () => {
           }}
         >
           <h4 style={{ fontWeight: 700 }}>
-            Chart of Accounts ({accounts.length})
+            {t("coaTab.title", { count: accounts.length })}
           </h4>
 
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
@@ -206,7 +208,7 @@ const ChartOfAccountsTab = () => {
                   accentColor: "var(--color-primary-600)",
                 }}
               />
-              Zero balance only
+              {t("coaTab.zeroBalanceOnly")}
             </label>
 
             <Button
@@ -215,7 +217,7 @@ const ChartOfAccountsTab = () => {
               onClick={() => setShowCreateModal(true)}
               disabled={isSubmitting}
             >
-              Add Account
+              {t("coaTab.addAccount")}
             </Button>
           </div>
         </div>
@@ -237,19 +239,19 @@ const ChartOfAccountsTab = () => {
                 }}
               >
                 <th style={{ padding: "8px 12px", textAlign: "left" }}>
-                  Code
+                  {t("coaTab.code")}
                 </th>
                 <th style={{ padding: "8px 12px", textAlign: "left" }}>
-                  Name
+                  {t("coaTab.name")}
                 </th>
                 <th style={{ padding: "8px 12px", textAlign: "left" }}>
-                  Type
+                  {t("coaTab.type")}
                 </th>
                 <th style={{ padding: "8px 12px", textAlign: "center" }}>
-                  Status
+                  {t("coaTab.status")}
                 </th>
                 <th style={{ padding: "8px 12px", textAlign: "right" }}>
-                  Balance
+                  {t("coaTab.balance")}
                 </th>
                 <th
                   style={{
@@ -258,7 +260,7 @@ const ChartOfAccountsTab = () => {
                     width: "90px",
                   }}
                 >
-                  Actions
+                  {t("coaTab.actions")}
                 </th>
               </tr>
             </thead>
@@ -273,7 +275,7 @@ const ChartOfAccountsTab = () => {
                       color: "var(--color-text-muted)",
                     }}
                   >
-                    No accounts found
+                    {t("coaTab.noAccounts")}
                   </td>
                 </tr>
               ) : (
@@ -319,7 +321,7 @@ const ChartOfAccountsTab = () => {
                             color: acc.is_active ? "#059669" : "#dc2626",
                           }}
                         >
-                          {acc.is_active ? "Active" : "Inactive"}
+                          {acc.is_active ? t("common:status.active") : t("common:status.inactive")}
                         </span>
                       </td>
                       <td
@@ -336,7 +338,7 @@ const ChartOfAccountsTab = () => {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })} ${acc.current_balance_currency || ""}`
-                          : "—"}
+                          : t("common:notAvailable")}
                       </td>
                       <td style={{ padding: "6px 12px", textAlign: "center" }}>
                         {!acc.is_system_account && (
@@ -357,7 +359,7 @@ const ChartOfAccountsTab = () => {
                                 color: "var(--color-primary-600)",
                                 padding: "2px",
                               }}
-                              title="Edit"
+                              title={t("common:actions.edit")}
                             >
                               <Edit3 size={13} />
                             </button>
@@ -371,7 +373,7 @@ const ChartOfAccountsTab = () => {
                                 color: "var(--color-error)",
                                 padding: "2px",
                               }}
-                              title="Delete"
+                              title={t("common:actions.delete")}
                             >
                               <Trash2 size={13} />
                             </button>
@@ -436,7 +438,7 @@ const ChartOfAccountsTab = () => {
                   gap: "0.5rem",
                 }}
               >
-                <Plus size={18} /> Add New Account
+                <Plus size={18} /> {t("coaTab.addNewAccount")}
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -457,7 +459,7 @@ const ChartOfAccountsTab = () => {
               style={{ padding: "1.5rem", overflowY: "auto", flex: 1 }}
             >
               <div style={{ marginBottom: "1rem" }}>
-                <label style={labelStyle}>Account Code</label>
+                <label style={labelStyle}>{t("coaTab.accountCode")}</label>
                 <input
                   type="text"
                   value={createForm.code}
@@ -468,7 +470,7 @@ const ChartOfAccountsTab = () => {
               </div>
 
               <div style={{ marginBottom: "1rem" }}>
-                <label style={labelStyle}>Account Name</label>
+                <label style={labelStyle}>{t("coaTab.accountName")}</label>
                 <input
                   type="text"
                   value={createForm.name}
@@ -479,18 +481,18 @@ const ChartOfAccountsTab = () => {
 
               <div style={{ marginBottom: "1rem" }}>
                 <SelectWithLoadMore
-                  label="Account Type"
+                  label={t("coaTab.accountType")}
                   value={createForm.account_type}
                   onChange={(val) => setField("account_type", val)}
                   options={accountTypes}
-                  emptyOptionLabel="Select…"
+                  emptyOptionLabel={t("periodReview.editModal.select")}
                   isInitialLoading={isAccountTypesLoading}
                   zIndex={10000}
                 />
               </div>
 
               <div style={{ marginBottom: "1rem" }}>
-                <label style={labelStyle}>Description</label>
+                <label style={labelStyle}>{t("coaTab.description")}</label>
                 <input
                   type="text"
                   value={createForm.description}
@@ -500,7 +502,7 @@ const ChartOfAccountsTab = () => {
               </div>
 
               <div style={{ marginBottom: "1rem" }}>
-                <label style={labelStyle}>Order</label>
+                <label style={labelStyle}>{t("coaTab.order")}</label>
                 <input
                   type="number"
                   value={createForm.order}
@@ -524,14 +526,14 @@ const ChartOfAccountsTab = () => {
                   type="button"
                   onClick={() => setShowCreateModal(false)}
                 >
-                  Cancel
+                  {t("common:actions.cancel")}
                 </Button>
                 <Button
                   type="submit"
                   icon={<Save size={14} />}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Submitting…" : "Save Changes"}
+                  {isSubmitting ? t("coaTab.submitting") : t("periodReview.editModal.saveChanges")}
                 </Button>
               </div>
             </form>
@@ -542,13 +544,17 @@ const ChartOfAccountsTab = () => {
       <ConfirmationModal
         isOpen={!!deleteTarget}
         type="danger"
-        title="Delete Account"
+        title={t("coaTab.deleteAccount")}
         message={
           deleteTarget
-            ? `Are you sure you want to delete account ${deleteTarget.code} - ${deleteTarget.name}?`
+            ? t("coaTab.deleteConfirm", {
+                code: deleteTarget.code,
+                name: deleteTarget.name,
+              })
             : ""
         }
-        confirmText="Delete"
+        confirmText={t("common:actions.delete")}
+        cancelText={t("common:actions.cancel")}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
         disabled={isSubmitting}

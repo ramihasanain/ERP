@@ -1,0 +1,19 @@
+{
+  "dashboard": "Dashboard",
+  "accounting": "Buchhaltung",
+  "auditorChanges": "Prüferänderungen",
+  "hrPayroll": "Personal & Lohn",
+  "inventory": "Lager",
+  "reports": "Berichte",
+  "settings": "Einstellungen",
+  "categories": "Kategorien",
+  "permissions": "Berechtigungen",
+  "signOut": "Abmelden",
+  "notifications": "Benachrichtigungen",
+  "search": "Suchen",
+  "myRequests": "Meine Anfragen",
+  "payslips": "Gehaltsabrechnungen",
+  "myContract": "Mein Vertrag",
+  "procurement": "Beschaffung",
+  "searchPlaceholder": "Überall suchen..."
+}

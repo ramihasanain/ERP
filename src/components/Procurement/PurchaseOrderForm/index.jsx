@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
@@ -8,9 +9,11 @@ import PurchaseOrderFormHeader from './PurchaseOrderFormHeader';
 import PurchaseOrderFormCard from './PurchaseOrderFormCard';
 import PurchaseOrderApprovalHistory from './PurchaseOrderApprovalHistory';
 import usePurchaseOrderFormData from './usePurchaseOrderFormData';
+import translateApiError from '@/utils/translateApiError';
 import { defaultFormData, emptyLineItem } from './utils';
 
 const PurchaseOrderForm = () => {
+    const { t } = useTranslation(['procurement', 'common']);
     const { addPurchaseOrder, updatePurchaseOrder, purchaseOrders, submitPO, approvePO, rejectPO } = useProcurement();
     const navigate = useNavigate();
     const basePath = useBasePath();
@@ -73,12 +76,12 @@ const PurchaseOrderForm = () => {
         };
 
         if (!payload.vendor_id || !payload.order_date || !payload.expected_date) {
-            toast.error('Vendor, order date, and expected date are required.');
+            toast.error(t('poForm.requiredFields'));
             return;
         }
 
         if (payload.lines.length === 0) {
-            toast.error('Please add at least one line item.');
+            toast.error(t('poForm.addLineItem'));
             return;
         }
 
@@ -92,7 +95,7 @@ const PurchaseOrderForm = () => {
                     items: lineItems,
                     totalAmount,
                 });
-                toast.success('Purchase order updated successfully.');
+                toast.success(t('poForm.updateSuccess'));
             } else {
                 await createPurchaseOrder.mutateAsync(payload);
                 addPurchaseOrder({
@@ -100,13 +103,12 @@ const PurchaseOrderForm = () => {
                     items: lineItems,
                     totalAmount: lineItems.reduce((acc, item) => acc + item.totalCost, 0),
                 });
-                toast.success('Purchase order created successfully.');
+                toast.success(t('poForm.createSuccess'));
             }
 
             navigate(`${basePath}/inventory/purchase-orders`);
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to save purchase order.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'procurement:poForm.saveFailed'));
         }
     };
 

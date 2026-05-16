@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import translateApiError from '@/utils/translateApiError';
+import { useTranslation } from 'react-i18next';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomRemove } from '@/hooks/useMutation';
 import { put } from '@/api';
@@ -10,6 +12,8 @@ import TaxSlabsTable from './TaxSlabsTable';
 import { TaxSlabsComplianceCard, TaxSlabsSummaryCard } from './TaxSlabsInfoCards';
 
 const TaxSlabs = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const taxBracketsQuery = useCustomQuery('/api/hr/income-tax-brackets/', ['hr-income-tax-brackets']);
     const createTaxBracket = useCustomPost('/api/hr/income-tax-brackets/', []);
     const deleteTaxBracket = useCustomRemove((id) => `/api/hr/income-tax-brackets/${id}/`, []);
@@ -125,7 +129,7 @@ const TaxSlabs = () => {
             }
 
             await taxBracketsQuery.refetch();
-            toast.success('Tax brackets saved successfully.');
+            toast.success(t('taxSlabs.saved'));
         } catch (error) {
             const extractErrorMessages = (payload) => {
                 if (!payload) return [];
@@ -147,7 +151,7 @@ const TaxSlabs = () => {
             const parsedMessages = extractErrorMessages(responseData).filter(Boolean);
             const fallbackMessage = error?.response?.data?.detail || error?.message || 'Failed to save tax brackets.';
             const message = parsedMessages.length ? parsedMessages.join('\n') : fallbackMessage;
-            toast.error(message);
+            toast.error(translateApiError(error, 'hr:errors.generic'));
         } finally {
             setIsSaving(false);
         }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Save, X } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -16,6 +17,8 @@ const ProjectFormCard = ({
     onCancel,
     onSubmit,
 }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     if (!showForm) return null;
 
     const hasRequiredFields = Boolean(formData.name.trim() && formData.startDate && formData.endDate);
@@ -88,9 +91,7 @@ const ProjectFormCard = ({
             </div>
 
             <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                <Button variant="ghost" onClick={onCancel}>
-                    Cancel
-                </Button>
+                <Button variant="ghost" onClick={onCancel}>{t('common:actions.cancel')}</Button>
                 <Button
                     icon={<Save size={16} />}
                     onClick={onSubmit}

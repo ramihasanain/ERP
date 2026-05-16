@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle, Eye, Pencil, ThumbsDown, ThumbsUp, Trash2, XCircle } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -15,19 +16,21 @@ const PurchaseOrdersListTable = ({
     onApprove,
     onReject,
     isStatusUpdating,
-}) => (
+}) => {
+    const { t } = useTranslation(['procurement', 'common']);
+    return (
     <Card>
         <div style={{ width: '100%', overflowX: 'auto' }}>
             <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse' }}>
                 <thead>
                     <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-bg-table-header)' }}>
-                        <th style={thStyle}>PO ID</th>
-                        <th style={thStyle}>Vendor</th>
-                        <th style={thStyle}>Date</th>
-                        <th style={thStyle}>Expected Delivery</th>
-                        <th style={thStyle}>Amount</th>
-                        <th style={thStyle}>Status</th>
-                        <th style={thStyle}>Actions</th>
+                        <th style={thStyle}>{t('poList.colPoId')}</th>
+                        <th style={thStyle}>{t('poList.colVendor')}</th>
+                        <th style={thStyle}>{t('poList.colDate')}</th>
+                        <th style={thStyle}>{t('poList.colExpectedDelivery')}</th>
+                        <th style={thStyle}>{t('poList.colAmount')}</th>
+                        <th style={thStyle}>{t('poList.colStatus')}</th>
+                        <th style={thStyle}>{t('poList.colActions')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,7 +44,7 @@ const PurchaseOrdersListTable = ({
                     {isError && !isLoading && (
                         <tr>
                             <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-error)' }}>
-                                Failed to load purchase orders.
+                                {t('poList.loadFailed')}
                             </td>
                         </tr>
                     )}
@@ -83,7 +86,7 @@ const PurchaseOrdersListTable = ({
                                         onClick={() => onView(po.id)}
                                         className="font-medium cursor-pointer"
                                     >
-                                        View
+                                        {t('poList.view')}
                                     </Button>
                                     {po.status === 'Pending Approval' ? (
                                         <>
@@ -96,7 +99,7 @@ const PurchaseOrdersListTable = ({
                                                 className="font-medium cursor-pointer"
                                                 disabled={isStatusUpdating}
                                             >
-                                                Approve
+                                                {t('poList.approve')}
                                             </Button>
                                             <Button
                                                 variant="ghost"
@@ -107,7 +110,7 @@ const PurchaseOrdersListTable = ({
                                                 className="font-medium cursor-pointer"
                                                 disabled={isStatusUpdating}
                                             >
-                                                Reject
+                                                {t('poList.reject')}
                                             </Button>
                                         </>
                                     ) : po.status === 'Approved' || po.status === 'Rejected' ? null : (
@@ -119,9 +122,7 @@ const PurchaseOrdersListTable = ({
                                                 icon={<Pencil size={14} />}
                                                 onClick={() => onEdit(po.id)}
                                                 className="font-medium cursor-pointer"
-                                            >
-                                                Edit
-                                            </Button>
+                                            >{t('poList.edit')}</Button>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -129,9 +130,7 @@ const PurchaseOrdersListTable = ({
                                                 icon={<Trash2 size={14} />}
                                                 onClick={() => onDelete(po)}
                                                 className="font-medium cursor-pointer"
-                                            >
-                                                Delete
-                                            </Button>
+                                            >{t('poList.delete')}</Button>
                                         </>
                                     )}
                                 </div>
@@ -141,7 +140,7 @@ const PurchaseOrdersListTable = ({
                     {!isLoading && !isError && purchaseOrders.length === 0 && (
                         <tr>
                             <td colSpan={7} style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                No purchase orders found.
+                                {t('poList.empty')}
                             </td>
                         </tr>
                     )}
@@ -149,7 +148,8 @@ const PurchaseOrdersListTable = ({
             </table>
         </div>
     </Card>
-);
+    );
+};
 
 const thStyle = {
     padding: '1rem',

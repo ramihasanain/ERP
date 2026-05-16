@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -24,32 +25,32 @@ import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { useEmployeeCompanyName } from "@/hooks/useEmployeeCompanyName";
 import { MODULE_KEYS } from "@/config/rolePermissions";
 
-const baseNavItems = [
-  { to: "/employee/dashboard", label: "Dashboard", module: null },
-  { to: "/employee/requests", label: "My Requests", module: null },
-  { to: "/employee/payslips", label: "Payslips", module: null },
-  { to: "/employee/my-contract", label: "My Contract", module: null },
+const BASE_NAV_ITEMS = [
+  { to: "/employee/dashboard", key: "dashboard", module: null },
+  { to: "/employee/requests", key: "myRequests", module: null },
+  { to: "/employee/payslips", key: "payslips", module: null },
+  { to: "/employee/my-contract", key: "myContract", module: null },
   {
     to: "/employee/accounting",
-    label: "Accounting",
+    key: "accounting",
     module: MODULE_KEYS.ACCOUNTING,
   },
   {
     to: "/employee/auditor-adjustments",
-    label: "Auditor Changes",
+    key: "auditorChanges",
     module: MODULE_KEYS.AUDITOR_CHANGES,
   },
-  { to: "/employee/hr", label: "HR & Payroll", module: MODULE_KEYS.HR },
+  { to: "/employee/hr", key: "hrPayroll", module: MODULE_KEYS.HR },
   {
     to: "/employee/inventory",
-    label: "Inventory",
+    key: "inventory",
     module: MODULE_KEYS.INVENTORY,
   },
-  { to: "/employee/reports", label: "Reports", module: MODULE_KEYS.REPORTS },
-  { to: "/employee/settings", label: "Settings", module: MODULE_KEYS.SETTINGS },
+  { to: "/employee/reports", key: "reports", module: MODULE_KEYS.REPORTS },
+  { to: "/employee/settings", key: "settings", module: MODULE_KEYS.SETTINGS },
   {
     to: "/employee/categories",
-    label: "Categories",
+    key: "categories",
     module: MODULE_KEYS.CATEGORIES,
   },
 ];
@@ -66,6 +67,7 @@ const navLinkStyle = ({ isActive }) => ({
 });
 
 const EmployeeHeader = () => {
+  const { t } = useTranslation("nav");
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -112,8 +114,12 @@ const EmployeeHeader = () => {
     navigate("/auth/signin");
   };
 
-  const navItems = baseNavItems.filter(
-    (item) => item.module === null || canAccessModule(item.module),
+  const navItems = useMemo(
+    () =>
+      BASE_NAV_ITEMS.filter(
+        (item) => item.module === null || canAccessModule(item.module),
+      ).map((item) => ({ ...item, label: t(item.key) })),
+    [canAccessModule, t],
   );
 
   return (
@@ -261,7 +267,7 @@ const EmployeeHeader = () => {
         </div>
         <button
           onClick={handleSignOut}
-          title="Sign Out"
+          title={t("signOut")}
           style={{
             background: "none",
             border: "none",

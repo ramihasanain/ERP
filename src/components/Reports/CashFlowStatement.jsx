@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Spinner from '@/core/Spinner';
@@ -10,6 +11,7 @@ import { useBasePath } from '@/hooks/useBasePath';
 const CASH_FLOW_URL = '/accounting/reports/cash-flow/?start_date=2026-5-1&end_date=2026-5-30';
 
 const CashFlowStatement = () => {
+    const { t } = useTranslation('reports');
     const navigate = useNavigate();
     const basePath = useBasePath();
     const printableRef = useRef(null);
@@ -41,7 +43,7 @@ const CashFlowStatement = () => {
     if (isError || !data) {
         return (
             <Card className="padding-lg">
-                <p style={{ color: 'var(--color-error)' }}>Failed to load cash flow report.</p>
+                <p style={{ color: 'var(--color-error)' }}>{t('loadFailed.cashFlow')}</p>
             </Card>
         );
     }
@@ -50,62 +52,62 @@ const CashFlowStatement = () => {
         <div ref={printableRef} className="printable-area" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
             <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/reports`)} aria-label="Back" />
+                    <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/reports`)} aria-label={t('aria.back')} />
                     <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Cash Flow Statement</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>{data.company_name} • {data.start_date} to {data.end_date}</p>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('cashFlow')}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{t('cashFlowPeriod', { company: data.company_name, start: data.start_date, end: data.end_date })}</p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.55rem' }}>
-                        <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>From: {startDate}</span>
+                        <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{t('from')}: {startDate}</span>
                         <div style={{ position: 'relative', width: '34px', height: '34px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', display: 'grid', placeItems: 'center', background: 'var(--color-bg-card)' }} className="cursor-pointer">
                             <Calendar size={16} />
                             <input
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                aria-label="Start date"
+                                aria-label={t('aria.startDate')}
                                 className="cursor-pointer"
                                 style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%', height: '100%' }}
                             />
                         </div>
                     </div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.55rem' }}>
-                        <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>To: {endDate}</span>
+                        <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{t('to')}: {endDate}</span>
                         <div style={{ position: 'relative', width: '34px', height: '34px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', display: 'grid', placeItems: 'center', background: 'var(--color-bg-card)' }} className="cursor-pointer">
                             <Calendar size={16} />
                             <input
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                aria-label="End date"
+                                aria-label={t('aria.endDate')}
                                 className="cursor-pointer"
                                 style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%', height: '100%' }}
                             />
                         </div>
                     </div>
-                    <Button variant="outline" icon={<Download size={18} />} onClick={handleExportPdf}>Export PDF</Button>
+                    <Button variant="outline" icon={<Download size={16} />} onClick={handleExportPdf}>{t('exportPdf')}</Button>
                 </div>
             </div>
 
             <Card className="padding-lg">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <SectionHeader title="Operating Activities" />
-                    <Row label={data?.operating_activities?.label || 'Net Cash from Operations'} amount={data?.operating_activities?.amount || 0} currency={data.currency} isTotal />
+                    <SectionHeader title={t('cashFlowReport.operating')} />
+                    <Row label={data?.operating_activities?.label || t('cashFlowReport.netCashOperations')} amount={data?.operating_activities?.amount || 0} currency={data.currency} isTotal />
 
                     <div style={{ height: '1.5rem' }}></div>
-                    <SectionHeader title="Investing Activities" />
-                    <Row label={data?.investing_activities?.label || 'Net Cash from Investing'} amount={data?.investing_activities?.amount || 0} currency={data.currency} isTotal />
+                    <SectionHeader title={t('cashFlowReport.investing')} />
+                    <Row label={data?.investing_activities?.label || t('cashFlowReport.netCashInvesting')} amount={data?.investing_activities?.amount || 0} currency={data.currency} isTotal />
 
                     <div style={{ height: '1.5rem' }}></div>
-                    <SectionHeader title="Financing Activities" />
-                    <Row label={data?.financing_activities?.label || 'Net Cash from Financing'} amount={data?.financing_activities?.amount || 0} currency={data.currency} isTotal />
+                    <SectionHeader title={t('cashFlowReport.financing')} />
+                    <Row label={data?.financing_activities?.label || t('cashFlowReport.netCashFinancing')} amount={data?.financing_activities?.amount || 0} currency={data.currency} isTotal />
 
                     <div style={{ marginTop: '2rem', paddingTop: '1rem', borderTop: '2px solid var(--color-border)' }}>
-                        <Row label="Net Increase/Decrease in Cash" amount={data?.net_increase_decrease_in_cash || 0} currency={data.currency} isBold />
-                        <Row label="Cash at Beginning of Period" amount={data?.cash_at_beginning || 0} currency={data.currency} />
-                        <Row label="Cash at End of Period" amount={data?.cash_at_end || 0} currency={data.currency} isDoubleUnderline />
+                        <Row label={t('cashFlowReport.netChange')} amount={data?.net_increase_decrease_in_cash || 0} currency={data.currency} isBold />
+                        <Row label={t('cashFlowReport.cashBeginning')} amount={data?.cash_at_beginning || 0} currency={data.currency} />
+                        <Row label={t('cashFlowReport.cashEnd')} amount={data?.cash_at_end || 0} currency={data.currency} isDoubleUnderline />
                     </div>
                 </div>
             </Card>

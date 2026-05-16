@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -6,15 +7,16 @@ import Input from '@/components/Shared/Input';
 import { Save, ArrowLeft, Building2, User, Phone, MapPin } from 'lucide-react';
 
 const AddVendor = () => {
+    const { t } = useTranslation(['inventory', 'common']);
     const navigate = useNavigate();
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '800px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)}>Back</Button>
+                <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(-1)}>{t('common:actions.back')}</Button>
                 <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Add New Vendor</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Register a new supplier.</p>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('addVendor.title')}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{t('addVendor.subtitle')}</p>
                 </div>
             </div>
 
@@ -52,8 +54,8 @@ const AddVendor = () => {
                 </div>
 
                 <div style={{ borderTop: '1px solid var(--color-border)', marginTop: '2rem', paddingTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                    <Button variant="ghost" onClick={() => navigate(-1)}>Cancel</Button>
-                    <Button icon={<Save size={18} />}>Save Vendor</Button>
+                    <Button variant="ghost" onClick={() => navigate(-1)}>{t('common:actions.cancel')}</Button>
+                    <Button icon={<Save size={18} />}>{t('addVendor.saveVendor')}</Button>
                 </div>
             </Card>
         </div>

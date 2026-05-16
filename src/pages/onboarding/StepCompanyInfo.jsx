@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Input from '@/components/Shared/Input';
 import { Building2, Globe } from 'lucide-react';
 
@@ -18,16 +19,17 @@ const selectStyle = (hasError) => ({
 });
 
 const StepCompanyInfo = ({ data, updateData, options, errors = {} }) => {
+    const { t } = useTranslation('onboarding');
     const industries = options?.industries || [];
     const countries = options?.countries || [];
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Company Details</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('companyInfo.title')}</h3>
 
             <Input
-                label="Company Name"
-                placeholder="Acme Corp"
+                label={t('companyInfo.companyName')}
+                placeholder={t('companyInfo.companyNamePlaceholder')}
                 value={data.companyName}
                 onChange={(e) => updateData('companyName', e.target.value)}
                 startIcon={<Building2 size={18} />}
@@ -37,14 +39,14 @@ const StepCompanyInfo = ({ data, updateData, options, errors = {} }) => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                 <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>
-                    Industry
+                    {t('companyInfo.industry')}
                 </label>
                 <select
                     value={data.industry}
                     onChange={(e) => updateData('industry', e.target.value)}
                     style={selectStyle(Boolean(errors.industry))}
                 >
-                    <option value="">Select Industry...</option>
+                    <option value="">{t('companyInfo.selectIndustry')}</option>
                     {industries.map((industry) => (
                         <option key={industry.value} value={industry.value}>
                             {industry.label}
@@ -56,7 +58,7 @@ const StepCompanyInfo = ({ data, updateData, options, errors = {} }) => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                 <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>
-                    Country
+                    {t('companyInfo.country')}
                 </label>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <Globe
@@ -78,7 +80,7 @@ const StepCompanyInfo = ({ data, updateData, options, errors = {} }) => {
                             paddingRight: '0.75rem',
                         }}
                     >
-                        <option value="">Select Country...</option>
+                        <option value="">{t('companyInfo.selectCountry')}</option>
                         {countries.map((country) => (
                             <option key={country.value} value={country.value}>
                                 {country.label}

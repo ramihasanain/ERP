@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import { Info } from 'lucide-react';
 
@@ -33,15 +34,17 @@ const NoData = ({
   style,
   className,
 }) => {
+  const { t } = useTranslation('common');
   const resolved = sizeStyles[size] || sizeStyles.md;
 
   const resolvedTitle =
-    title || (label ? `No ${label} yet` : 'No data available');
+    title ||
+    (label ? t('noData.titleWithLabel', { label }) : t('noData.title'));
   const resolvedDescription =
     description ||
     (label
-      ? `There is no ${label} data to show right now.`
-      : 'There is no data to show right now.');
+      ? t('noData.descriptionWithLabel', { label })
+      : t('noData.description'));
 
   const Icon = icon || Info;
 

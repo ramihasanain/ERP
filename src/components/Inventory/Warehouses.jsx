@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import Modal from "@/components/Shared/Modal";
@@ -13,9 +14,11 @@ import {
 } from "@/hooks/useMutation";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import translateApiError from '@/utils/translateApiError';
 import { Plus, Edit, Trash2, MapPin, User, Warehouse, Eye } from "lucide-react";
 
 const normalizeArrayResponse = (response) => {
+    const { t } = useTranslation(['inventory', 'common']);
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.results)) return response.results;
   if (Array.isArray(response?.data)) return response.data;
@@ -54,7 +57,7 @@ const normalizeEmployee = (item) => {
   const email = item?.email ?? userData?.email ?? "";
   return {
     id: getEntityId(item),
-    fullName: `${firstName} ${lastName}`.trim() || email || "Unknown",
+    fullName: `${firstName} ${lastName}`.trim() || email || t("warehouses.unknown"),
     email,
     status: item?.status ?? userData?.status ?? "",
     roleKey: getEmployeeRoleKey(item),
@@ -152,7 +155,7 @@ const Warehouses = () => {
       } else {
         activeEmployees.push({
           id: currentId,
-          fullName: editingWarehouse?.managerName?.trim() || "Current manager",
+          fullName: editingWarehouse?.managerName?.trim() || t("warehouses.currentManager"),
           email: "",
           status: "",
           roleKey: "",
@@ -228,19 +231,17 @@ const Warehouses = () => {
           id: editingWarehouse.id,
           ...payload,
         });
-        toast.success("Warehouse updated successfully.");
+        toast.success(t('warehouses.updateSuccess'));
       } else {
         await createWarehouse.mutateAsync(payload);
-        toast.success("Warehouse created successfully.");
+        toast.success(t('warehouses.createSuccess'));
       }
 
       setIsFormOpen(false);
       setEditingWarehouse(null);
       reset({ name: "", location: "", manager: "" });
     } catch (error) {
-      const message =
-        error?.response?.data?.detail || "Failed to save warehouse.";
-      toast.error(message);
+      toast.error(translateApiError(error, 'inventory:warehouses.saveFailed'));
     }
   };
 
@@ -249,15 +250,13 @@ const Warehouses = () => {
 
     try {
       await deleteWarehouse.mutateAsync(deleteTarget.id);
-      toast.success("Warehouse deleted successfully.");
+      toast.success(t('warehouses.deleteSuccess'));
       setDeleteTarget(null);
       if (selectedWarehouseId === deleteTarget.id) {
         closeDetailModal();
       }
     } catch (error) {
-      const message =
-        error?.response?.data?.detail || "Failed to delete warehouse.";
-      toast.error(message);
+      toast.error(translateApiError(error, 'inventory:warehouses.deleteFailed'));
     }
   };
 
@@ -267,9 +266,9 @@ const Warehouses = () => {
   const handleRetry = async () => {
     try {
       await Promise.all([warehousesQuery.refetch(), employeesQuery.refetch()]);
-      toast.success("Warehouses refreshed.");
+      toast.success(t('warehouses.refreshSuccess'));
     } catch {
-      toast.error("Refresh failed. Please try again.");
+      toast.error(t('warehouses.refreshFailed'));
     }
   };
 
@@ -291,9 +290,9 @@ const Warehouses = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Warehouses</h1>
+          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>{t("warehouses.title")}</h1>
           <p style={{ color: "var(--color-text-secondary)" }}>
-            Manage physical storage locations.
+            {t("warehouses.subtitle")}
           </p>
         </div>
         <Button
@@ -303,7 +302,7 @@ const Warehouses = () => {
           onClick={handleAdd}
           style={{ alignSelf: isNarrowScreen ? "flex-end" : "auto" }}
         >
-          Add Warehouse
+          {t("warehouses.addWarehouse")}
         </Button>
       </div>
 
@@ -320,10 +319,10 @@ const Warehouses = () => {
             }}
           >
             <p style={{ margin: 0, color: "var(--color-error)" }}>
-              Could not load warehouses data.
+              {t("warehouses.loadFailed")}
             </p>
             <Button variant="outline" onClick={handleRetry}>
-              Retry
+              {t("common:actions.retry")}
             </Button>
           </div>
         </Card>
@@ -340,8 +339,7 @@ const Warehouses = () => {
           {warehouses.length === 0 ? (
             <Card className="padding-lg">
               <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>
-                No warehouses available yet. Add your first warehouse to get
-                started.
+                {t('warehouses.empty')}
               </p>
             </Card>
           ) : (
@@ -391,7 +389,7 @@ const Warehouses = () => {
                         }}
                       >
                         <MapPin size={14} />
-                        <span>{wh.location || "No location provided"}</span>
+                        <span>{wh.location || t("warehouses.noLocation")}</span>
                       </div>
                     </div>
                   </div>
@@ -411,7 +409,7 @@ const Warehouses = () => {
                         cursor: "pointer",
                         color: "var(--color-text-secondary)",
                       }}
-                      title="View"
+                      title={t("common:actions.view")}
                     >
                       <Eye size={16} />
                     </button>
@@ -424,7 +422,7 @@ const Warehouses = () => {
                         cursor: "pointer",
                         color: "var(--color-text-secondary)",
                       }}
-                      title="Edit"
+                      title={t('actions.edit', { ns: 'common' })}
                     >
                       <Edit size={16} />
                     </button>
@@ -437,7 +435,7 @@ const Warehouses = () => {
                         cursor: "pointer",
                         color: "var(--color-error)",
                       }}
-                      title="Delete"
+                      title={t('actions.delete', { ns: 'common' })}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -458,12 +456,12 @@ const Warehouses = () => {
                 >
                   <User size={16} color="var(--color-text-muted)" />
                   <span style={{ color: "var(--color-text-secondary)" }}>
-                    Manager:
+                    {t("warehouses.manager")}
                   </span>
                   <span style={{ fontWeight: 500 }}>
                     {managerNameMap.get(wh.manager) ||
                       wh.managerName ||
-                      "Unassigned"}
+                      t("warehouses.unassigned")}
                   </span>
                 </div>
               </Card>
@@ -478,7 +476,7 @@ const Warehouses = () => {
           setIsFormOpen(false);
           setEditingWarehouse(null);
         }}
-        title={editingWarehouse ? "Edit Warehouse" : "Add Warehouse"}
+        title={editingWarehouse ? t('warehouses.editWarehouse') : t('warehouses.addWarehouseModal')}
         size="md"
       >
         <form
@@ -486,23 +484,23 @@ const Warehouses = () => {
           style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
         >
           <div>
-            <label style={labelStyle}>Warehouse Name</label>
+            <label style={labelStyle}>{t('warehouses.warehouseName')}</label>
             <input
-              {...register("name", { required: "Warehouse name is required." })}
+              {...register("name", { required: t("warehouses.nameRequired") })}
               style={inputStyle}
-              placeholder="Enter warehouse name"
+              placeholder={t("warehouses.namePlaceholder")}
             />
             {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
           </div>
 
           <div>
-            <label style={labelStyle}>Location / Address</label>
+            <label style={labelStyle}>{t('warehouses.location')}</label>
             <input
               {...register("location", {
-                required: "Warehouse location is required.",
+                required: t("warehouses.locationRequired"),
               })}
               style={inputStyle}
-              placeholder="Enter location"
+              placeholder={t("warehouses.locationPlaceholder")}
             />
             {errors.location && (
               <p style={errorStyle}>{errors.location.message}</p>
@@ -510,7 +508,7 @@ const Warehouses = () => {
           </div>
 
           <div>
-            <label style={labelStyle}>Manager</label>
+            <label style={labelStyle}>{t('warehouses.manager')}</label>
             <Controller
               name="manager"
               control={control}
@@ -526,11 +524,11 @@ const Warehouses = () => {
                   }))}
                   searchTerm={managerSearchTerm}
                   onSearchChange={setManagerSearchTerm}
-                  placeholder="Select manager"
+                  placeholder={t("warehouses.selectManager")}
                   emptyLabel={
                     employeesQuery.isLoading
-                      ? "Loading..."
-                      : "No employees found"
+                      ? t("common:actions.loading")
+                      : t("warehouses.noEmployees")
                   }
                   isInitialLoading={employeesQuery.isLoading}
                   disabled={employeesQuery.isLoading || employeesQuery.isError}
@@ -555,15 +553,13 @@ const Warehouses = () => {
                 setIsFormOpen(false);
                 setEditingWarehouse(null);
               }}
-            >
-              Cancel
-            </Button>
+            >{t('actions.cancel', { ns: 'common' })}</Button>
             <Button
               type="submit"
               variant="primary"
               isLoading={createWarehouse.isPending || updateWarehouse.isPending}
             >
-              {editingWarehouse ? "Update" : "Create"}
+              {editingWarehouse ? t("common:actions.update") : t("common:actions.create")}
             </Button>
           </div>
         </form>
@@ -572,33 +568,33 @@ const Warehouses = () => {
       <Modal
         isOpen={isDetailOpen}
         onClose={closeDetailModal}
-        title="Warehouse Details"
+        title={t("warehouses.details")}
         size="md"
       >
         {warehouseDetailsQuery.isLoading ? (
           <Spinner />
         ) : !selectedWarehouse ? (
           <p style={{ margin: 0, color: "var(--color-text-secondary)" }}>
-            Warehouse details unavailable.
+            {t("warehouses.detailsUnavailable")}
           </p>
         ) : (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
           >
             <div style={detailRowStyle}>
-              <span style={detailLabelStyle}>Name</span>
+              <span style={detailLabelStyle}>{t("warehouses.nameLabel")}</span>
               <span>{selectedWarehouse.name || "--"}</span>
             </div>
             <div style={detailRowStyle}>
-              <span style={detailLabelStyle}>Location</span>
+              <span style={detailLabelStyle}>{t("warehouses.locationLabel")}</span>
               <span>{selectedWarehouse.location || "--"}</span>
             </div>
             <div style={detailRowStyle}>
-              <span style={detailLabelStyle}>Manager</span>
+              <span style={detailLabelStyle}>{t("warehouses.manager")}</span>
               <span>
                 {managerNameMap.get(selectedWarehouse.manager) ||
                   selectedWarehouse.managerName ||
-                  "Unassigned"}
+                  t("warehouses.unassigned")}
               </span>
             </div>
 
@@ -617,16 +613,12 @@ const Warehouses = () => {
                   closeDetailModal();
                   handleEdit(selectedWarehouse);
                 }}
-              >
-                Edit
-              </Button>
+              >{t('actions.edit', { ns: 'common' })}</Button>
               <Button
                 variant="danger"
                 icon={<Trash2 size={16} />}
                 onClick={() => setDeleteTarget(selectedWarehouse)}
-              >
-                Delete
-              </Button>
+              >{t('actions.delete', { ns: 'common' })}</Button>
             </div>
           </div>
         )}
@@ -634,11 +626,11 @@ const Warehouses = () => {
 
       <ConfirmationModal
         isOpen={Boolean(deleteTarget)}
-        title="Delete Warehouse"
+        title={t("warehouses.deleteTitle")}
         type="danger"
-        message={`Are you sure you want to delete "${deleteTarget?.name || "this warehouse"}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
+        message={t('warehouses.deleteMessage', { name: deleteTarget?.name || t('warehouses.deleteFallbackName') })}
+        confirmText={t("common:actions.delete")}
+        cancelText={t("common:actions.cancel")}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
       />

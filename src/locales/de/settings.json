@@ -1,0 +1,191 @@
+{
+  "categoryManagement": {
+    "title": "Category Management",
+    "subtitle": "Manage all category dropdowns used across the system.",
+    "loadError": "Could not load categories data.",
+    "noGroups": "No category groups configured yet.",
+    "unnamedGroup": "Unnamed group",
+    "categoryCount_one": "1 category",
+    "categoryCount_other": "{{count}} categories",
+    "noCategoriesHint": "No categories yet. Use + to add one.",
+    "uncategorized": "Uncategorized",
+    "addCategory": "Add Category",
+    "editCategory": "Edit Category",
+    "categoryName": "Category Name *",
+    "categoryNamePlaceholder": "Enter category name",
+    "categoryType": "Category Type *",
+    "selectCategoryType": "Select category type",
+    "unnamedType": "Unnamed type",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Enter description",
+    "activeCategory": "Active Category",
+    "deleteTitle": "Delete Category",
+    "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "thisCategory": "this category",
+    "addToGroup": "Add category to {{name}}",
+    "validation": {
+      "nameRequired": "Category name is required.",
+      "typeRequired": "Category type is required."
+    },
+    "toast": {
+      "created": "Category created successfully.",
+      "updated": "Category updated successfully.",
+      "deleted": "Category deleted successfully.",
+      "saveFailed": "Failed to save category.",
+      "deleteFailed": "Failed to delete category.",
+      "refreshed": "Categories refreshed.",
+      "refreshFailed": "Refresh failed. Please try again."
+    }
+  },
+  "title": "Einstellungen",
+  "subtitle": "Manage your workspace preferences.",
+  "tabs": {
+    "ariaLabel": "Settings sections",
+    "general": "Allgemein",
+    "security": "Sicherheit",
+    "taxManagement": "Tax Management",
+    "permissions": "Permissions & Roles",
+    "holidays": "Feiertage"
+  },
+  "general": {
+    "title": "Unternehmensprofil",
+    "companyName": "Company Name",
+    "industry": "Industry",
+    "selectIndustry": "Select industry",
+    "taxId": "Tax ID",
+    "defaultCurrency": "Default Currency",
+    "selectCurrency": "Select currency",
+    "payDay": "Pay Day",
+    "payDayType": "Typ",
+    "payDayDay": "Day",
+    "payDayLastOfMonth": "Last day of the month",
+    "payDayFixedOfMonth": "Fixed day of the month",
+    "chooseDay": "Choose day",
+    "dayOption": "Day {{day}}",
+    "payDayLastHint": "Salary will be processed on the last available day of each month.",
+    "localization": "Localization",
+    "dateFormat": "Date Format",
+    "timezone": "Timezone",
+    "loadSettingsFailed": "Could not load company settings.",
+    "loadIndustriesFailed": "Could not load industries. You can still pick a saved value or retry later.",
+    "loadCurrenciesFailed": "Could not load currencies.",
+    "loadMoreCurrenciesFailed": "Could not load more currencies. Scroll down to retry.",
+    "saveSuccess": "Company settings updated successfully.",
+    "saveFailed": "Failed to update company settings.",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes"
+  },
+  "security": {
+    "title": "Security Settings",
+    "twoFactorPrefix": "Two-Factor Authentication is currently",
+    "enabled": "Enabled"
+  },
+  "notifications": {
+    "title": "Notification Preferences",
+    "pushTitle": "Push notifications",
+    "pushDescription": "Enable browser notifications for important updates.",
+    "enableButton": "Enable push notifications",
+    "enabling": "Enabling…",
+    "statusLabel": "Status:",
+    "statusUnsupported": "Unsupported",
+    "permission": {
+      "granted": "Granted",
+      "denied": "Denied",
+      "default": "Default",
+      "prompt": "Prompt"
+    },
+    "blockedInBrowser": "Notifications are blocked in your browser settings.",
+    "enableFailed": "Could not enable push notifications on this device.",
+    "enableSuccess": "Push notifications enabled for this browser.",
+    "enableError": "Could not enable push notifications.",
+    "permissionHint": "If you don't see the permission prompt, check your browser's site settings and make sure notifications are allowed."
+  },
+  "tax": {
+    "title": "Tax Management",
+    "subtitle": "Create and maintain tax rules for sales operations",
+    "subtitleWithCountry": "Create and maintain tax rules for sales operations ({{country}}).",
+    "addRule": "Add Tax Rule",
+    "loadFailed": "Could not load tax rules data.",
+    "refreshSuccess": "Tax rules refreshed.",
+    "refreshFailed": "Refresh failed. Please try again.",
+    "unnamedAccount": "Unnamed account",
+    "table": {
+      "ruleName": "Rule Name",
+      "rate": "Rate (%)",
+      "type": "Typ",
+      "glAccounts": "Sales GL / Purchase GL",
+      "default": "Default",
+      "actions": "Actions",
+      "empty": "No tax rules found."
+    },
+    "aria": {
+      "view": "View tax rule",
+      "edit": "Edit tax rule",
+      "delete": "Delete tax rule"
+    },
+    "modal": {
+      "add": "Add Tax Rule",
+      "edit": "Edit Tax Rule",
+      "view": "Tax Rule Details"
+    },
+    "form": {
+      "ruleName": "Rule Name",
+      "ruleNamePlaceholder": "e.g. Standard VAT 20%",
+      "ruleNameRequired": "Rule name is required",
+      "rate": "Rate (%)",
+      "rateRequired": "Rate is required",
+      "type": "Typ",
+      "salesGl": "Sales GL Account",
+      "purchaseGl": "Purchase GL Account",
+      "selectAccount": "Select account",
+      "isDefault": "Set as default tax rule",
+      "updateRule": "Update Rule",
+      "createRule": "Create Rule",
+      "saving": "Saving..."
+    },
+    "types": {
+      "standard": "Standard",
+      "reduced": "Reduced",
+      "zero": "Zero",
+      "exempt": "Reverse exempt"
+    },
+    "toast": {
+      "created": "Tax rule created successfully.",
+      "updated": "Tax rule updated successfully.",
+      "deleted": "Tax rule deleted successfully.",
+      "saveFailed": "Failed to save tax rule.",
+      "deleteFailed": "Failed to delete tax rule."
+    },
+    "delete": {
+      "title": "Delete Tax Rule",
+      "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "messageFallback": "Are you sure you want to delete this tax rule? This action cannot be undone.",
+      "deleting": "Deleting..."
+    }
+  },
+  "holidays": {
+    "title": "Feiertage",
+    "subtitle": "Add public holidays to use across HR workflows.",
+    "name": "Holiday name",
+    "namePlaceholder": "e.g., Eid Al-Fitr",
+    "day": "Day",
+    "month": "Month",
+    "year": "Year",
+    "dayPlaceholder": "DD",
+    "monthPlaceholder": "MM",
+    "yearPlaceholder": "YYYY",
+    "add": "Add Holiday",
+    "listTitle": "Holiday list",
+    "loadFailed": "Could not load holidays.",
+    "empty": "No holidays added yet.",
+    "createdAt": "Created: {{date}}",
+    "validation": {
+      "nameRequired": "Holiday name is required.",
+      "invalidDate": "Please enter a valid date."
+    },
+    "toast": {
+      "added": "Holiday added.",
+      "addFailed": "Failed to add holiday."
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import Card from '@/components/Shared/Card';
@@ -27,6 +28,8 @@ const humanizeDetailKey = (key) =>
         .replace(/\b\w/g, (c) => c.toUpperCase());
 
 const PeriodDetails = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const { id } = useParams();
     const navigate = useNavigate();
     const basePath = useBasePath();
@@ -67,9 +70,7 @@ const PeriodDetails = () => {
     if (periodQuery.isError) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/payroll`)}>
-                    Back
-                </Button>
+                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/payroll`)}>{t('common:actions.back')}</Button>
                 <ResourceLoadError
                     error={periodQuery.error}
                     title="Could not load payroll period"
@@ -82,9 +83,7 @@ const PeriodDetails = () => {
     if (!period) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/payroll`)}>
-                    Back
-                </Button>
+                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/payroll`)}>{t('common:actions.back')}</Button>
                 <ResourceLoadError
                     message="Period not found or you do not have access to it."
                     title="Period unavailable"
@@ -97,9 +96,7 @@ const PeriodDetails = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/payroll`)}>
-                    Back
-                </Button>
+                <Button variant="ghost" className="cursor-pointer" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr/payroll`)}>{t('common:actions.back')}</Button>
                 <div style={{ flex: 1 }}>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{period.name}</h2>
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem', marginTop: '0.25rem' }}>

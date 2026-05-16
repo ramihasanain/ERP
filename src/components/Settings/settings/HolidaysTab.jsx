@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -8,6 +9,7 @@ import { useCustomPost } from '@/hooks/useMutation';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import formatDate from '@/utils/formatDate';
+import translateApiError from '@/utils/translateApiError';
 import { Plus } from 'lucide-react';
 
 const HOLIDAYS_API = '/api/hr/employees/holidays/';
@@ -36,6 +38,7 @@ const isValidDateParts = (year, month, day) => {
 };
 
 const HolidaysTab = () => {
+    const { t } = useTranslation(['settings', 'common']);
     const holidaysQuery = useCustomQuery(HOLIDAYS_API, HOLIDAYS_QUERY_KEY);
     const createHoliday = useCustomPost(HOLIDAYS_API, HOLIDAYS_QUERY_KEY);
     const currentYear = String(new Date().getFullYear());
@@ -94,12 +97,12 @@ const HolidaysTab = () => {
         const year = toIntOrNull(values?.year);
 
         if (!name) {
-            setError('name', { type: 'validate', message: 'Holiday name is required.' });
+            setError('name', { type: 'validate', message: t('holidays.validation.nameRequired') });
             return;
         }
 
         if (!isValidDateParts(year, month, day)) {
-            setError('day', { type: 'validate', message: 'Please enter a valid date.' });
+            setError('day', { type: 'validate', message: t('holidays.validation.invalidDate') });
             setError('month', { type: 'validate', message: ' ' });
             setError('year', { type: 'validate', message: ' ' });
             return;
@@ -109,11 +112,10 @@ const HolidaysTab = () => {
 
         try {
             await createHoliday.mutateAsync({ name, date });
-            toast.success('Holiday added.');
+            toast.success(t('holidays.toast.added'));
             reset({ name: '', day: '', month: '', year: currentYear });
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to add holiday.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'settings:holidays.toast.addFailed'));
         }
     };
 
@@ -121,9 +123,9 @@ const HolidaysTab = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <Card className="padding-lg" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>Holidays</h3>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>{t('holidays.title')}</h3>
                     <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-secondary)' }}>
-                        Add public holidays to use across HR workflows.
+                        {t('holidays.subtitle')}
                     </p>
                 </div>
 
@@ -142,8 +144,8 @@ const HolidaysTab = () => {
                             render={({ field }) => (
                                 <div style={{ gridColumn: isTwoRowLayout ? '1 / -1' : 'auto' }}>
                                     <Input
-                                        label="Holiday name"
-                                        placeholder="e.g., Eid Al-Fitr"
+                                        label={t('holidays.name')}
+                                        placeholder={t('holidays.namePlaceholder')}
                                         value={field.value}
                                         onChange={field.onChange}
                                         error={errors?.name?.message}
@@ -157,12 +159,12 @@ const HolidaysTab = () => {
                             control={control}
                             render={({ field }) => (
                                 <Input
-                                    label="Day"
+                                    label={t('holidays.day')}
                                     type="number"
                                     inputMode="numeric"
                                     min={1}
                                     max={31}
-                                    placeholder="DD"
+                                    placeholder={t('holidays.dayPlaceholder')}
                                     value={field.value}
                                     onChange={field.onChange}
                                     error={errors?.day?.message}
@@ -175,12 +177,12 @@ const HolidaysTab = () => {
                             control={control}
                             render={({ field }) => (
                                 <Input
-                                    label="Month"
+                                    label={t('holidays.month')}
                                     type="number"
                                     inputMode="numeric"
                                     min={1}
                                     max={12}
-                                    placeholder="MM"
+                                    placeholder={t('holidays.monthPlaceholder')}
                                     value={field.value}
                                     onChange={field.onChange}
                                     error={errors?.month?.message}
@@ -193,12 +195,12 @@ const HolidaysTab = () => {
                             control={control}
                             render={({ field }) => (
                                 <Input
-                                    label="Year"
+                                    label={t('holidays.year')}
                                     type="number"
                                     inputMode="numeric"
                                     min={1900}
                                     max={2100}
-                                    placeholder="YYYY"
+                                    placeholder={t('holidays.yearPlaceholder')}
                                     value={field.value}
                                     onChange={field.onChange}
                                     error={errors?.year?.message}
@@ -214,23 +216,23 @@ const HolidaysTab = () => {
                             disabled={!canSubmit}
                             isLoading={createHoliday.isPending}
                         >
-                            Add Holiday
+                            {t('holidays.add')}
                         </Button>
                     </div>
                 </form>
             </Card>
 
-            <Card className="padding-lg" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} title="Holiday list">
+            <Card className="padding-lg" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} title={t('holidays.listTitle')}>
                 {holidaysQuery.isLoading && <Spinner />}
 
                 {holidaysQuery.isError && (
                     <div style={{ color: 'var(--color-error)' }}>
-                        Could not load holidays.
+                        {t('holidays.loadFailed')}
                     </div>
                 )}
 
                 {!holidaysQuery.isLoading && !holidaysQuery.isError && holidays.length === 0 && (
-                    <div style={{ color: 'var(--color-text-secondary)' }}>No holidays added yet.</div>
+                    <div style={{ color: 'var(--color-text-secondary)' }}>{t('holidays.empty')}</div>
                 )}
 
                 {!holidaysQuery.isLoading && !holidaysQuery.isError && holidays.length > 0 && (
@@ -251,13 +253,13 @@ const HolidaysTab = () => {
                             >
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0 }}>
                                     <div style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>
-                                        {h?.name || '-'}
+                                        {h?.name || t('common:notAvailable')}
                                     </div>
                                     <div style={{ color: 'var(--color-text-secondary)' }}>
                                         {formatDate(h?.date)}
                                     </div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                                        Created: {formatDate(h?.created_at)}
+                                        {t('holidays.createdAt', { date: formatDate(h?.created_at) })}
                                     </div>
                                 </div>
                             </div>
@@ -270,4 +272,3 @@ const HolidaysTab = () => {
 };
 
 export default HolidaysTab;
-

@@ -5,7 +5,9 @@ import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Search, Plus, Filter, CreditCard, ArrowLeft, Edit } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/context/LanguageContext';
+import translateApiError from '@/utils/translateApiError';
 import InvoicePaymentModal from '@/components/Accounting/InvoicePaymentModal';
 import Pagination from '@/core/Pagination';
 import Spinner from '@/core/Spinner';
@@ -16,7 +18,8 @@ import { toast } from 'sonner';
 const Invoices = () => {
     const navigate = useNavigate();
     const basePath = useBasePath();
-    const { language } = useLanguage();
+    const { t } = useTranslation('accounting');
+    const { dir } = useLanguage();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [customerFilter, setCustomerFilter] = useState('All');
@@ -158,9 +161,9 @@ const Invoices = () => {
                 id: invoice.id,
                 status: 'posted',
             });
-            toast.success(isRtl ? 'تم ترحيل الفاتورة بنجاح.' : 'Invoice posted successfully.');
+            toast.success(t('invoices.postSuccess'));
         } catch (error) {
-            toast.error(error?.response?.data?.message || (isRtl ? 'فشل ترحيل الفاتورة.' : 'Failed to post invoice.'));
+            toast.error(translateApiError(error, 'accounting:invoices.postFailed'));
         }
     };
 
@@ -169,7 +172,19 @@ const Invoices = () => {
         setCurrentPage(1);
     };
 
-    const isRtl = language === 'ar';
+    const isRtl = dir === 'rtl';
+
+    const statusLabel = (status) => {
+        const keyMap = {
+            All: 'invoices.all',
+            Paid: 'invoices.paid',
+            Partial: 'invoices.partial',
+            Posted: 'invoices.posted',
+            Draft: 'invoices.draft',
+            Overdue: 'invoices.overdue',
+        };
+        return t(keyMap[status] || status);
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -182,12 +197,12 @@ const Invoices = () => {
                         className="cursor-pointer shrink-0"
                     />
                     <div>
-                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{isRtl ? 'فواتير المبيعات' : 'Sales Invoices'}</h1>
-                        <p style={{ color: 'var(--color-text-secondary)' }}>{isRtl ? 'إدارة الفواتير والتحصيلات.' : 'Manage billing and revenue.'}</p>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('invoices.title')}</h1>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>{t('invoices.subtitle')}</p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }} className="shrink-0">
-                    <Button icon={<Plus size={18} />} onClick={() => navigate('new')} className="cursor-pointer">{isRtl ? 'إنشاء فاتورة' : 'Create Invoice'}</Button>
+                    <Button icon={<Plus size={18} />} onClick={() => navigate('new')} className="cursor-pointer">{t('invoices.newInvoice')}</Button>
                 </div>
             </div>
 
@@ -196,7 +211,7 @@ const Invoices = () => {
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <div style={{ width: '300px' }}>
                             <Input
-                                placeholder={isRtl ? 'بحث برقم الفاتورة أو العميل...' : "Search invoice or client..."}
+                                placeholder={t('invoices.searchPlaceholder')}
                                 startIcon={<Search size={16} />}
                                 value={searchTerm}
                                 onChange={e => updateFilter(setSearchTerm, e.target.value)}
@@ -208,12 +223,12 @@ const Invoices = () => {
                             value={customerFilter}
                             onChange={e => updateFilter(setCustomerFilter, e.target.value)}
                         >
-                            <option value="All">{isRtl ? 'كل العملاء' : 'All Customers'}</option>
+                            <option value="All">{t('invoices.allCustomers')}</option>
                             {customerOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{isRtl ? 'من:' : 'From:'}</span>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{t('invoices.from')}</span>
                             <Input
                                 type="date"
                                 value={dateFrom}
@@ -223,7 +238,7 @@ const Invoices = () => {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{isRtl ? 'إلى:' : 'To:'}</span>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{t('invoices.to')}</span>
                             <Input
                                 type="date"
                                 value={dateTo}
@@ -236,7 +251,7 @@ const Invoices = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                             <Filter size={14} color="var(--color-text-muted)" />
-                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginRight: '0.5rem' }}>{isRtl ? 'الحالة:' : 'Status:'}</span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginRight: '0.5rem' }}>{t('invoices.status')}</span>
                             {['All', 'Paid', 'Partial', 'Posted', 'Draft', 'Overdue'].map(status => (
                                 <button
                                     key={status}
@@ -252,7 +267,7 @@ const Invoices = () => {
                                         fontSize: '0.8rem'
                                     }}
                                 >
-                                    {status}
+                                    {statusLabel(status)}
                                 </button>
                             ))}
                         </div>
@@ -271,7 +286,7 @@ const Invoices = () => {
                                 }}
                                 style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}
                             >
-                                {isRtl ? 'مسح الفلاتر' : 'Clear Filters'}
+                                {t('invoices.clearFilters')}
                             </Button>
                         )}
                     </div>
@@ -284,7 +299,7 @@ const Invoices = () => {
                 )}
                 {invoicesQuery.isError && (
                     <div style={{ padding: '1.25rem 1.5rem', color: 'var(--color-error)' }}>
-                        {isRtl ? 'تعذر تحميل الفواتير.' : 'Failed to load invoices.'}
+                        {t('invoices.loadFailed')}
                     </div>
                 )}
                 {!invoicesQuery.isLoading && !invoicesQuery.isError && (
@@ -293,13 +308,13 @@ const Invoices = () => {
                             <table style={{ width: '100%', minWidth: '920px', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                                 <thead>
                                     <tr style={{ background: 'var(--color-bg-table-header)', textAlign: isRtl ? 'right' : 'left', color: 'var(--color-text-secondary)' }}>
-                                        <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'رقم الفاتورة' : 'Invoice #'}</th>
-                                        <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'العميل' : 'Client'}</th>
-                                        <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'التاريخ' : 'Date'}</th>
-                                        <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'استحقاق' : 'Due Date'}</th>
-                                        <th style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right' }}>{isRtl ? 'القيمة' : 'Amount'}</th>
-                                        <th style={{ padding: '1rem 1.5rem' }}>{isRtl ? 'الحالة' : 'Status'}</th>
-                                        <th style={{ padding: '1rem 1rem' }}>{isRtl ? 'إجراءات' : 'Actions'}</th>
+                                        <th style={{ padding: '1rem 1.5rem' }}>{t('invoices.colInvoice')}</th>
+                                        <th style={{ padding: '1rem 1rem' }}>{t('invoices.colClient')}</th>
+                                        <th style={{ padding: '1rem 1rem' }}>{t('invoices.colDate')}</th>
+                                        <th style={{ padding: '1rem 1rem' }}>{t('invoices.colDueDate')}</th>
+                                        <th style={{ padding: '1rem 1rem', textAlign: isRtl ? 'left' : 'right' }}>{t('invoices.colAmount')}</th>
+                                        <th style={{ padding: '1rem 1.5rem' }}>{t('invoices.colStatus')}</th>
+                                        <th style={{ padding: '1rem 1rem' }}>{t('invoices.colActions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -322,7 +337,7 @@ const Invoices = () => {
                                                         background: statusStyle.bg, color: statusStyle.color,
                                                         fontSize: '0.75rem', fontWeight: 600
                                                     }}>
-                                                        {inv.status}
+                                                        {statusLabel(inv.status)}
                                                     </span>
                                                 </td>
                                                 <td style={{ padding: '1rem 1rem' }}>
@@ -336,7 +351,7 @@ const Invoices = () => {
                                                                     className="cursor-pointer"
                                                                     disabled={postInvoiceMutation.isPending}
                                                                 >
-                                                                    {isRtl ? 'ترحيل' : 'Post'}
+                                                                    {t('invoices.post')}
                                                                 </Button>
                                                             ) : (
                                                                 <Button
@@ -346,7 +361,7 @@ const Invoices = () => {
                                                                     onClick={(e) => handleRecordPayment(e, inv)}
                                                                     className="cursor-pointer"
                                                                 >
-                                                                    {isRtl ? 'سداد' : 'Pay'}
+                                                                    {t('invoices.pay')}
                                                                 </Button>
                                                             )}
                                                             <Button
@@ -355,8 +370,8 @@ const Invoices = () => {
                                                                 icon={<Edit size={14} />}
                                                                 onClick={(e) => handleEditInvoice(e, inv)}
                                                                 className="cursor-pointer"
-                                                                aria-label={isRtl ? 'تعديل الفاتورة' : 'Edit invoice'}
-                                                                title={isRtl ? 'تعديل الفاتورة' : 'Edit invoice'}
+                                                                aria-label={t('invoices.editInvoice')}
+                                                                title={t('invoices.editInvoice')}
                                                             />
                                                         </div>
                                                     )}
@@ -367,7 +382,7 @@ const Invoices = () => {
                                     {filteredInvoices.length === 0 && (
                                         <tr>
                                             <td colSpan={7} style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                                {isRtl ? 'لا توجد فواتير مطابقة.' : 'No invoices found.'}
+                                                {t('invoices.noInvoices')}
                                             </td>
                                         </tr>
                                     )}

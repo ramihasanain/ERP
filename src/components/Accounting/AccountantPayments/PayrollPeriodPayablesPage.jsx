@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from "react-router-dom";
 import { useBasePath } from "@/hooks/useBasePath";
 import * as XLSX from "xlsx";
@@ -315,6 +316,7 @@ const PayCategoryModal = ({
 };
 
 const PayrollPeriodPayablesPage = () => {
+    const { t } = useTranslation('accounting');
   const { periodId } = useParams();
   const navigate = useNavigate();
   const basePath = useBasePath();

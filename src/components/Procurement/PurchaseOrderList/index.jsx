@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
@@ -7,8 +8,10 @@ import PurchaseOrderDetailsModal from '@/components/Procurement/PurchaseOrderDet
 import PurchaseOrderHeaderFilters from './PurchaseOrderHeaderFilters';
 import PurchaseOrdersListTable from './PurchaseOrdersListTable';
 import usePurchaseOrderListData from './usePurchaseOrderListData';
+import translateApiError from '@/utils/translateApiError';
 
 const PurchaseOrderList = () => {
+    const { t } = useTranslation(['procurement', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const [filterStatus, setFilterStatus] = useState('Draft');
@@ -35,11 +38,10 @@ const PurchaseOrderList = () => {
 
         try {
             await deletePurchaseOrder.mutateAsync(deletingOrder.id);
-            toast.success('Purchase order deleted successfully.');
+            toast.success(t('poList.deleteSuccess'));
             setDeletingOrder(null);
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to delete purchase order.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'procurement:poList.deleteFailed'));
         }
     };
 
@@ -48,10 +50,9 @@ const PurchaseOrderList = () => {
 
         try {
             await setPurchaseOrderStatus.mutateAsync({ id, status });
-            toast.success(`Purchase order ${status} successfully.`);
+            toast.success(t('poList.statusSuccess', { status }));
         } catch (error) {
-            const message = error?.response?.data?.detail || `Failed to ${status} purchase order.`;
-            toast.error(message);
+            toast.error(translateApiError(error, 'procurement:poList.statusFailed'));
         }
     };
 
@@ -85,11 +86,11 @@ const PurchaseOrderList = () => {
 
             <ConfirmationModal
                 isOpen={Boolean(deletingOrder)}
-                title="Delete Purchase Order"
+                title={t('poList.deleteTitle')}
                 type="danger"
-                message={`Are you sure you want to delete "${deletingOrder?.number || 'this purchase order'}"? This action cannot be undone.`}
-                confirmText={deletePurchaseOrder.isPending ? 'Deleting...' : 'Delete'}
-                cancelText="Cancel"
+                message={t('poList.deleteMessage', { name: deletingOrder?.number || t('poList.deleteFallbackName') })}
+                confirmText={deletePurchaseOrder.isPending ? t('poList.deleting') : t('common:actions.delete')}
+                cancelText={t('common:actions.cancel')}
                 onCancel={() => {
                     if (!deletePurchaseOrder.isPending) setDeletingOrder(null);
                 }}

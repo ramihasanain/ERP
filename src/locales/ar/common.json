@@ -1,0 +1,94 @@
+{
+  "actions": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "close": "إغلاق",
+    "back": "رجوع",
+    "next": "التالي",
+    "submit": "إرسال",
+    "search": "بحث",
+    "filter": "تصفية",
+    "reset": "إعادة ضبط",
+    "export": "تصدير",
+    "import": "استيراد",
+    "refresh": "تحديث",
+    "view": "عرض",
+    "download": "تنزيل",
+    "upload": "رفع",
+    "discard": "إلغاء",
+    "apply": "تطبيق",
+    "clear": "مسح",
+    "yes": "نعم",
+    "no": "لا",
+    "loading": "جاري التحميل...",
+    "retry": "إعادة المحاولة"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "pending": "قيد الانتظار",
+    "approved": "موافق عليه",
+    "rejected": "مرفوض",
+    "draft": "مسودة",
+    "posted": "مرحّل",
+    "cancelled": "ملغى",
+    "completed": "مكتمل",
+    "all": "الكل"
+  },
+  "table": {
+    "noData": "لا توجد بيانات",
+    "noResults": "لا توجد نتائج",
+    "actions": "إجراءات",
+    "showing": "عرض {{from}}–{{to}} من {{total}}",
+    "rowsPerPage": "صفوف لكل صفحة"
+  },
+  "empty": {
+    "title": "لا يوجد شيء هنا بعد",
+    "description": "ابدأ بإنشاء أول عنصر."
+  },
+  "language": {
+    "label": "اللغة",
+    "ariaLabel": "اختر اللغة",
+    "listboxLabel": "اللغات"
+  },
+  "theme": {
+    "light": "الوضع الفاتح",
+    "dark": "الوضع الداكن"
+  },
+  "user": "مستخدم",
+  "guest": "زائر",
+  "notAvailable": "—",
+  "pagination": {
+    "pageOf": "صفحة {{current}} من {{total}}",
+    "prev": "السابق",
+    "next": "التالي"
+  },
+  "resourceLoadError": {
+    "title": "تعذر تحميل هذه الصفحة",
+    "fallback": "تعذر تحميل البيانات. قد لا تملك صلاحية الوصول، أو أن المورد غير متاح.",
+    "goBack": "رجوع",
+    "refresh": "تحديث الصفحة"
+  },
+  "noData": {
+    "title": "لا توجد بيانات",
+    "titleWithLabel": "لا يوجد {{label}} بعد",
+    "description": "لا توجد بيانات للعرض حالياً.",
+    "descriptionWithLabel": "لا توجد بيانات {{label}} للعرض حالياً."
+  },
+  "header": {
+    "openNav": "فتح قائمة التنقل",
+    "menu": "القائمة"
+  },
+  "roles": {
+    "admin": "مسؤول",
+    "employee": "موظف",
+    "accountant": "محاسب",
+    "manager": "مدير"
+  }
+}

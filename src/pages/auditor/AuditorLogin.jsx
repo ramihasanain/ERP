@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
@@ -9,10 +10,12 @@ import { useAuth } from "@/context/AuthContext";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { errorToastOptions, successToastOptions } from "@/utils/toastOptions";
+import { translateApiError } from "@/utils/translateApiError";
 
 const PUBLIC_API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const AuditorLogin = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const navigate = useNavigate();
   const { persistLoginResponse } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,10 +42,7 @@ const AuditorLogin = () => {
       const data = response.data;
 
       if (data.user?.reset_password_required) {
-        toast.success(
-          "Please change your password before continuing.",
-          successToastOptions,
-        );
+        toast.success(t("auditor:login.resetRequired"), successToastOptions);
         navigate("/auditor/reset-password-first-login", {
           replace: true,
           state: { accessToken: data.access },
@@ -52,19 +52,18 @@ const AuditorLogin = () => {
           loginBaseUrl: PUBLIC_API_URL,
         });
         toast.success(
-          `Welcome back, ${user?.name || "Auditor"}!`,
+          t("auditor:login.welcomeBack", {
+            name: user?.name || t("auditor:login.defaultName"),
+          }),
           successToastOptions,
         );
         navigate("/auditor/dashboard", { replace: true });
       }
     } catch (err) {
-      const message =
-        err?.response?.data?.detail ||
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Sign in failed. Please verify your credentials.";
-      toast.error(message, errorToastOptions);
+      toast.error(
+        translateApiError(err, "auditor:login.failed"),
+        errorToastOptions,
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -102,7 +101,7 @@ const AuditorLogin = () => {
               fontSize: "0.85rem",
             }}
           >
-            <ArrowLeft size={16} /> Back to Main Login
+            <ArrowLeft size={16} /> {t("auditor:login.backToMain")}
           </button>
         </div>
 
@@ -129,7 +128,7 @@ const AuditorLogin = () => {
                 marginBottom: "0.25rem",
               }}
             >
-              Auditor Portal
+              {t("auditor:login.title")}
             </h1>
             <p
               style={{
@@ -137,7 +136,7 @@ const AuditorLogin = () => {
                 fontSize: "0.85rem",
               }}
             >
-              Sign in to review and audit financial statements.
+              {t("auditor:login.subtitle")}
             </p>
           </div>
 
@@ -148,13 +147,13 @@ const AuditorLogin = () => {
             <Controller
               name="email"
               control={control}
-              rules={{ required: "Email is required" }}
+              rules={{ required: t("auditor:login.emailRequired") }}
               render={({ field }) => (
                 <Input
                   {...field}
-                  label="Email Address"
+                  label={t("auditor:login.email")}
                   type="email"
-                  placeholder="audit@company.com"
+                  placeholder={t("auditor:login.emailPlaceholder")}
                   error={errors.email?.message}
                   required
                 />
@@ -163,19 +162,21 @@ const AuditorLogin = () => {
             <Controller
               name="password"
               control={control}
-              rules={{ required: "Password is required" }}
+              rules={{ required: t("auditor:login.passwordRequired") }}
               render={({ field }) => (
                 <Input
                   {...field}
-                  label="Password"
+                  label={t("auditor:login.password")}
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder={t("auditor:login.passwordPlaceholder")}
                   endIcon={
                     <button
                       type="button"
                       onClick={() => setShowPassword((current) => !current)}
                       aria-label={
-                        showPassword ? "Hide password" : "Show password"
+                        showPassword
+                          ? t("auditor:login.hidePassword")
+                          : t("auditor:login.showPassword")
                       }
                       style={{
                         border: "none",
@@ -204,7 +205,7 @@ const AuditorLogin = () => {
               icon={<LogIn size={18} />}
               style={{ width: "100%", marginTop: "0.5rem" }}
             >
-              Sign In as Auditor
+              {t("auditor:login.submit")}
             </Button>
           </form>
         </Card>

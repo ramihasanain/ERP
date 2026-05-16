@@ -1,10 +1,12 @@
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Spinner from "@/core/Spinner";
 import { AlertCircle } from "lucide-react";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 
 const BankAccountsTab = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const { periodId } = useParams();
   const { bankAccounts, isPending, isError, error } = useBankAccounts(periodId);
 
@@ -21,7 +23,7 @@ const BankAccountsTab = () => {
       <Card className="padding-lg">
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--color-error)" }}>
           <AlertCircle size={18} />
-          <span>{error?.message || "Failed to load bank accounts."}</span>
+          <span>{error?.message || t("bankTab.loadError")}</span>
         </div>
       </Card>
     );
@@ -36,7 +38,7 @@ const BankAccountsTab = () => {
         }}
       >
         <h4 style={{ fontWeight: 700 }}>
-          Bank Accounts ({bankAccounts.length})
+          {t("bankTab.title", { count: bankAccounts.length })}
         </h4>
       </div>
       <div
@@ -81,7 +83,7 @@ const BankAccountsTab = () => {
                     : "var(--color-error)",
                 }}
               >
-                {bank.is_active ? "Active" : "Inactive"}
+                {bank.is_active ? t("common:status.active") : t("common:status.inactive")}
               </span>
             </div>
             <p
@@ -125,7 +127,7 @@ const BankAccountsTab = () => {
                   color: "var(--color-text-muted)",
                 }}
               >
-                Open: {Number(bank.opening_balance).toLocaleString()}
+                {t("bankTab.open")} {Number(bank.opening_balance).toLocaleString()}
               </span>
             </div>
           </div>
@@ -138,7 +140,7 @@ const BankAccountsTab = () => {
               color: "var(--color-text-muted)",
             }}
           >
-            No bank accounts found.
+            {t("bankTab.empty")}
           </p>
         )}
       </div>

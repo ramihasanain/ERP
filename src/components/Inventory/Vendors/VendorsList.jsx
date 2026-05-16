@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { getPaymentTermsLabel } from './utils';
 
@@ -16,6 +17,7 @@ const actionButtonStyle = {
 };
 
 const VendorsList = ({ vendors, onView, onEdit, onDelete }) => {
+    const { t } = useTranslation(['inventory', 'common']);
     return (
         <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
@@ -77,7 +79,7 @@ const VendorsList = ({ vendors, onView, onEdit, onDelete }) => {
                                             fontWeight: 600,
                                         }}
                                     >
-                                        {vendor.isActive ? 'Active' : 'Inactive'}
+                                        {vendor.isActive ? t('vendors.statusActive') : t('vendors.statusInactive')}
                                     </span>
                                 </td>
                                 <td style={tdStyle}>

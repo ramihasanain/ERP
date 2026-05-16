@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { Controller, useForm } from 'react-hook-form';
 import { Eye, EyeOff, KeyRound, Lock, ShieldCheck } from 'lucide-react';
@@ -8,10 +9,12 @@ import AuthLayout from '@/components/app-layout/AuthLayout';
 import Input from '@/components/Shared/Input';
 import Button from '@/components/Shared/Button';
 import { errorToastOptions, successToastOptions } from '@/utils/toastOptions';
+import { translateApiError } from '@/utils/translateApiError';
 
 const PUBLIC_API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const AuditorFirstLoginResetPassword = () => {
+    const { t } = useTranslation(['auditor', 'common']);
     const navigate = useNavigate();
     const location = useLocation();
     const accessToken = location.state?.accessToken;
@@ -54,18 +57,13 @@ const AuditorFirstLoginResetPassword = () => {
                 values,
                 { headers: { Authorization: `Bearer ${accessToken}` } },
             );
-            toast.success(
-                'Password changed successfully. Please sign in with your new password.',
-                successToastOptions,
-            );
+            toast.success(t('auditor:resetPassword.success'), successToastOptions);
             navigate('/auditor/login', { replace: true });
         } catch (err) {
-            const message =
-                err?.response?.data?.detail ||
-                err?.response?.data?.error ||
-                err?.response?.data?.message ||
-                'Failed to change password. Please try again.';
-            toast.error(message, errorToastOptions);
+            toast.error(
+                translateApiError(err, 'auditor:resetPassword.failed'),
+                errorToastOptions,
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -73,26 +71,26 @@ const AuditorFirstLoginResetPassword = () => {
 
     return (
         <AuthLayout
-            title="Set your new password"
-            subtitle="For security, you need to change your temporary password before continuing."
+            title={t('auditor:resetPassword.title')}
+            subtitle={t('auditor:resetPassword.subtitle')}
         >
             <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <Controller
                     name="current_password"
                     control={control}
-                    rules={{ required: 'Current password is required' }}
+                    rules={{ required: t('auditor:resetPassword.currentPasswordRequired') }}
                     render={({ field }) => (
                         <Input
                             {...field}
-                            label="Current Password"
+                            label={t('auditor:resetPassword.currentPassword')}
                             type={showPassword.current ? 'text' : 'password'}
-                            placeholder="Enter current password"
+                            placeholder={t('auditor:resetPassword.currentPasswordPlaceholder')}
                             startIcon={<Lock size={18} />}
                             endIcon={(
                                 <button
                                     type="button"
                                     onClick={() => toggleVisibility('current')}
-                                    aria-label={showPassword.current ? 'Hide current password' : 'Show current password'}
+                                    aria-label={showPassword.current ? t('auditor:resetPassword.hideCurrentPassword') : t('auditor:resetPassword.showCurrentPassword')}
                                     style={{
                                         border: 'none',
                                         background: 'transparent',
@@ -118,24 +116,24 @@ const AuditorFirstLoginResetPassword = () => {
                     name="new_password"
                     control={control}
                     rules={{
-                        required: 'New password is required',
+                        required: t('auditor:resetPassword.newPasswordRequired'),
                         minLength: {
                             value: 8,
-                            message: 'Password must be at least 8 characters',
+                            message: t('auditor:resetPassword.passwordMinLength'),
                         },
                     }}
                     render={({ field }) => (
                         <Input
                             {...field}
-                            label="New Password"
+                            label={t('auditor:resetPassword.newPassword')}
                             type={showPassword.next ? 'text' : 'password'}
-                            placeholder="Enter new password"
+                            placeholder={t('auditor:resetPassword.newPasswordPlaceholder')}
                             startIcon={<KeyRound size={18} />}
                             endIcon={(
                                 <button
                                     type="button"
                                     onClick={() => toggleVisibility('next')}
-                                    aria-label={showPassword.next ? 'Hide new password' : 'Show new password'}
+                                    aria-label={showPassword.next ? t('auditor:resetPassword.hideNewPassword') : t('auditor:resetPassword.showNewPassword')}
                                     style={{
                                         border: 'none',
                                         background: 'transparent',
@@ -161,21 +159,21 @@ const AuditorFirstLoginResetPassword = () => {
                     name="confirm_password"
                     control={control}
                     rules={{
-                        required: 'Please confirm your new password',
-                        validate: (value) => value === newPassword || 'Passwords do not match',
+                        required: t('auditor:resetPassword.confirmPasswordRequired'),
+                        validate: (value) => value === newPassword || t('auditor:resetPassword.passwordsMismatch'),
                     }}
                     render={({ field }) => (
                         <Input
                             {...field}
-                            label="Confirm New Password"
+                            label={t('auditor:resetPassword.confirmPassword')}
                             type={showPassword.confirm ? 'text' : 'password'}
-                            placeholder="Re-enter new password"
+                            placeholder={t('auditor:resetPassword.confirmPasswordPlaceholder')}
                             startIcon={<ShieldCheck size={18} />}
                             endIcon={(
                                 <button
                                     type="button"
                                     onClick={() => toggleVisibility('confirm')}
-                                    aria-label={showPassword.confirm ? 'Hide confirm password' : 'Show confirm password'}
+                                    aria-label={showPassword.confirm ? t('auditor:resetPassword.hideConfirmPassword') : t('auditor:resetPassword.showConfirmPassword')}
                                     style={{
                                         border: 'none',
                                         background: 'transparent',
@@ -198,7 +196,7 @@ const AuditorFirstLoginResetPassword = () => {
                 />
 
                 <Button type="submit" size="lg" isLoading={isSubmitting}>
-                    Change Password
+                    {t('auditor:resetPassword.submit')}
                 </Button>
             </form>
         </AuthLayout>

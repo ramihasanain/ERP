@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Button from '@/components/Shared/Button';
 import EditRoleForm from '@/components/permissions/role-forms/EditRoleForm';
@@ -12,22 +13,26 @@ import {
     Users,
 } from 'lucide-react';
 
-const innerTabs = [
-    { id: 'roles', label: 'Roles', icon: <Shield size={18} /> },
-    { id: 'assign', label: 'Employee Assignments', icon: <Users size={18} /> },
-];
-
 /**
  * Permissions & roles UI. Used from Settings (embedded) and from /admin/permissions (full page).
  * @param {{ embedded?: boolean }} props — embedded: no back-to-settings chrome; fits under Settings tabs.
  */
 const PermissionsManagerContent = ({ embedded = false }) => {
+    const { t } = useTranslation(['permissions', 'common']);
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('roles');
 
     /** `null` list view; `{ id }` edit; `{ id: null }` new role draft */
     const [editingRole, setEditingRole] = useState(null);
+
+    const innerTabs = useMemo(
+        () => [
+            { id: 'roles', label: t('roles'), icon: <Shield size={18} /> },
+            { id: 'assign', label: t('assignments'), icon: <Users size={18} /> },
+        ],
+        [t],
+    );
 
     const handleEditRole = (role) => {
         setEditingRole({
@@ -71,18 +76,18 @@ const PermissionsManagerContent = ({ embedded = false }) => {
                         <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate('/admin/settings')} />
                     )}
                     <div style={{ minWidth: 0 }}>
-                        <h2 style={{ fontSize: titleSize, fontWeight: 700, margin: 0 }}>Permissions & Roles</h2>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', margin: '0.25rem 0 0' }}>Manage access control for employees.</p>
+                        <h2 style={{ fontSize: titleSize, fontWeight: 700, margin: 0 }}>{t('pageTitle')}</h2>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', margin: '0.25rem 0 0' }}>{t('subtitle')}</p>
                     </div>
                 </div>
-                <Button icon={<Plus size={18} />} onClick={handleNewRole}>New Role</Button>
+                <Button icon={<Plus size={18} />} onClick={handleNewRole}>{t('newRole')}</Button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', minWidth: 0 }}>
                 <div style={{ width: '100%', overflowX: 'auto' }}>
                     <div
                         role="tablist"
-                        aria-label="Permissions sections"
+                        aria-label={t('tablistAriaLabel')}
                         style={{
                             display: 'flex',
                             flexWrap: 'wrap',

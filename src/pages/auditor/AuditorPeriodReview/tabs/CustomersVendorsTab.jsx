@@ -1,9 +1,11 @@
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Spinner from "@/core/Spinner";
 import { useCustomersVendors } from "@/hooks/useCustomersVendors";
 
 const CustomersVendorsTab = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const { periodId } = useParams();
   const { customers, vendors, isPending, isError, error } =
     useCustomersVendors(periodId);
@@ -20,12 +22,14 @@ const CustomersVendorsTab = () => {
     return (
       <Card>
         <p style={{ color: "var(--color-danger)" }}>
-          Failed to load customers &amp; vendors
+          {t("customersVendorsTab.loadError")}
           {error?.message ? `: ${error.message}` : "."}
         </p>
       </Card>
     );
   }
+
+  const notAvailable = t("customersVendorsTab.notAvailable");
 
   return (
     <div
@@ -43,7 +47,7 @@ const CustomersVendorsTab = () => {
           }}
         >
           <h4 style={{ fontWeight: 700 }}>
-            Customers ({customers.length})
+            {t("customersVendorsTab.customers", { count: customers.length })}
           </h4>
         </div>
         <div style={{ maxHeight: "300px", overflowY: "auto" }}>
@@ -64,13 +68,13 @@ const CustomersVendorsTab = () => {
                 }}
               >
                 {c.contact_person && <span>{c.contact_person} • </span>}
-                {c.email} • {c.phone || "N/A"}
+                {c.email} • {c.phone || notAvailable}
               </div>
             </div>
           ))}
           {customers.length === 0 && (
             <div style={{ padding: "1rem", color: "var(--color-text-muted)", fontSize: "0.8rem" }}>
-              No customers found.
+              {t("customersVendorsTab.noCustomers")}
             </div>
           )}
         </div>
@@ -84,7 +88,7 @@ const CustomersVendorsTab = () => {
           }}
         >
           <h4 style={{ fontWeight: 700 }}>
-            Vendors ({vendors.length})
+            {t("customersVendorsTab.vendors", { count: vendors.length })}
           </h4>
         </div>
         <div style={{ maxHeight: "300px", overflowY: "auto" }}>
@@ -105,13 +109,13 @@ const CustomersVendorsTab = () => {
                 }}
               >
                 {v.contact_person && <span>{v.contact_person} • </span>}
-                {v.email} • {v.phone || "N/A"}
+                {v.email} • {v.phone || notAvailable}
               </div>
             </div>
           ))}
           {vendors.length === 0 && (
             <div style={{ padding: "1rem", color: "var(--color-text-muted)", fontSize: "0.8rem" }}>
-              No vendors found.
+              {t("customersVendorsTab.noVendors")}
             </div>
           )}
         </div>

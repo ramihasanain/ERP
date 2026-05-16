@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import translateApiError from '@/utils/translateApiError';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -31,6 +33,7 @@ const normalizeCustomersResponse = (response) => {
 };
 
 const Customers = () => {
+    const { t } = useTranslation(['accounting', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const { openDrawer } = useAccounting();
@@ -61,15 +64,15 @@ const Customers = () => {
     const handleDeleteCustomer = async () => {
         const id = deletingCustomer?.id;
         if (!id) {
-            toast.error('No customer selected.');
+            toast.error(t('customers.noSelection'));
             return;
         }
         try {
             await deleteCustomerMutation.mutateAsync(id);
-            toast.success('Customer deleted successfully.');
+            toast.success(t('customers.deleteSuccess'));
             setDeletingCustomer(null);
         } catch (error) {
-            toast.error(error?.response?.data?.message || 'Failed to delete customer.');
+            toast.error(translateApiError(error, 'accounting:customers.deleteFailed'));
         }
     };
 
@@ -84,21 +87,21 @@ const Customers = () => {
                         className="cursor-pointer shrink-0"
                     />
                     <div>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Customers & Clients</h2>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Manage your client base.</p>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('customers.title')}</h2>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>{t('customers.subtitle')}</p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div style={{ width: '240px' }}>
                         <Input
-                            placeholder="Search customers..."
+                            placeholder={t('customers.searchPlaceholder')}
                             startIcon={<Search size={16} />}
                             style={{ fontSize: '0.875rem' }}
                             value={searchTerm}
                             onChange={(event) => setSearchTerm(event.target.value)}
                         />
                     </div>
-                    <Button icon={<Plus size={16} />} onClick={() => navigate('new')}>Add Customer</Button>
+                    <Button icon={<Plus size={16} />} onClick={() => navigate('new')}>{t('customers.addCustomer')}</Button>
                 </div>
             </div>
 
@@ -108,10 +111,10 @@ const Customers = () => {
                 </div>
             ) : customersQuery.isError ? (
                 <div style={{ padding: '1.5rem' }}>
-                    <p style={{ margin: 0, color: 'var(--color-error)', fontSize: '0.9rem' }}>Could not load customers.</p>
+                    <p style={{ margin: 0, color: 'var(--color-error)', fontSize: '0.9rem' }}>{t('customers.loadFailed')}</p>
                     <div style={{ marginTop: '1rem' }}>
                         <Button variant="outline" onClick={() => customersQuery.refetch()}>
-                            Retry
+                            {t('common:actions.retry')}
                         </Button>
                     </div>
                 </div>
@@ -120,20 +123,20 @@ const Customers = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                         <thead>
                             <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                                <th style={{ padding: '0.75rem 1.5rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Customer Name</th>
-                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Contact Person</th>
-                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Email</th>
-                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Phone</th>
-                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Currency</th>
-                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Status</th>
-                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Actions</th>
+                                <th style={{ padding: '0.75rem 1.5rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('customers.colName')}</th>
+                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('customers.colContact')}</th>
+                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('customers.colEmail')}</th>
+                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('customers.colPhone')}</th>
+                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('customers.colCurrency')}</th>
+                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('customers.colStatus')}</th>
+                                <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('customers.colActions')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {customers.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} style={{ padding: '1rem 1.5rem', color: 'var(--color-text-secondary)' }}>
-                                        No customers found.
+                                        {t('customers.noCustomers')}
                                     </td>
                                 </tr>
                             ) : (
@@ -154,28 +157,28 @@ const Customers = () => {
                                                     color: cust.isActive ? 'var(--color-success)' : 'var(--color-text-secondary)',
                                                 }}
                                             >
-                                                {cust.isActive ? 'Active' : 'Inactive'}
+                                                {cust.isActive ? t('common:status.active') : t('common:status.inactive')}
                                             </span>
                                         </td>
                                         <td style={{ padding: '1rem 1rem', display: 'flex', gap: '0.5rem' }}>
                                             <button
                                                 onClick={() => openEditModal(cust)}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}
-                                                title="Edit Customer"
+                                                title={t('customers.editCustomer')}
                                             >
                                                 <Edit3 size={18} />
                                             </button>
                                             <button
                                                 onClick={() => openDrawer('Customer', cust.id)}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary-600)' }}
-                                                title="View Activity"
+                                                title={t('customers.viewActivity')}
                                             >
                                                 <Eye size={18} />
                                             </button>
                                             <button
                                                 onClick={() => setDeletingCustomer(cust)}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger-500)' }}
-                                                title="Delete Customer"
+                                                title={t('customers.deleteCustomer')}
                                             >
                                                 <Trash2 size={18} />
                                             </button>
@@ -212,7 +215,10 @@ const Customers = () => {
     );
 };
 
-const DeleteCustomerModal = ({ customer, isDeleting, onCancel, onConfirm }) => (
+const DeleteCustomerModal = ({ customer, isDeleting, onCancel, onConfirm }) => {
+    const { t } = useTranslation(['accounting', 'common']);
+
+    return (
     <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
         background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
@@ -220,22 +226,24 @@ const DeleteCustomerModal = ({ customer, isDeleting, onCancel, onConfirm }) => (
     }}>
         <Card className="padding-xl" style={{ width: '480px', maxWidth: '95%', borderRadius: '16px' }}>
             <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Delete Customer</h3>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>{t('customers.deleteTitle')}</h3>
             </div>
             <p style={{ margin: 0, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
-                Are you sure you want to delete <strong>{customer?.name || 'this customer'}</strong>? This action cannot be undone.
+                {t('customers.deleteMessage', { name: customer?.name || t('customers.deleteFallbackName') })}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-                <Button variant="ghost" onClick={onCancel} disabled={isDeleting}>Cancel</Button>
+                <Button variant="ghost" onClick={onCancel} disabled={isDeleting}>{t('common.cancel')}</Button>
                 <Button onClick={onConfirm} disabled={isDeleting}>
-                    {isDeleting ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? t('customers.deleting') : t('common.delete')}
                 </Button>
             </div>
         </Card>
     </div>
-);
+    );
+};
 
 const EditCustomerModal = ({ customer, onClose }) => {
+    const { t } = useTranslation(['accounting', 'common']);
     const updateCustomerMutation = useCustomPut('/api/sales/customers/a0791e6f-455e-4e66-9627-36faf9541df5/', [['sales-customers']]);
     const initialFormData = useMemo(() => ({
         name: customer.name || '',
@@ -270,10 +278,10 @@ const EditCustomerModal = ({ customer, onClose }) => {
 
         try {
             await updateCustomerMutation.mutateAsync(payload);
-            toast.success('Customer updated successfully.');
+            toast.success(t('customers.updateSuccess'));
             onClose();
         } catch (error) {
-            toast.error(error?.response?.data?.message || 'Failed to update customer.');
+            toast.error(translateApiError(error, 'accounting:customers.updateFailed'));
         }
     };
 
@@ -285,7 +293,7 @@ const EditCustomerModal = ({ customer, onClose }) => {
         }}>
             <Card className="padding-xl" style={{ width: '500px', maxWidth: '95%', borderRadius: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Edit Customer</h3>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{t('customers.editTitle')}</h3>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-400)' }}>
                         <X size={20} />
                     </button>
@@ -293,39 +301,39 @@ const EditCustomerModal = ({ customer, onClose }) => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <Input
-                        label="Company / Customer Name"
+                        label={t('customers.companyName')}
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                     />
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <Input
-                            label="Contact Person"
+                            label={t('customers.contactPerson')}
                             value={formData.contact}
                             onChange={e => setFormData({ ...formData, contact: e.target.value })}
                         />
                         <Input
-                            label="Phone Number"
+                            label={t('customers.phoneNumber')}
                             value={formData.phone}
                             onChange={e => setFormData({ ...formData, phone: e.target.value })}
                         />
                     </div>
 
                     <Input
-                        label="Email Address"
+                        label={t('customers.emailAddress')}
                         type="email"
                         value={formData.email}
                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                     />
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                        <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
                         <Button
                             icon={<Save size={16} />}
                             onClick={handleSubmit}
                             disabled={!isFormChanged || updateCustomerMutation.isPending}
                         >
-                            {updateCustomerMutation.isPending ? 'Saving...' : 'Save Changes'}
+                            {updateCustomerMutation.isPending ? t('customers.saving') : t('customers.saveChanges')}
                         </Button>
                     </div>
                 </div>

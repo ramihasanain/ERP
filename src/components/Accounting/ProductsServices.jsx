@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/context/LanguageContext';
+import translateApiError from '@/utils/translateApiError';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { useAccounting } from '@/context/AccountingContext';
@@ -10,7 +13,6 @@ import Input from '@/components/Shared/Input';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
 import SearchableSelectBackend from '@/core/SearchableSelectBackend';
 import SelectWithLoadMore from '@/core/SelectWithLoadMore';
-import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 import { toast } from 'sonner';
 import { Plus, Trash2, Edit3, Search, ArrowLeft, Package, Briefcase, Save, X } from 'lucide-react';
 
@@ -52,6 +54,9 @@ const normalizeFormSnapshot = (formData) => JSON.stringify({
 });
 
 const ProductsServices = () => {
+    const { t } = useTranslation(['accounting', 'common']);
+    const { dir } = useLanguage();
+    const isRtl = dir === 'rtl';
     const navigate = useNavigate();
     const basePath = useBasePath();
     const { updateProductOrService, deleteProductOrService, taxRules } = useAccounting();
@@ -148,10 +153,16 @@ const ProductsServices = () => {
         [['inventory-products-min-list'], ['inventory-products-name-options'], ['sales-catalog-items-list']]
     );
 
+    const getTypeLabel = (type) => {
+        if (type === 'Service') return t('productsServices.service');
+        if (type === 'Product') return t('productsServices.product');
+        return type;
+    };
+
     const productsAndServices = normalizeArrayResponse(productsResponse).map((item) => ({
         id: item.id,
         productId: item.product_id || '',
-        name: item?.item?.name || 'Unnamed item',
+        name: item?.item?.name || t('productsServices.unnamedItem'),
         description: item?.item?.description || '-',
         type: item?.item?.type_display || (String(item?.item?.kind || '').toLowerCase() === 'service' ? 'Service' : 'Product'),
         unit: item?.item?.unit_name || '-',
@@ -165,7 +176,7 @@ const ProductsServices = () => {
     const filteredItems = productsAndServices;
     const itemNameOptions = normalizeArrayResponse(itemNameOptionsQuery.data).map((item) => ({
         id: item.id,
-        name: item.name || 'Unnamed item',
+        name: item.name || t('productsServices.unnamedItem'),
     }));
     const hasAlternativeItemNameOptions = useMemo(() => {
         const normalizedCurrentName = String(formData.name || '').trim().toLowerCase();
@@ -309,15 +320,15 @@ const ProductsServices = () => {
                     reorder_level: 0,
                     sku: formData.description.startsWith('SKU: ') ? formData.description.replace('SKU: ', '').trim() : formData.name.trim(),
                 });
-                toast.success('Item updated successfully.');
+                toast.success(t('productsServices.updateSuccess'));
             } else if (editingItem) {
                 updateProductOrService(editingItem.id, { ...formData, price: Number(formData.price) });
-                toast.success('Item updated successfully.');
+                toast.success(t('productsServices.updateSuccess'));
             } else {
                 const matchedProduct = itemNameOptions.find((item) => item.name === formData.name);
                 const productId = selectedProductId || matchedProduct?.id;
                 if (!productId) {
-                    toast.error('Please select a valid item name from the dropdown.');
+                    toast.error(t('productsServices.selectValidItem'));
                     return;
                 }
 
@@ -328,11 +339,11 @@ const ProductsServices = () => {
                     description: formData.description || '',
                     selling_price: String(formData.price),
                 });
-                toast.success('Item added successfully.');
+                toast.success(t('productsServices.addSuccess'));
             }
             resetForm();
         } catch (error) {
-            toast.error(getApiErrorMessage(error, 'Failed to save item.'));
+            toast.error(translateApiError(error, 'accounting:productsServices.saveFailed'));
         }
     };
 
@@ -372,11 +383,11 @@ const ProductsServices = () => {
             } else {
                 deleteProductOrService(deleteTarget.id);
             }
-            toast.success('Item deleted successfully.');
+            toast.success(t('productsServices.deleteSuccess'));
             setIsDeleteModalOpen(false);
             setDeleteTarget(null);
         } catch (error) {
-            toast.error(getApiErrorMessage(error, 'Failed to delete item.'));
+            toast.error(translateApiError(error, 'accounting:productsServices.deleteFailed'));
         }
     };
 
@@ -407,12 +418,12 @@ const ProductsServices = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/accounting`)} className="cursor-pointer shrink-0" />
                     <div>
-                        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Products & Services</h1>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Manage your catalog of billable items.</p>
+                        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{t('productsServices.title')}</h1>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{t('productsServices.subtitle')}</p>
                     </div>
                 </div>
-                <Button icon={<Plus size={18} />} onClick={() => { resetForm(); setShowForm(true); }}>
-                    Add Item
+                <Button icon={<Plus size={18} />} onClick={() => { resetForm(); setShowForm(true); }} className="cursor-pointer">
+                    {t('productsServices.addItem')}
                 </Button>
             </div>
 
@@ -422,7 +433,7 @@ const ProductsServices = () => {
                     <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-slate-400)' }} size={18} />
                     <input
                         type="text"
-                        placeholder="Search products or services..."
+                        placeholder={t('productsServices.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{
@@ -435,19 +446,23 @@ const ProductsServices = () => {
                     />
                 </div>
                 <div style={{ display: 'flex', background: 'var(--color-bg-toggle-track)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                    {['All', 'Product', 'Service'].map(type => (
+                    {[
+                        { value: 'All', label: t('productsServices.filterAll') },
+                        { value: 'Product', label: t('productsServices.filterProducts') },
+                        { value: 'Service', label: t('productsServices.filterServices') },
+                    ].map(({ value, label }) => (
                         <button
-                            key={type}
-                            onClick={() => setFilterType(type)}
+                            key={value}
+                            onClick={() => setFilterType(value)}
                             style={{
                                 padding: '6px 14px', border: 'none', borderRadius: '6px',
-                                background: filterType === type ? 'var(--color-bg-surface)' : 'transparent',
-                                boxShadow: filterType === type ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
-                                color: filterType === type ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
+                                background: filterType === value ? 'var(--color-bg-surface)' : 'transparent',
+                                boxShadow: filterType === value ? '0 2px 4px rgba(0,0,0,0.08)' : 'none',
+                                color: filterType === value ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
                                 cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500
                             }}
                         >
-                            {type === 'All' ? 'All' : type + 's'}
+                            {label}
                         </button>
                     ))}
                 </div>
@@ -457,14 +472,14 @@ const ProductsServices = () => {
             {showForm && (
                 <Card className="padding-lg" style={{ border: '2px solid var(--color-border)', background: 'linear-gradient(to bottom right, var(--color-bg-card), color-mix(in srgb, var(--color-primary-600) 12%, var(--color-bg-card)))', overflow: 'visible' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{editingItem ? 'Edit Item' : 'Add New Item'}</h3>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{editingItem ? t('productsServices.editItem') : t('productsServices.addNewItem')}</h3>
                         <button onClick={resetForm} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
                             <X size={20} />
                         </button>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', overflow: 'visible' }}>
                         <SearchableSelectBackend
-                            label="Item Name *"
+                            label={t('productsServices.itemName')}
                             value={formData.name}
                             options={itemNameOptions}
                             searchTerm={itemNameSearch}
@@ -474,77 +489,77 @@ const ProductsServices = () => {
                                 setItemNameSearch(option?.name || '');
                                 setSelectedProductId(option?.id || '');
                             }}
-                            placeholder="Search item name..."
-                            emptyLabel={itemNameOptionsQuery.isLoading ? 'Loading...' : 'No items found'}
+                            placeholder={t('productsServices.searchItemName')}
+                            emptyLabel={itemNameOptionsQuery.isLoading ? t('productsServices.loading') : t('productsServices.noItemsFound')}
                             getOptionLabel={(option) => option.name}
                             getOptionValue={(option) => option.name}
                             disabled={isItemNameSelectDisabled}
                         />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Type</label>
+                            <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('productsServices.type')}</label>
                             <select style={selectStyle} value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })}>
-                                <option value="Service">Service</option>
-                                <option value="Product">Product</option>
+                                <option value="Service">{t('productsServices.service')}</option>
+                                <option value="Product">{t('productsServices.product')}</option>
                             </select>
                         </div>
-                        <Input label="Price *" type="number" min="0" step="0.01" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} placeholder="0.00" />
+                        <Input label={t('productsServices.price')} type="number" min="0" step="0.01" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} placeholder="0.00" />
                         <SelectWithLoadMore
-                            label="Unit"
+                            label={t('productsServices.unit')}
                             value={formData.unit}
                             options={unitSelectOptions}
                             onChange={(nextValue) => setFormData((prev) => ({ ...prev, unit: nextValue || '' }))}
-                            emptyOptionLabel="No units found"
+                            emptyOptionLabel={t('productsServices.noUnitsFound')}
                             hasMore={unitsHasMore}
                             onLoadMore={() => setUnitsPage((prev) => prev + 1)}
                             isLoadingMore={unitsQuery.isFetching && unitsPage > 1}
                             isInitialLoading={unitsQuery.isFetching && unitsPage === 1}
-                            paginationError={unitsQuery.isError ? 'Failed to load more units.' : ''}
+                            paginationError={unitsQuery.isError ? t('productsServices.loadMoreUnitsFailed') : ''}
                             zIndex={1400}
                         />
                         <SearchableSelectBackend
-                            label="Tax Rule"
+                            label={t('productsServices.taxRule')}
                             value={formData.taxRuleId}
                             options={taxOptions}
                             searchTerm={taxSearchTerm}
                             onSearchChange={setTaxSearchTerm}
                             onChange={(nextValue) => setFormData((prev) => ({ ...prev, taxRuleId: nextValue }))}
-                            placeholder="Search tax rule..."
-                            emptyLabel={taxRulesQuery.isFetching && taxPage === 1 ? 'Loading tax rules...' : 'No tax rules found'}
+                            placeholder={t('productsServices.searchTaxRule')}
+                            emptyLabel={taxRulesQuery.isFetching && taxPage === 1 ? t('productsServices.loadingTaxRules') : t('productsServices.noTaxRulesFound')}
                             getOptionLabel={(option) => `${option.name} (${option.rate}%)`}
                             getOptionValue={(option) => option.id}
                             hasMore={taxHasMore}
                             onLoadMore={() => setTaxPage((prev) => prev + 1)}
                             isLoadingMore={taxRulesQuery.isFetching && taxPage > 1}
                             isInitialLoading={taxRulesQuery.isFetching && taxPage === 1}
-                            paginationError={taxRulesQuery.isError ? 'Failed to load more tax rules.' : ''}
+                            paginationError={taxRulesQuery.isError ? t('productsServices.loadMoreTaxFailed') : ''}
                             zIndex={1400}
                         />
                         <SearchableSelectBackend
-                            label="Revenue Account"
+                            label={t('productsServices.revenueAccount')}
                             value={formData.revenueAccount}
                             options={revenueAccountOptions}
                             searchTerm={revenueSearchTerm}
                             onSearchChange={setRevenueSearchTerm}
                             onChange={(nextValue) => setFormData((prev) => ({ ...prev, revenueAccount: nextValue }))}
-                            placeholder="Search revenue account..."
-                            emptyLabel={revenueAccountsQuery.isFetching && revenuePage === 1 ? 'Loading accounts...' : 'No accounts found'}
+                            placeholder={t('productsServices.searchRevenueAccount')}
+                            emptyLabel={revenueAccountsQuery.isFetching && revenuePage === 1 ? t('productsServices.loadingAccounts') : t('productsServices.noAccountsFound')}
                             getOptionLabel={(option) => `${option.code} - ${option.name}`}
                             getOptionValue={(option) => option.id}
                             hasMore={revenueHasMore}
                             onLoadMore={() => setRevenuePage((prev) => prev + 1)}
                             isLoadingMore={revenueAccountsQuery.isFetching && revenuePage > 1}
                             isInitialLoading={revenueAccountsQuery.isFetching && revenuePage === 1}
-                            paginationError={revenueAccountsQuery.isError ? 'Failed to load more accounts.' : ''}
+                            paginationError={revenueAccountsQuery.isError ? t('productsServices.loadMoreAccountsFailed') : ''}
                             zIndex={1400}
                         />
                     </div>
                     <div style={{ marginTop: '1rem' }}>
-                        <Input label="Description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Brief description..." />
+                        <Input label={t('productsServices.description')} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder={t('productsServices.descriptionPlaceholder')} />
                     </div>
                     <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                        <Button variant="ghost" onClick={resetForm}>Cancel</Button>
-                        <Button icon={<Save size={16} />} onClick={handleSubmit} disabled={isSaveDisabled}>
-                            {editingItem ? 'Update' : 'Save'}
+                        <Button variant="ghost" onClick={resetForm} className="cursor-pointer">{t('common:actions.cancel')}</Button>
+                        <Button icon={<Save size={16} />} onClick={handleSubmit} disabled={isSaveDisabled} className="cursor-pointer">
+                            {editingItem ? t('productsServices.update') : t('common:actions.save')}
                         </Button>
                     </div>
                 </Card>
@@ -552,15 +567,16 @@ const ProductsServices = () => {
 
             {/* Items Table */}
             <Card>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '720px' }}>
                     <thead>
-                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-bg-table-header)' }}>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Item</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Type</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Unit</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)', textAlign: 'right' }}>Price</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Tax</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Actions</th>
+                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: isRtl ? 'right' : 'left', background: 'var(--color-bg-table-header)' }}>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('productsServices.colItem')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('productsServices.colType')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('productsServices.colUnit')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)', textAlign: isRtl ? 'left' : 'right' }}>{t('productsServices.colPrice')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('productsServices.colTax')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('productsServices.colActions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -588,22 +604,22 @@ const ProductsServices = () => {
                                         background: item.type === 'Service' ? 'color-mix(in srgb, var(--color-primary-600) 14%, var(--color-bg-card))' : 'var(--color-success-dim)',
                                         color: item.type === 'Service' ? 'var(--color-primary-600)' : 'var(--color-success)'
                                     }}>
-                                        {item.type}
+                                        {getTypeLabel(item.type)}
                                     </span>
                                 </td>
                                 <td style={{ padding: '1rem', color: 'var(--color-text-secondary)' }}>{item.unit}</td>
-                                <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 700 }}>
+                                <td style={{ padding: '1rem', textAlign: isRtl ? 'left' : 'right', fontWeight: 700 }}>
                                     {item.price === null ? '-' : `${Number(item.price).toFixed(2)} ${item.currencyCode || 'JOD'}`}
                                 </td>
                                 <td style={{ padding: '1rem', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
-                                    {item.taxDisplay || (item.taxRuleId ? taxRules.find(r => r.id === item.taxRuleId)?.name || 'N/A' : 'None')}
+                                    {item.taxDisplay || (item.taxRuleId ? taxRules.find(r => r.id === item.taxRuleId)?.name || 'N/A' : t('productsServices.none'))}
                                 </td>
                                 <td style={{ padding: '1rem' }}>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button onClick={() => handleEdit(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary-600)' }} aria-label={`Edit ${item.name}`}>
+                                        <button onClick={() => handleEdit(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary-600)' }} aria-label={t('productsServices.editItemAria', { name: item.name })}>
                                             <Edit3 size={16} />
                                         </button>
-                                        <button onClick={() => handleDeleteClick(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)' }} aria-label={`Delete ${item.name}`}>
+                                        <button onClick={() => handleDeleteClick(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)' }} aria-label={t('productsServices.deleteItemAria', { name: item.name })}>
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
@@ -613,39 +629,40 @@ const ProductsServices = () => {
                         {isProductsLoading && (
                             <tr>
                                 <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                    Loading products...
+                                    {t('productsServices.loadingProducts')}
                                 </td>
                             </tr>
                         )}
                         {isProductsError && (
                             <tr>
                                 <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-error)' }}>
-                                    Failed to load products.
+                                    {t('productsServices.loadFailed')}
                                 </td>
                             </tr>
                         )}
                         {!isProductsLoading && !isProductsError && filteredItems.length === 0 && (
                             <tr>
                                 <td colSpan={6} style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                    No items found. Click "Add Item" to create your first product or service.
+                                    {t('productsServices.emptyState')}
                                 </td>
                             </tr>
                         )}
                     </tbody>
                 </table>
+                </div>
             </Card>
             {isDeleteModalOpen && (
                 <ConfirmationModal
                     isOpen={isDeleteModalOpen}
-                    title="Delete Item"
-                    message={`Are you sure you want to delete "${deleteTarget?.name || 'this item'}"? This action cannot be undone.`}
+                    title={t('productsServices.deleteTitle')}
+                    message={t('productsServices.deleteMessage', { name: deleteTarget?.name || t('productsServices.unnamedItem') })}
                     onCancel={() => {
                         setIsDeleteModalOpen(false);
                         setDeleteTarget(null);
                     }}
                     onConfirm={confirmDelete}
                     type="danger"
-                    confirmText={deleteApiProduct.isPending ? 'Deleting...' : 'Delete'}
+                    confirmText={deleteApiProduct.isPending ? t('productsServices.deleting') : t('common:actions.delete')}
                 />
             )}
         </div>

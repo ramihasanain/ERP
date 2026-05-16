@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import ConfirmationModal from "@/components/Shared/ConfirmationModal";
@@ -6,6 +7,7 @@ import Spinner from "@/core/Spinner";
 import { useCustomQuery } from "@/hooks/useQuery";
 import { useCustomPost } from "@/hooks/useMutation";
 import { toast } from "sonner";
+import translateApiError from "@/utils/translateApiError";
 import {
   Shield,
   CheckCircle,
@@ -25,48 +27,14 @@ import {
 
 const QUERY_KEY = "admin-change-requests";
 
-const statusConfig = {
-  submitted: {
-    label: "Pending",
-    icon: <Clock size={14} />,
-    bg: "var(--color-warning-dim)",
-    color: "var(--color-warning)",
-  },
-  approved: {
-    label: "Approved",
-    icon: <CheckCircle size={14} />,
-    bg: "var(--color-success-dim)",
-    color: "var(--color-success)",
-  },
-  rejected: {
-    label: "Rejected",
-    icon: <XCircle size={14} />,
-    bg: "var(--color-error-dim)",
-    color: "var(--color-error)",
-  },
-};
-
-const typeLabels = {
-  account: "Account",
-  journal_entry: "Journal Entry",
-  journal_line: "Journal Line",
-  invoice: "Invoice",
-};
-
 const actionIcons = {
   create: <Plus size={12} />,
   update: <Pencil size={12} />,
   delete: <Trash2 size={12} />,
 };
 
-const actionLabels = {
-  create: "Create",
-  update: "Update",
-  delete: "Delete",
-};
-
-const formatValue = (val) => {
-  if (val === null || val === undefined) return "—";
+const formatValue = (val, emptyLabel = "—") => {
+  if (val === null || val === undefined) return emptyLabel;
   if (typeof val === "string" || typeof val === "number") return String(val);
   if (Array.isArray(val)) {
     return val
@@ -89,10 +57,10 @@ const formatValue = (val) => {
   return String(val);
 };
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return "—";
+const formatDate = (dateStr, emptyLabel = "—", locale = "en") => {
+  if (!dateStr) return emptyLabel;
   try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -104,7 +72,8 @@ const formatDate = (dateStr) => {
   }
 };
 
-const PayloadComparison = ({ original, proposed, action }) => {
+const PayloadComparison = ({ original, proposed, action, t }) => {
+  const emptyLabel = t("notAvailable", { ns: "common" });
   const allKeys = useMemo(() => {
     const keys = new Set([
       ...Object.keys(original || {}),
@@ -133,7 +102,7 @@ const PayloadComparison = ({ original, proposed, action }) => {
             marginBottom: "0.5rem",
           }}
         >
-          Proposed Values
+          {t("adminChangeRequests.comparison.proposedValues")}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
           {allKeys.map((key) => (
@@ -167,7 +136,7 @@ const PayloadComparison = ({ original, proposed, action }) => {
                   wordBreak: "break-all",
                 }}
               >
-                {formatValue(proposed?.[key])}
+                {formatValue(proposed?.[key], emptyLabel)}
               </span>
             </div>
           ))}
@@ -202,7 +171,7 @@ const PayloadComparison = ({ original, proposed, action }) => {
             letterSpacing: "0.5px",
           }}
         >
-          Original
+          {t("adminChangeRequests.comparison.original")}
         </div>
         <div />
         <div
@@ -214,12 +183,12 @@ const PayloadComparison = ({ original, proposed, action }) => {
             letterSpacing: "0.5px",
           }}
         >
-          Proposed
+          {t("adminChangeRequests.comparison.proposed")}
         </div>
       </div>
       {allKeys.map((key) => {
-        const oldVal = formatValue(original?.[key]);
-        const newVal = formatValue(proposed?.[key]);
+        const oldVal = formatValue(original?.[key], emptyLabel);
+        const newVal = formatValue(proposed?.[key], emptyLabel);
         const changed = oldVal !== newVal;
         return (
           <div
@@ -311,7 +280,62 @@ const PayloadComparison = ({ original, proposed, action }) => {
   );
 };
 
+const TYPE_KEY_MAP = {
+  account: "account",
+  journal_entry: "journalEntry",
+  journal_line: "journal_line",
+  invoice: "invoice",
+};
+
 const AuditorAdjustmentsPage = () => {
+  const { t, i18n } = useTranslation(["auditor", "common"]);
+  const emptyLabel = t("notAvailable", { ns: "common" });
+  const formatDateLocalized = useCallback(
+    (dateStr) => formatDate(dateStr, emptyLabel, i18n.language),
+    [emptyLabel, i18n.language],
+  );
+
+  const statusConfig = useMemo(
+    () => ({
+      submitted: {
+        label: t("status.pending", { ns: "common" }),
+        icon: <Clock size={14} />,
+        bg: "var(--color-warning-dim)",
+        color: "var(--color-warning)",
+      },
+      approved: {
+        label: t("status.approved", { ns: "common" }),
+        icon: <CheckCircle size={14} />,
+        bg: "var(--color-success-dim)",
+        color: "var(--color-success)",
+      },
+      rejected: {
+        label: t("status.rejected", { ns: "common" }),
+        icon: <XCircle size={14} />,
+        bg: "var(--color-error-dim)",
+        color: "var(--color-error)",
+      },
+    }),
+    [t],
+  );
+
+  const getTypeLabel = useCallback(
+    (targetArea) => {
+      const mapped = TYPE_KEY_MAP[targetArea];
+      if (!mapped) return targetArea;
+      if (mapped === "journal_line") {
+        return t(`adminChangeRequests.type.${mapped}`);
+      }
+      return t(`changeRequests.${mapped}`);
+    },
+    [t],
+  );
+
+  const getActionLabel = useCallback(
+    (action) => t(`changeRequests.${action}`, { defaultValue: action }),
+    [t],
+  );
+
   const [statusFilter, setStatusFilter] = useState("all");
   const [periodFilter, setPeriodFilter] = useState("");
   const [adminNotes, setAdminNotes] = useState({});
@@ -321,7 +345,7 @@ const AuditorAdjustmentsPage = () => {
     title: "",
     message: "",
     type: "warning",
-    confirmText: "Confirm",
+    confirmText: t("actions.confirm", { ns: "common" }),
     onConfirm: null,
   });
 
@@ -382,20 +406,23 @@ const AuditorAdjustmentsPage = () => {
     const note = adminNotes[change.id] || "";
     setConfirmModal({
       isOpen: true,
-      title: "Approve Change Request",
-      message: `Are you sure you want to approve "${change.title}"?`,
+      title: t("adminChangeRequests.modals.approveTitle"),
+      message: t("adminChangeRequests.modals.approveMessage", { title: change.title }),
       type: "success",
-      confirmText: "Approve",
+      confirmText: t("adminChangeRequests.modals.approve"),
       onConfirm: () => {
         approveMutation.mutate(
           { id: change.id, body: { admin_note: note } },
           {
             onSuccess: () => {
-              toast.success("Change request approved");
+              toast.success(t("adminChangeRequests.toasts.approved"));
               setAdminNotes((prev) => ({ ...prev, [change.id]: "" }));
               refetch();
             },
-            onError: () => toast.error("Failed to approve change request"),
+            onError: (err) =>
+              toast.error(
+                translateApiError(err, "auditor:adminChangeRequests.toasts.approveFailed"),
+              ),
           },
         );
         closeModal();
@@ -406,25 +433,28 @@ const AuditorAdjustmentsPage = () => {
   const handleReject = (change) => {
     const note = adminNotes[change.id] || "";
     if (!note.trim()) {
-      toast.error("Please enter a rejection reason");
+      toast.error(t("adminChangeRequests.toasts.rejectionReasonRequired"));
       return;
     }
     setConfirmModal({
       isOpen: true,
-      title: "Reject Change Request",
-      message: `Are you sure you want to reject "${change.title}"?`,
+      title: t("adminChangeRequests.modals.rejectTitle"),
+      message: t("adminChangeRequests.modals.rejectMessage", { title: change.title }),
       type: "danger",
-      confirmText: "Reject",
+      confirmText: t("adminChangeRequests.modals.reject"),
       onConfirm: () => {
         rejectMutation.mutate(
           { id: change.id, body: { admin_note: note } },
           {
             onSuccess: () => {
-              toast.success("Change request rejected");
+              toast.success(t("adminChangeRequests.toasts.rejected"));
               setAdminNotes((prev) => ({ ...prev, [change.id]: "" }));
               refetch();
             },
-            onError: () => toast.error("Failed to reject change request"),
+            onError: (err) =>
+              toast.error(
+                translateApiError(err, "auditor:adminChangeRequests.toasts.rejectFailed"),
+              ),
           },
         );
         closeModal();
@@ -437,20 +467,32 @@ const AuditorAdjustmentsPage = () => {
     setBulkNote("");
     setConfirmModal({
       isOpen: true,
-      title: "Approve All Pending",
-      message: `Approve all ${submittedIds.length} pending change requests?`,
+      title: t("adminChangeRequests.modals.approveAllTitle"),
+      message: t("adminChangeRequests.modals.approveAllMessage", {
+        count: submittedIds.length,
+      }),
       type: "success",
-      confirmText: "Approve All",
+      confirmText: t("adminChangeRequests.approveAll"),
       onConfirm: () => {
         approveAllMutation.mutate(
-          { ids: submittedIds, admin_note: bulkNote || "Approved in bulk." },
+          {
+            ids: submittedIds,
+            admin_note: bulkNote || t("adminChangeRequests.bulkNoteApproved"),
+          },
           {
             onSuccess: () => {
-              toast.success(`${submittedIds.length} change requests approved`);
+              toast.success(
+                t("adminChangeRequests.toasts.bulkApproved", {
+                  count: submittedIds.length,
+                }),
+              );
               setBulkNote("");
               refetch();
             },
-            onError: () => toast.error("Failed to approve change requests"),
+            onError: (err) =>
+              toast.error(
+                translateApiError(err, "auditor:adminChangeRequests.toasts.bulkApproveFailed"),
+              ),
           },
         );
         closeModal();
@@ -463,20 +505,32 @@ const AuditorAdjustmentsPage = () => {
     setBulkNote("");
     setConfirmModal({
       isOpen: true,
-      title: "Reject All Pending",
-      message: `Reject all ${submittedIds.length} pending change requests?`,
+      title: t("adminChangeRequests.modals.rejectAllTitle"),
+      message: t("adminChangeRequests.modals.rejectAllMessage", {
+        count: submittedIds.length,
+      }),
       type: "danger",
-      confirmText: "Reject All",
+      confirmText: t("adminChangeRequests.rejectAll"),
       onConfirm: () => {
         rejectAllMutation.mutate(
-          { ids: submittedIds, admin_note: bulkNote || "Rejected in bulk." },
+          {
+            ids: submittedIds,
+            admin_note: bulkNote || t("adminChangeRequests.bulkNoteRejected"),
+          },
           {
             onSuccess: () => {
-              toast.success(`${submittedIds.length} change requests rejected`);
+              toast.success(
+                t("adminChangeRequests.toasts.bulkRejected", {
+                  count: submittedIds.length,
+                }),
+              );
               setBulkNote("");
               refetch();
             },
-            onError: () => toast.error("Failed to reject change requests"),
+            onError: (err) =>
+              toast.error(
+                translateApiError(err, "auditor:adminChangeRequests.toasts.bulkRejectFailed"),
+              ),
           },
         );
         closeModal();
@@ -514,7 +568,7 @@ const AuditorAdjustmentsPage = () => {
               color: "var(--color-text-main)",
             }}
           >
-            <GitCompare size={24} /> Auditor Change Requests
+            <GitCompare size={24} /> {t("adminChangeRequests.title")}
           </h1>
           <p
             style={{
@@ -522,8 +576,7 @@ const AuditorAdjustmentsPage = () => {
               fontSize: "0.85rem",
             }}
           >
-            Review all change requests submitted by auditors. Compare original
-            and proposed values before approving.
+            {t("adminChangeRequests.subtitle")}
           </p>
         </div>
         {submittedIds.length > 0 && (
@@ -543,7 +596,8 @@ const AuditorAdjustmentsPage = () => {
                 gap: "0.5rem",
               }}
             >
-              <AlertTriangle size={16} /> {submittedIds.length} Pending
+              <AlertTriangle size={16} />{" "}
+              {t("adminChangeRequests.pendingBadge", { count: submittedIds.length })}
             </div>
             <Button
               size="sm"
@@ -552,7 +606,7 @@ const AuditorAdjustmentsPage = () => {
               onClick={handleApproveAll}
               disabled={isMutating}
             >
-              Approve All
+              {t("adminChangeRequests.approveAll")}
             </Button>
             <Button
               size="sm"
@@ -565,7 +619,7 @@ const AuditorAdjustmentsPage = () => {
               onClick={handleRejectAll}
               disabled={isMutating}
             >
-              Reject All
+              {t("adminChangeRequests.rejectAll")}
             </Button>
           </div>
         )}
@@ -582,22 +636,22 @@ const AuditorAdjustmentsPage = () => {
       >
         {[
           {
-            label: "Total",
+            label: t("adminChangeRequests.stats.total"),
             value: totalChanges,
             color: "var(--color-text-secondary)",
           },
           {
-            label: "Pending",
+            label: t("adminChangeRequests.stats.pending"),
             value: summary.submitted,
             color: "var(--color-warning)",
           },
           {
-            label: "Approved",
+            label: t("adminChangeRequests.stats.approved"),
             value: summary.approved,
             color: "var(--color-success)",
           },
           {
-            label: "Rejected",
+            label: t("adminChangeRequests.stats.rejected"),
             value: summary.rejected,
             color: "var(--color-error)",
           },
@@ -654,7 +708,7 @@ const AuditorAdjustmentsPage = () => {
               minWidth: "160px",
             }}
           >
-            <option value="">All Periods</option>
+            <option value="">{t("adminChangeRequests.allPeriods")}</option>
             {periods.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -674,10 +728,10 @@ const AuditorAdjustmentsPage = () => {
         {/* Status tabs */}
         <div style={{ display: "flex", gap: "0.5rem" }}>
           {[
-            { id: "all", label: "All" },
-            { id: "submitted", label: "Pending" },
-            { id: "approved", label: "Approved" },
-            { id: "rejected", label: "Rejected" },
+            { id: "all", label: t("status.all", { ns: "common" }) },
+            { id: "submitted", label: t("status.pending", { ns: "common" }) },
+            { id: "approved", label: t("status.approved", { ns: "common" }) },
+            { id: "rejected", label: t("status.rejected", { ns: "common" }) },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -714,7 +768,7 @@ const AuditorAdjustmentsPage = () => {
             style={{ color: "var(--color-error)", marginBottom: "0.75rem" }}
           />
           <p style={{ fontWeight: 500, color: "var(--color-text-main)" }}>
-            Failed to load change requests
+            {t("adminChangeRequests.loadError")}
           </p>
           <p
             style={{
@@ -723,10 +777,10 @@ const AuditorAdjustmentsPage = () => {
               marginBottom: "1rem",
             }}
           >
-            Something went wrong. Please try again.
+            {t("adminChangeRequests.loadErrorHint")}
           </p>
           <Button size="sm" onClick={() => refetch()}>
-            Retry
+            {t("actions.retry", { ns: "common" })}
           </Button>
         </Card>
       )}
@@ -742,7 +796,7 @@ const AuditorAdjustmentsPage = () => {
             }}
           />
           <p style={{ fontWeight: 500, color: "var(--color-text-main)" }}>
-            No change requests found
+            {t("adminChangeRequests.emptyTitle")}
           </p>
           <p
             style={{
@@ -750,7 +804,7 @@ const AuditorAdjustmentsPage = () => {
               color: "var(--color-text-secondary)",
             }}
           >
-            Change requests will appear when auditors submit modifications.
+            {t("adminChangeRequests.emptyHint")}
           </p>
         </Card>
       )}
@@ -818,7 +872,7 @@ const AuditorAdjustmentsPage = () => {
                             color: "var(--color-primary-400)",
                           }}
                         >
-                          {typeLabels[change.target_area] || change.target_area}
+                          {getTypeLabel(change.target_area)}
                         </span>
                         <span
                           style={{
@@ -833,7 +887,8 @@ const AuditorAdjustmentsPage = () => {
                             gap: "0.25rem",
                           }}
                         >
-                          {actionIcons[change.action]} {actionLabels[change.action] || change.action}
+                          {actionIcons[change.action]}{" "}
+                          {getActionLabel(change.action)}
                         </span>
                       </div>
                       {change.description && (
@@ -872,7 +927,7 @@ const AuditorAdjustmentsPage = () => {
                             gap: "0.25rem",
                           }}
                         >
-                          <Clock size={11} /> {formatDate(change.created_at)}
+                          <Clock size={11} /> {formatDateLocalized(change.created_at)}
                         </span>
                         {change.target_object_id && (
                           <span
@@ -903,7 +958,7 @@ const AuditorAdjustmentsPage = () => {
                       }}
                     >
                       <strong style={{ color: "var(--color-info)" }}>
-                        Auditor Note:
+                        {t("adminChangeRequests.auditorNote")}
                       </strong>{" "}
                       {change.auditor_note}
                     </div>
@@ -914,6 +969,7 @@ const AuditorAdjustmentsPage = () => {
                     original={change.original_payload}
                     proposed={change.proposed_payload}
                     action={change.action}
+                    t={t}
                   />
 
                   {/* Admin decision note (for reviewed items) */}
@@ -936,7 +992,7 @@ const AuditorAdjustmentsPage = () => {
                     >
                       <span>
                         <strong>
-                          {change.admin_reviewer_name || "Admin"}:
+                          {change.admin_reviewer_name || t("adminChangeRequests.adminLabel")}:
                         </strong>{" "}
                         {change.admin_note}
                       </span>
@@ -946,7 +1002,9 @@ const AuditorAdjustmentsPage = () => {
                           color: "var(--color-text-muted)",
                         }}
                       >
-                        Reviewed: {formatDate(change.reviewed_at)}
+                        {t("adminChangeRequests.reviewedAt", {
+                          date: formatDateLocalized(change.reviewed_at),
+                        })}
                       </span>
                     </div>
                   )}
@@ -969,7 +1027,7 @@ const AuditorAdjustmentsPage = () => {
                           [change.id]: e.target.value,
                         }))
                       }
-                      placeholder="Admin notes (required for rejection)..."
+                      placeholder={t("adminChangeRequests.adminNotesPlaceholder")}
                       style={{
                         width: "100%",
                         minHeight: "50px",
@@ -1002,7 +1060,7 @@ const AuditorAdjustmentsPage = () => {
                         onClick={() => handleReject(change)}
                         disabled={isMutating}
                       >
-                        Reject
+                        {t("adminChangeRequests.modals.reject")}
                       </Button>
                       <Button
                         style={{ background: "var(--color-success)" }}
@@ -1010,7 +1068,7 @@ const AuditorAdjustmentsPage = () => {
                         onClick={() => handleApprove(change)}
                         disabled={isMutating}
                       >
-                        Approve
+                        {t("adminChangeRequests.modals.approve")}
                       </Button>
                     </div>
                   </div>

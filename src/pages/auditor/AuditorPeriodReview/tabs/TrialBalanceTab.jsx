@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import Spinner from "@/core/Spinner";
@@ -9,6 +10,7 @@ import { useTrialBalance } from "@/hooks/useTrialBalance";
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 const TrialBalanceTab = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const { periodId } = useParams();
   const [asOf, setAsOf] = useState(todayISO);
   const [includeZeroAccounts, setIncludeZeroAccounts] = useState(false);
@@ -32,7 +34,7 @@ const TrialBalanceTab = () => {
           style={{ color: "var(--color-error)", marginBottom: "0.5rem" }}
         />
         <p style={{ fontWeight: 600, marginBottom: "0.25rem" }}>
-          Failed to load trial balance
+          {t("trialBalanceTab.loadError")}
         </p>
         <p
           style={{
@@ -41,10 +43,10 @@ const TrialBalanceTab = () => {
             marginBottom: "0.75rem",
           }}
         >
-          {error?.message || "An unexpected error occurred"}
+          {error?.message || t("validation.unexpectedError")}
         </p>
         <Button size="sm" onClick={refetch}>
-          Retry
+          {t("common:actions.retry")}
         </Button>
       </Card>
     );
@@ -64,7 +66,7 @@ const TrialBalanceTab = () => {
         }}
       >
         <h4 style={{ fontWeight: 700 }}>
-          Trial Balance ({accounts.length})
+          {t("trialBalanceTab.title", { count: accounts.length })}
         </h4>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
@@ -78,7 +80,7 @@ const TrialBalanceTab = () => {
                 whiteSpace: "nowrap",
               }}
             >
-              As of:
+              {t("trialBalanceTab.asOf")}
             </label>
             <input
               id="tb-as-of"
@@ -115,7 +117,7 @@ const TrialBalanceTab = () => {
                 accentColor: "var(--color-primary-600)",
               }}
             />
-            Include zero balances
+            {t("trialBalanceTab.includeZero")}
           </label>
         </div>
       </div>
@@ -136,11 +138,11 @@ const TrialBalanceTab = () => {
                 top: 0,
               }}
             >
-              <th style={{ padding: "8px 12px", textAlign: "left" }}>Code</th>
-              <th style={{ padding: "8px 12px", textAlign: "left" }}>Account</th>
-              <th style={{ padding: "8px 12px", textAlign: "left" }}>Currency</th>
-              <th style={{ padding: "8px 12px", textAlign: "right" }}>Debit</th>
-              <th style={{ padding: "8px 12px", textAlign: "right" }}>Credit</th>
+              <th style={{ padding: "8px 12px", textAlign: "left" }}>{t("trialBalanceTab.code")}</th>
+              <th style={{ padding: "8px 12px", textAlign: "left" }}>{t("trialBalanceTab.account")}</th>
+              <th style={{ padding: "8px 12px", textAlign: "left" }}>{t("trialBalanceTab.currency")}</th>
+              <th style={{ padding: "8px 12px", textAlign: "right" }}>{t("trialBalanceTab.debit")}</th>
+              <th style={{ padding: "8px 12px", textAlign: "right" }}>{t("trialBalanceTab.credit")}</th>
             </tr>
           </thead>
           <tbody>
@@ -154,7 +156,7 @@ const TrialBalanceTab = () => {
                     color: "var(--color-text-muted)",
                   }}
                 >
-                  No accounts found
+                  {t("trialBalanceTab.noAccounts")}
                 </td>
               </tr>
             ) : (
@@ -194,7 +196,7 @@ const TrialBalanceTab = () => {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })
-                      : "—"}
+                      : t("common:notAvailable")}
                   </td>
                   <td
                     style={{
@@ -208,7 +210,7 @@ const TrialBalanceTab = () => {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })
-                      : "—"}
+                      : t("common:notAvailable")}
                   </td>
                 </tr>
               ))
@@ -221,7 +223,7 @@ const TrialBalanceTab = () => {
               }}
             >
               <td colSpan={3} style={{ padding: "10px 12px" }}>
-                Total
+                {t("trialBalanceTab.total")}
               </td>
               <td
                 style={{

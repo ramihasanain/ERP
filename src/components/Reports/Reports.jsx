@@ -1,7 +1,10 @@
 import React from 'react';
 import Card from '@/components/Shared/Card';
-import { BarChart3, PieChart, TrendingUp, FileText, ArrowUpRight } from 'lucide-react';
+import Button from '@/components/Shared/Button';
+import { BarChart3, PieChart, TrendingUp, FileText, ArrowUpRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useBasePath } from '@/hooks/useBasePath';
 
 const ReportCard = ({ title, description, icon, links }) => {
     const navigate = useNavigate();
@@ -28,53 +31,66 @@ const ReportCard = ({ title, description, icon, links }) => {
 };
 
 const Reports = () => {
+    const { t } = useTranslation('reports');
+    const navigate = useNavigate();
+    const basePath = useBasePath();
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Reports Center</h1>
-                <p style={{ color: 'var(--color-text-secondary)' }}>Financial insights and operational analytics.</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <Button
+                    variant="ghost"
+                    icon={<ArrowLeft size={18} />}
+                    onClick={() => navigate(`${basePath}/accounting`)}
+                    className="cursor-pointer shrink-0"
+                    aria-label={t('aria.back')}
+                />
+                <div>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('center.title')}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{t('center.subtitle')}</p>
+                </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                 <ReportCard
-                    title="Financial Statements"
-                    description="Essential financial reports for accounting compliance and health monitoring."
+                    title={t('cards.financial.title')}
+                    description={t('cards.financial.description')}
                     icon={<TrendingUp size={24} />}
                     links={[
-                        { label: "Balance Sheet", url: "balance-sheet" },
-                        { label: "Profit & Loss (Income Statement)", url: "pnl" },
-                        { label: "Cash Flow Statement", url: "cash-flow" },
-                        { label: "Tax Return (VAT/GST)", url: "tax-return" }
+                        { label: t('cards.financial.balanceSheet'), url: 'balance-sheet' },
+                        { label: t('cards.financial.profitAndLoss'), url: 'pnl' },
+                        { label: t('cards.financial.cashFlow'), url: 'cash-flow' },
+                        { label: t('cards.financial.taxReturn'), url: 'tax-return' },
                     ]}
                 />
                 <ReportCard
-                    title="Sales & Customers"
-                    description="Analyze revenue trends, customer growth, and outstanding debts."
+                    title={t('cards.sales.title')}
+                    description={t('cards.sales.description')}
                     icon={<BarChart3 size={24} />}
                     links={[
-                        { label: "Sales by Customer", url: "sales-by-customer" },
-                        { label: "Aged Receivables", url: "aged-receivables" },
-                        { label: "Revenue by Item", url: "revenue-by-item" }
+                        { label: t('cards.sales.salesByCustomer'), url: 'sales-by-customer' },
+                        { label: t('cards.sales.agedReceivables'), url: 'aged-receivables' },
+                        { label: t('cards.sales.revenueByItem'), url: 'revenue-by-item' },
                     ]}
                 />
                 <ReportCard
-                    title="Expense & Purchasing"
-                    description="Track spending, vendor payments, and operational costs."
+                    title={t('cards.expense.title')}
+                    description={t('cards.expense.description')}
                     icon={<PieChart size={24} />}
                     links={[
-                        { label: "Expense Breakdown", url: "expense-breakdown" },
-                        { label: "Aged Payables", url: "aged-payables" },
-                        { label: "Purchase History", url: "purchase-history" }
+                        { label: t('cards.expense.expenseBreakdown'), url: 'expense-breakdown' },
+                        { label: t('cards.expense.agedPayables'), url: 'aged-payables' },
+                        { label: t('cards.expense.purchaseHistory'), url: 'purchase-history' },
                     ]}
                 />
                 <ReportCard
-                    title="Inventory & Stock"
-                    description="Monitor stock levels, valuation, and movement history."
+                    title={t('cards.inventory.title')}
+                    description={t('cards.inventory.description')}
                     icon={<FileText size={24} />}
                     links={[
-                        { label: "Inventory Valuation", url: "inventory-valuation" },
-                        { label: "Low Stock Alert", url: "low-stock" },
-                        { label: "Stock Movement Log", url: "stock-movement" }
+                        { label: t('cards.inventory.inventoryValuation'), url: 'inventory-valuation' },
+                        { label: t('cards.inventory.lowStock'), url: 'low-stock' },
+                        { label: t('cards.inventory.stockMovement'), url: 'stock-movement' },
                     ]}
                 />
             </div>

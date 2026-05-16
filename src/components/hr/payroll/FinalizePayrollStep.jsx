@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { CheckCircle, Lock, Download } from 'lucide-react';
@@ -6,6 +7,7 @@ import Spinner from '@/core/Spinner';
 import ResourceLoadError from '@/core/ResourceLoadError';
 
 const formatMoney = (value, currency) => {
+    const { t } = useTranslation(['hr', 'common']);
     const num = Number(value);
     if (Number.isNaN(num)) return `— ${currency}`;
     return `${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
@@ -25,6 +27,7 @@ const FinalizePayrollStep = ({
     isFinalizing = false,
     canFinalize = true,
 }) => {
+
     const data = finalizeSummary;
     const currency = data?.currency ?? 'USD';
     const periodLabel = data?.period_name ?? '—';

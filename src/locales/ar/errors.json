@@ -1,0 +1,34 @@
+{
+  "generic": {
+    "somethingWentWrong": "حدث خطأ ما.",
+    "unknown": "حدث خطأ غير متوقع.",
+    "network": "خطأ في الشبكة. يرجى التحقق من الاتصال والمحاولة مرة أخرى.",
+    "timeout": "انتهت مهلة الطلب. يرجى المحاولة مرة أخرى.",
+    "unauthorized": "غير مصرح لك. يرجى تسجيل الدخول مرة أخرى.",
+    "forbidden": "ليس لديك صلاحية لتنفيذ هذا الإجراء.",
+    "notFound": "المورد المطلوب غير موجود.",
+    "serverError": "خطأ في الخادم. يرجى المحاولة لاحقاً."
+  },
+  "api": {
+    "this field is required.": "هذا الحقل مطلوب.",
+    "this field may not be blank.": "لا يمكن أن يكون هذا الحقل فارغاً.",
+    "this field may not be null.": "لا يمكن أن يكون هذا الحقل فارغاً.",
+    "enter a valid email address.": "أدخل بريداً إلكترونياً صالحاً.",
+    "enter a valid url.": "أدخل رابطاً صالحاً.",
+    "must be a valid uuid.": "يجب أن يكون UUID صالحاً.",
+    "a valid integer is required.": "مطلوب عدد صحيح صالح.",
+    "a valid number is required.": "مطلوب رقم صالح.",
+    "no active account found with the given credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "invalid credentials.": "بيانات الاعتماد غير صالحة.",
+    "authentication credentials were not provided.": "لم يتم تقديم بيانات المصادقة.",
+    "you do not have permission to perform this action.": "ليس لديك صلاحية لتنفيذ هذا الإجراء.",
+    "not found.": "غير موجود.",
+    "method not allowed.": "الطريقة غير مسموحة."
+  },
+  "validation": {
+    "required": "هذا الحقل مطلوب",
+    "email": "أدخل بريداً إلكترونياً صالحاً",
+    "minLength": "يجب أن يكون {{min}} أحرف على الأقل",
+    "maxLength": "يجب ألا يتجاوز {{max}} حرفاً"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "wizard": {
+    "title": "Setup your workspace",
+    "subtitleStep": "Step {{current}} of {{total}}",
+    "noSignupTitle": "Create an account",
+    "noSignupSubtitle": "Start your 14-day free trial",
+    "noSignupMessage": "Please start from the signup form to continue onboarding.",
+    "goToSignUp": "Go to Sign Up",
+    "loadingTitle": "Setup your workspace",
+    "loadingSubtitle": "Loading onboarding data...",
+    "loadingMessage": "Preparing industries, countries, currencies, languages, and modules.",
+    "errorTitle": "Setup your workspace",
+    "errorSubtitle": "Could not load onboarding data",
+    "errorDefault": "Failed to load onboarding data.",
+    "retry": "Retry"
+  },
+  "steps": {
+    "companyInfo": "معلومات الشركة",
+    "regionalSettings": "الإعدادات الإقليمية",
+    "selectModules": "اختيار الوحدات"
+  },
+  "companyInfo": {
+    "title": "Company Details",
+    "companyName": "Company Name",
+    "companyNamePlaceholder": "Acme Corp",
+    "industry": "Industry",
+    "selectIndustry": "Select Industry...",
+    "country": "Country",
+    "selectCountry": "Select Country..."
+  },
+  "regionalSettings": {
+    "title": "الإعدادات الإقليمية",
+    "baseCurrency": "Base Currency",
+    "selectCurrency": "Select Currency...",
+    "defaultLanguage": "Default Language",
+    "selectLanguage": "Select Language...",
+    "autoConfigTitle": "Auto-Configuration",
+    "autoConfigDescription": "Based on your selection of <strong>{{country}}</strong>, we will automatically apply localized tax rules, chart of accounts, and payroll policies.",
+    "yourCountry": "your country"
+  },
+  "modules": {
+    "title": "اختيار الوحدات",
+    "subtitle": "Choose the apps you want to start with.",
+    "fallbackDesc": "ERP module",
+    "fallback": {
+      "accounting": {
+        "name": "المحاسبة",
+        "desc": "Ledgers, Invoicing, Tax"
+      },
+      "hr": {
+        "name": "الموارد البشرية والرواتب",
+        "desc": "Employees, Payroll, Leaves"
+      },
+      "inventory": {
+        "name": "المخزون",
+        "desc": "Stock, Warehouses, POs"
+      }
+    }
+  },
+  "validation": {
+    "companyNameRequired": "اسم الشركة مطلوب",
+    "industryRequired": "القطاع مطلوب",
+    "countryRequired": "الدولة مطلوبة",
+    "currencyRequired": "العملة الأساسية مطلوبة",
+    "languageRequired": "اللغة الافتراضية مطلوبة",
+    "modulesRequired": "اختر وحدة واحدة على الأقل"
+  },
+  "actions": {
+    "back": "رجوع",
+    "next": "التالي",
+    "continue": "Continue",
+    "finish": "Finish Setup"
+  },
+  "success": "Account created successfully. Welcome to your workspace!",
+  "failed": "Registration failed. Please verify your setup details and try again."
+}

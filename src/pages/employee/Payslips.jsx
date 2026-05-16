@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
-import { FileText, Download, Calendar, Eye } from 'lucide-react';
+import { FileText, Download, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useCustomQuery from '@/hooks/useQuery';
 import NoData from '@/core/NoData';
@@ -27,6 +28,7 @@ const selectPayslipsPayload = (payload) => {
 };
 
 const Payslips = () => {
+    const { t } = useTranslation(['employee', 'common']);
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -56,9 +58,9 @@ const Payslips = () => {
         return (
             <ResourceLoadError
                 error={payslipsQuery.error}
-                title="Payslips could not be loaded"
+                title={t('employee:payslips.loadError')}
                 onRefresh={() => payslipsQuery.refetch()}
-                refreshLabel="Try again"
+                refreshLabel={t('common:actions.retry')}
             />
         );
     }
@@ -66,20 +68,22 @@ const Payslips = () => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Payslips</h1>
-                <p style={{ color: 'var(--color-text-secondary)' }}>View and download your monthly salary slips.</p>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>{t('employee:payslips.title')}</h1>
+                <p style={{ color: 'var(--color-text-secondary)' }}>{t('employee:payslips.subtitle')}</p>
             </div>
 
             {payslipsQuery.isFetching && (
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Updating…</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                    {t('employee:payslips.updating')}
+                </div>
             )}
 
             {payslips.length === 0 ? (
-                <NoData label="payslips" />
+                <NoData label={t('employee:empty.payslips')} />
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
                     {payslips.map((slip) => {
-                        const month = slip.month || slip.period_name || slip.name || 'Payslip';
+                        const month = slip.month || slip.period_name || slip.name || t('employee:payslips.defaultName');
                         const date = slip.date || slip.pay_date || slip.processed_at || '-';
                         const amount = slip.amount || slip.net_pay || slip.net || slip.total_net || '-';
                         const slipId = slip.id || slip.payslip_id || slip.line_id;
@@ -92,14 +96,16 @@ const Payslips = () => {
                                         </div>
                                         <div>
                                             <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{month}</h3>
-                                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Processed on {date}</span>
+                                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                                                {t('employee:payslips.processedOn', { date })}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div style={{ padding: '1rem 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', marginBottom: '1rem' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ color: 'var(--color-text-secondary)' }}>Net Pay</span>
+                                        <span style={{ color: 'var(--color-text-secondary)' }}>{t('employee:payslips.netPay')}</span>
                                         <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>{amount}</span>
                                     </div>
                                 </div>
@@ -112,13 +118,13 @@ const Payslips = () => {
                                         onClick={() => (slipId ? navigate(`/employee/payslips/${slipId}`) : null)}
                                         disabled={!slipId}
                                     >
-                                        View
+                                        {t('common:actions.view')}
                                     </Button>
                                     <Button
                                         variant="ghost"
                                         style={{ flex: 1 }}
                                         icon={<Download size={16} />}
-                                        onClick={() => alert(`Downloading payslip for ${month}...`)}
+                                        onClick={() => alert(t('employee:payslips.downloading', { month }))}
                                     >
                                         PDF
                                     </Button>

@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import Spinner from "@/core/Spinner";
 import InvoiceForm from "@/components/Accounting/InvoiceForm";
 import useCustomQuery from "@/hooks/useQuery";
 import { useCustomPost } from "@/hooks/useMutation";
-import { getApiErrorMessage } from "@/utils/apiErrorMessage";
+import { translateApiError } from "@/utils/translateApiError";
 import { Plus, Edit3, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,12 +16,12 @@ const toNumber = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-const normalizeOptions = (data) => {
+const normalizeOptions = (data, t) => {
   const customers = (data?.customers || [])
     .filter((c) => c.is_active !== false)
     .map((c) => ({
       id: c.id,
-      name: c.name || "Unnamed customer",
+      name: c.name || t("invoicesTab.unnamedCustomer"),
       contactPerson: c.contact_person || "",
       email: c.email || "",
       phone: c.phone || "",
@@ -32,7 +33,7 @@ const normalizeOptions = (data) => {
     return {
       id: ci.id,
       productId: ci.product_id || ci.id,
-      name: item.name || ci.name || "Unnamed item",
+      name: item.name || ci.name || t("invoicesTab.unnamedItem"),
       sku: item.sku || "",
       price: toNumber(ci.selling_price),
       description: item.description || item.name || "",
@@ -43,13 +44,13 @@ const normalizeOptions = (data) => {
 
   const warehouses = (data?.warehouses || []).map((w) => ({
     id: w.id,
-    name: w.name || "Unnamed warehouse",
+    name: w.name || t("invoicesTab.unnamedWarehouse"),
     location: w.location || "",
   }));
 
   const taxRules = (data?.tax_rules || []).map((r) => ({
     id: r.id,
-    name: r.name || "Unnamed tax rule",
+    name: r.name || t("invoicesTab.unnamedTaxRule"),
     rate: toNumber(r.rate_percent ?? r.rate),
   }));
 
@@ -57,6 +58,7 @@ const normalizeOptions = (data) => {
 };
 
 const InvoicesTab = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const { periodId } = useParams();
   const [formModal, setFormModal] = useState(null);
 
@@ -81,8 +83,8 @@ const InvoicesTab = () => {
   }, [invoicesQuery.data]);
 
   const options = useMemo(
-    () => normalizeOptions(optionsQuery.data),
-    [optionsQuery.data],
+    () => normalizeOptions(optionsQuery.data, t),
+    [optionsQuery.data, t],
   );
 
   const openCreate = () => setFormModal({ mode: "create", invoice: null });
@@ -96,46 +98,47 @@ const InvoicesTab = () => {
     try {
       await changeRequestMutation.mutateAsync({
         title: isEdit
-          ? `Update invoice ${formModal.invoice?.number || formModal.invoice?.id || ""}`
-          : "Create new invoice",
+          ? t("invoicesTab.updateTitle", {
+              number: formModal.invoice?.number || formModal.invoice?.id || "",
+            })
+          : t("invoicesTab.createTitle"),
         target_area: "invoice",
         action: isEdit ? "update" : "create",
         target_object_id: isEdit ? formModal.invoice.id : "",
         proposed_payload: payload,
       });
       toast.success(
-        isEdit
-          ? "Invoice update request submitted."
-          : "Invoice creation request submitted.",
+        isEdit ? t("invoicesTab.updateSuccess") : t("invoicesTab.createSuccess"),
       );
       closeModal();
     } catch (error) {
       toast.error(
-        getApiErrorMessage(
+        translateApiError(
           error,
-          isEdit
-            ? "Failed to submit invoice update."
-            : "Failed to submit invoice creation.",
+          isEdit ? "auditor:invoicesTab.updateFailed" : "auditor:invoicesTab.createFailed",
         ),
       );
     }
   };
 
   const handleDelete = async (inv) => {
-    if (!confirm(`Delete invoice ${inv.number || inv.id}?`)) return;
+    if (
+      !confirm(
+        t("invoicesTab.deleteConfirm", { number: inv.number || inv.id }),
+      )
+    )
+      return;
     try {
       await changeRequestMutation.mutateAsync({
-        title: `Delete invoice ${inv.number || inv.id}`,
+        title: t("invoicesTab.deleteTitle", { number: inv.number || inv.id }),
         target_area: "invoice",
         action: "delete",
         target_object_id: inv.id,
         proposed_payload: {},
       });
-      toast.success("Invoice deletion request submitted.");
+      toast.success(t("invoicesTab.deleteSuccess"));
     } catch (error) {
-      toast.error(
-        getApiErrorMessage(error, "Failed to submit invoice deletion."),
-      );
+      toast.error(translateApiError(error, "auditor:invoicesTab.deleteFailed"));
     }
   };
 
@@ -159,9 +162,11 @@ const InvoicesTab = () => {
             alignItems: "center",
           }}
         >
-          <h4 style={{ fontWeight: 700 }}>Invoices ({invoices.length})</h4>
+          <h4 style={{ fontWeight: 700 }}>
+            {t("invoicesTab.title", { count: invoices.length })}
+          </h4>
           <Button size="sm" icon={<Plus size={14} />} onClick={openCreate}>
-            Add Invoice
+            {t("invoicesTab.addInvoice")}
           </Button>
         </div>
 
@@ -176,17 +181,19 @@ const InvoicesTab = () => {
             <thead>
               <tr style={{ background: "var(--color-slate-50)" }}>
                 <th style={{ padding: "8px 12px", textAlign: "left" }}>
-                  Invoice #
+                  {t("invoicesTab.invoiceNumber")}
                 </th>
                 <th style={{ padding: "8px 12px", textAlign: "left" }}>
-                  Customer
+                  {t("invoicesTab.customer")}
                 </th>
-                <th style={{ padding: "8px 12px", textAlign: "left" }}>Date</th>
+                <th style={{ padding: "8px 12px", textAlign: "left" }}>
+                  {t("invoicesTab.date")}
+                </th>
                 <th style={{ padding: "8px 12px", textAlign: "right" }}>
-                  Amount
+                  {t("invoicesTab.amount")}
                 </th>
                 <th style={{ padding: "8px 12px", textAlign: "center" }}>
-                  Status
+                  {t("invoicesTab.status")}
                 </th>
                 <th
                   style={{
@@ -195,7 +202,7 @@ const InvoicesTab = () => {
                     width: "90px",
                   }}
                 >
-                  Actions
+                  {t("invoicesTab.actions")}
                 </th>
               </tr>
             </thead>
@@ -209,7 +216,7 @@ const InvoicesTab = () => {
                     {inv.number || inv.id}
                   </td>
                   <td style={{ padding: "6px 12px" }}>
-                    {inv.customer_name || "N/A"}
+                    {inv.customer_name || t("invoicesTab.notAvailable")}
                   </td>
                   <td
                     style={{
@@ -269,7 +276,7 @@ const InvoicesTab = () => {
                           color: "var(--color-primary-600)",
                           padding: "2px",
                         }}
-                        title="Edit"
+                        title={t("common:actions.edit")}
                       >
                         <Edit3 size={13} />
                       </button>
@@ -282,7 +289,7 @@ const InvoicesTab = () => {
                           color: "var(--color-error)",
                           padding: "2px",
                         }}
-                        title="Delete"
+                        title={t("common:actions.delete")}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -300,7 +307,7 @@ const InvoicesTab = () => {
                       color: "var(--color-text-muted)",
                     }}
                   >
-                    No invoices found.
+                    {t("invoicesTab.noInvoices")}
                   </td>
                 </tr>
               )}
@@ -349,8 +356,10 @@ const InvoicesTab = () => {
             >
               <h3 style={{ fontWeight: 700, fontSize: "1.1rem" }}>
                 {formModal.mode === "edit"
-                  ? `Edit Invoice: ${formModal.invoice?.number || ""}`
-                  : "Create Invoice"}
+                  ? t("invoicesTab.editInvoice", {
+                      number: formModal.invoice?.number || "",
+                    })
+                  : t("invoicesTab.createInvoice")}
               </h3>
               <button
                 onClick={closeModal}
@@ -379,8 +388,8 @@ const InvoicesTab = () => {
                 isSubmitting={changeRequestMutation.isPending}
                 submitLabel={
                   formModal.mode === "edit"
-                    ? "Submit Update Request"
-                    : "Submit Invoice Request"
+                    ? t("invoicesTab.submitUpdate")
+                    : t("invoicesTab.submitInvoice")
                 }
                 showNotes={false}
                 dropdownZIndexBase={10000}

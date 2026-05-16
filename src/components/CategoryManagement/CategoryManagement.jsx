@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from '@/components/Shared/Button';
 import Modal from '@/components/Shared/Modal';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
@@ -8,6 +9,7 @@ import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost, useCustomPut, useCustomRemove } from '@/hooks/useMutation';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { translateApiError } from '@/utils/translateApiError';
 import { Plus, Edit3, Trash2, Package, Monitor, Briefcase, FolderOpen } from 'lucide-react';
 
 const normalizeArrayResponse = (response) => {
@@ -110,6 +112,7 @@ const GROUP_ICONS = [Package, Monitor, Briefcase, FolderOpen];
 const CATEGORY_LIST_MAX_HEIGHT = '27.5rem';
 
 const CategoryManagement = () => {
+    const { t } = useTranslation(['settings', 'common']);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
@@ -207,10 +210,10 @@ const CategoryManagement = () => {
         try {
             if (editingCategory?.id) {
                 await updateCategory.mutateAsync({ id: editingCategory.id, ...payload });
-                toast.success('Category updated successfully.');
+                toast.success(t('settings:categoryManagement.toast.updated'));
             } else {
                 await createCategory.mutateAsync(payload);
-                toast.success('Category created successfully.');
+                toast.success(t('settings:categoryManagement.toast.created'));
             }
 
             closeForm();
@@ -221,8 +224,7 @@ const CategoryManagement = () => {
                 is_active: true,
             });
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to save category.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'settings:categoryManagement.toast.saveFailed'));
         }
     };
 
@@ -231,20 +233,19 @@ const CategoryManagement = () => {
 
         try {
             await deleteCategory.mutateAsync(deleteTarget.id);
-            toast.success('Category deleted successfully.');
+            toast.success(t('settings:categoryManagement.toast.deleted'));
             setDeleteTarget(null);
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to delete category.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'settings:categoryManagement.toast.deleteFailed'));
         }
     };
 
     const handleRetry = async () => {
         try {
             await Promise.all([categoriesQuery.refetch(), categoryTypesQuery.refetch()]);
-            toast.success('Categories refreshed.');
+            toast.success(t('settings:categoryManagement.toast.refreshed'));
         } catch {
-            toast.error('Refresh failed. Please try again.');
+            toast.error(t('settings:categoryManagement.toast.refreshFailed'));
         }
     };
 
@@ -252,10 +253,10 @@ const CategoryManagement = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div>
                 <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, color: 'var(--color-text-main)' }}>
-                    Category Management
+                    {t('settings:categoryManagement.title')}
                 </h1>
                 <p style={{ color: 'var(--color-text-secondary)', margin: '0.35rem 0 0', fontSize: '0.95rem' }}>
-                    Manage all category dropdowns used across the system.
+                    {t('settings:categoryManagement.subtitle')}
                 </p>
             </div>
 
@@ -271,16 +272,16 @@ const CategoryManagement = () => {
                     }}
                 >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
-                        <p style={{ margin: 0, color: 'var(--color-error)' }}>Could not load categories data.</p>
+                        <p style={{ margin: 0, color: 'var(--color-error)' }}>{t('settings:categoryManagement.loadError')}</p>
                         <Button variant="outline" onClick={handleRetry}>
-                            Retry
+                            {t('common:actions.retry')}
                         </Button>
                     </div>
                 </div>
             )}
 
             {!isLoading && !hasError && categoryTypes.length === 0 && (
-                <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>No category groups configured yet.</p>
+                <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>{t('settings:categoryManagement.noGroups')}</p>
             )}
 
             {!isLoading && !hasError && categoryTypes.length > 0 && (
@@ -341,10 +342,10 @@ const CategoryManagement = () => {
                                                         lineHeight: 1.3,
                                                     }}
                                                 >
-                                                    {type.name || 'Unnamed group'}
+                                                    {type.name || t('settings:categoryManagement.unnamedGroup')}
                                                 </div>
                                                 <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '0.2rem' }}>
-                                                    {list.length === 1 ? '1 category' : `${list.length} categories`}
+                                                    {t('settings:categoryManagement.categoryCount', { count: list.length })}
                                                 </div>
                                             </div>
                                         </div>
@@ -355,7 +356,7 @@ const CategoryManagement = () => {
                                             className="cursor-pointer"
                                             icon={<Plus size={16} />}
                                             onClick={() => handleAddForType(type.id)}
-                                            aria-label={`Add category to ${type.name || 'group'}`}
+                                            aria-label={t('settings:categoryManagement.addToGroup', { name: type.name || t('settings:categoryManagement.unnamedGroup') })}
                                         />
                                     </div>
                                 </div>
@@ -376,7 +377,7 @@ const CategoryManagement = () => {
                                                 color: 'var(--color-text-muted)',
                                             }}
                                         >
-                                            No categories yet. Use + to add one.
+                                            {t('settings:categoryManagement.noCategoriesHint')}
                                         </p>
                                     ) : (
                                         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
@@ -402,7 +403,7 @@ const CategoryManagement = () => {
                                                             type="button"
                                                             onClick={() => handleEdit(category)}
                                                             style={iconBtnStyle}
-                                                            title="Edit"
+                                                            title={t('common:actions.edit')}
                                                         >
                                                             <Edit3 size={15} />
                                                         </button>
@@ -459,10 +460,10 @@ const CategoryManagement = () => {
                                     </div>
                                     <div>
                                         <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--color-text-main)' }}>
-                                            Uncategorized
+                                            {t('settings:categoryManagement.uncategorized')}
                                         </div>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '0.2rem' }}>
-                                            {uncategorized.length === 1 ? '1 category' : `${uncategorized.length} categories`}
+                                            {t('settings:categoryManagement.categoryCount', { count: uncategorized.length })}
                                         </div>
                                     </div>
                                 </div>
@@ -493,7 +494,7 @@ const CategoryManagement = () => {
                                             {category.name || '—'}
                                         </span>
                                         <div style={{ display: 'inline-flex', gap: '0.25rem', flexShrink: 0 }}>
-                                            <button type="button" onClick={() => handleEdit(category)} style={iconBtnStyle} title="Edit">
+                                            <button type="button" onClick={() => handleEdit(category)} style={iconBtnStyle} title={t('common:actions.edit')}>
                                                 <Edit3 size={15} />
                                             </button>
                                             <button
@@ -513,44 +514,44 @@ const CategoryManagement = () => {
                 </div>
             )}
 
-            <Modal isOpen={isFormOpen} onClose={closeForm} title={editingCategory ? 'Edit Category' : 'Add Category'} size="md">
+            <Modal isOpen={isFormOpen} onClose={closeForm} title={editingCategory ? t('settings:categoryManagement.editCategory') : t('settings:categoryManagement.addCategory')} size="md">
                 <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
-                        <label style={labelStyle}>Category Name *</label>
+                        <label style={labelStyle}>{t('settings:categoryManagement.categoryName')}</label>
                         <input
-                            {...register('name', { required: 'Category name is required.' })}
+                            {...register('name', { required: t('settings:categoryManagement.validation.nameRequired') })}
                             style={inputStyle}
-                            placeholder="Enter category name"
+                            placeholder={t('settings:categoryManagement.categoryNamePlaceholder')}
                         />
                         {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
                     </div>
 
                     <div>
-                        <label style={labelStyle}>Category Type *</label>
+                        <label style={labelStyle}>{t('settings:categoryManagement.categoryType')}</label>
                         <Controller
                             name="type"
                             control={control}
-                            rules={{ required: 'Category type is required.' }}
+                            rules={{ required: t('settings:categoryManagement.validation.typeRequired') }}
                             render={({ field }) => (
                                 editingCategory ? (
                                     <SelectWithLoadMore
                                         id="category-type-edit"
                                         value={field.value}
                                         onChange={field.onChange}
-                                        options={categoryTypes.map((t) => ({
-                                            value: t.id,
-                                            label: t.name || 'Unnamed type',
+                                        options={categoryTypes.map((typeRow) => ({
+                                            value: typeRow.id,
+                                            label: typeRow.name || t('settings:categoryManagement.unnamedType'),
                                         }))}
-                                        emptyOptionLabel="Select category type"
+                                        emptyOptionLabel={t('settings:categoryManagement.selectCategoryType')}
                                         disabled={Boolean(lockedTypeId)}
                                         triggerStyle={inputStyle}
                                     />
                                 ) : (
                                     <select {...field} style={inputStyle} disabled={Boolean(lockedTypeId)}>
-                                        <option value="">Select category type</option>
-                                        {categoryTypes.map((t) => (
-                                            <option key={t.id} value={t.id}>
-                                                {t.name || 'Unnamed type'}
+                                        <option value="">{t('settings:categoryManagement.selectCategoryType')}</option>
+                                        {categoryTypes.map((typeRow) => (
+                                            <option key={typeRow.id} value={typeRow.id}>
+                                                {typeRow.name || t('settings:categoryManagement.unnamedType')}
                                             </option>
                                         ))}
                                     </select>
@@ -561,11 +562,11 @@ const CategoryManagement = () => {
                     </div>
 
                     <div>
-                        <label style={labelStyle}>Description</label>
+                        <label style={labelStyle}>{t('settings:categoryManagement.description')}</label>
                         <textarea
                             {...register('description')}
                             style={{ ...inputStyle, minHeight: '88px', resize: 'vertical' }}
-                            placeholder="Enter description"
+                            placeholder={t('settings:categoryManagement.descriptionPlaceholder')}
                         />
                     </div>
 
@@ -582,7 +583,7 @@ const CategoryManagement = () => {
                                 />
                             )}
                         />
-                        <label style={{ ...labelStyle, margin: 0 }}>Active Category</label>
+                        <label style={{ ...labelStyle, margin: 0 }}>{t('settings:categoryManagement.activeCategory')}</label>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -595,7 +596,7 @@ const CategoryManagement = () => {
                             isLoading={isSaving}
                             disabled={isCreateDisabled}
                         >
-                            {editingCategory ? 'Update' : 'Create'}
+                            {editingCategory ? t('common:actions.update') : t('common:actions.create')}
                         </Button>
                     </div>
                 </form>
@@ -603,11 +604,11 @@ const CategoryManagement = () => {
 
             <ConfirmationModal
                 isOpen={Boolean(deleteTarget)}
-                title="Delete Category"
+                title={t('settings:categoryManagement.deleteTitle')}
                 type="danger"
-                message={`Are you sure you want to delete "${deleteTarget?.name || 'this category'}"? This action cannot be undone.`}
-                confirmText="Delete"
-                cancelText="Cancel"
+                message={t('settings:categoryManagement.deleteMessage', { name: deleteTarget?.name || t('settings:categoryManagement.thisCategory') })}
+                confirmText={t('common:actions.delete')}
+                cancelText={t('common:actions.cancel')}
                 onCancel={() => setDeleteTarget(null)}
                 onConfirm={confirmDelete}
             />

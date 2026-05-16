@@ -1,12 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/context/LanguageContext';
 import { useAccounting } from '@/context/AccountingContext';
 import { Monitor, Eye } from 'lucide-react';
-
-const formatStatusLabel = (status) => {
-    if (!status || typeof status !== 'string') return '';
-    const s = status.toLowerCase();
-    return s.charAt(0).toUpperCase() + s.slice(1);
-};
 
 const getEntryTotalAmount = (entry) => {
     if (entry.total != null && entry.total !== '') return Number(entry.total);
@@ -23,44 +19,61 @@ const isSystemSourceEntry = (entry) => {
     return /\bPAYROLL\b/i.test(entry.reference || '');
 };
 
-const formatSourceLabel = (entry) => {
-    const rawSource = (entry.sourceType || entry.source || '').toString().trim();
-    if (!rawSource) {
-        return isSystemSourceEntry(entry) ? 'System' : 'Manual';
-    }
-
-    return rawSource
-        .split(/[\s_-]+/)
-        .filter(Boolean)
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
-};
-
 const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
+    const { t } = useTranslation('accounting');
+    const { dir } = useLanguage();
     const { openDrawer } = useAccounting();
-    // Keep backend order exactly as received.
+    const isRtl = dir === 'rtl';
     const displayEntries = limit ? entries.slice(0, limit) : entries;
+
+    const getEntryStatusLabel = (status) => {
+        const key = (status || '').toLowerCase();
+        const keyMap = {
+            posted: 'journalEntries.posted',
+            draft: 'journalEntries.draft',
+        };
+        if (keyMap[key]) return t(keyMap[key]);
+        if (!status || typeof status !== 'string') return '';
+        const s = status.toLowerCase();
+        return s.charAt(0).toUpperCase() + s.slice(1);
+    };
+
+    const formatSourceLabel = (entry) => {
+        const rawSource = (entry.sourceType || entry.source || '').toString().trim();
+        if (!rawSource) {
+            return isSystemSourceEntry(entry) ? t('journalEntries.system') : t('journalEntries.manual');
+        }
+
+        return rawSource
+            .split(/[\s_-]+/)
+            .filter(Boolean)
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    };
+
+    const thAlign = isRtl ? 'right' : 'left';
+    const amountAlign = isRtl ? 'left' : 'right';
 
     return (
         <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                 <thead>
-                    <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Date</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Title</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Reference</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Source</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Description</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Amount</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Status</th>
-                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Actions</th>
+                    <tr style={{ background: 'var(--color-bg-table-header)', borderBottom: '1px solid var(--color-border)', textAlign: thAlign }}>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('journalEntries.date')}</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('journalEntries.colTitle')}</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('journalEntries.reference')}</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('journalEntries.colSource')}</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('journalEntries.description')}</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600, textAlign: amountAlign, whiteSpace: 'nowrap' }}>{t('journalEntries.colAmount')}</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('journalEntries.status')}</th>
+                        <th style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{t('journalEntries.colActions')}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {displayEntries.length === 0 ? (
                         <tr>
                             <td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                No journal entries found.
+                                {t('journalEntries.noEntries')}
                             </td>
                         </tr>
                     ) : (
@@ -70,7 +83,7 @@ const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
                             const isAuto = isSystemSourceEntry(entry);
                             const sourceLabel = formatSourceLabel(entry);
                             const statusKey = (entry.status || '').toLowerCase();
-                            const statusLabel = formatStatusLabel(entry.status);
+                            const statusLabel = getEntryStatusLabel(entry.status);
 
                             return (
                                 <tr
@@ -99,7 +112,7 @@ const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
                                         {entry.description}
                                     </td>
 
-                                    <td style={{ padding: '1rem 1rem', textAlign: 'right', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
+                                    <td style={{ padding: '1rem 1rem', textAlign: amountAlign, fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
                                         {currency} {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
                                     <td style={{ padding: '1rem 1rem' }}>
@@ -126,7 +139,7 @@ const JournalEntryList = ({ entries = [], limit, onViewEntry }) => {
                                                 openDrawer('Journal', entry.id);
                                             }}
                                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary-600)' }}
-                                            title="View Activity"
+                                            title={t('journalEntries.viewActivity')}
                                         >
                                             <Eye size={18} />
                                         </button>

@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost } from '@/hooks/useMutation';
-import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import translateApiError from '@/utils/translateApiError';
 import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
@@ -17,6 +18,7 @@ const normalizeArrayResponse = (response) => {
 };
 
 const WarehouseTransfer = () => {
+    const { t } = useTranslation(['inventory', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const createTransaction = useCustomPost('/api/inventory/transactions/create/', [['inventory-transactions']]);
@@ -78,16 +80,16 @@ const WarehouseTransfer = () => {
 
     const handleSubmit = async () => {
         if (!isTransferReady) {
-            toast.error('Please complete all required fields before posting the transfer.');
+            toast.error(t('warehouseTransfer.completeFields'));
             return;
         }
 
         if (formData.fromWarehouseId === formData.toWarehouseId) {
-            toast.error('Source and destination warehouses cannot be the same.');
+            toast.error(t('warehouseTransfer.sameWarehouse'));
             return;
         }
         if (hasInvalidLines) {
-            toast.error('Transfer quantity cannot exceed available stock in the source warehouse.');
+            toast.error(t('warehouseTransfer.exceedsStock'));
             return;
         }
 
@@ -111,11 +113,10 @@ const WarehouseTransfer = () => {
 
         try {
             await createTransaction.mutateAsync(payload);
-            toast.success('Warehouse transfer transaction created successfully.');
+            toast.success(t('warehouseTransfer.success'));
             navigate(`${basePath}/inventory/transactions`);
         } catch (error) {
-            const message = getApiErrorMessage(error, 'Failed to create warehouse transfer transaction.');
-            toast.error(message);
+            toast.error(translateApiError(error, 'inventory:warehouseTransfer.failed'));
         }
     };
 
@@ -266,9 +267,7 @@ const WarehouseTransfer = () => {
                     </Button>
                 </div>
                 <div style={{ marginTop: '0.75rem' }}>
-                    <Button variant="outline" onClick={() => navigate(`${basePath}/inventory/transactions`)}>
-                        Cancel
-                    </Button>
+                    <Button variant="outline" onClick={() => navigate(`${basePath}/inventory/transactions`)}>{t('actions.cancel', { ns: 'common' })}</Button>
                 </div>
             </Card>
         </div>

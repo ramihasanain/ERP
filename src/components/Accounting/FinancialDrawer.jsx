@@ -4,7 +4,7 @@ import Button from '@/components/Shared/Button';
 import Pagination from '@/core/Pagination';
 import { X, Calendar, ArrowRight, ArrowLeft, Filter, Search, Tag, Info, List, Link as LinkIcon, Monitor, User, DollarSign, Target, Activity, FileText, Landmark, Download, ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAccounting } from '@/context/AccountingContext';
-import { useLanguage } from '@/context/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import { useBasePath } from '@/hooks/useBasePath';
 import useCustomQuery from '@/hooks/useQuery';
 import { exportToCSV } from '@/utils/exportUtils';
@@ -14,7 +14,7 @@ const FinancialDrawer = () => {
         drawerState, closeDrawer, accounts, entries, customers,
         costCenters, bankAccounts, getAccountBalance, getAllChildAccountIds
     } = useAccounting();
-    const { language } = useLanguage();
+    const { t: translate } = useTranslation('accounting');
     const basePath = useBasePath();
     const { isOpen, entityType, entityId } = drawerState;
     const [activeTab, setActiveTab] = useState('overview');
@@ -206,7 +206,7 @@ const FinancialDrawer = () => {
                 currency: payload?.currency || 'JOD',
                 activity_count: Number(payload?.activity_count ?? 0),
                 last_transaction: payload?.last_transaction ?? null,
-                ledger_sync_note: payload?.ledger_sync_note || 'Real-time Ledger Sync Complete',
+                ledger_sync_note: payload?.ledger_sync_note || translate('financialDrawer.ledgerSyncComplete'),
             }),
         }
     );
@@ -273,7 +273,7 @@ const FinancialDrawer = () => {
                 currency: payload?.currency || 'JOD',
                 activity_count: Number(payload?.activity_count ?? 0),
                 last_transaction: payload?.last_transaction ?? null,
-                ledger_sync_note: payload?.ledger_sync_note || 'Real-time Ledger Sync Complete',
+                ledger_sync_note: payload?.ledger_sync_note || translate('financialDrawer.ledgerSyncComplete'),
             }),
         }
     );
@@ -314,56 +314,30 @@ const FinancialDrawer = () => {
         return () => window.removeEventListener('keydown', handleEsc);
     }, [closeDrawer]);
 
-    // Localization Strings
-    const t = useMemo(() => {
-        return language === 'ar' ? {
-            overview: 'نظرة عامة',
-            transactions: 'العمليات',
-            related: 'مرتبط',
-            currentBalance: 'الرصيد الحالي',
-            activityCount: 'عدد العمليات',
-            lastTransaction: 'آخر عملية',
-            description: 'الوصف',
-            historyLogs: 'سجل العمليات',
-            export: 'تصدير',
-            filter: 'تصفية',
-            noTransactions: 'لا يوجد عمليات لهذه الفترة',
-            debit: 'مدين',
-            credit: 'دائن',
-            details: 'تفاصيل القيد',
-            account: 'الحساب',
-            automatic: 'آلي',
-            manual: 'يدوي',
-            connectedModules: 'الوحدات المرتبطة',
-            aggregationMode: 'عرض مجمع (يشمل الحسابات الفرعية)',
-            done: 'تم',
-            goToEntry: 'انتقال للقيد',
-            costCenterBudget: 'ميزانية مركز التكلفة',
-        } : {
-            overview: 'Overview',
-            transactions: 'Transactions',
-            related: 'Related',
-            currentBalance: 'Current Balance',
-            activityCount: 'Activity Count',
-            lastTransaction: 'Last Transaction',
-            description: 'Description',
-            historyLogs: 'History Logs',
-            export: 'Export',
-            filter: 'Filter',
-            noTransactions: 'No transactions found for this period.',
-            debit: 'Debit',
-            credit: 'Credit',
-            details: 'Entry Details',
-            account: 'Account',
-            automatic: 'Automatic',
-            manual: 'Manual',
-            connectedModules: 'Connected Modules',
-            aggregationMode: 'Aggregated View (Includes sub-accounts)',
-            done: 'Done',
-            goToEntry: 'Go to Entry',
-            costCenterBudget: 'Cost center budget',
-        };
-    }, [language]);
+    const t = useMemo(() => ({
+        overview: translate('financialDrawer.overview'),
+        transactions: translate('financialDrawer.transactions'),
+        related: translate('financialDrawer.related'),
+        currentBalance: translate('financialDrawer.currentBalance'),
+        activityCount: translate('financialDrawer.activityCount'),
+        lastTransaction: translate('financialDrawer.lastTransaction'),
+        description: translate('financialDrawer.description'),
+        historyLogs: translate('financialDrawer.historyLogs'),
+        export: translate('financialDrawer.export'),
+        filter: translate('financialDrawer.filter'),
+        noTransactions: translate('financialDrawer.noTransactions'),
+        debit: translate('financialDrawer.debit'),
+        credit: translate('financialDrawer.credit'),
+        details: translate('financialDrawer.entryDetails'),
+        account: translate('financialDrawer.account'),
+        automatic: translate('financialDrawer.automatic'),
+        manual: translate('financialDrawer.manual'),
+        connectedModules: translate('financialDrawer.connectedModules'),
+        aggregationMode: translate('financialDrawer.aggregationMode'),
+        done: translate('financialDrawer.done'),
+        goToEntry: translate('financialDrawer.goToEntry'),
+        costCenterBudget: translate('financialDrawer.costCenterBudget'),
+    }), [translate]);
 
     // Derived Data
     const entityData = useMemo(() => {
@@ -670,7 +644,6 @@ const FinancialDrawer = () => {
                     )}
                     {activeTab === 'transactions' && (
                         <TransactionsTab
-                            language={language}
                             t={t}
                             history={transactionHistory}
                             totalCount={transactionTotalCount}
@@ -1063,12 +1036,13 @@ const DetailItem = ({ label, value, fullWidth = false }) => (
 );
 
 const TransactionsTab = ({
-    language, t, history, totalCount, entityName, entityType, entityId, entityData, accounts, getAllChildAccountIds,
+    t, history, totalCount, entityName, entityType, entityId, entityData, accounts, getAllChildAccountIds,
     currentPage, pageSize, onPageChange,
     isCostCenterTransactionsLoading,
     isAssetTransactionsLoading,
     isBankTransactionsLoading,
 }) => {
+    const { t: translate } = useTranslation('accounting');
     const [expandedEntry, setExpandedEntry] = useState(null);
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const uuidInTextRegex = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
@@ -1090,7 +1064,7 @@ const TransactionsTab = ({
         const source = sanitizeForDisplay(entry.sourceType || entry.source);
         if (reference) return reference;
         if (source) return source.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-        return 'Entry';
+        return translate('financialDrawer.entry');
     };
 
     const handleDetailedExport = () => {
@@ -1100,18 +1074,18 @@ const TransactionsTab = ({
                 const account = accounts.find(a => a.id === line.account);
                 const isDebit = Number(line.debit) > 0;
                 fullLedger.push({
-                    'Date': entry.date,
-                    'Reference': entryDisplayRef(entry),
-                    'Entry Description': entry.description,
-                    'Account Code': line.account,
-                    'Account Name': account?.name || 'Unknown',
-                    'Line Description': line.description || '',
-                    'Debit (+)': isDebit ? line.debit : 0,
-                    'Credit (-)': !isDebit ? line.credit : 0,
-                    'Sign': isDebit ? '+' : '-',
-                    'Direction': isDebit ? (language === 'ar' ? 'مدين' : 'Debit') : (language === 'ar' ? 'دائن' : 'Credit'),
-                    'Cost Center': line.costCenter || '',
-                    'Source': entry.sourceType || 'Manual'
+                    [translate('financialDrawer.exportDate')]: entry.date,
+                    [translate('financialDrawer.exportReference')]: entryDisplayRef(entry),
+                    [translate('financialDrawer.exportEntryDescription')]: entry.description,
+                    [translate('financialDrawer.exportAccountCode')]: line.account,
+                    [translate('financialDrawer.exportAccountName')]: account?.name || translate('financialDrawer.unknownAccount'),
+                    [translate('financialDrawer.exportLineDescription')]: line.description || '',
+                    [translate('financialDrawer.exportDebit')]: isDebit ? line.debit : 0,
+                    [translate('financialDrawer.exportCredit')]: !isDebit ? line.credit : 0,
+                    [translate('financialDrawer.exportSign')]: isDebit ? '+' : '-',
+                    [translate('financialDrawer.exportDirection')]: isDebit ? t.debit : t.credit,
+                    [translate('financialDrawer.exportCostCenter')]: line.costCenter || '',
+                    [translate('financialDrawer.exportSource')]: entry.sourceType || translate('financialDrawer.manual'),
                 });
             });
         });

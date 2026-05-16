@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import translateApiError from '@/utils/translateApiError';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
@@ -8,6 +10,8 @@ import { useCustomPatch, useCustomPost } from '@/hooks/useMutation';
 import { ArrowLeft, CheckCircle, Printer, DollarSign, Calendar, AlertTriangle } from 'lucide-react';
 
 const num = (v) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     if (v == null || v === '') return 0;
     const n = parseFloat(v);
     return Number.isFinite(n) ? n : 0;
@@ -38,6 +42,7 @@ const normalizeEmployeeFromApiState = (e) => ({
 });
 
 const FinalSettlement = () => {
+
     const location = useLocation();
     const navigate = useNavigate();
     const basePath = useBasePath();
@@ -143,7 +148,7 @@ const FinalSettlement = () => {
             lastSavedRef.current = res;
         } catch (e) {
             const msg = e?.response?.data?.detail || e?.message || 'Update failed.';
-            toast.error(typeof msg === 'string' ? msg : 'Update failed.');
+            toast.error(translateApiError(e, 'hr:finalSettlement.updateFailed'));
         }
     };
 
@@ -156,15 +161,16 @@ const FinalSettlement = () => {
         if (!empId || !termination || isViewMode) return;
         try {
             await finalizeTermination.mutateAsync({});
-            toast.success('Termination finalized.');
+            toast.success(t('finalSettlement.finalized'));
             navigate(`${basePath}/hr/payroll`, { state: { activeTab: 'settlements' } });
         } catch (e) {
             const msg = e?.response?.data?.detail || e?.message || 'Finalize failed.';
-            toast.error(typeof msg === 'string' ? msg : 'Finalize failed.');
+            toast.error(translateApiError(e, 'hr:finalSettlement.finalizeFailed'));
         }
     };
 
     const handleAddAdjustment = () => {
+
         if (!newAdjustment.description?.trim() || !newAdjustment.amount) return;
         const list = termination?.manual_adjustments ? [...termination.manual_adjustments] : [];
         const amountNum = parseFloat(newAdjustment.amount);
@@ -183,11 +189,11 @@ const FinalSettlement = () => {
         applyPatch({ manual_adjustments: list });
     };
 
-    if (!employee) return <div>Loading...</div>;
+    if (!employee) return <div>{t('common:actions.loading')}</div>;
 
-    if (!isViewMode && !termination) return <div>Loading...</div>;
+    if (!isViewMode && !termination) return <div>{t('common:actions.loading')}</div>;
 
-    if (isViewMode && !viewSettlement) return <div>Loading...</div>;
+    if (isViewMode && !viewSettlement) return <div>{t('common:actions.loading')}</div>;
 
     const currencyCode = calculation?.currency || 'JOD';
     const hasJournalPreview = Array.isArray(calculation?.journal_preview) && calculation.journal_preview.length > 0;
@@ -216,9 +222,7 @@ const FinalSettlement = () => {
                 }
             `}</style>
             <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', minWidth: 0 }}>
-            <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={() => navigate(-1)} style={{ marginBottom: '1rem' }}>
-                Back
-            </Button>
+            <Button variant="ghost" icon={<ArrowLeft size={16} />} onClick={() => navigate(-1)} style={{ marginBottom: '1rem' }}>{t('common:actions.back')}</Button>
 
             <div
                 style={{
@@ -670,9 +674,7 @@ const FinalSettlement = () => {
                                                 onChange={(e) => setNewAdjustment({ ...newAdjustment, amount: e.target.value })}
                                                 style={{ padding: '0.5rem', border: '1px solid var(--color-border)', borderRadius: '4px', fontSize: '0.85rem' }}
                                             />
-                                            <Button size="sm" onClick={handleAddAdjustment} disabled={patchTermination.isPending}>
-                                                Add
-                                            </Button>
+                                            <Button size="sm" onClick={handleAddAdjustment} disabled={patchTermination.isPending}>{t('common:actions.add')}</Button>
                                         </div>
                                     )}
                                 </div>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useBasePath } from "@/hooks/useBasePath";
 import Card from "@/components/Shared/Card";
@@ -101,13 +102,19 @@ const formatAmount = (value) => {
   });
 };
 
-const formatDateLabel = (date) => {
-  if (!date) return "selected date";
+const DATE_LOCALE_MAP = {
+  en: "en-US",
+  ar: "ar",
+  de: "de-DE",
+};
+
+const formatDateLabel = (date, language, fallback) => {
+  if (!date) return fallback;
 
   const parsedDate = new Date(`${date}T00:00:00`);
   if (Number.isNaN(parsedDate.getTime())) return date;
 
-  return parsedDate.toLocaleDateString("en-US", {
+  return parsedDate.toLocaleDateString(DATE_LOCALE_MAP[language] || undefined, {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -141,6 +148,7 @@ const downloadExcelFile = ({ filename, sheetName, rows }) => {
 };
 
 const TrialBalance = () => {
+  const { t, i18n } = useTranslation(["accounting", "common"]);
   const navigate = useNavigate();
   const basePath = useBasePath();
   const [filters, setFilters] = useState({
@@ -210,27 +218,39 @@ const TrialBalance = () => {
 
   const handleExportExcel = () => {
     if (trialBalanceQuery.isLoading) {
-      toast.error("Please wait for the trial balance to finish loading.");
+      toast.error(t("trialBalance.waitLoading"));
       return;
     }
 
     if (trialBalanceQuery.isError) {
-      toast.error(
-        "Could not export trial balance. Please reload the data first.",
-      );
+      toast.error(t("trialBalance.exportError"));
       return;
     }
 
     if (trialBalance.accounts.length === 0) {
-      toast.error("No accounts found to export.");
+      toast.error(t("trialBalance.noAccounts"));
       return;
     }
 
     const rows = [
-      ["Trial Balance"],
-      [`As of ${trialBalance.asOf || filters.asOf}`],
+      [t("trialBalance.exportSheetTitle")],
+      [
+        t("trialBalance.asOf", {
+          date: formatDateLabel(
+            trialBalance.asOf || filters.asOf,
+            i18n.language,
+            t("trialBalance.selectedDate"),
+          ),
+        }),
+      ],
       [],
-      ["Account Code", "Account Name", "Currency", "Debit", "Credit"],
+      [
+        t("trialBalance.colAccountCode"),
+        t("trialBalance.colAccountName"),
+        t("trialBalance.colCurrency"),
+        t("trialBalance.colDebit"),
+        t("trialBalance.colCredit"),
+      ],
       ...trialBalance.accounts.map((account) => [
         account.code || "-",
         account.name || "-",
@@ -240,7 +260,7 @@ const TrialBalance = () => {
       ]),
       [],
       [
-        "Total",
+        t("trialBalance.total"),
         "",
         "",
         formatExcelAmount(trialBalance.totalDebit),
@@ -250,10 +270,10 @@ const TrialBalance = () => {
 
     downloadExcelFile({
       filename: `trial_balance_${trialBalance.asOf || filters.asOf || "export"}`,
-      sheetName: "Trial Balance",
+      sheetName: t("trialBalance.exportSheetName"),
       rows,
     });
-    toast.success("Trial balance exported successfully.");
+    toast.success(t("trialBalance.exportSuccess"));
   };
 
   return (
@@ -283,10 +303,16 @@ const TrialBalance = () => {
           />
           <div>
             <h1 style={{ fontSize: "1.75rem", fontWeight: 700 }}>
-              Trial Balance
+              {t("trialBalance.title")}
             </h1>
             <p style={{ color: "var(--color-text-secondary)" }}>
-              As of {formatDateLabel(trialBalance.asOf || filters.asOf)}
+              {t("trialBalance.asOf", {
+                date: formatDateLabel(
+                  trialBalance.asOf || filters.asOf,
+                  i18n.language,
+                  t("trialBalance.selectedDate"),
+                ),
+              })}
             </p>
           </div>
         </div>
@@ -302,7 +328,7 @@ const TrialBalance = () => {
             }
             className="cursor-pointer"
           >
-            Export Excel
+            {t("trialBalance.exportExcel")}
           </Button>
         </div>
       </div>
@@ -317,7 +343,7 @@ const TrialBalance = () => {
           }}
         >
           <div style={filterFieldStyle}>
-            <label style={labelStyle}>As of</label>
+            <label style={labelStyle}>{t("trialBalance.filterAsOf")}</label>
             <Input
               type="date"
               lang="en"
@@ -326,19 +352,19 @@ const TrialBalance = () => {
             />
           </div>
           <div style={filterFieldStyle}>
-            <label style={labelStyle}>Active Status</label>
+            <label style={labelStyle}>{t("trialBalance.filterActiveStatus")}</label>
             <select
               value={filters.isActive}
               onChange={(event) => updateFilter("isActive", event.target.value)}
               style={selectStyle}
               className="cursor-pointer"
             >
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
+              <option value="true">{t("common:status.active")}</option>
+              <option value="false">{t("common:status.inactive")}</option>
             </select>
           </div>
           <div style={filterFieldStyle}>
-            <label style={labelStyle}>Account Type</label>
+            <label style={labelStyle}>{t("trialBalance.filterAccountType")}</label>
             <select
               value={filters.accountType}
               onChange={(event) =>
@@ -350,7 +376,7 @@ const TrialBalance = () => {
             >
               {accountTypesQuery.isLoading ? (
                 <option value={filters.accountType}>
-                  Loading account types...
+                  {t("trialBalance.loadingAccountTypes")}
                 </option>
               ) : accountTypes.length === 0 ? (
                 <option value={filters.accountType}>
@@ -358,7 +384,7 @@ const TrialBalance = () => {
                 </option>
               ) : (
                 <>
-                  <option value="">All</option>
+                  <option value="">{t("common.all")}</option>
                   {accountTypes.map((type) => (
                     <option key={type.id || type.code} value={type.code}>
                       {type.name}
@@ -369,7 +395,7 @@ const TrialBalance = () => {
             </select>
           </div>
           <div style={filterFieldStyle}>
-            <label style={labelStyle}>Include Zero Accounts</label>
+            <label style={labelStyle}>{t("trialBalance.filterIncludeZero")}</label>
             <select
               value={filters.includeZeroAccounts}
               onChange={(event) =>
@@ -378,8 +404,8 @@ const TrialBalance = () => {
               style={selectStyle}
               className="cursor-pointer"
             >
-              <option value="true">Yes</option>
-              <option value="false">No</option>
+              <option value="true">{t("common:actions.yes")}</option>
+              <option value="false">{t("common:actions.no")}</option>
             </select>
           </div>
         </div>
@@ -403,12 +429,12 @@ const TrialBalance = () => {
             <AlertCircle size={20} />
           )}
           {trialBalanceQuery.isLoading
-            ? "Loading balance status..."
+            ? t("trialBalance.loadingBalanceStatus")
             : trialBalanceQuery.isError
-              ? "Balance status unavailable"
+              ? t("trialBalance.balanceStatusUnavailable")
               : trialBalance.isBalanced
-                ? "Accounts are balanced"
-                : "Accounts are not balanced"}
+                ? t("trialBalance.balanced")
+                : t("trialBalance.notBalanced")}
         </div>
 
         {trialBalanceQuery.isLoading ? (
@@ -423,14 +449,14 @@ const TrialBalance = () => {
           </div>
         ) : trialBalanceQuery.isError ? (
           <div style={{ padding: "1rem 0", color: "var(--color-error)" }}>
-            Could not load trial balance.
+            {t("trialBalance.loadFailed")}
             <div style={{ marginTop: "1rem" }}>
               <Button
                 variant="outline"
                 onClick={() => trialBalanceQuery.refetch()}
                 className="cursor-pointer"
               >
-                Retry
+                {t("common:actions.retry")}
               </Button>
             </div>
           </div>
@@ -447,11 +473,11 @@ const TrialBalance = () => {
                       color: "var(--color-text-secondary)",
                     }}
                   >
-                    <th style={tableCellStyle}>Account Code</th>
-                    <th style={tableCellStyle}>Account Name</th>
-                    <th style={tableCellStyle}>Currency</th>
-                    <th style={tableAmountCellStyle}>Debit</th>
-                    <th style={tableAmountCellStyle}>Credit</th>
+                    <th style={tableCellStyle}>{t("trialBalance.colAccountCode")}</th>
+                    <th style={tableCellStyle}>{t("trialBalance.colAccountName")}</th>
+                    <th style={tableCellStyle}>{t("trialBalance.colCurrency")}</th>
+                    <th style={tableAmountCellStyle}>{t("trialBalance.colDebit")}</th>
+                    <th style={tableAmountCellStyle}>{t("trialBalance.colCredit")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -464,7 +490,7 @@ const TrialBalance = () => {
                           color: "var(--color-text-secondary)",
                         }}
                       >
-                        No accounts found for the selected filters.
+                        {t("trialBalance.noAccountsForFilters")}
                       </td>
                     </tr>
                   ) : (
@@ -510,7 +536,7 @@ const TrialBalance = () => {
                     }}
                   >
                     <td style={totalCellStyle}></td>
-                    <td style={totalCellStyle}>Total</td>
+                    <td style={totalCellStyle}>{t("trialBalance.total")}</td>
                     <td style={totalCellStyle}></td>
                     <td style={totalAmountCellStyle}>
                       {formatAmount(trialBalance.totalDebit)}

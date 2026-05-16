@@ -1,10 +1,12 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Card from "@/components/Shared/Card";
 import LanguageMenu from "@/components/Shared/LanguageMenu";
 import ThemeToggle from "@/components/Shared/ThemeToggle";
 
 const AuthLayout = ({ children, title, subtitle }) => {
+  const { t } = useTranslation("auth");
   return (
     <div
       style={{
@@ -83,7 +85,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
                 color: "var(--color-text-main)",
               }}
             >
-              UnifiedCore
+              {t("layout.brand")}
             </span>
           </Link>
           <h1
@@ -112,7 +114,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
             fontSize: "0.875rem",
           }}
         >
-          &copy; {new Date().getFullYear()} UnifiedCore
+          {t("layout.copyright", { year: new Date().getFullYear() })}
         </div>
       </div>
       <style>{`

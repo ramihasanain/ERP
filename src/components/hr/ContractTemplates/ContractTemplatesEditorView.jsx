@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save } from 'lucide-react';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
@@ -27,6 +28,8 @@ const ContractTemplatesEditorView = ({
     availableVariables,
     onInsertVariable,
 }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const basePath = useBasePath();
     const quillContainerRef = useRef(null);
     const quillInstanceRef = useRef(null);
@@ -118,9 +121,7 @@ const ContractTemplatesEditorView = ({
                         variant="ghost"
                         onClick={() => navigate(`${basePath}/hr/contract-templates`)}
                         disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
-                    >
-                        Cancel
-                    </Button>
+                    >{t('common:actions.cancel')}</Button>
                     <Button icon={<Save size={16} />} onClick={onSave} isLoading={createTemplateMutation.isPending || updateTemplateMutation.isPending}>
                         Save Template
                     </Button>

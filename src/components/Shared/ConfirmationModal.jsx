@@ -1,4 +1,5 @@
 import { X, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ConfirmationModal = ({
   isOpen,
@@ -7,10 +8,14 @@ const ConfirmationModal = ({
   onConfirm,
   onCancel,
   type = "warning",
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText,
+  cancelText,
   disabled = false,
 }) => {
+  const { t } = useTranslation("common");
+  const resolvedConfirmText = confirmText ?? t("actions.confirm");
+  const resolvedCancelText = cancelText ?? t("actions.cancel");
+
   if (!isOpen) return null;
 
   const getIcon = () => {
@@ -26,7 +31,6 @@ const ConfirmationModal = ({
     }
   };
 
-  /** Theme-aware tint (works in light and dark; avoids undefined *-50 tokens). */
   const getHeaderColor = () => {
     switch (type) {
       case "danger":
@@ -138,7 +142,7 @@ const ConfirmationModal = ({
               fontWeight: 500,
             }}
           >
-            {cancelText}
+            {resolvedCancelText}
           </button>
           <button
             disabled={disabled}
@@ -157,7 +161,7 @@ const ConfirmationModal = ({
             }}
             className={disabled ? "btn-disabled" : ""}
           >
-            {confirmText}
+            {resolvedConfirmText}
           </button>
         </div>
       </div>

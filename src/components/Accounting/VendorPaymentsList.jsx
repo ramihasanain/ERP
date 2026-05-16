@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Search, ArrowLeft, CreditCard, Eye } from 'lucide-react';
@@ -49,7 +50,14 @@ const buildBillsUrl = ({ name, status }) => {
     return serialized ? `/api/purchasing/bills/?${serialized}` : '/api/purchasing/bills/';
 };
 
+const STATUS_FILTERS = [
+    { value: 'All', labelKey: 'vendorPaymentsPage.filterAll' },
+    { value: 'Posted', labelKey: 'vendorPaymentsPage.filterPosted' },
+    { value: 'Paid', labelKey: 'vendorPaymentsPage.filterPaid' },
+];
+
 const VendorPaymentsList = () => {
+    const { t } = useTranslation(['accounting', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const [filterStatus, setFilterStatus] = useState('All');
@@ -88,8 +96,8 @@ const VendorPaymentsList = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/accounting`)} className="cursor-pointer shrink-0" />
                     <div>
-                        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Vendor Payment Clearances</h1>
-                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Review posted bills and record vendor payments.</p>
+                        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{t('vendorPaymentsPage.title')}</h1>
+                        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{t('vendorPaymentsPage.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -99,7 +107,7 @@ const VendorPaymentsList = () => {
                         <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-slate-400)' }} size={18} />
                         <input
                             type="text"
-                            placeholder="Search by bill, invoice number, or vendor..."
+                            placeholder={t('vendorPaymentsPage.searchPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             style={{
@@ -112,19 +120,20 @@ const VendorPaymentsList = () => {
                         />
                 </div>
                 <div style={{ display: 'flex', background: 'var(--color-bg-toggle-track)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                    {['All', 'Posted', 'Paid'].map(status => (
+                    {STATUS_FILTERS.map(({ value, labelKey }) => (
                         <button
-                            key={status}
-                            onClick={() => setFilterStatus(status)}
+                            key={value}
+                            type="button"
+                            onClick={() => setFilterStatus(value)}
                             style={{
                                 padding: '6px 12px', border: 'none', borderRadius: '6px',
-                                background: filterStatus === status ? 'var(--color-bg-surface)' : 'transparent',
-                                boxShadow: filterStatus === status ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                                color: filterStatus === status ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
+                                background: filterStatus === value ? 'var(--color-bg-surface)' : 'transparent',
+                                boxShadow: filterStatus === value ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                                color: filterStatus === value ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
                                 cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500
                             }}
                         >
-                            {status}
+                            {t(labelKey)}
                         </button>
                     ))}
                 </div>
@@ -134,26 +143,26 @@ const VendorPaymentsList = () => {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', background: 'var(--color-bg-table-header)' }}>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Bill ID</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Date</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Vendor Invoice</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Payable Amount</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Status</th>
-                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Actions</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('vendorPaymentsPage.colBillId')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('vendorPaymentsPage.colDate')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('vendorPaymentsPage.colVendorInvoice')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('vendorPaymentsPage.colPayableAmount')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('vendorPaymentsPage.colStatus')}</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>{t('vendorPaymentsPage.colActions')}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {vendorBillsQuery.isPending && (
                             <tr>
                                 <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                    Loading vendor bills...
+                                    {t('vendorPaymentsPage.loading')}
                                 </td>
                             </tr>
                         )}
                         {vendorBillsQuery.isError && (
                             <tr>
                                 <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-error)' }}>
-                                    Failed to load vendor bills.
+                                    {t('vendorPaymentsPage.loadFailed')}
                                 </td>
                             </tr>
                         )}
@@ -189,7 +198,7 @@ const VendorPaymentsList = () => {
                                             icon={<Eye size={14} />}
                                             onClick={() => setSelectedBillId(bill.id)}
                                         >
-                                            View
+                                            {t('vendorPaymentsPage.view')}
                                         </Button>
                                         {bill.status === 'posted' && (
                                             <Button
@@ -198,7 +207,7 @@ const VendorPaymentsList = () => {
                                                 icon={<CreditCard size={14} strokeWidth={2} aria-hidden />}
                                                 onClick={() => setPayingBill(bill)}
                                             >
-                                                Pay
+                                                {t('vendorPaymentsPage.pay')}
                                             </Button>
                                         )}
                                     </div>
@@ -208,7 +217,7 @@ const VendorPaymentsList = () => {
                         {!vendorBillsQuery.isPending && !vendorBillsQuery.isError && filteredBills.length === 0 && (
                             <tr>
                                 <td colSpan={6} style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                                    No posted or paid vendor bills found matching your filters.
+                                    {t('vendorPaymentsPage.empty')}
                                 </td>
                             </tr>
                         )}

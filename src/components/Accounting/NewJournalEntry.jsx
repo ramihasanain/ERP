@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import translateApiError from '@/utils/translateApiError';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -108,6 +110,7 @@ const useWindowWidth = () => {
 };
 
 const NewJournalEntry = () => {
+  const { t } = useTranslation('accounting');
   const navigate = useNavigate();
   const basePath = useBasePath();
   const queryClient = useQueryClient();
@@ -199,19 +202,19 @@ const NewJournalEntry = () => {
 
   useEffect(() => {
     if (accountsQuery.error) {
-      toast.error('Failed to load accounts list.');
+      toast.error(t('newJournalEntry.loadAccountsFailed'));
     }
   }, [accountsQuery.error]);
 
   useEffect(() => {
     if (entryDetailQuery.error) {
-      toast.error('Failed to load journal entry details.');
+      toast.error(t('newJournalEntry.loadEntryFailed'));
     }
   }, [entryDetailQuery.error]);
 
   useEffect(() => {
     if (currenciesQuery.error) {
-      toast.error('Failed to load currencies list.');
+      toast.error(t('newJournalEntry.loadCurrenciesFailed'));
     }
   }, [currenciesQuery.error]);
 
@@ -327,7 +330,7 @@ const NewJournalEntry = () => {
       toast.success(successMessage);
       navigate(`${basePath}/accounting/journal`);
     } catch (error) {
-      toast.error(error?.response?.data?.message || 'Failed to save journal entry.');
+      toast.error(translateApiError(error, 'accounting:newJournalEntry.saveFailed'));
     }
   };
 
@@ -399,7 +402,7 @@ const NewJournalEntry = () => {
             onClick={() => navigate(`${basePath}/accounting/journal`)}
             className="cursor-pointer shrink-0"
           />
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{id ? (isPosted ? 'View Journal Entry' : 'Edit Journal Entry') : 'New Journal Entry'}</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{id ? (isPosted ? t('newJournalEntry.viewTitle') : t('newJournalEntry.editTitle')) : t('newJournalEntry.title')}</h1>
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AuthLayout from '@/components/app-layout/AuthLayout';
 import Button from '@/components/Shared/Button';
 import StepCompanyInfo from '@/pages/onboarding/StepCompanyInfo';
@@ -9,7 +10,7 @@ import { useCustomQuery } from '@/hooks/useQuery';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { errorToastOptions, successToastOptions } from '@/utils/toastOptions';
-import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import { translateApiError } from '@/utils/translateApiError';
 import {
     mapRegisterApiErrors,
     validateOnboardingStep,
@@ -17,13 +18,14 @@ import {
 
 const COMPANY_INFO_STEP = 1;
 
-const steps = [
-    { id: 1, title: 'Company Info', component: StepCompanyInfo },
-    { id: 2, title: 'Regional Settings', component: StepRegionalSettings },
-    { id: 3, title: 'Select Modules', component: StepModules },
+const STEP_COMPONENTS = [
+    { id: 1, key: 'companyInfo', component: StepCompanyInfo },
+    { id: 2, key: 'regionalSettings', component: StepRegionalSettings },
+    { id: 3, key: 'selectModules', component: StepModules },
 ];
 
 const OnboardingWizard = () => {
+    const { t } = useTranslation('onboarding');
     const navigate = useNavigate();
     const location = useLocation();
     const { register, isLoading } = useAuth();
@@ -38,6 +40,15 @@ const OnboardingWizard = () => {
         modules: [],
     });
     const [stepErrors, setStepErrors] = useState({});
+
+    const steps = useMemo(
+        () =>
+            STEP_COMPONENTS.map((step) => ({
+                ...step,
+                title: t(`steps.${step.key}`),
+            })),
+        [t],
+    );
 
     const bootstrapQuery = useCustomQuery('/shared/bootstrap-data/', ['signup-bootstrap-data']);
 
@@ -95,7 +106,9 @@ const OnboardingWizard = () => {
     }, [options]);
 
     const handleNext = async () => {
-        const validationErrors = validateOnboardingStep(currentStep, formData);
+        const validationErrors = validateOnboardingStep(currentStep, formData, (key) =>
+            t(`validation.${key}`),
+        );
         if (Object.keys(validationErrors).length > 0) {
             setStepErrors((prev) => ({ ...prev, ...validationErrors }));
             const firstMessage = Object.values(validationErrors)[0];
@@ -126,7 +139,7 @@ const OnboardingWizard = () => {
                 default_language: formData.language,
                 selected_modules: formData.modules,
             });
-            toast.success('Account created successfully. Welcome to your workspace!', successToastOptions);
+            toast.success(t('success'), successToastOptions);
             navigate('/admin/dashboard');
         } catch (err) {
             const apiErrors = mapRegisterApiErrors(err?.response?.data);
@@ -136,17 +149,16 @@ const OnboardingWizard = () => {
 
             setCurrentStep(COMPANY_INFO_STEP);
 
-            const message = getApiErrorMessage(
-                err,
-                'Registration failed. Please verify your setup details and try again.'
+            toast.error(
+                translateApiError(err, 'onboarding:failed'),
+                errorToastOptions,
             );
-            toast.error(message, errorToastOptions);
         }
     };
 
     const handleBack = () => {
         if (currentStep > 1) {
-            setCurrentStep(curr => curr - 1);
+            setCurrentStep((curr) => curr - 1);
         }
     };
 
@@ -160,16 +172,16 @@ const OnboardingWizard = () => {
         });
     };
 
-    const CurrentComponent = steps.find(s => s.id === currentStep)?.component || StepCompanyInfo;
+    const CurrentComponent = steps.find((s) => s.id === currentStep)?.component || StepCompanyInfo;
 
     if (!signupData) {
         return (
-            <AuthLayout title="Create an account" subtitle="Start your 14-day free trial">
+            <AuthLayout title={t('wizard.noSignupTitle')} subtitle={t('wizard.noSignupSubtitle')}>
                 <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
-                    Please start from the signup form to continue onboarding.
+                    {t('wizard.noSignupMessage')}
                 </p>
                 <Button onClick={() => navigate('/auth/signup')}>
-                    Go to Sign Up
+                    {t('wizard.goToSignUp')}
                 </Button>
             </AuthLayout>
         );
@@ -177,9 +189,9 @@ const OnboardingWizard = () => {
 
     if (onboardingLoading) {
         return (
-            <AuthLayout title="Setup your workspace" subtitle="Loading onboarding data...">
+            <AuthLayout title={t('wizard.loadingTitle')} subtitle={t('wizard.loadingSubtitle')}>
                 <p style={{ color: 'var(--color-text-secondary)' }}>
-                    Preparing industries, countries, currencies, languages, and modules.
+                    {t('wizard.loadingMessage')}
                 </p>
             </AuthLayout>
         );
@@ -187,12 +199,12 @@ const OnboardingWizard = () => {
 
     if (onboardingError) {
         return (
-            <AuthLayout title="Setup your workspace" subtitle="Could not load onboarding data">
+            <AuthLayout title={t('wizard.errorTitle')} subtitle={t('wizard.errorSubtitle')}>
                 <p style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
-                    {onboardingError?.message || 'Failed to load onboarding data.'}
+                    {onboardingError?.message || t('wizard.errorDefault')}
                 </p>
                 <Button onClick={() => window.location.reload()}>
-                    Retry
+                    {t('wizard.retry')}
                 </Button>
             </AuthLayout>
         );
@@ -200,21 +212,14 @@ const OnboardingWizard = () => {
 
     return (
         <AuthLayout
-            title="Setup your workspace"
-            subtitle={`Step ${currentStep} of ${steps.length}`}
+            title={t('wizard.title')}
+            subtitle={t('wizard.subtitleStep', { current: currentStep, total: steps.length })}
         >
-            {/* Progress Bar */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
                 {steps.map((step) => (
-                    <div
+                    <ProgressBar
                         key={step.id}
-                        style={{
-                            flex: 1,
-                            height: '4px',
-                            background: step.id <= currentStep ? 'var(--color-primary-600)' : 'var(--color-border)',
-                            borderRadius: '2px',
-                            transition: 'background 0.3s ease'
-                        }}
+                        active={step.id <= currentStep}
                     />
                 ))}
             </div>
@@ -234,14 +239,28 @@ const OnboardingWizard = () => {
                     onClick={handleBack}
                     disabled={currentStep === 1}
                 >
-                    Back
+                    {t('actions.back')}
                 </Button>
                 <Button onClick={handleNext} isLoading={isLoading} disabled={isLoading}>
-                    {currentStep === steps.length ? 'Finish Setup' : 'Continue'}
+                    {currentStep === steps.length ? t('actions.finish') : t('actions.continue')}
                 </Button>
             </div>
         </AuthLayout>
     );
 };
+
+function ProgressBar({ active }) {
+    return (
+        <div
+            style={{
+                flex: 1,
+                height: '4px',
+                background: active ? 'var(--color-primary-600)' : 'var(--color-border)',
+                borderRadius: '2px',
+                transition: 'background 0.3s ease',
+            }}
+        />
+    );
+}
 
 export default OnboardingWizard;

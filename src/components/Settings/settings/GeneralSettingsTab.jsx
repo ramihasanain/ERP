@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -8,6 +9,7 @@ import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPatch } from '@/hooks/useMutation';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
+import translateApiError from '@/utils/translateApiError';
 import { Save } from 'lucide-react';
 import { listFromResponse } from './listFromResponse';
 import { useCurrenciesInfiniteQuery } from './useCurrenciesInfiniteQuery';
@@ -71,6 +73,7 @@ const parsePayDayFromSettings = (rawPayDay) => {
 };
 
 const GeneralSettingsTab = () => {
+    const { t } = useTranslation(['settings', 'common']);
     const updateCompanySettings = useCustomPatch('/api/tenants/clients/settings/', ['company-settings']);
     const settingsQuery = useCustomQuery('/api/tenants/clients/settings/', ['company-settings']);
     const industriesQuery = useCustomQuery('/api/shared/industries/', ['settings-industries']);
@@ -204,7 +207,7 @@ const GeneralSettingsTab = () => {
 
         try {
             await updateCompanySettings.mutateAsync(payload);
-            toast.success('Company settings updated successfully.');
+            toast.success(t('general.saveSuccess'));
             try {
                 if (typeof window !== 'undefined') {
                     const currencyId = values.default_currency ? String(values.default_currency).trim() : '';
@@ -219,8 +222,7 @@ const GeneralSettingsTab = () => {
                 // ignore storage errors
             }
         } catch (error) {
-            const message = error?.response?.data?.detail || 'Failed to update company settings.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'settings:general.saveFailed'));
         }
     };
 
@@ -254,25 +256,25 @@ const GeneralSettingsTab = () => {
 
     return (
         <Card className="padding-lg" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Company Profile</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('general.title')}</h3>
 
             {loading && <Spinner />}
 
             {settingsFailed && (
                 <div style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
-                    Could not load company settings.
+                    {t('general.loadSettingsFailed')}
                 </div>
             )}
 
             {industriesFailed && (
                 <div style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
-                    Could not load industries. You can still pick a saved value or retry later.
+                    {t('general.loadIndustriesFailed')}
                 </div>
             )}
 
             {currenciesFailed && (
                 <div style={{ color: 'var(--color-error)', marginBottom: '1rem' }}>
-                    Could not load currencies.
+                    {t('general.loadCurrenciesFailed')}
                 </div>
             )}
 
@@ -283,7 +285,7 @@ const GeneralSettingsTab = () => {
                             name="company_name"
                             control={control}
                             render={({ field }) => (
-                                <Input label="Company Name" value={field.value} onChange={field.onChange} />
+                                <Input label={t('general.companyName')} value={field.value} onChange={field.onChange} />
                             )}
                         />
 
@@ -292,7 +294,7 @@ const GeneralSettingsTab = () => {
                             control={control}
                             render={({ field }) => (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Industry</label>
+                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('general.industry')}</label>
                                     <select
                                         value={field.value || ''}
                                         onChange={field.onChange}
@@ -306,7 +308,7 @@ const GeneralSettingsTab = () => {
                                                     : 'pointer',
                                         }}
                                     >
-                                        <option value="">Select industry</option>
+                                        <option value="">{t('general.selectIndustry')}</option>
                                         {field.value && !industries.some((i) => i.value === field.value) ? (
                                             <option value={field.value}>{field.value}</option>
                                         ) : null}
@@ -323,7 +325,7 @@ const GeneralSettingsTab = () => {
                         <Controller
                             name="tax_id"
                             control={control}
-                            render={({ field }) => <Input label="Tax ID" value={field.value} onChange={field.onChange} />}
+                            render={({ field }) => <Input label={t('general.taxId')} value={field.value} onChange={field.onChange} />}
                         />
 
                         <Controller
@@ -331,12 +333,12 @@ const GeneralSettingsTab = () => {
                             control={control}
                             render={({ field }) => (
                                 <SelectWithLoadMore
-                                    label="Default Currency"
+                                    label={t('general.defaultCurrency')}
                                     id="settings-default-currency"
                                     value={field.value || ''}
                                     onChange={field.onChange}
                                     options={currencySelectOptions}
-                                    emptyOptionLabel="Select currency"
+                                    emptyOptionLabel={t('general.selectCurrency')}
                                     disabled={currenciesFailed}
                                     isInitialLoading={currenciesInitialLoading && !currenciesQuery.data}
                                     hasMore={Boolean(hasNextPage) && !currenciesFailed}
@@ -344,7 +346,7 @@ const GeneralSettingsTab = () => {
                                     isLoadingMore={isFetchingNextPage}
                                     paginationError={
                                         isFetchNextPageError
-                                            ? 'Could not load more currencies. Scroll down to retry.'
+                                            ? t('general.loadMoreCurrenciesFailed')
                                             : null
                                     }
                                 />
@@ -363,7 +365,7 @@ const GeneralSettingsTab = () => {
                                         gridColumn: isNarrowScreen ? 'span 1' : 'span 2',
                                     }}
                                 >
-                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Pay Day</label>
+                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('general.payDay')}</label>
                                     <div
                                         style={{
                                             border: '1px solid var(--color-border)',
@@ -384,10 +386,10 @@ const GeneralSettingsTab = () => {
                                                 }}
                                             >
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Type</label>
+                                                    <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('general.payDayType')}</label>
                                                     <select value={field.value} onChange={field.onChange} style={selectStyle}>
-                                                        <option value={PAY_DAY_LAST_DAY}>Last day of the month</option>
-                                                        <option value={PAY_DAY_FIXED_DAY}>Fixed day of the month</option>
+                                                        <option value={PAY_DAY_LAST_DAY}>{t('general.payDayLastOfMonth')}</option>
+                                                        <option value={PAY_DAY_FIXED_DAY}>{t('general.payDayFixedOfMonth')}</option>
                                                     </select>
                                                 </div>
                                                 <Controller
@@ -396,19 +398,19 @@ const GeneralSettingsTab = () => {
                                                     render={({ field: payDayField }) => (
                                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                                             <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                                                                Day
+                                                                {t('general.payDayDay')}
                                                             </label>
                                                             <select
                                                                 value={payDayField.value || ''}
                                                                 onChange={payDayField.onChange}
                                                                 style={selectStyle}
                                                             >
-                                                                <option value="">Choose day</option>
+                                                                <option value="">{t('general.chooseDay')}</option>
                                                                 {Array.from({ length: 31 }, (_, index) => {
                                                                     const day = String(index + 1);
                                                                     return (
                                                                         <option key={day} value={day}>
-                                                                            Day {day}
+                                                                            {t('general.dayOption', { day })}
                                                                         </option>
                                                                     );
                                                                 })}
@@ -420,8 +422,8 @@ const GeneralSettingsTab = () => {
                                         ) : (
                                             <>
                                                 <select value={field.value} onChange={field.onChange} style={selectStyle}>
-                                                    <option value={PAY_DAY_LAST_DAY}>Last day of the month</option>
-                                                    <option value={PAY_DAY_FIXED_DAY}>Fixed day of the month</option>
+                                                    <option value={PAY_DAY_LAST_DAY}>{t('general.payDayLastOfMonth')}</option>
+                                                    <option value={PAY_DAY_FIXED_DAY}>{t('general.payDayFixedOfMonth')}</option>
                                                 </select>
                                                 <div
                                                     style={{
@@ -430,7 +432,7 @@ const GeneralSettingsTab = () => {
                                                         padding: '0.25rem 0',
                                                     }}
                                                 >
-                                                    Salary will be processed on the last available day of each month.
+                                                    {t('general.payDayLastHint')}
                                                 </div>
                                             </>
                                         )}
@@ -441,14 +443,14 @@ const GeneralSettingsTab = () => {
                     </div>
 
                     <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem', marginTop: '1rem' }}>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Localization</h3>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>{t('general.localization')}</h3>
                         <div style={{ display: 'grid', gridTemplateColumns: isNarrowScreen ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
                             <Controller
                                 name="date_format"
                                 control={control}
                                 render={({ field }) => (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Date Format</label>
+                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('general.dateFormat')}</label>
                                         <select value={field.value} onChange={field.onChange} style={selectStyle}>
                                             <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                                             <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -462,7 +464,7 @@ const GeneralSettingsTab = () => {
                                 control={control}
                                 render={({ field }) => (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Timezone</label>
+                                        <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('general.timezone')}</label>
                                         <select value={field.value} onChange={field.onChange} style={selectStyle}>
                                             <option value="Africa/Amman">Africa/Amman</option>
                                             <option value="Asia/Amman">Asia/Amman</option>
@@ -479,7 +481,7 @@ const GeneralSettingsTab = () => {
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
                         <Button icon={<Save size={18} />} type="submit" disabled={isSaveDisabled}>
-                            {updateCompanySettings.isPending ? 'Saving...' : 'Save Changes'}
+                            {updateCompanySettings.isPending ? t('general.saving') : t('general.saveChanges')}
                         </Button>
                     </div>
                 </form>

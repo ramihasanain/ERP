@@ -1,0 +1,28 @@
+{
+  "title": "Benachrichtigungen",
+  "markAllRead": "Alle als gelesen markieren",
+  "clearAll": "Alle löschen",
+  "noNotifications": "Keine Benachrichtigungen",
+  "unread": "Ungelesen",
+  "read": "Gelesen",
+  "all": "Alle",
+  "allTab": "Alle ({{count}})",
+  "unreadTab": "Ungelesen ({{count}})",
+  "readTab": "Gelesen ({{count}})",
+  "unreadSummary_one": "Sie haben {{count}} ungelesene Benachrichtigung.",
+  "unreadSummary_other": "Sie haben {{count}} ungelesene Benachrichtigungen.",
+  "allCaughtUp": "Alles erledigt!",
+  "emptyUnread": "Alles erledigt! Keine ungelesenen Benachrichtigungen.",
+  "emptyInbox": "Ihr Benachrichtigungsposteingang ist leer.",
+  "hoverToMarkSeen": "1 Sek. darüberfahren, um als gelesen zu markieren",
+  "remove": "Entfernen",
+  "open": "Öffnen",
+  "viewAll": "Alle Benachrichtigungen anzeigen",
+  "markAllReadShort": "Alle als gelesen markieren",
+  "time": {
+    "justNow": "Gerade eben",
+    "minutesAgo": "vor {{count}} Min.",
+    "hoursAgo": "vor {{count}} Std.",
+    "daysAgo": "vor {{count}} T."
+  }
+}

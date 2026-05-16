@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from 'react-i18next';
+import { translateApiError } from '@/utils/translateApiError';
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import {
@@ -41,11 +43,11 @@ const selectRequestsPayload = (payload) => {
   return { rows, count };
 };
 
-const requestTypeLabel = (type) => {
-  if (!type) return "Request";
-  const t = String(type).toLowerCase();
-  if (t === "leave") return "Leave";
-  if (t === "document") return "Document";
+const requestTypeLabel = (type, tr) => {
+  if (!type) return tr('employee:myRequests.typeRequest');
+  const key = String(type).toLowerCase();
+  if (key === 'leave') return tr('employee:myRequests.typeLeave');
+  if (key === 'document') return tr('employee:myRequests.typeDocument');
   return String(type).charAt(0).toUpperCase() + String(type).slice(1);
 };
 
@@ -71,6 +73,7 @@ const resolveDeleteUrl = ({ id, request_type: requestType }) => {
 };
 
 const MyRequests = () => {
+  const { t } = useTranslation(['employee', 'common']);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -157,7 +160,7 @@ const MyRequests = () => {
         if (file) formData.append("file", file);
 
         await uploadDocumentMutation.mutateAsync(formData);
-        toast.success("Document uploaded.");
+        toast.success(t('employee:toast.documentUploaded'));
       } else {
         const payload = {
           leave_type: values.leave_type,
@@ -168,7 +171,7 @@ const MyRequests = () => {
         };
 
         await createLeaveMutation.mutateAsync(payload);
-        toast.success("Leave request submitted.");
+        toast.success(t('employee:toast.leaveSubmitted'));
       }
 
       setShowRequestModal(false);
@@ -179,8 +182,8 @@ const MyRequests = () => {
         (typeof data?.detail === "string" ? data.detail : null) ||
         error?.message ||
         (values.request_kind === "document"
-          ? "Could not upload document."
-          : "Could not submit leave request.");
+          ? t('employee:toast.uploadDocumentFailed')
+          : t('employee:toast.submitLeaveFailed'));
 
       const renderErrorDescription = (payload) => {
         if (!payload) return null;
@@ -258,8 +261,8 @@ const MyRequests = () => {
       if (description) {
         toast.error(
           values.request_kind === "document"
-            ? "Document upload failed"
-            : "Leave request failed",
+            ? t('employee:toast.documentUploadFailed')
+            : t('employee:toast.leaveRequestFailed'),
           {
             description,
           },
@@ -282,7 +285,7 @@ const MyRequests = () => {
 
   const handleDownloadDocument = (url) => {
     if (!url) {
-      toast.error("Document is not available.");
+      toast.error(t('employee:myRequests.documentUnavailable'));
       return;
     }
     window.open(url, "_blank", "noopener,noreferrer");
@@ -296,26 +299,26 @@ const MyRequests = () => {
         id: req.id,
         request_type: req.request_type,
       });
-      toast.success("Request removed.");
+      toast.success(t('employee:myRequests.requestRemoved'));
       setDeleteConfirmRequest(null);
     } catch (e) {
       toast.error(
-        e?.response?.data?.detail || e?.message || "Could not remove request.",
+        translateApiError(e, 'employee:myRequests.removeFailed'),
       );
     }
   };
 
   const deleteModalMessage = useMemo(() => {
     if (!deleteConfirmRequest) return "";
-    const kind = requestTypeLabel(deleteConfirmRequest.request_type);
+    const kind = requestTypeLabel(deleteConfirmRequest.request_type, t);
     const det = buildDetailsLabel(deleteConfirmRequest);
     let snippet = "";
     if (det && det !== "—") {
       const short = det.length > 120 ? `${det.slice(0, 120)}…` : det;
       snippet = `\n\n“${short}”`;
     }
-    return `Remove this pending ${kind} request?${snippet}\n\nThis action cannot be undone.`;
-  }, [deleteConfirmRequest]);
+    return t('employee:myRequests.removeRequestConfirm', { kind, snippet });
+  }, [deleteConfirmRequest, t]);
 
   if (requestsQuery.isLoading && !requestsQuery.data) {
     return <MyRequestsSkeleton />;
@@ -325,7 +328,7 @@ const MyRequests = () => {
     return (
       <ResourceLoadError
         error={requestsQuery.error}
-        title="My requests could not be loaded"
+        title={t('employee:myRequests.loadError')}
         onRefresh={() => requestsQuery.refetch()}
         refreshLabel="Try again"
       />
@@ -342,9 +345,9 @@ const MyRequests = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700 }}>My Requests</h1>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700 }}>{t('employee:myRequests.title')}</h1>
           <p style={{ color: "var(--color-text-secondary)" }}>
-            Track and manage your HR requests.
+            {t('employee:myRequests.subtitle')}
           </p>
         </div>
         <Button
@@ -379,7 +382,7 @@ const MyRequests = () => {
                 marginBottom: "1.5rem",
               }}
             >
-              {requestKind === "document" ? "Upload Document" : "Request Leave"}
+              {requestKind === 'document' ? t('employee:requestForm.uploadDocument') : t('employee:requestForm.requestLeave')}
             </h3>
             <form
               onSubmit={handleSubmit(onSubmitRequest)}
@@ -404,19 +407,19 @@ const MyRequests = () => {
                     border: "1px solid var(--color-border)",
                   }}
                 >
-                  <option value="leave">Leave</option>
-                  <option value="document">Document</option>
+                  <option value="leave">{t('employee:requestForm.leave')}</option>
+                  <option value="document">{t('employee:requestForm.document')}</option>
                 </select>
               </div>
 
               {requestKind === "document" ? (
                 <>
                   <Input
-                    label="Name"
-                    placeholder="Salary certificate"
+                    label={t('employee:requestForm.name')}
+                    placeholder={t('employee:requestForm.namePlaceholder')}
                     error={errors.document_name?.message}
                     {...register("document_name", {
-                      required: "Document name is required.",
+                      required: t('employee:requestForm.validation.documentNameRequired'),
                     })}
                   />
                   <div
@@ -468,8 +471,8 @@ const MyRequests = () => {
                           }}
                         >
                           {selectedDocumentFile
-                            ? "File selected"
-                            : "Choose a file"}
+                            ? t('employee:requestForm.fileSelected')
+                            : t('employee:requestForm.chooseFile')}
                         </div>
                         <div
                           style={{
@@ -482,7 +485,7 @@ const MyRequests = () => {
                         >
                           {selectedDocumentFile
                             ? selectedDocumentFile.name
-                            : "PDF, PNG, JPG (max size depends on server)"}
+                            : t('employee:requestForm.fileHint')}
                         </div>
                       </span>
                       {selectedDocumentFile ? (
@@ -528,7 +531,7 @@ const MyRequests = () => {
                       accept=".pdf,image/*"
                       style={{ display: "none" }}
                       {...register("document_file", {
-                        required: "File is required.",
+                        required: t('employee:requestForm.validation.fileRequired'),
                       })}
                     />
                     {errors.document_file?.message && (
@@ -557,7 +560,7 @@ const MyRequests = () => {
                     </label>
                     <select
                       {...register("leave_type", {
-                        required: "Leave type is required.",
+                        required: t('employee:requestForm.validation.leaveTypeRequired'),
                       })}
                       style={{
                         height: "2.5rem",
@@ -566,8 +569,8 @@ const MyRequests = () => {
                         border: "1px solid var(--color-border)",
                       }}
                     >
-                      <option value="annual">Annual Leave</option>
-                      <option value="sick">Sick Leave</option>
+                      <option value="annual">{t('employee:requestForm.annualLeave')}</option>
+                      <option value="sick">{t('employee:requestForm.sickLeave')}</option>
                     </select>
                     {errors.leave_type?.message && (
                       <span
@@ -589,38 +592,38 @@ const MyRequests = () => {
                     }}
                   >
                     <Input
-                      label="From Date"
+                      label={t('employee:requestForm.fromDate')}
                       type="date"
                       error={errors.start_date?.message}
                       {...register("start_date", {
-                        required: "Start date is required.",
+                        required: t('employee:requestForm.validation.startDateRequired'),
                       })}
                     />
                     <Input
-                      label="To Date"
+                      label={t('employee:requestForm.toDate')}
                       type="date"
                       error={errors.end_date?.message}
                       {...register("end_date", {
-                        required: "End date is required.",
+                        required: t('employee:requestForm.validation.endDateRequired'),
                         validate: (value) => {
                           if (!leaveStartDate || !value) return true;
                           return (
                             value >= leaveStartDate ||
-                            "End date must be after start date."
+                            t('employee:requestForm.validation.endDateAfterStart')
                           );
                         },
                       })}
                     />
                   </div>
                   <Input
-                    label="Days"
+                    label={t('employee:requestForm.days')}
                     type="number"
                     value={computedLeaveDays}
                     readOnly
                   />
                   <Input
-                    label="Notes"
-                    placeholder="Family travel"
+                    label={t('employee:requestForm.notes')}
+                    placeholder={t('employee:requestForm.notesPlaceholder')}
                     {...register("notes")}
                   />
                 </>
@@ -652,10 +655,10 @@ const MyRequests = () => {
                   }
                 >
                   {isSubmitting
-                    ? "Submitting…"
+                    ? t('employee:requestForm.submitting')
                     : requestKind === "document"
-                      ? "Upload Document"
-                      : "Submit Leave"}
+                      ? t('employee:requestForm.uploadDocument')
+                      : t('employee:requestForm.submitLeave')}
                 </Button>
               </div>
             </form>
@@ -745,14 +748,14 @@ const MyRequests = () => {
                     variant="ghost"
                     size="sm"
                     icon={<X size={20} />}
-                    aria-label="Close"
+                    aria-label={t('common:actions.close')}
                     onClick={() => setShowDocumentModal(false)}
                   />
                 </div>
               </div>
               {selectedRequest.document_url ? (
                 <iframe
-                  title="Document preview"
+                  title={t('employee:myRequests.documentPreview')}
                   src={selectedRequest.document_url}
                   style={{
                     width: "100%",
@@ -771,7 +774,7 @@ const MyRequests = () => {
                     fontSize: "0.9rem",
                   }}
                 >
-                  No document file is linked to this request yet.
+                  {t('employee:myRequests.noDocumentLinked')}
                 </p>
               )}
             </Card>
@@ -815,8 +818,8 @@ const MyRequests = () => {
                 }}
               >
                 <th style={{ padding: "1rem 1.5rem" }}>Type</th>
-                <th style={{ padding: "1rem 1rem" }}>Date Requested</th>
-                <th style={{ padding: "1rem 1rem" }}>Details/Dates</th>
+                <th style={{ padding: "1rem 1rem" }}>{t('employee:myRequests.tableDateRequested')}</th>
+                <th style={{ padding: "1rem 1rem" }}>{t('employee:myRequests.tableDetails')}</th>
                 <th style={{ padding: "1rem 1.5rem" }}>Status</th>
                 <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
                   Actions
@@ -827,6 +830,7 @@ const MyRequests = () => {
               {requests.map((req) => {
                 const typeLabel = requestTypeLabel(
                   req.request_type || req.type || req.leave_type,
+                  t,
                 );
                 const rawDate =
                   req.date || req.requested_at || req.created_at || null;
@@ -939,8 +943,7 @@ const MyRequests = () => {
                           textAlign: "right",
                         }}
                       >
-                        This leave request was approved. No further action is
-                        required.
+                        {t('employee:myRequests.leaveApprovedHint')}
                       </span>
                     );
                   } else if (isRejected) {
@@ -955,8 +958,7 @@ const MyRequests = () => {
                           textAlign: "right",
                         }}
                       >
-                        This leave request was rejected. Contact HR if you need
-                        clarification.
+                        {t('employee:myRequests.leaveRejectedHint')}
                       </span>
                     );
                   }
@@ -1039,9 +1041,9 @@ const MyRequests = () => {
       <ConfirmationModal
         isOpen={Boolean(deleteConfirmRequest)}
         type="danger"
-        title="Remove request"
+        title={t('employee:myRequests.removeRequestTitle')}
         message={deleteModalMessage}
-        confirmText={deleteRequestMutation.isPending ? "Removing…" : "Delete"}
+        confirmText={deleteRequestMutation.isPending ? t('employee:myRequests.removing') : t('common:actions.delete')}
         cancelText="Cancel"
         onCancel={() =>
           !deleteRequestMutation.isPending && setDeleteConfirmRequest(null)

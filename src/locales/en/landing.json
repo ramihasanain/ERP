@@ -1,0 +1,112 @@
+{
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "signIn": "Sign In",
+    "logIn": "Log In",
+    "getStarted": "Get Started",
+    "openUserMenu": "Open user menu"
+  },
+  "hero": {
+    "badge": "v2.0 is now live with enhanced Analytics",
+    "title": "Unified Management for",
+    "titleHighlight": "Global Enterprise",
+    "subtitle": "Seamlessly integrate Accounting, HR, and Inventory across borders. Built for teams in Jordan, KSA, Germany, and beyond with native compliance.",
+    "startTrial": "Start Free Trial",
+    "watchDemo": "Watch Demo",
+    "dashboardPreview": "Dashboard Preview Image"
+  },
+  "features": {
+    "title": "Everything you need to run your business",
+    "subtitle": "UnifiedCore brings all your critical business functions into one seamless platform.",
+    "accounting": {
+      "title": "Advanced Accounting",
+      "description": "Multi-currency, tax-compliant ledgers for Jordan, KSA, and Germany."
+    },
+    "hr": {
+      "title": "Global HR & Payroll",
+      "description": "Manage diverse teams with country-specific labor laws and payroll rules."
+    },
+    "inventory": {
+      "title": "Smart Inventory",
+      "description": "Real-time stock tracking across multiple warehouses and locations."
+    },
+    "security": {
+      "title": "Enterprise Security",
+      "description": "Role-based access control (RBAC), audit logs, and data encryption."
+    },
+    "localization": {
+      "title": "Native Localization",
+      "description": "Built-in RTL support for Arabic and localized date/number formats."
+    },
+    "analytics": {
+      "title": "Real-time Analytics",
+      "description": "Actionable insights with customizable dashboards and reports."
+    }
+  },
+  "pricing": {
+    "title": "Simple, transparent pricing",
+    "subtitle": "Choose the plan that fits your business scale.",
+    "mostPopular": "Most Popular",
+    "perMonth": "/mo",
+    "contactSales": "Contact Sales",
+    "getStarted": "Get Started",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "price": "$49",
+        "description": "Essential tools for small businesses.",
+        "features": {
+          "singleCompany": "Single Company",
+          "basicAccounting": "Basic Accounting",
+          "upTo5Users": "Up to 5 Users",
+          "emailSupport": "Email Support"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$99",
+        "description": "Perfect for growing companies.",
+        "features": {
+          "multiCompany": "Multi-Company (up to 3)",
+          "advancedAccountingHr": "Advanced Accounting & HR",
+          "upTo20Users": "Up to 20 Users",
+          "prioritySupport": "Priority Support",
+          "inventoryManagement": "Inventory Management"
+        }
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom",
+        "description": "For large organizations.",
+        "features": {
+          "unlimitedCompanies": "Unlimited Companies",
+          "allModules": "All Modules Included",
+          "unlimitedUsers": "Unlimited Users",
+          "accountManager": "Dedicated Account Manager",
+          "customIntegrations": "Custom Integrations",
+          "sla": "SLA"
+        }
+      }
+    }
+  },
+  "footer": {
+    "brand": "UnifiedCore",
+    "tagline": "The complete operating system for modern global businesses.",
+    "product": "Product",
+    "resources": "Resources",
+    "legal": "Legal",
+    "accounting": "Accounting",
+    "hrPayroll": "HR & Payroll",
+    "inventory": "Inventory",
+    "integrations": "Integrations",
+    "documentation": "Documentation",
+    "apiReference": "API Reference",
+    "blog": "Blog",
+    "community": "Community",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "security": "Security",
+    "copyright": "© {{year}} UnifiedCore. All rights reserved."
+  }
+}

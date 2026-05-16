@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useBasePath } from '@/hooks/useBasePath';
 import Button from '@/components/Shared/Button';
@@ -23,6 +24,7 @@ const ContractTemplatesListView = ({
     onConfirmDelete,
     isDeletingTemplate,
 }) => {
+    const { t } = useTranslation(['hr', 'common']);
     const basePath = useBasePath();
     return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -30,12 +32,12 @@ const ContractTemplatesListView = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <Button variant="ghost" icon={<ArrowLeft size={18} />} onClick={() => navigate(`${basePath}/hr`)} />
                 <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Contract Templates</h1>
-                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Create and manage employment contract formats.</p>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{t('contractTemplates.title')}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>{t('contractTemplates.subtitle')}</p>
                 </div>
             </div>
             <Button icon={<Plus size={18} />} onClick={() => navigate(`${basePath}/hr/contract-templates/new`)}>
-                New Template
+                {t('contractTemplates.newTemplate')}
             </Button>
         </div>
 

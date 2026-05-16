@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Copy, Printer } from 'lucide-react';
 import Button from '@/components/Shared/Button';
 import Card from '@/components/Shared/Card';

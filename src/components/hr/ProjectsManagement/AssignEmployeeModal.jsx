@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserPlus } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -18,6 +19,8 @@ const AssignEmployeeModal = ({
     onClose,
     onAssign,
 }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     if (!projectId) return null;
 
     return (
@@ -62,9 +65,7 @@ const AssignEmployeeModal = ({
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-                    <Button variant="ghost" onClick={onClose}>
-                        Cancel
-                    </Button>
+                    <Button variant="ghost" onClick={onClose}>{t('common:actions.cancel')}</Button>
                     <Button icon={<UserPlus size={16} />} onClick={onAssign} disabled={isAssigning || !assignEmpId || !assignRole}>
                         Assign
                     </Button>

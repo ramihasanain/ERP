@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMatch, useNavigate, useParams } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
@@ -11,6 +12,8 @@ import ContractTemplatesPreviewView from './ContractTemplatesPreviewView';
 import { formatTemplateDate, humanizeTag } from './utils';
 
 const ContractTemplates = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const navigate = useNavigate();
     const basePath = useBasePath();
     const { templateId } = useParams();
@@ -80,6 +83,7 @@ const ContractTemplates = () => {
 
     useEffect(() => {
         const handleResize = () => {
+
             setIsWidePreviewHeader(window.innerWidth > 850);
             setIsLargeEditorLayout(window.innerWidth >= 1200);
             setIsNarrowEditorForm(window.innerWidth < 1000);
@@ -108,7 +112,7 @@ const ContractTemplates = () => {
 
     const handleSave = async () => {
         if (!formData.name || !formData.body) {
-            toast.error('Please fill in template name and body.');
+            toast.error(t('contractTemplates.fillRequired'));
             return;
         }
         if (isEditPage && templateId) {
@@ -119,7 +123,7 @@ const ContractTemplates = () => {
                     is_default: Boolean(formData.is_default),
                     body: formData.body,
                 });
-                toast.success('Template updated successfully.');
+                toast.success(t('contractTemplates.updated'));
                 navigate(`${basePath}/hr/contract-templates`);
             } catch (error) {
                 const message =
@@ -138,7 +142,7 @@ const ContractTemplates = () => {
                 is_default: Boolean(formData.is_default),
                 body: formData.body,
             });
-            toast.success('Template created successfully.');
+            toast.success(t('contractTemplates.created'));
         } catch (error) {
             const message =
                 error?.response?.data?.detail ||
@@ -153,7 +157,7 @@ const ContractTemplates = () => {
 
     const handlePreviewRender = useCallback(async (selectedTemplateId) => {
         if (!previewEmployee) {
-            toast.error('Please select an employee for preview.');
+            toast.error(t('contractTemplates.selectEmployeePreview'));
             return;
         }
         setPreviewHtml('');
@@ -171,7 +175,7 @@ const ContractTemplates = () => {
                             ? response.html
                             : '';
             if (!html) {
-                toast.error('Template render returned empty HTML.');
+                toast.error(t('contractTemplates.emptyRender'));
                 return;
             }
             setPreviewHtml(html);
@@ -193,6 +197,7 @@ const ContractTemplates = () => {
     }, [isPreviewPage, templateId, previewEmployee, handlePreviewRender]);
 
     const handlePrint = () => {
+
         if (!previewHtml) return;
         const printWindow = window.open('', '_blank');
         printWindow.document.write(`
@@ -239,14 +244,14 @@ const ContractTemplates = () => {
         const contentToCopy = getCopyContent();
         if (!contentToCopy) return;
         await navigator.clipboard.writeText(contentToCopy);
-        toast.success('Copied to clipboard.');
+        toast.success(t('contractTemplates.copied'));
     };
 
     const handleDeleteTemplate = async () => {
         if (!templateToDelete?.id) return;
         try {
             await deleteTemplateMutation.mutateAsync(templateToDelete.id);
-            toast.success('Template deleted successfully.');
+            toast.success(t('contractTemplates.deleted'));
             setTemplateToDelete(null);
         } catch (error) {
             const message =

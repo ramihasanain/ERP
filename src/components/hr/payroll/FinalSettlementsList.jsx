@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +8,7 @@ import { FileText, Download, Eye, Search } from 'lucide-react';
 import useCustomQuery from '@/hooks/useQuery';
 
 const FinalSettlementsList = () => {
+    const { t } = useTranslation(['hr', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const [searchTerm, setSearchTerm] = useState('');

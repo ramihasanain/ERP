@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import SelectWithLoadMore from "@/core/SelectWithLoadMore";
@@ -11,6 +12,7 @@ import { BookOpen, Edit3, Plus, Trash2, Save } from "lucide-react";
 import NewJournalEntryForm from "./NewJournalEntryForm";
 
 const JournalEntriesTab = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const { periodId } = useParams();
 
   const {
@@ -56,7 +58,7 @@ const JournalEntriesTab = () => {
         l.account && (parseFloat(l.debit) > 0 || parseFloat(l.credit) > 0),
     );
     if (validLines.length === 0) {
-      toast.error("At least one valid line is required");
+      toast.error(t("journalTab.validationLine"));
       return;
     }
     const totalDebit = validLines.reduce(
@@ -68,7 +70,7 @@ const JournalEntriesTab = () => {
       0,
     );
     if (totalDebit !== totalCredit) {
-      toast.error("Total debit must equal total credit");
+      toast.error(t("journalTab.validationBalance"));
       return;
     }
     try {
@@ -81,21 +83,21 @@ const JournalEntriesTab = () => {
           order: i,
         })),
       });
-      toast.success("Update change request submitted");
+      toast.success(t("journalTab.updateSuccess"));
       setEditingJeId(null);
       setEditJeLines([]);
     } catch {
-      toast.error("Failed to submit update request");
+      toast.error(t("journalTab.updateFailed"));
     }
   };
 
   const handleDeleteJe = async (entry) => {
-    if (!confirm(`Request deletion of "${entry.title}"?`)) return;
+    if (!confirm(t("journalTab.deleteConfirm", { title: entry.title }))) return;
     try {
       await deleteEntry(entry.id);
-      toast.success("Delete change request submitted");
+      toast.success(t("journalTab.deleteSuccess"));
     } catch {
-      toast.error("Failed to submit delete request");
+      toast.error(t("journalTab.deleteFailed"));
     }
   };
 
@@ -112,14 +114,14 @@ const JournalEntriesTab = () => {
           }}
         >
           <h4 style={{ fontWeight: 700 }}>
-            Journal Entries ({journalEntries.length})
+            {t("journalTab.title", { count: journalEntries.length })}
           </h4>
           <Button
             size="sm"
             icon={<Plus size={14} />}
             onClick={() => setShowNewJournalForm(!showNewJournalForm)}
           >
-            {showNewJournalForm ? "Cancel" : "New Entry"}
+            {showNewJournalForm ? t("common:actions.cancel") : t("journalTab.newEntry")}
           </Button>
         </div>
 
@@ -133,7 +135,7 @@ const JournalEntriesTab = () => {
               fontSize: "0.9rem",
             }}
           >
-            Loading journal entries…
+            {t("journalTab.loading")}
           </div>
         )}
 
@@ -149,10 +151,8 @@ const JournalEntriesTab = () => {
               size={40}
               style={{ marginBottom: "0.75rem", opacity: 0.4 }}
             />
-            <p style={{ fontWeight: 500 }}>No journal entries found</p>
-            <p style={{ fontSize: "0.85rem" }}>
-              Click "New Entry" to propose a journal entry.
-            </p>
+            <p style={{ fontWeight: 500 }}>{t("journalTab.empty")}</p>
+            <p style={{ fontSize: "0.85rem" }}>{t("journalTab.emptyHint")}</p>
           </div>
         )}
 
@@ -217,7 +217,7 @@ const JournalEntriesTab = () => {
                           color: "#d97706",
                         }}
                       >
-                        MANUAL
+                        {t("journalTab.manual")}
                       </span>
                     )}
                     <span
@@ -258,7 +258,7 @@ const JournalEntriesTab = () => {
                         cursor: "pointer",
                         color: "var(--color-primary-600)",
                       }}
-                      title="Propose Edit"
+                      title={t("journalTab.proposeEdit")}
                     >
                       <Edit3 size={13} />
                     </button>
@@ -271,7 +271,7 @@ const JournalEntriesTab = () => {
                         cursor: "pointer",
                         color: "var(--color-error)",
                       }}
-                      title="Propose Delete"
+                      title={t("journalTab.proposeDelete")}
                     >
                       <Trash2 size={13} />
                     </button>
@@ -301,12 +301,12 @@ const JournalEntriesTab = () => {
                           <th
                             style={{ padding: "4px 8px", textAlign: "left" }}
                           >
-                            Account
+                            {t("journalTab.account")}
                           </th>
                           <th
                             style={{ padding: "4px 8px", textAlign: "left" }}
                           >
-                            Description
+                            {t("journalTab.description")}
                           </th>
                           <th
                             style={{
@@ -315,7 +315,7 @@ const JournalEntriesTab = () => {
                               width: "120px",
                             }}
                           >
-                            Debit
+                            {t("journalTab.debit")}
                           </th>
                           <th
                             style={{
@@ -324,7 +324,7 @@ const JournalEntriesTab = () => {
                               width: "120px",
                             }}
                           >
-                            Credit
+                            {t("journalTab.credit")}
                           </th>
                           <th
                             style={{ padding: "4px 8px", width: "40px" }}
@@ -351,8 +351,8 @@ const JournalEntriesTab = () => {
                                 options={accountOptions}
                                 emptyOptionLabel={
                                   accountsQuery.isPending
-                                    ? "Loading…"
-                                    : "Select account…"
+                                    ? t("journalTab.loadingAccounts")
+                                    : t("journalTab.selectAccount")
                                 }
                                 disabled={accountsQuery.isError}
                                 isInitialLoading={accountsQuery.isPending}
@@ -477,7 +477,7 @@ const JournalEntriesTab = () => {
                           fontWeight: 600,
                         }}
                       >
-                        + Add Line
+                        {t("journalTab.addLine")}
                       </button>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <Button
@@ -488,7 +488,7 @@ const JournalEntriesTab = () => {
                             setEditJeLines([]);
                           }}
                         >
-                          Cancel
+                          {t("common:actions.cancel")}
                         </Button>
                         <Button
                           size="sm"
@@ -498,8 +498,8 @@ const JournalEntriesTab = () => {
                           style={{ background: "var(--color-primary-600)" }}
                         >
                           {jeSubmitting
-                            ? "Submitting…"
-                            : "Submit Update Request"}
+                            ? t("journalTab.submitting")
+                            : t("journalTab.submitUpdate")}
                         </Button>
                       </div>
                     </div>
@@ -517,22 +517,22 @@ const JournalEntriesTab = () => {
                         <th
                           style={{ padding: "4px 8px", textAlign: "left" }}
                         >
-                          Account
+                          {t("journalTab.account")}
                         </th>
                         <th
                           style={{ padding: "4px 8px", textAlign: "left" }}
                         >
-                          Description
+                          {t("journalTab.description")}
                         </th>
                         <th
                           style={{ padding: "4px 8px", textAlign: "right" }}
                         >
-                          Debit
+                          {t("journalTab.debit")}
                         </th>
                         <th
                           style={{ padding: "4px 8px", textAlign: "right" }}
                         >
-                          Credit
+                          {t("journalTab.credit")}
                         </th>
                       </tr>
                     </thead>
@@ -567,7 +567,7 @@ const JournalEntriesTab = () => {
                           >
                             {parseFloat(line.debit) > 0
                               ? parseFloat(line.debit).toLocaleString()
-                              : "—"}
+                              : t("common:notAvailable")}
                           </td>
                           <td
                             style={{
@@ -581,7 +581,7 @@ const JournalEntriesTab = () => {
                           >
                             {parseFloat(line.credit) > 0
                               ? parseFloat(line.credit).toLocaleString()
-                              : "—"}
+                              : t("common:notAvailable")}
                           </td>
                         </tr>
                       ))}

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { Plus, Eye, Search } from 'lucide-react';
@@ -41,7 +42,18 @@ const buildBillsUrl = ({ name, status }) => {
 };
 
 const VendorInvoiceList = () => {
+    const { t } = useTranslation(['procurement', 'common']);
     const navigate = useNavigate();
+
+    const statusLabel = (status) => {
+        const map = {
+            All: t('vendorInvoicesList.statusAll'),
+            Draft: t('vendorInvoicesList.statusDraft'),
+            Posted: t('vendorInvoicesList.statusPosted'),
+            Paid: t('vendorInvoicesList.statusPaid'),
+        };
+        return map[status] || status;
+    };
     const basePath = useBasePath();
     const [isNarrowScreen, setIsNarrowScreen] = useState(() => window.innerWidth < 1100);
     const [filterStatus, setFilterStatus] = useState('All');
@@ -78,11 +90,11 @@ const VendorInvoiceList = () => {
         <div style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', flexDirection: isNarrowScreen ? 'column' : 'row', justifyContent: 'space-between', alignItems: isNarrowScreen ? 'flex-start' : 'center', marginBottom: '2rem', gap: '1rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>Vendor Invoices (Bills)</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Manage supplier bills and payments</p>
+                    <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>{t('vendorInvoicesList.title')}</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{t('vendorInvoicesList.subtitle')}</p>
                 </div>
                 <Button variant="primary" icon={<Plus size={16} />} size={isNarrowScreen ? 'sm' : undefined} onClick={() => navigate(`${basePath}/inventory/invoices/new`)} style={{ alignSelf: isNarrowScreen ? 'flex-end' : 'auto' }}>
-                    Record New Bill
+                    {t('vendorInvoicesList.recordNewBill')}
                 </Button>
             </div>
 
@@ -91,7 +103,7 @@ const VendorInvoiceList = () => {
                     <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }} />
                     <input
                         type="text"
-                        placeholder="Search Bills or Vendors..."
+                        placeholder={t('vendorInvoicesList.searchPlaceholder')}
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.5rem', border: '1px solid var(--color-border)', borderRadius: '6px', background: 'var(--color-bg-surface)', color: 'var(--color-text-main)' }}
@@ -115,7 +127,7 @@ const VendorInvoiceList = () => {
                                 fontWeight: 500,
                             }}
                         >
-                            {status}
+                            {statusLabel(status)}
                         </button>
                     ))}
                 </div>

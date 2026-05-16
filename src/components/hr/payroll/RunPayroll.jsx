@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import translateApiError from '@/utils/translateApiError';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import Card from '@/components/Shared/Card';
@@ -12,6 +14,8 @@ import Spinner from '@/core/Spinner';
 import ResourceLoadError from '@/core/ResourceLoadError';
 
 const RunPayroll = () => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const basePath = useBasePath();
@@ -45,7 +49,7 @@ const RunPayroll = () => {
         if (!selectedPeriod) return;
         try {
             await calculateMutation.mutateAsync(selectedPeriod);
-            toast.success('Payroll calculation started.');
+            toast.success(t('payroll.calculationStarted'));
 
             const periodName = draftPeriods.find((p) => p.id === selectedPeriod)?.name;
 
@@ -61,7 +65,7 @@ const RunPayroll = () => {
                 (typeof error?.response?.data === 'string' ? error.response.data : null) ||
                 error?.message ||
                 'Could not start payroll calculation.';
-            toast.error(typeof message === 'string' ? message : 'Could not start payroll calculation.');
+            toast.error(translateApiError(error, 'hr:payroll.calculationFailed'));
         }
     };
 

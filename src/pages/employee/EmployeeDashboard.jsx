@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
+import { translateApiError } from '@/utils/translateApiError';
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import Input from "@/components/Shared/Input";
@@ -39,18 +41,8 @@ function extractTimeTrackerStartPayload(data) {
   };
 }
 
-function formatTrackerMutationError(error) {
-  const data = error?.response?.data;
-  if (typeof data?.detail === "string") return data.detail;
-  if (Array.isArray(data?.detail)) {
-    return data.detail
-      .map((x) => (typeof x === "string" ? x : JSON.stringify(x)))
-      .join(" ");
-  }
-  return error?.message || "Something went wrong.";
-}
-
 const EmployeeDashboard = () => {
+  const { t } = useTranslation(['employee', 'common']);
   const [showRequestModal, setShowRequestModal] = useState(false);
 
   // Timer state
@@ -136,7 +128,7 @@ const EmployeeDashboard = () => {
     () =>
       assignmentProjects.map((p) => ({
         value: String(p.id),
-        label: p.name || "Untitled project",
+        label: p.name || t('employee:dashboard.untitledProject'),
       })),
     [assignmentProjects],
   );
@@ -164,7 +156,7 @@ const EmployeeDashboard = () => {
   );
   const leaveBalance = dashboardData?.leave_balance ?? {};
   const latestPayslip = dashboardData?.latest_payslip ?? null;
-  const greetingName = dashboardData?.user?.full_name || "Employee";
+  const greetingName = dashboardData?.user?.full_name || t('employee:employee');
 
   // Live ticker
   useEffect(() => {
@@ -212,10 +204,10 @@ const EmployeeDashboard = () => {
         startTime: serverStart,
       });
       setTaskDescription("");
-      toast.success("Time tracker started.");
+      toast.success(t('employee:toast.timeTrackerStarted'));
     } catch (error) {
-      toast.error("Could not start time tracker.", {
-        description: formatTrackerMutationError(error),
+      toast.error(t('employee:toast.timeTrackerStartFailed'), {
+        description: translateApiError(error),
       });
     }
   };
@@ -229,16 +221,16 @@ const EmployeeDashboard = () => {
     const lineId = activeActivity.lineId ?? activeActivity.id;
     if (!lineId) {
       stop();
-      toast.success("Time tracker stopped.");
+      toast.success(t('employee:toast.timeTrackerStopped'));
       return;
     }
     try {
       await stopTimeTrackerMutation.mutateAsync({ line_id: lineId });
       stop();
-      toast.success("Time tracker stopped.");
+      toast.success(t('employee:toast.timeTrackerStopped'));
     } catch (error) {
-      toast.error("Could not stop time tracker.", {
-        description: formatTrackerMutationError(error),
+      toast.error(t('employee:toast.timeTrackerStopFailed'), {
+        description: translateApiError(error),
       });
     }
   };
@@ -276,7 +268,7 @@ const EmployeeDashboard = () => {
         if (file) formData.append("file", file);
 
         await uploadDocumentMutation.mutateAsync(formData);
-        toast.success("Document uploaded.");
+        toast.success(t('employee:toast.documentUploaded'));
       } else {
         const payload = {
           leave_type: values.leave_type,
@@ -287,7 +279,7 @@ const EmployeeDashboard = () => {
         };
 
         await createLeaveMutation.mutateAsync(payload);
-        toast.success("Leave request submitted.");
+        toast.success(t('employee:toast.leaveSubmitted'));
       }
 
       setShowRequestModal(false);
@@ -298,8 +290,8 @@ const EmployeeDashboard = () => {
         (typeof data?.detail === "string" ? data.detail : null) ||
         error?.message ||
         (values.request_kind === "document"
-          ? "Could not upload document."
-          : "Could not submit leave request.");
+          ? t('employee:toast.uploadDocumentFailed')
+          : t('employee:toast.submitLeaveFailed'));
 
       const renderErrorDescription = (payload) => {
         if (!payload) return null;
@@ -377,8 +369,8 @@ const EmployeeDashboard = () => {
       if (description) {
         toast.error(
           values.request_kind === "document"
-            ? "Document upload failed"
-            : "Leave request failed",
+            ? t('employee:toast.documentUploadFailed')
+            : t('employee:toast.leaveRequestFailed'),
           {
             description,
           },
@@ -416,9 +408,9 @@ const EmployeeDashboard = () => {
     return (
       <ResourceLoadError
         error={dashboardQuery.error}
-        title="Could not load employee dashboard"
+        title={t('employee:dashboard.loadError')}
         onRefresh={() => dashboardQuery.refetch()}
-        refreshLabel="Try again"
+        refreshLabel={t('common:actions.retry')}
       />
     );
   }
@@ -439,9 +431,9 @@ const EmployeeDashboard = () => {
         <div>
           <h1
             style={{ fontSize: "1.75rem", fontWeight: 700 }}
-          >{`Good Morning, ${greetingName}`}</h1>
+          >{t('employee:dashboard.greeting', { name: greetingName })}</h1>
           <p style={{ color: "var(--color-text-secondary)" }}>
-            {`You currently have ${pendingRequestsCount} pending request${pendingRequestsCount === 1 ? "" : "s"}.`}
+            {t(`employee:dashboard.pendingRequests${pendingRequestsCount === 1 ? '_one' : '_other'}`, { count: pendingRequestsCount })}
           </p>
         </div>
         <Button
@@ -452,7 +444,7 @@ const EmployeeDashboard = () => {
         </Button>
       </div>
 
-      {isEmptyDashboard && <NoData label="dashboard" />}
+      {isEmptyDashboard && <NoData label={t('employee:empty.dashboard')} />}
 
       {/* Request Modal */}
       {showRequestModal && (
@@ -478,7 +470,7 @@ const EmployeeDashboard = () => {
                 marginBottom: "1.5rem",
               }}
             >
-              {requestKind === "document" ? "Upload Document" : "Request Leave"}
+              {requestKind === 'document' ? t('employee:requestForm.uploadDocument') : t('employee:requestForm.requestLeave')}
             </h3>
             <form
               onSubmit={handleSubmit(onSubmitRequest)}
@@ -503,19 +495,19 @@ const EmployeeDashboard = () => {
                     border: "1px solid var(--color-border)",
                   }}
                 >
-                  <option value="leave">Leave</option>
-                  <option value="document">Document</option>
+                  <option value="leave">{t('employee:requestForm.leave')}</option>
+                  <option value="document">{t('employee:requestForm.document')}</option>
                 </select>
               </div>
 
               {requestKind === "document" ? (
                 <>
                   <Input
-                    label="Name"
-                    placeholder="Salary certificate"
+                    label={t('employee:requestForm.name')}
+                    placeholder={t('employee:requestForm.namePlaceholder')}
                     error={errors.document_name?.message}
                     {...register("document_name", {
-                      required: "Document name is required.",
+                      required: t('employee:requestForm.validation.documentNameRequired'),
                     })}
                   />
                   <div
@@ -567,8 +559,8 @@ const EmployeeDashboard = () => {
                           }}
                         >
                           {selectedDocumentFile
-                            ? "File selected"
-                            : "Choose a file"}
+                            ? t('employee:requestForm.fileSelected')
+                            : t('employee:requestForm.chooseFile')}
                         </div>
                         <div
                           style={{
@@ -581,7 +573,7 @@ const EmployeeDashboard = () => {
                         >
                           {selectedDocumentFile
                             ? selectedDocumentFile.name
-                            : "PDF, PNG, JPG (max size depends on server)"}
+                            : t('employee:requestForm.fileHint')}
                         </div>
                       </span>
                       {selectedDocumentFile ? (
@@ -627,7 +619,7 @@ const EmployeeDashboard = () => {
                       accept=".pdf,image/*"
                       style={{ display: "none" }}
                       {...register("document_file", {
-                        required: "File is required.",
+                        required: t('employee:requestForm.validation.fileRequired'),
                       })}
                     />
                     {errors.document_file?.message && (
@@ -656,7 +648,7 @@ const EmployeeDashboard = () => {
                     </label>
                     <select
                       {...register("leave_type", {
-                        required: "Leave type is required.",
+                        required: t('employee:requestForm.validation.leaveTypeRequired'),
                       })}
                       style={{
                         height: "2.5rem",
@@ -665,8 +657,8 @@ const EmployeeDashboard = () => {
                         border: "1px solid var(--color-border)",
                       }}
                     >
-                      <option value="annual">Annual Leave</option>
-                      <option value="sick">Sick Leave</option>
+                      <option value="annual">{t('employee:requestForm.annualLeave')}</option>
+                      <option value="sick">{t('employee:requestForm.sickLeave')}</option>
                     </select>
                     {errors.leave_type?.message && (
                       <span
@@ -688,38 +680,38 @@ const EmployeeDashboard = () => {
                     }}
                   >
                     <Input
-                      label="From Date"
+                      label={t('employee:requestForm.fromDate')}
                       type="date"
                       error={errors.start_date?.message}
                       {...register("start_date", {
-                        required: "Start date is required.",
+                        required: t('employee:requestForm.validation.startDateRequired'),
                       })}
                     />
                     <Input
-                      label="To Date"
+                      label={t('employee:requestForm.toDate')}
                       type="date"
                       error={errors.end_date?.message}
                       {...register("end_date", {
-                        required: "End date is required.",
+                        required: t('employee:requestForm.validation.endDateRequired'),
                         validate: (value) => {
                           if (!leaveStartDate || !value) return true;
                           return (
                             value >= leaveStartDate ||
-                            "End date must be after start date."
+                            t('employee:requestForm.validation.endDateAfterStart')
                           );
                         },
                       })}
                     />
                   </div>
                   <Input
-                    label="Days"
+                    label={t('employee:requestForm.days')}
                     type="number"
                     value={computedLeaveDays}
                     readOnly
                   />
                   <Input
-                    label="Notes"
-                    placeholder="Family travel"
+                    label={t('employee:requestForm.notes')}
+                    placeholder={t('employee:requestForm.notesPlaceholder')}
                     {...register("notes")}
                   />
                 </>
@@ -751,10 +743,10 @@ const EmployeeDashboard = () => {
                   }
                 >
                   {isSubmitting
-                    ? "Submitting…"
+                    ? t('employee:requestForm.submitting')
                     : requestKind === "document"
-                      ? "Upload Document"
-                      : "Submit Leave"}
+                      ? t('employee:requestForm.uploadDocument')
+                      : t('employee:requestForm.submitLeave')}
                 </Button>
               </div>
             </form>
@@ -800,7 +792,7 @@ const EmployeeDashboard = () => {
           >
             <Timer size={20} />
           </div>
-          <h3 style={{ fontSize: "1.1rem", fontWeight: 600 }}>Time Tracker</h3>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: 600 }}>{t('employee:dashboard.timeTracker')}</h3>
           {activeActivity?.status === "running" && (
             <span
               style={{
@@ -852,7 +844,7 @@ const EmployeeDashboard = () => {
                     marginTop: "0.25rem",
                   }}
                 >
-                  Started at{" "}
+                  {t('employee:dashboard.startedAt', { time: formatDateTimeSimple(activeActivity.startTime) || '—' })}
                   {formatDateTimeSimple(activeActivity.startTime) || "—"}
                 </div>
               </div>
@@ -867,7 +859,7 @@ const EmployeeDashboard = () => {
                 disabled={stopTimeTrackerMutation.isPending}
               >
                 <Square size={16} fill="var(--color-error)" />{" "}
-                {stopTimeTrackerMutation.isPending ? "Stopping…" : "Stop"}
+                {stopTimeTrackerMutation.isPending ? t('employee:dashboard.stopping') : t('employee:dashboard.stop')}
               </Button>
             </div>
           </div>
@@ -883,18 +875,18 @@ const EmployeeDashboard = () => {
             <div style={{ flex: "1 1 200px", minWidth: 0 }}>
               <SelectWithLoadMore
                 id="employee-dashboard-time-tracker-project"
-                label="Project"
+                label={t('employee:dashboard.project')}
                 value={selectedProject}
                 onChange={setSelectedProject}
                 options={projectSelectOptions}
-                emptyOptionLabel="Select project…"
+                emptyOptionLabel={t('employee:dashboard.selectProject')}
                 hasMore={Boolean(assignmentsQuery.hasNextPage)}
                 onLoadMore={() => assignmentsQuery.fetchNextPage()}
                 isLoadingMore={assignmentsQuery.isFetchingNextPage}
                 isInitialLoading={assignmentsQuery.isPending}
                 paginationError={
                   assignmentsQuery.isError
-                    ? "Could not load projects. Scroll to retry or refresh the page."
+                    ? t('employee:dashboard.projectsLoadError')
                     : null
                 }
                 zIndex={500}
@@ -915,13 +907,13 @@ const EmployeeDashboard = () => {
                   color: "var(--color-text-secondary)",
                 }}
               >
-                What are you working on?
+                {t('employee:dashboard.whatWorkingOn')}
               </label>
               <input
                 type="text"
                 value={taskDescription}
                 onChange={(e) => setTaskDescription(e.target.value)}
-                placeholder="e.g. Working on payroll module"
+                placeholder={t('employee:dashboard.workOnPlaceholder')}
                 style={{
                   height: "2.5rem",
                   padding: "0 0.75rem",
@@ -950,7 +942,7 @@ const EmployeeDashboard = () => {
               }}
             >
               <Play size={16} fill="white" />{" "}
-              {startTimeTrackerMutation.isPending ? "Starting…" : "Start"}
+              {startTimeTrackerMutation.isPending ? t('employee:dashboard.starting') : t('employee:dashboard.start')}
             </Button>
           </div>
         )}
@@ -971,7 +963,7 @@ const EmployeeDashboard = () => {
               marginBottom: "0.5rem",
             }}
           >
-            Today&apos;s activity
+            {t('employee:dashboard.todaysActivity')}
           </div>
           {todayTrackerQuery.isLoading && !todayTrackerQuery.data ? (
             <div
@@ -980,11 +972,11 @@ const EmployeeDashboard = () => {
                 color: "var(--color-text-muted)",
               }}
             >
-              Loading today&apos;s log…
+              {t('employee:dashboard.loadingTodayLog')}
             </div>
           ) : todayTrackerQuery.isError ? (
             <div style={{ fontSize: "0.8125rem", color: "var(--color-error)" }}>
-              Could not load today&apos;s time entries.
+              {t('employee:dashboard.todayEntriesError')}
               <button
                 type="button"
                 onClick={() => todayTrackerQuery.refetch()}
@@ -1009,7 +1001,7 @@ const EmployeeDashboard = () => {
                 color: "var(--color-text-muted)",
               }}
             >
-              No completed entries today yet.
+              {t('employee:dashboard.noCompletedToday')}
             </div>
           ) : (
             completedTodayLines.map((line, index) => {
@@ -1118,7 +1110,7 @@ const EmployeeDashboard = () => {
             </span>
             <span
               style={{ fontWeight: 700 }}
-            >{`${remainingBalance} / ${annualEntitlement} Days`}</span>
+            >{t('employee:dashboard.daysCount', { remaining: remainingBalance, total: annualEntitlement })}</span>
           </div>
           <div
             style={{
@@ -1158,7 +1150,7 @@ const EmployeeDashboard = () => {
             >
               <FileText size={20} />
             </div>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 600 }}>Payslips</h3>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 600 }}>{t('employee:dashboard.payslipsCard')}</h3>
           </div>
           <div style={{ marginBottom: "1rem" }}>
             {latestPayslip ? (
@@ -1175,12 +1167,15 @@ const EmployeeDashboard = () => {
                     color: "var(--color-text-secondary)",
                   }}
                 >
-                  {`Last payment on ${formatDate(latestPayslip.pay_date) || "-"} (${latestPayslip.period_name || "Period"})`}
+                  {t('employee:dashboard.lastPayment', {
+                    date: formatDate(latestPayslip.pay_date) || '-',
+                    period: latestPayslip.period_name || t('employee:dashboard.period'),
+                  })}
                 </div>
               </>
             ) : (
               <NoData
-                label="payslip"
+                label={t('employee:empty.payslip')}
                 size="sm"
                 variant="inline"
                 style={{
@@ -1194,7 +1189,7 @@ const EmployeeDashboard = () => {
             size="sm"
             style={{ width: "100%" }}
             disabled={!latestPayslip}
-            onClick={() => toast.info("Payslip download is not connected yet.")}
+            onClick={() => toast.info(t('employee:dashboard.payslipDownloadUnavailable'))}
           >
             Download PDF
           </Button>
@@ -1226,7 +1221,7 @@ const EmployeeDashboard = () => {
           <ul style={{ listStyle: "none", padding: 0 }}>
             {upcomingHolidays.length === 0 ? (
               <li>
-                <NoData label="upcoming holidays" size="sm" />
+                <NoData label={t('employee:empty.upcomingHolidays')} size="sm" />
               </li>
             ) : (
               upcomingHolidays.map((holiday, index) => (
@@ -1242,7 +1237,7 @@ const EmployeeDashboard = () => {
                         : "1px solid var(--color-border)",
                   }}
                 >
-                  <span>{holiday.name || "Holiday"}</span>
+                  <span>{holiday.name || t('employee:dashboard.holiday')}</span>
                   <span style={{ color: "var(--color-text-muted)" }}>
                     {formatDate(holiday.date) || "-"}
                   </span>
@@ -1261,7 +1256,7 @@ const EmployeeDashboard = () => {
           My Projects
         </h3>
         {myProjects.length === 0 ? (
-          <NoData label="projects" />
+          <NoData label={t('employee:empty.projects')} />
         ) : (
           <div
             style={{
@@ -1307,9 +1302,9 @@ const EmployeeDashboard = () => {
                         color: "var(--color-text-secondary)",
                       }}
                     >
-                      {p.client_name || p.client || "Internal"}
+                      {p.client_name || p.client || t('dashboard.internal')}
                       {Array.isArray(p.assignedEmployees)
-                        ? ` • ${p.assignedEmployees.length} members`
+                        ? ` • ${t('dashboard.members', { count: p.assignedEmployees.length })}`
                         : ""}
                     </div>
                   </div>
@@ -1327,7 +1322,7 @@ const EmployeeDashboard = () => {
           My Requests
         </h3>
         {myRequests.length === 0 ? (
-          <NoData label="requests" />
+          <NoData label={t('employee:empty.requests')} />
         ) : (
           <Card className="padding-none">
             <table
@@ -1348,10 +1343,10 @@ const EmployeeDashboard = () => {
                     fontSize: "0.8rem",
                   }}
                 >
-                  <th style={{ padding: "0.75rem 1.5rem" }}>Type</th>
-                  <th style={{ padding: "0.75rem 1rem" }}>Dates</th>
-                  <th style={{ padding: "0.75rem 1rem" }}>Days</th>
-                  <th style={{ padding: "0.75rem 1.5rem" }}>Status</th>
+                  <th style={{ padding: "0.75rem 1.5rem" }}>{t('employee:dashboard.tableType')}</th>
+                  <th style={{ padding: "0.75rem 1rem" }}>{t('employee:dashboard.tableDates')}</th>
+                  <th style={{ padding: "0.75rem 1rem" }}>{t('employee:dashboard.tableDays')}</th>
+                  <th style={{ padding: "0.75rem 1.5rem" }}>{t('employee:dashboard.tableStatus')}</th>
                 </tr>
               </thead>
               <tbody>

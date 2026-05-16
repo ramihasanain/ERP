@@ -1,12 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import { Layers, Users, Package } from 'lucide-react';
 
-const fallbackModulesList = [
-    { id: 'accounting', name: 'Accounting', icon: <Layers />, desc: 'Ledgers, Invoicing, Tax' },
-    { id: 'hr', name: 'HR & Payroll', icon: <Users />, desc: 'Employees, Payroll, Leaves' },
-    { id: 'inventory', name: 'Inventory', icon: <Package />, desc: 'Stock, Warehouses, POs' },
-];
+const FALLBACK_MODULE_KEYS = ['accounting', 'hr', 'inventory'];
+const FALLBACK_ICONS = [<Layers key="layers" />, <Users key="users" />, <Package key="package" />];
 
 const fieldErrorStyle = {
     fontSize: '0.875rem',
@@ -15,22 +13,29 @@ const fieldErrorStyle = {
 };
 
 const StepModules = ({ data, updateData, options, errors = {} }) => {
-    const modulesList = (options?.modules?.length
-        ? options.modules.map((module) => ({
-            id: module.value,
-            name: module.label,
-            desc: module.description || 'ERP module',
-        }))
-        : fallbackModulesList
-    ).map((item, index) => ({
-        ...item,
-        icon: fallbackModulesList[index]?.icon || <Layers />,
-    }));
+    const { t } = useTranslation('onboarding');
+
+    const modulesList = useMemo(() => {
+        if (options?.modules?.length) {
+            return options.modules.map((module, index) => ({
+                id: module.value,
+                name: module.label,
+                desc: module.description || t('modules.fallbackDesc'),
+                icon: FALLBACK_ICONS[index] || <Layers />,
+            }));
+        }
+        return FALLBACK_MODULE_KEYS.map((key, index) => ({
+            id: key,
+            name: t(`modules.fallback.${key}.name`),
+            desc: t(`modules.fallback.${key}.desc`),
+            icon: FALLBACK_ICONS[index],
+        }));
+    }, [options?.modules, t]);
 
     const toggleModule = (id) => {
         const current = data.modules || [];
         if (current.includes(id)) {
-            updateData('modules', current.filter(m => m !== id));
+            updateData('modules', current.filter((m) => m !== id));
         } else {
             updateData('modules', [...current, id]);
         }
@@ -38,8 +43,8 @@ const StepModules = ({ data, updateData, options, errors = {} }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Select Modules</h3>
-            <p style={{ color: 'var(--color-text-secondary)' }}>Choose the apps you want to start with.</p>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('modules.title')}</h3>
+            <p style={{ color: 'var(--color-text-secondary)' }}>{t('modules.subtitle')}</p>
             {errors.modules && <span style={fieldErrorStyle}>{errors.modules}</span>}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -79,7 +84,11 @@ const StepModules = ({ data, updateData, options, errors = {} }) => {
                                 justifyContent: 'center',
                                 color: 'white'
                             }}>
-                                {isSelected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                                {isSelected && (
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                )}
                             </div>
                         </Card>
                     );

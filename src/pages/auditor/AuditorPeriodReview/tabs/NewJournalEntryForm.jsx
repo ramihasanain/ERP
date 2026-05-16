@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import SelectWithLoadMore from "@/core/SelectWithLoadMore";
@@ -14,6 +15,7 @@ const NewJournalEntryForm = ({
   accountsQuery,
   onClose,
 }) => {
+  const { t } = useTranslation(["auditor", "common"]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [reference, setReference] = useState("");
@@ -35,7 +37,7 @@ const NewJournalEntryForm = ({
 
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim()) {
-      toast.error("Title and description are required");
+      toast.error(t("newJournalForm.validationTitle"));
       return;
     }
     const validLines = lines.filter(
@@ -43,7 +45,7 @@ const NewJournalEntryForm = ({
         l.account && (parseFloat(l.debit) > 0 || parseFloat(l.credit) > 0),
     );
     if (validLines.length === 0) {
-      toast.error("At least one valid line is required");
+      toast.error(t("newJournalForm.validationLine"));
       return;
     }
     const totalDebit = validLines.reduce(
@@ -55,7 +57,7 @@ const NewJournalEntryForm = ({
       0,
     );
     if (totalDebit !== totalCredit) {
-      toast.error("Total debit must equal total credit");
+      toast.error(t("newJournalForm.validationBalance"));
       return;
     }
     try {
@@ -76,10 +78,10 @@ const NewJournalEntryForm = ({
           })),
         },
       });
-      toast.success("Journal entry change request submitted");
+      toast.success(t("newJournalForm.submitSuccess"));
       reset();
     } catch {
-      toast.error("Failed to submit journal entry request");
+      toast.error(t("newJournalForm.submitFailed"));
     }
   };
 
@@ -115,7 +117,7 @@ const NewJournalEntryForm = ({
           gap: "0.5rem",
         }}
       >
-        <Edit3 size={16} /> Propose New Journal Entry
+        <Edit3 size={16} /> {t("newJournalForm.title")}
       </h4>
       <div
         style={{
@@ -135,12 +137,12 @@ const NewJournalEntryForm = ({
               marginBottom: "0.25rem",
             }}
           >
-            Title
+            {t("newJournalForm.titleLabel")}
           </label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Revenue Recognition Correction"
+            placeholder={t("newJournalForm.titlePlaceholder")}
             style={{
               width: "100%",
               padding: "0.5rem",
@@ -160,12 +162,12 @@ const NewJournalEntryForm = ({
               marginBottom: "0.25rem",
             }}
           >
-            Reference
+            {t("newJournalForm.reference")}
           </label>
           <input
             value={reference}
             onChange={(e) => setReference(e.target.value)}
-            placeholder="e.g. AUD-ACCRUAL-001"
+            placeholder={t("newJournalForm.referencePlaceholder")}
             style={{
               width: "100%",
               padding: "0.5rem",
@@ -194,7 +196,7 @@ const NewJournalEntryForm = ({
               marginBottom: "0.25rem",
             }}
           >
-            Date
+            {t("newJournalForm.date")}
           </label>
           <input
             type="date"
@@ -210,15 +212,15 @@ const NewJournalEntryForm = ({
           />
         </div>
         <SelectWithLoadMore
-          label="Currency"
+          label={t("newJournalForm.currency")}
           id="je-currency"
           value={currency}
           onChange={(val) => setCurrency(val)}
           options={currencyOptions}
           emptyOptionLabel={
             currenciesQuery.isLoading
-              ? "Loading currencies…"
-              : "Select currency…"
+              ? t("newJournalForm.loadingCurrencies")
+              : t("newJournalForm.selectCurrency")
           }
           disabled={currenciesQuery.isError}
           isInitialLoading={currenciesQuery.isLoading}
@@ -227,7 +229,7 @@ const NewJournalEntryForm = ({
           isLoadingMore={currenciesQuery.isFetchingNextPage}
           paginationError={
             currenciesQuery.isFetchNextPageError
-              ? "Could not load more currencies."
+              ? t("newJournalForm.currenciesLoadMoreError")
               : null
           }
         />
@@ -242,12 +244,12 @@ const NewJournalEntryForm = ({
             marginBottom: "0.25rem",
           }}
         >
-          Description
+          {t("newJournalForm.description")}
         </label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Explain the reason for this journal entry…"
+          placeholder={t("newJournalForm.descriptionPlaceholder")}
           style={{
             width: "100%",
             minHeight: "80px",
@@ -270,7 +272,7 @@ const NewJournalEntryForm = ({
             marginBottom: "0.5rem",
           }}
         >
-          Journal Entry Lines
+          {t("newJournalForm.lines")}
         </label>
         <table
           style={{
@@ -282,10 +284,10 @@ const NewJournalEntryForm = ({
           <thead>
             <tr style={{ background: "white" }}>
               <th style={{ padding: "6px 8px", textAlign: "left" }}>
-                Account
+                {t("journalTab.account")}
               </th>
               <th style={{ padding: "6px 8px", textAlign: "left" }}>
-                Description
+                {t("journalTab.description")}
               </th>
               <th
                 style={{
@@ -294,7 +296,7 @@ const NewJournalEntryForm = ({
                   width: "120px",
                 }}
               >
-                Debit
+                {t("journalTab.debit")}
               </th>
               <th
                 style={{
@@ -303,7 +305,7 @@ const NewJournalEntryForm = ({
                   width: "120px",
                 }}
               >
-                Credit
+                {t("journalTab.credit")}
               </th>
               <th style={{ padding: "6px 8px", width: "40px" }}></th>
             </tr>
@@ -319,8 +321,8 @@ const NewJournalEntryForm = ({
                     options={accountOptions}
                     emptyOptionLabel={
                       accountsQuery.isPending
-                        ? "Loading…"
-                        : "Select account…"
+                        ? t("journalTab.loadingAccounts")
+                        : t("journalTab.selectAccount")
                     }
                     disabled={accountsQuery.isError}
                     isInitialLoading={accountsQuery.isPending}
@@ -338,7 +340,7 @@ const NewJournalEntryForm = ({
                     onChange={(e) =>
                       updateLine(idx, "description", e.target.value)
                     }
-                    placeholder="e.g. Utilities expense"
+                    placeholder={t("newJournalForm.lineDescriptionPlaceholder")}
                     style={{
                       width: "100%",
                       padding: "4px 6px",
@@ -435,7 +437,7 @@ const NewJournalEntryForm = ({
               fontWeight: 600,
             }}
           >
-            + Add Line
+            {t("journalTab.addLine")}
           </button>
           <div
             style={{
@@ -443,8 +445,8 @@ const NewJournalEntryForm = ({
               color: "var(--color-text-muted)",
             }}
           >
-            Total Debit: <strong>{totalDebit.toLocaleString()}</strong>
-            &nbsp;|&nbsp; Total Credit:{" "}
+            {t("newJournalForm.totalDebit")} <strong>{totalDebit.toLocaleString()}</strong>
+            &nbsp;|&nbsp; {t("newJournalForm.totalCredit")}{" "}
             <strong>{totalCredit.toLocaleString()}</strong>
             {totalDebit !== totalCredit && (
               <span
@@ -453,7 +455,7 @@ const NewJournalEntryForm = ({
                   marginLeft: "0.5rem",
                 }}
               >
-                ⚠ Unbalanced
+                {t("newJournalForm.unbalanced")}
               </span>
             )}
           </div>
@@ -467,7 +469,7 @@ const NewJournalEntryForm = ({
         }}
       >
         <Button variant="ghost" onClick={reset}>
-          Cancel
+          {t("common:actions.cancel")}
         </Button>
         <Button
           icon={<CheckCircle size={14} />}
@@ -475,7 +477,7 @@ const NewJournalEntryForm = ({
           onClick={handleSubmit}
           style={{ background: "var(--color-primary-600)" }}
         >
-          {isSubmitting ? "Submitting…" : "Submit for Approval"}
+          {isSubmitting ? t("newJournalForm.submitting") : t("newJournalForm.submitForApproval")}
         </Button>
       </div>
     </Card>

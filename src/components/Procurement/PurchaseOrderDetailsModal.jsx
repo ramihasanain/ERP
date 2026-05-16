@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Package } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';

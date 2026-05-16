@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
 import Input from '@/components/Shared/Input';
 
@@ -10,6 +11,7 @@ const searchColStyleDrawer = { width: '100%', minWidth: 0 };
  * @param {{ compact?: boolean; variant?: 'header' | 'drawer' }} props
  */
 const HeaderSearchField = ({ compact = false, variant = 'header' }) => {
+    const { t } = useTranslation('nav');
     const colStyle =
         variant === 'drawer'
             ? searchColStyleDrawer
@@ -27,7 +29,7 @@ const HeaderSearchField = ({ compact = false, variant = 'header' }) => {
     return (
         <div style={colStyle}>
             <Input
-                placeholder="Search everywhere..."
+                placeholder={t('searchPlaceholder')}
                 startIcon={React.createElement(Search, { size: iconSize })}
                 style={inputStyle}
             />

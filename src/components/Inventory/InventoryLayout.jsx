@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,6 +14,7 @@ import Button from "@/components/Shared/Button";
 import { useBasePath } from "@/hooks/useBasePath";
 
 const InventoryLayout = () => {
+  const { t } = useTranslation(["inventory", "common"]);
   const navigate = useNavigate();
   const basePath = useBasePath();
   const [isNarrowScreen, setIsNarrowScreen] = useState(
@@ -28,37 +30,37 @@ const InventoryLayout = () => {
   const tabs = [
     {
       path: `${basePath}/inventory/dashboard`,
-      label: "Overview",
+      label: t("layout.tabOverview"),
       icon: <LayoutDashboard size={18} />,
     },
     {
       path: `${basePath}/inventory/items`,
-      label: "Items",
+      label: t("layout.tabItems"),
       icon: <Package size={18} />,
     },
     {
       path: `${basePath}/inventory/warehouses`,
-      label: "Warehouses",
+      label: t("layout.tabWarehouses"),
       icon: <Warehouse size={18} />,
     },
     {
       path: `${basePath}/inventory/transactions`,
-      label: "Transactions",
+      label: t("layout.tabTransactions"),
       icon: <ArrowRightLeft size={18} />,
     },
     {
       path: `${basePath}/inventory/purchase-orders`,
-      label: "Purchase Orders",
+      label: t("layout.tabPurchaseOrders"),
       icon: <ShoppingCart size={18} />,
     },
     {
       path: `${basePath}/inventory/invoices`,
-      label: "Bills",
+      label: t("layout.tabBills"),
       icon: <FileText size={18} />,
     },
     {
       path: `${basePath}/inventory/vendors`,
-      label: "Vendors",
+      label: t("layout.tabVendors"),
       icon: <Users size={18} />,
     },
   ];
@@ -85,10 +87,10 @@ const InventoryLayout = () => {
                 color: "var(--color-text-main)",
               }}
             >
-              Inventory Management
+              {t("layout.title")}
             </h1>
             <p style={{ color: "var(--color-text-secondary)" }}>
-              Track stock, manage warehouses, and control procurement.
+              {t("layout.subtitle")}
             </p>
           </div>
           <div
@@ -105,7 +107,7 @@ const InventoryLayout = () => {
               size={isNarrowScreen ? "sm" : undefined}
               onClick={() => navigate(`${basePath}/inventory/items/new`)}
             >
-              + New Item
+              {t("layout.newItem")}
             </Button>
             <Button
               size={isNarrowScreen ? "sm" : undefined}
@@ -113,7 +115,7 @@ const InventoryLayout = () => {
                 navigate(`${basePath}/inventory/transactions/receipt`)
               }
             >
-              + Receive Goods
+              {t("layout.receiveGoods")}
             </Button>
           </div>
         </div>

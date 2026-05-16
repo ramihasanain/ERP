@@ -1,0 +1,28 @@
+{
+  "title": "Notifications",
+  "markAllRead": "Mark All Read",
+  "clearAll": "Clear All",
+  "noNotifications": "No notifications",
+  "unread": "Unread",
+  "read": "Read",
+  "all": "All",
+  "allTab": "All ({{count}})",
+  "unreadTab": "Unread ({{count}})",
+  "readTab": "Read ({{count}})",
+  "unreadSummary_one": "You have {{count}} unread notification.",
+  "unreadSummary_other": "You have {{count}} unread notifications.",
+  "allCaughtUp": "All caught up!",
+  "emptyUnread": "All caught up! No unread notifications.",
+  "emptyInbox": "Your notification inbox is empty.",
+  "hoverToMarkSeen": "Hover 1s to mark as seen",
+  "remove": "Remove",
+  "open": "Open",
+  "viewAll": "View All Notifications",
+  "markAllReadShort": "Mark all read",
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  }
+}

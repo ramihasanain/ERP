@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 
 const fieldErrorStyle = {
     fontSize: '0.875rem',
@@ -16,24 +17,26 @@ const selectStyle = (hasError) => ({
 });
 
 const StepRegionalSettings = ({ data, updateData, options, errors = {} }) => {
+    const { t } = useTranslation('onboarding');
     const currencies = options?.currencies || [];
     const languages = options?.languages || [];
 
     const selectedCountryName =
-        options?.countries?.find((country) => country.value === data.country)?.label || 'your country';
+        options?.countries?.find((country) => country.value === data.country)?.label ||
+        t('regionalSettings.yourCountry');
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Regional Settings</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('regionalSettings.title')}</h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Base Currency</label>
+                <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('regionalSettings.baseCurrency')}</label>
                 <select
                     value={data.currency}
                     onChange={(e) => updateData('currency', e.target.value)}
                     style={selectStyle(Boolean(errors.currency))}
                 >
-                    <option value="">Select Currency...</option>
+                    <option value="">{t('regionalSettings.selectCurrency')}</option>
                     {currencies.map((currency) => (
                         <option key={currency.value} value={currency.value}>
                             {currency.label}
@@ -44,13 +47,13 @@ const StepRegionalSettings = ({ data, updateData, options, errors = {} }) => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Default Language</label>
+                <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('regionalSettings.defaultLanguage')}</label>
                 <select
                     value={data.language}
                     onChange={(e) => updateData('language', e.target.value)}
                     style={selectStyle(Boolean(errors.language))}
                 >
-                    <option value="">Select Language...</option>
+                    <option value="">{t('regionalSettings.selectLanguage')}</option>
                     {languages.map((language) => (
                         <option key={language.value} value={language.value}>
                             {language.label}
@@ -69,10 +72,14 @@ const StepRegionalSettings = ({ data, updateData, options, errors = {} }) => {
                 }}
             >
                 <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>
-                    Auto-Configuration
+                    {t('regionalSettings.autoConfigTitle')}
                 </h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                    Based on your selection of <strong style={{ color: 'var(--color-text-main)' }}>{selectedCountryName}</strong>, we will automatically apply localized tax rules, chart of accounts, and payroll policies.
+                    <Trans
+                        i18nKey="onboarding:regionalSettings.autoConfigDescription"
+                        values={{ country: selectedCountryName }}
+                        components={{ strong: <strong style={{ color: 'var(--color-text-main)' }} /> }}
+                    />
                 </p>
             </div>
         </div>

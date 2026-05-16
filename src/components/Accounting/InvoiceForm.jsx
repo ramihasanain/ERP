@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import Input from "@/components/Shared/Input";

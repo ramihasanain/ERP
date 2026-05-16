@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import translateApiError from '@/utils/translateApiError';
+import { useTranslation } from 'react-i18next';
 import { X, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import Button from '@/components/Shared/Button';
@@ -6,6 +8,8 @@ import Input from '@/components/Shared/Input';
 import { useCustomPost } from '@/hooks/useMutation';
 
 const TerminationModal = ({ isOpen, onClose, employeeId, employee, onConfirm }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const [formData, setFormData] = useState({
         termination_type: 'resignation',
         last_working_day: new Date().toISOString().split('T')[0],
@@ -45,7 +49,7 @@ const TerminationModal = ({ isOpen, onClose, employeeId, employee, onConfirm }) 
                 (typeof error?.response?.data === 'string' ? error.response.data : null) ||
                 error?.message ||
                 'Could not calculate termination.';
-            toast.error(typeof message === 'string' ? message : 'Could not calculate termination.');
+            toast.error(translateApiError(error, 'hr:termination.calculateFailed'));
         }
     };
 
@@ -210,9 +214,7 @@ const TerminationModal = ({ isOpen, onClose, employeeId, employee, onConfirm }) 
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                        <Button type="button" variant="ghost" onClick={onClose} disabled={calculateMutation.isPending}>
-                            Cancel
-                        </Button>
+                        <Button type="button" variant="ghost" onClick={onClose} disabled={calculateMutation.isPending}>{t('common:actions.cancel')}</Button>
                         <Button type="submit" variant="danger" isLoading={calculateMutation.isPending}>
                             Confirm & Calculate Settlement
                         </Button>

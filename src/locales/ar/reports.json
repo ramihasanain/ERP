@@ -1,0 +1,136 @@
+{
+  "title": "التقارير",
+  "center": {
+    "title": "مركز التقارير",
+    "subtitle": "رؤى مالية وتحليلات تشغيلية."
+  },
+  "cards": {
+    "financial": {
+      "title": "القوائم المالية",
+      "description": "تقارير مالية أساسية للامتثال المحاسبي ومراقبة الصحة المالية.",
+      "balanceSheet": "الميزانية العمومية",
+      "profitAndLoss": "الأرباح والخسائر (قائمة الدخل)",
+      "cashFlow": "بيان التدفقات النقدية",
+      "taxReturn": "الإقرار الضريبي (ضريبة القيمة المضافة)"
+    },
+    "sales": {
+      "title": "المبيعات والعملاء",
+      "description": "تحليل اتجاهات الإيرادات ونمو العملاء والديون المستحقة.",
+      "salesByCustomer": "المبيعات حسب العميل",
+      "agedReceivables": "الذمم المدينة حسب العمر",
+      "revenueByItem": "الإيرادات حسب الصنف"
+    },
+    "expense": {
+      "title": "المصروفات والمشتريات",
+      "description": "تتبع الإنفاق ومدفوعات الموردين والتكاليف التشغيلية.",
+      "expenseBreakdown": "تفصيل المصروفات",
+      "agedPayables": "الذمم الدائنة حسب العمر",
+      "purchaseHistory": "سجل المشتريات"
+    },
+    "inventory": {
+      "title": "المخزون والأصناف",
+      "description": "مراقبة مستويات المخزون والتقييم وسجل الحركة.",
+      "inventoryValuation": "تقييم المخزون",
+      "lowStock": "تنبيه انخفاض المخزون",
+      "stockMovement": "سجل حركة المخزون"
+    }
+  },
+  "profitAndLoss": "الأرباح والخسائر",
+  "profitAndLossSubtitle": "Income Statement.",
+  "balanceSheet": "الميزانية العمومية",
+  "balanceSheetSubtitle": "Financial position.",
+  "balanceSheetAsOf": "As of {{date}}",
+  "taxReturn": "الإقرار الضريبي",
+  "taxReturnFullTitle": "Tax Return (VAT/GST)",
+  "taxReturnSubtitle": "Tax liability report for government filing.",
+  "cashFlow": "بيان التدفقات النقدية",
+  "cashFlowPeriod": "{{company}} • {{start}} to {{end}}",
+  "generate": "إنشاء التقرير",
+  "export": "تصدير التقرير",
+  "exportPdf": "Export PDF",
+  "period": "الفترة",
+  "from": "من",
+  "to": "إلى",
+  "asOf": "As of",
+  "loadFailed": {
+    "pnl": "Failed to load profit and loss report.",
+    "balanceSheet": "Failed to load balance sheet report.",
+    "cashFlow": "Failed to load cash flow report.",
+    "taxReturn": "Failed to load tax return report."
+  },
+  "pnl": {
+    "income": "Income",
+    "totalIncome": "Total Income",
+    "cogs": "Cost of Goods Sold",
+    "totalCogs": "Total COGS",
+    "grossProfit": "Gross Profit",
+    "operatingExpenses": "Operating Expenses",
+    "totalOperatingExpenses": "Total Operating Expenses",
+    "operatingIncome": "Operating Income",
+    "netIncome": "Net Income",
+    "noLines": "No lines",
+    "reportTitle": "Profit and Loss"
+  },
+  "balanceSheetReport": {
+    "title": "الميزانية العمومية",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "equity": "Equity",
+    "totalAssets": "Total Assets",
+    "netIncomeCurrentYear": "Net Income (Current Year)",
+    "totalLiabEquity": "Total Liab. & Equity",
+    "total": "Total {{section}}"
+  },
+  "cashFlowReport": {
+    "operating": "Operating Activities",
+    "investing": "Investing Activities",
+    "financing": "Financing Activities",
+    "netCashOperations": "Net Cash from Operations",
+    "netCashInvesting": "Net Cash from Investing",
+    "netCashFinancing": "Net Cash from Financing",
+    "netChange": "Net Increase/Decrease in Cash",
+    "cashBeginning": "Cash at Beginning of Period",
+    "cashEnd": "Cash at End of Period"
+  },
+  "taxReturnReport": {
+    "readyTitle": "Ready for Filing",
+    "periodRange": "{{company}} • {{start}} to {{end}}",
+    "salesSection": "1. Sales (Output Tax)",
+    "totalSalesExclTax": "Total Sales (Excl. Tax)",
+    "vatCollectedInvoices": "VAT Collected from Invoices",
+    "vatCollectedNet": "VAT Collected for Net",
+    "purchasesSection": "2. Purchases (Input Tax)",
+    "totalPurchasesExclTax": "Total Purchases (Excl. Tax)",
+    "vatPaidReclaimable": "VAT Paid (Reclaimable)",
+    "netTaxPayable": "Net Tax Payable",
+    "markAsFiled": "Mark as Filed",
+    "fileReturnNow": "File Return Now"
+  },
+  "taxReport": {
+    "title": "Tax Return Report",
+    "subtitle": "VAT/GST Summary for the selected period.",
+    "startDate": "تاريخ البداية",
+    "endDate": "تاريخ النهاية",
+    "jurisdiction": "Tax Jurisdiction",
+    "applyFilters": "Apply Filters",
+    "exportXml": "Export XML",
+    "exportPdf": "Export PDF",
+    "totalSalesExclTax": "Total Sales (Excl. Tax)",
+    "totalTaxCollected": "Total Tax Collected (Output)",
+    "netTaxPayable": "Net Tax Payable",
+    "breakdownTitle": "Tax Breakdown by Rule",
+    "ruleName": "Rule Name",
+    "netSales": "Net Sales",
+    "taxRate": "Tax Rate",
+    "taxAmount": "Tax Amount",
+    "total": "الإجمالي"
+  },
+  "aria": {
+    "back": "رجوع",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "periodStart": "Period start date",
+    "periodEnd": "Period end date",
+    "asOfDate": "As of date"
+  }
+}

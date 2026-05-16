@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -33,8 +34,6 @@ const selectStyle = {
 
 const NewAccountModal = ({
     open,
-    t,
-    language,
     accountTypes,
     parentOptions,
     onAccountTypeChange,
@@ -44,6 +43,7 @@ const NewAccountModal = ({
     isSubmitting,
     isParentLoading,
 }) => {
+    const { t } = useTranslation('accounting');
     const {
         control,
         handleSubmit,
@@ -113,7 +113,7 @@ const NewAccountModal = ({
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-text-main)' }}>
-                        {t.modalAdd}
+                        {t('chartOfAccounts.modalAdd')}
                     </h2>
                     <button
                         onClick={onClose}
@@ -137,11 +137,11 @@ const NewAccountModal = ({
                         rules={{ required: true }}
                         render={({ field }) => (
                             <Input
-                                label={language === 'ar' ? 'الكود' : 'Code'}
-                                placeholder={language === 'ar' ? 'مثال: 412' : 'e.g. 412'}
+                                label={t('chartOfAccounts.codeLabel')}
+                                placeholder={t('chartOfAccounts.codePlaceholder')}
                                 value={field.value}
                                 onChange={field.onChange}
-                                error={errors.code ? (language === 'ar' ? 'مطلوب' : 'Required') : ''}
+                                error={errors.code ? t('chartOfAccounts.required') : ''}
                             />
                         )}
                     />
@@ -152,11 +152,11 @@ const NewAccountModal = ({
                         rules={{ required: true }}
                         render={({ field }) => (
                             <Input
-                                label={language === 'ar' ? 'اسم الحساب' : 'Display Name'}
-                                placeholder={language === 'ar' ? 'مثال: مبيعات الخدمات' : 'e.g. Sales Revenue'}
+                                label={t('chartOfAccounts.displayName')}
+                                placeholder={t('chartOfAccounts.displayNamePlaceholder')}
                                 value={field.value}
                                 onChange={field.onChange}
-                                error={errors.name ? (language === 'ar' ? 'مطلوب' : 'Required') : ''}
+                                error={errors.name ? t('chartOfAccounts.required') : ''}
                             />
                         )}
                     />
@@ -167,9 +167,9 @@ const NewAccountModal = ({
                         rules={{ required: true }}
                         render={({ field }) => (
                             <div style={selectWrapperStyle}>
-                                <label style={labelStyle}>{language === 'ar' ? 'نوع الحساب' : 'Account Type'}</label>
+                                <label style={labelStyle}>{t('chartOfAccounts.accountType')}</label>
                                 <select {...field} style={selectStyle}>
-                                    <option value="">{language === 'ar' ? 'اختر النوع' : 'Select type'}</option>
+                                    <option value="">{t('chartOfAccounts.selectType')}</option>
                                     {accountTypes.map((type) => (
                                         <option key={type.id} value={type.id}>
                                             {type.label}
@@ -185,9 +185,9 @@ const NewAccountModal = ({
                         control={control}
                         render={({ field }) => (
                             <div style={selectWrapperStyle}>
-                                <label style={labelStyle}>{language === 'ar' ? 'الحساب الأب' : 'Parent Node'}</label>
+                                <label style={labelStyle}>{t('chartOfAccounts.parentNode')}</label>
                                 <select {...field} style={selectStyle} disabled={!selectedType || isParentLoading}>
-                                    <option value="">{language === 'ar' ? 'حساب رئيسي' : 'Top Level (Root)'}</option>
+                                    <option value="">{t('chartOfAccounts.topLevel')}</option>
                                     {parentOptions.map((parent) => (
                                         <option key={parent.id} value={parent.id}>
                                             {parent.code} - {parent.name}
@@ -203,7 +203,7 @@ const NewAccountModal = ({
                         control={control}
                         render={({ field }) => (
                             <Input
-                                label={language === 'ar' ? 'الوصف' : 'Strategic Description'}
+                                label={t('chartOfAccounts.description')}
                                 placeholder="..."
                                 value={field.value}
                                 onChange={field.onChange}
@@ -216,7 +216,7 @@ const NewAccountModal = ({
                         control={control}
                         render={({ field }) => (
                             <Input
-                                label={language === 'ar' ? 'الترتيب' : 'Order'}
+                                label={t('chartOfAccounts.order')}
                                 type="number"
                                 value={String(field.value)}
                                 onChange={(event) => field.onChange(event.target.value)}
@@ -226,10 +226,10 @@ const NewAccountModal = ({
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
                         <Button type="button" variant="ghost" onClick={onClose}>
-                            {t.discard}
+                            {t('chartOfAccounts.discard')}
                         </Button>
                         <Button type="submit" icon={<Save size={18} />} size="lg" disabled={isSubmitting}>
-                            {isSubmitting ? (language === 'ar' ? 'جارٍ الحفظ...' : 'Saving...') : t.save}
+                            {isSubmitting ? t('chartOfAccounts.saving') : t('chartOfAccounts.save')}
                         </Button>
                     </div>
                 </form>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Card from "@/components/Shared/Card";
@@ -7,7 +8,7 @@ import Spinner from "@/core/Spinner";
 import ResourceLoadError from "@/core/ResourceLoadError";
 import Pagination from "@/core/Pagination";
 import { patch } from "@/api";
-import { getApiErrorMessage } from "@/utils/apiErrorMessage";
+import translateApiError from "@/utils/translateApiError";
 
 const PAGE_SIZE = 15;
 
@@ -35,6 +36,7 @@ const initialsFromFullName = (name) => {
  * @param {{ enabled: boolean }} props — fetch assignments only when this tab is active.
  */
 const PermissionsEmployeeAssignmentsTab = ({ enabled }) => {
+  const { t } = useTranslation(["permissions", "common"]);
   const queryClient = useQueryClient();
   const [assignmentsPage, setAssignmentsPage] = useState(1);
 
@@ -72,10 +74,10 @@ const PermissionsEmployeeAssignmentsTab = ({ enabled }) => {
         }),
         queryClient.invalidateQueries({ queryKey: ["permissions", "roles"] }),
       ]);
-      toast.success("Role updated");
+      toast.success(t("roleAssignmentUpdated"));
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "Could not update role"));
+      toast.error(translateApiError(error, "permissions:roleUpdateFailed"));
     },
   });
 
@@ -103,9 +105,9 @@ const PermissionsEmployeeAssignmentsTab = ({ enabled }) => {
     return (
       <ResourceLoadError
         error={assignmentsQuery.error}
-        title="Assignments could not be loaded"
+        title={t("assignmentsLoadError")}
         onRefresh={() => assignmentsQuery.refetch()}
-        refreshLabel="Try again"
+        refreshLabel={t("common:actions.retry")}
       />
     );
   }
@@ -116,7 +118,7 @@ const PermissionsEmployeeAssignmentsTab = ({ enabled }) => {
         className="padding-lg"
         style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}
       >
-        No employee assignments returned from the server.
+        {t("noAssignmentsFromServer")}
       </Card>
     );
   }
@@ -154,22 +156,22 @@ const PermissionsEmployeeAssignmentsTab = ({ enabled }) => {
                 }}
               >
                 <th style={{ padding: "12px 1.5rem", textAlign: "left" }}>
-                  Employee
+                  {t("table.employee")}
                 </th>
                 <th style={{ padding: "12px 1rem", textAlign: "left" }}>
-                  Department
+                  {t("table.department")}
                 </th>
                 <th style={{ padding: "12px 1rem", textAlign: "left" }}>
-                  Current Role
+                  {t("table.currentRole")}
                 </th>
                 <th style={{ padding: "12px 1.5rem", textAlign: "right" }}>
-                  Modules
+                  {t("table.modules")}
                 </th>
               </tr>
             </thead>
             <tbody>
               {paginatedAssignments.map((row) => {
-                const deptLabel = row.department_name ?? "—";
+                const deptLabel = row.department_name ?? t("common:notAvailable");
                 const currentRoleId =
                   row.role?.id != null ? String(row.role.id) : "";
                 const assignmentId = assignmentIdForRow(row);
@@ -265,7 +267,7 @@ const PermissionsEmployeeAssignmentsTab = ({ enabled }) => {
                           ...selectStyle,
                           opacity: rowBusy || rolesQuery.isLoading ? 0.65 : 1,
                         }}
-                        aria-label={`Role for ${row.name ?? "employee"}`}
+                        aria-label={t("roleForEmployee", { name: row.name ?? t("table.employee") })}
                         value={currentRoleId}
                         disabled={
                           rowBusy ||
@@ -292,8 +294,8 @@ const PermissionsEmployeeAssignmentsTab = ({ enabled }) => {
                         {!currentRoleId && (
                           <option value="" disabled>
                             {rolesQuery.isLoading
-                              ? "Loading roles…"
-                              : "Select a role"}
+                              ? t("loadingRoles")
+                              : t("selectRole")}
                           </option>
                         )}
                         {currentMissingFromList && (
@@ -313,7 +315,7 @@ const PermissionsEmployeeAssignmentsTab = ({ enabled }) => {
                             marginTop: "0.25rem",
                           }}
                         >
-                          Roles list failed to load
+                          {t("rolesListLoadFailed")}
                         </div>
                       )}
                     </td>
@@ -334,8 +336,7 @@ const PermissionsEmployeeAssignmentsTab = ({ enabled }) => {
                           fontWeight: 600,
                         }}
                       >
-                        {row.modules_count ?? 0} module
-                        {(row.modules_count ?? 0) !== 1 ? "s" : ""}
+                        {t("moduleCount", { count: row.modules_count ?? 0 })}
                       </span>
                     </td>
                   </tr>

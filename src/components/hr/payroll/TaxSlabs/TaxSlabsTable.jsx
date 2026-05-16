@@ -1,10 +1,13 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
 import { Trash2 } from 'lucide-react';
 
-const TaxSlabsTable = ({ slabs, isSaving, onChangeSlab, onDeleteSlab }) => (
+const TaxSlabsTable = () => {
+    const { t } = useTranslation(['hr', 'common']);
+    return (
     <Card className="padding-none overflow-x-auto" style={{ overflowX: 'auto', minWidth: 0, width: '100%' }}>
         <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse' }}>
             <thead>
@@ -60,6 +63,7 @@ const TaxSlabsTable = ({ slabs, isSaving, onChangeSlab, onDeleteSlab }) => (
             </tbody>
         </table>
     </Card>
-);
+    );
+};
 
 export default TaxSlabsTable;

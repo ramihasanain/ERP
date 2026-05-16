@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAccounting } from '@/context/AccountingContext';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost } from '@/hooks/useMutation';
-import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import translateApiError from '@/utils/translateApiError';
 import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
@@ -18,6 +19,7 @@ const normalizeArrayResponse = (response) => {
 };
 
 const GoodsReceipt = () => {
+    const { t } = useTranslation(['inventory', 'common']);
     const { addEntry } = useAccounting();
     const navigate = useNavigate();
     const basePath = useBasePath();
@@ -25,7 +27,7 @@ const GoodsReceipt = () => {
     const warehousesQuery = useCustomQuery('/api/inventory/warehouses/', ['inventory-warehouses-grn'], {
         select: (response) =>
             normalizeArrayResponse(response)
-                .map((warehouse) => ({ id: warehouse?.id || '', name: warehouse?.name || 'Unnamed Warehouse' }))
+                .map((warehouse) => ({ id: warehouse?.id || '', name: warehouse?.name || t('goodsReceipt.unnamedWarehouse') }))
                 .filter((warehouse) => warehouse.id),
     });
     const approvedPurchaseOrdersQuery = useCustomQuery(
@@ -41,7 +43,7 @@ const GoodsReceipt = () => {
                         purchaseOrder?.po_number ||
                         purchaseOrder?.id ||
                         '',
-                    vendorName: purchaseOrder?.vendor_name || purchaseOrder?.vendor?.name || 'Unknown Vendor',
+                    vendorName: purchaseOrder?.vendor_name || purchaseOrder?.vendor?.name || t('goodsReceipt.unknownVendor'),
                     reference:
                         purchaseOrder?.reference ||
                         purchaseOrder?.reference_number ||
@@ -146,7 +148,7 @@ const GoodsReceipt = () => {
 
     const handleSubmit = async () => {
         if (!isReceiptReady) {
-            toast.error('Please complete all required fields before processing the receipt.');
+            toast.error(t('goodsReceipt.completeFields'));
             return;
         }
 
@@ -190,11 +192,10 @@ const GoodsReceipt = () => {
 
             addEntry(journalEntry);
 
-            toast.success('Goods receipt transaction created successfully.');
+            toast.success(t('goodsReceipt.success'));
             navigate(`${basePath}/inventory/transactions`);
         } catch (error) {
-            const message = getApiErrorMessage(error, 'Failed to create goods receipt transaction.');
-            toast.error(message);
+            toast.error(translateApiError(error, 'inventory:goodsReceipt.failed'));
         }
     };
 
@@ -213,7 +214,7 @@ const GoodsReceipt = () => {
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '1.5rem' }}>Goods Receipt (GRN)</h1>
+            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '1.5rem' }}>{t('goodsReceipt.title')}</h1>
 
             <Card className="padding-md" style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>

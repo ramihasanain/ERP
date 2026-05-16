@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';
 import useCustomQuery from '@/hooks/useQuery';
@@ -7,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 
 const InventoryDashboard = () => {
+    const { t } = useTranslation(['inventory', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const dashboardQuery = useCustomQuery('/api/inventory/dashboard/', ['inventory-dashboard']);
@@ -35,25 +37,25 @@ const InventoryDashboard = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                 <div onClick={() => navigate(`${basePath}/inventory/reports/valuation`)} style={{ cursor: 'pointer' }}>
                     <KPICard
-                        title="Total Inventory Value"
+                        title={t('dashboard.totalInventoryValue')}
                         value={`${totalInventoryValue.toLocaleString()} ${totalInventoryCurrency}`}
                         icon={<DollarSign size={24} />}
                         color="primary"
                     />
                 </div>
                 <div onClick={() => navigate(`${basePath}/inventory/items`)} style={{ cursor: 'pointer' }}>
-                    <KPICard title="Total Items" value={totalItems} icon={<Package size={24} />} color="primary" />
+                    <KPICard title={t('dashboard.totalItems')} value={totalItems} icon={<Package size={24} />} color="primary" />
                 </div>
                 <div onClick={() => navigate(`${basePath}/inventory/items?filter=low_stock`)} style={{ cursor: 'pointer' }}>
                     <KPICard
-                        title="Low Stock Alerts"
+                        title={t('dashboard.lowStockAlerts')}
                         value={lowStockAlerts}
                         icon={<AlertTriangle size={24} />}
                         color={lowStockAlerts > 0 ? "danger" : "success"}
                     />
                 </div>
                 <div onClick={() => navigate(`${basePath}/inventory/transactions`)} style={{ cursor: 'pointer' }}>
-                    <KPICard title="Movements (Today)" value={movementsToday} icon={<TrendingUp size={24} />} color="secondary" />
+                    <KPICard title={t('dashboard.movementsToday')} value={movementsToday} icon={<TrendingUp size={24} />} color="secondary" />
                 </div>
             </div>
             {dashboardQuery.isPending && <Spinner />}
@@ -61,13 +63,13 @@ const InventoryDashboard = () => {
             {dashboardQuery.isError && (
                 <Card className="padding-lg">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'flex-start' }}>
-                        <p style={{ margin: 0, color: 'var(--color-error)' }}>Could not load dashboard data.</p>
+                        <p style={{ margin: 0, color: 'var(--color-error)' }}>{t('dashboard.loadFailed')}</p>
                         <button
                             type="button"
                             onClick={() => dashboardQuery.refetch()}
                             style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '0.5rem 0.8rem', cursor: 'pointer', color: 'var(--color-text-main)' }}
                         >
-                            Retry
+                            {t('common:actions.retry')}
                         </button>
                     </div>
                 </Card>
@@ -76,11 +78,11 @@ const InventoryDashboard = () => {
             {!dashboardQuery.isPending && !dashboardQuery.isError && (
                 <div style={{ display: 'grid', gridTemplateColumns: isNarrowScreen ? '1fr' : '2fr 1fr', gap: '1.5rem' }}>
                     {/* Recent Activity */}
-                    <Card title="Recent Transactions">
+                    <Card title={t('dashboard.recentTransactions')}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <tbody>
                                 {recentTransactions.length === 0 ? (
-                                    <tr><td colSpan="4" style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>No recent activity.</td></tr>
+                                    <tr><td colSpan="4" style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>{t('dashboard.noRecentActivity')}</td></tr>
                                 ) : (
                                     recentTransactions.map((trans) => {
                                         const type = String(trans.type || '').toUpperCase();
@@ -122,15 +124,15 @@ const InventoryDashboard = () => {
                             </tbody>
                         </table>
                         <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                            <button onClick={() => navigate(`${basePath}/inventory/transactions`)} style={{ background: 'none', border: 'none', color: 'var(--color-primary-600)', fontWeight: 600, cursor: 'pointer' }}>View All</button>
+                            <button onClick={() => navigate(`${basePath}/inventory/transactions`)} style={{ background: 'none', border: 'none', color: 'var(--color-primary-600)', fontWeight: 600, cursor: 'pointer' }}>{t('dashboard.viewAll')}</button>
                         </div>
                     </Card>
 
                     {/* Low Stock List */}
-                    <Card title="Low Stock Items" headerAction={<span style={{ fontSize: '0.8rem', color: 'var(--color-danger)', fontWeight: 600 }}>{lowStockItems.length} Items</span>}>
+                    <Card title={t('dashboard.lowStockItems')} headerAction={<span style={{ fontSize: '0.8rem', color: 'var(--color-danger)', fontWeight: 600 }}>{t('dashboard.itemsCount', { count: lowStockItems.length })}</span>}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             {lowStockItems.length === 0 ? (
-                                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>All stock levels healthy.</div>
+                                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>{t('dashboard.allStockHealthy')}</div>
                             ) : (
                                 lowStockItems.map((item) => (
                                     <div key={`${item.id}-${item.warehouse}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', background: 'color-mix(in srgb, var(--color-error) 16%, var(--color-bg-card))', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
@@ -140,7 +142,7 @@ const InventoryDashboard = () => {
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
                                             <span style={{ display: 'block', fontWeight: 700, color: 'var(--color-error)' }}>{Number(item.quantity ?? 0)}</span>
-                                            <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Reorder: {item.reorder_level ?? 0}</span>
+                                            <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{t('dashboard.reorder', { level: item.reorder_level ?? 0 })}</span>
                                         </div>
                                     </div>
                                 ))

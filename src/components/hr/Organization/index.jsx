@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import translateApiError from '@/utils/translateApiError';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -132,6 +134,7 @@ const getErrorMessage = (error, fallbackMessage) => {
 };
 
 const Organization = () => {
+    const { t } = useTranslation(['hr', 'common']);
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('departments');
     const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
@@ -162,16 +165,16 @@ const Organization = () => {
                     queryClient.invalidateQueries({ queryKey: ['hr-departments-tree'] }),
                     queryClient.invalidateQueries({ queryKey: ['hr-departments', 'infinite'] }),
                 ]);
-                toast.success('Department deleted successfully.');
+                toast.success(t('organization.departmentDeleted'));
             } else {
                 await queryClient.invalidateQueries({ queryKey: ['hr-positions'] });
-                toast.success('Position deleted successfully.');
+                toast.success(t('organization.positionDeleted'));
             }
             setDeleteState({ isOpen: false, type: '', id: '', name: '' });
         },
         onError: (error) => {
             const message = getErrorMessage(error, 'Delete request failed.');
-            toast.error(message);
+            toast.error(translateApiError(error, 'hr:errors.generic'));
         },
     });
 
@@ -185,6 +188,7 @@ const Organization = () => {
     const isPositionsError = positionsQuery.isError;
 
     const handleOpenDeptModal = (department = null) => {
+
         setEditingDept(department);
         setIsDeptModalOpen(true);
     };
@@ -220,7 +224,7 @@ const Organization = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Organization</h1>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-text-main)' }}>{t('organization.title')}</h1>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Manage departments, hierarchy, and job positions.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
@@ -335,6 +339,7 @@ const DepartmentsView = ({ departmentsTree, onAdd, onEdit, onDelete }) => {
 };
 
 const DepartmentNode = ({ dept, level, onEdit, onDelete }) => {
+
     const hasChildren = dept.children.length > 0;
     const [expanded, setExpanded] = useState(true);
 
@@ -403,10 +408,12 @@ const DepartmentNode = ({ dept, level, onEdit, onDelete }) => {
 };
 
 const PositionsView = ({ positions, positionsCount, currentPage, onPageChange, onAdd, onEdit, onDelete }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     return (
         <Card className="padding-lg">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-text-main)' }}>Job Positions</h2>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('organization.jobPositions')}</h2>
                 <Button icon={<Plus size={16} />} onClick={onAdd}>
                     Add Position
                 </Button>
@@ -456,6 +463,7 @@ const PositionsView = ({ positions, positionsCount, currentPage, onPageChange, o
 };
 
 const DepartmentModal = ({ isOpen, onClose, department }) => {
+    const { t } = useTranslation(['hr', 'common']);
     const [headSearchTerm, setHeadSearchTerm] = useState('');
 
     const {
@@ -588,15 +596,15 @@ const DepartmentModal = ({ isOpen, onClose, department }) => {
         try {
             if (department) {
                 await updateDepartmentMutation.mutateAsync(payload);
-                toast.success('Department updated successfully.');
+                toast.success(t('organization.departmentUpdated'));
             } else {
                 await createDepartmentMutation.mutateAsync(payload);
-                toast.success('Department created successfully.');
+                toast.success(t('organization.departmentCreated'));
             }
             onClose();
         } catch (error) {
             const message = getErrorMessage(error, 'Department request failed.');
-            toast.error(message);
+            toast.error(translateApiError(error, 'hr:errors.generic'));
         }
     };
 
@@ -669,9 +677,7 @@ const DepartmentModal = ({ isOpen, onClose, department }) => {
                 />
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                    <Button variant="outline" onClick={onClose} type="button">
-                        Cancel
-                    </Button>
+                    <Button variant="outline" onClick={onClose} type="button">{t('common:actions.cancel')}</Button>
                     <Button type="submit" isLoading={isSubmitting} disabled={isDepartmentSubmitDisabled}>
                         {department ? 'Save Changes' : 'Create Department'}
                     </Button>
@@ -682,6 +688,8 @@ const DepartmentModal = ({ isOpen, onClose, department }) => {
 };
 
 const PositionModal = ({ isOpen, onClose, position }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     const {
         control,
         handleSubmit,
@@ -747,15 +755,15 @@ const PositionModal = ({ isOpen, onClose, position }) => {
         try {
             if (position) {
                 await updatePositionMutation.mutateAsync(payload);
-                toast.success('Position updated successfully.');
+                toast.success(t('organization.positionUpdated'));
             } else {
                 await createPositionMutation.mutateAsync(payload);
-                toast.success('Position created successfully.');
+                toast.success(t('organization.positionCreated'));
             }
             onClose();
         } catch (error) {
             const message = getErrorMessage(error, 'Position request failed.');
-            toast.error(message);
+            toast.error(translateApiError(error, 'hr:errors.generic'));
         }
     };
 
@@ -831,9 +839,7 @@ const PositionModal = ({ isOpen, onClose, position }) => {
                 />
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                    <Button variant="outline" onClick={onClose} type="button">
-                        Cancel
-                    </Button>
+                    <Button variant="outline" onClick={onClose} type="button">{t('common:actions.cancel')}</Button>
                     <Button type="submit" isLoading={isSubmitting} disabled={isPositionSubmitDisabled}>
                         {position ? 'Save Changes' : 'Create Position'}
                     </Button>

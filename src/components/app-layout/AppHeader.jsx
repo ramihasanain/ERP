@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import { LogOut, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -52,6 +53,7 @@ const menuBtnStyle = {
  * @param {{ isNarrowLayout?: boolean; onOpenMobileNav?: () => void }} props
  */
 const AppHeader = ({ isNarrowLayout = false, onOpenMobileNav }) => {
+    const { t } = useTranslation(['nav', 'common']);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const companyName = useCompanyName();
@@ -65,6 +67,9 @@ const AppHeader = ({ isNarrowLayout = false, onOpenMobileNav }) => {
     const wideHeaderPad = { padding: '0 2rem', height: '4rem' };
 
     const roleName = getRoleName(user);
+    const roleLabel = roleName
+        ? t(`roles.${roleName}`, { ns: 'common', defaultValue: roleName })
+        : t('guest', { ns: 'common' });
 
     const avatarStyle = {
         width: isNarrowLayout ? '1.5rem' : '2rem',
@@ -93,8 +98,8 @@ const AppHeader = ({ isNarrowLayout = false, onOpenMobileNav }) => {
                         type="button"
                         style={menuBtnStyle}
                         onClick={onOpenMobileNav}
-                        aria-label="Open navigation menu"
-                        title="Menu"
+                        aria-label={t('header.openNav', { ns: 'common' })}
+                        title={t('header.menu', { ns: 'common' })}
                     >
                         <Menu size={18} strokeWidth={2} />
                     </button>
@@ -111,11 +116,11 @@ const AppHeader = ({ isNarrowLayout = false, onOpenMobileNav }) => {
                         <div style={avatarStyle}>{user?.initials || 'U'}</div>
                         <div style={{ ...profileTextColStyle, minWidth: 0 }}>
                             <span style={{ ...compactProfileNameStyle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
-                                {user?.name || 'User'}
+                                {user?.name || t('user', { ns: 'common' })}
                             </span>
-                            <span style={compactProfileRoleStyle}>{roleName || 'Guest'}</span>
+                            <span style={compactProfileRoleStyle}>{roleLabel}</span>
                         </div>
-                        <button type="button" onClick={handleSignOut} title="Sign Out" style={signOutBtnStyle}>
+                        <button type="button" onClick={handleSignOut} title={t('signOut')} style={signOutBtnStyle}>
                             <LogOut size={14} />
                         </button>
                     </div>
@@ -136,10 +141,10 @@ const AppHeader = ({ isNarrowLayout = false, onOpenMobileNav }) => {
                 <div style={compactProfileRowStyle}>
                     <div style={avatarStyle}>{user?.initials || 'U'}</div>
                     <div style={profileTextColStyle}>
-                        <span style={compactProfileNameStyle}>{user?.name || 'User'}</span>
-                        <span style={compactProfileRoleStyle}>{roleName || 'Guest'}</span>
+                        <span style={compactProfileNameStyle}>{user?.name || t('user', { ns: 'common' })}</span>
+                        <span style={compactProfileRoleStyle}>{roleLabel}</span>
                     </div>
-                    <button type="button" onClick={handleSignOut} title="Sign Out" style={signOutBtnStyle}>
+                    <button type="button" onClick={handleSignOut} title={t('signOut')} style={signOutBtnStyle}>
                         <LogOut size={16} />
                     </button>
                 </div>

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import i18n from '@/i18n';
 
 const LanguageContext = createContext();
 
@@ -16,27 +17,48 @@ export const languages = {
     de: { name: 'Deutsch', dir: 'ltr', code: 'de' },
 };
 
+const applyDocumentLanguage = (langCode) => {
+    const { dir, code } = languages[langCode] || languages.en;
+    document.documentElement.setAttribute('dir', dir);
+    document.documentElement.setAttribute('lang', code);
+    localStorage.setItem('language', langCode);
+};
+
 export const LanguageProvider = ({ children }) => {
     const [language, setLanguage] = useState(() => {
         const saved = localStorage.getItem('language');
-        return saved && languages[saved] ? saved : 'en';
+        const code = saved && languages[saved] ? saved : i18n.language || 'en';
+        if (i18n.language !== code) {
+            i18n.changeLanguage(code);
+        }
+        applyDocumentLanguage(code);
+        return code;
     });
 
     useEffect(() => {
-        const { dir, code } = languages[language];
-        document.documentElement.setAttribute('dir', dir);
-        document.documentElement.setAttribute('lang', code);
-        localStorage.setItem('language', language);
+        const onLanguageChanged = (lng) => {
+            if (lng && languages[lng] && lng !== language) {
+                setLanguage(lng);
+            }
+            applyDocumentLanguage(lng);
+        };
+
+        i18n.on('languageChanged', onLanguageChanged);
+        return () => {
+            i18n.off('languageChanged', onLanguageChanged);
+        };
     }, [language]);
 
-    const changeLanguage = (langCode) => {
+    const changeLanguage = useCallback((langCode) => {
         if (languages[langCode]) {
-            setLanguage(langCode);
+            i18n.changeLanguage(langCode);
         }
-    };
+    }, []);
 
     return (
-        <LanguageContext.Provider value={{ language, changeLanguage, dir: languages[language].dir }}>
+        <LanguageContext.Provider
+            value={{ language, changeLanguage, dir: languages[language].dir }}
+        >
             {children}
         </LanguageContext.Provider>
     );

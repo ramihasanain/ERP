@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import Card from '@/components/Shared/Card';
@@ -93,6 +94,7 @@ const normalizeAccountTypesResponse = (response) => {
 };
 
 const AccountLedgerTable = ({ account }) => {
+    const { t } = useTranslation(['accounting', 'common']);
     const [lineSearch, setLineSearch] = useState('');
     const [expandedLineKeys, setExpandedLineKeys] = useState(() => new Set());
 
@@ -166,7 +168,7 @@ const AccountLedgerTable = ({ account }) => {
                                 fontWeight: 600,
                             }}
                         >
-                            {account.isActive ? 'Active' : 'Inactive'}
+                            {account.isActive ? t('common:status.active') : t('common:status.inactive')}
                         </span>
                     </div>
                 </div>
@@ -184,8 +186,8 @@ const AccountLedgerTable = ({ account }) => {
                 >
                     <div style={{ flex: '1 1 160px', maxWidth: '280px', minWidth: '120px' }}>
                         <Input
-                            placeholder="Search…"
-                            aria-label="Search lines by reference or description"
+                            placeholder={t('generalLedger.lineSearchPlaceholder')}
+                            aria-label={t('generalLedger.lineSearchAriaLabel')}
                             startIcon={<Search size={14} />}
                             value={lineSearch}
                             onChange={(event) => setLineSearch(event.target.value)}
@@ -209,7 +211,7 @@ const AccountLedgerTable = ({ account }) => {
                                 whiteSpace: 'nowrap',
                             }}
                         >
-                            Current Balance
+                            {t('generalLedger.currentBalance')}
                         </span>
                         <span style={{ fontSize: '1.1rem', fontWeight: 700, color: balanceColor, whiteSpace: 'nowrap' }}>
                             {formatCurrency(account.currentBalance, account.currentBalanceCurrency)}
@@ -234,12 +236,12 @@ const AccountLedgerTable = ({ account }) => {
                                 }}
                             >
                                 <th style={{ width: '36px', padding: '0.75rem 0.5rem' }} />
-                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Date</th>
-                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Reference</th>
-                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>Description</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>Debit</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>Credit</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>Balance</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>{t('generalLedger.colDate')}</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>{t('generalLedger.colReference')}</th>
+                                <th style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>{t('generalLedger.colDescription')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>{t('generalLedger.colDebit')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>{t('generalLedger.colCredit')}</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>{t('generalLedger.colBalance')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -254,8 +256,8 @@ const AccountLedgerTable = ({ account }) => {
                                         }}
                                     >
                                         {account.lines.length === 0
-                                            ? 'No transactions for this account.'
-                                            : 'No lines match your search.'}
+                                            ? t('generalLedger.noTransactionsForAccount')
+                                            : t('generalLedger.noLinesMatchSearch')}
                                     </td>
                                 </tr>
                             ) : (
@@ -264,17 +266,17 @@ const AccountLedgerTable = ({ account }) => {
                                     const isExpanded = expandedLineKeys.has(lineKey);
 
                                     const metadataItems = [
-                                        { label: 'Currency', value: line.currency || '—' },
-                                        { label: 'Balance Currency', value: line.balanceCurrency || '—' },
-                                        { label: 'Base Debit', value: formatCurrency(line.baseDebit, line.balanceCurrency) },
-                                        { label: 'Base Credit', value: formatCurrency(line.baseCredit, line.balanceCurrency) },
-                                        { label: 'Converted Debit', value: formatCurrency(line.convertedDebit, line.balanceCurrency) },
-                                        { label: 'Converted Credit', value: formatCurrency(line.convertedCredit, line.balanceCurrency) },
+                                        { label: t('generalLedger.metadata.currency'), value: line.currency || '—' },
+                                        { label: t('generalLedger.metadata.balanceCurrency'), value: line.balanceCurrency || '—' },
+                                        { label: t('generalLedger.metadata.baseDebit'), value: formatCurrency(line.baseDebit, line.balanceCurrency) },
+                                        { label: t('generalLedger.metadata.baseCredit'), value: formatCurrency(line.baseCredit, line.balanceCurrency) },
+                                        { label: t('generalLedger.metadata.convertedDebit'), value: formatCurrency(line.convertedDebit, line.balanceCurrency) },
+                                        { label: t('generalLedger.metadata.convertedCredit'), value: formatCurrency(line.convertedCredit, line.balanceCurrency) },
                                         {
-                                            label: 'Exchange Rate Used',
+                                            label: t('generalLedger.metadata.exchangeRateUsed'),
                                             value: isNil(line.exchangeRateUsed) ? '—' : Number(line.exchangeRateUsed).toLocaleString(),
                                         },
-                                        { label: 'Exchange Rate Date', value: line.exchangeRateDate || '—' },
+                                        { label: t('generalLedger.metadata.exchangeRateDate'), value: line.exchangeRateDate || '—' },
                                     ];
 
                                     return (
@@ -382,6 +384,7 @@ const AccountLedgerTable = ({ account }) => {
 };
 
 const GeneralLedger = () => {
+    const { t } = useTranslation(['accounting', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
 
@@ -455,9 +458,9 @@ const GeneralLedger = () => {
                         className="cursor-pointer shrink-0"
                     />
                     <div>
-                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }}>General Ledger</h1>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }}>{t('generalLedger.title')}</h1>
                         <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
-                            Detailed history of all transactions per account.
+                            {t('generalLedger.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -474,8 +477,8 @@ const GeneralLedger = () => {
                 >
                     <div style={{ flex: '1 1 280px', minWidth: '200px' }}>
                         <Input
-                            placeholder="Search accounts..."
-                            aria-label="Search accounts"
+                            placeholder={t('generalLedger.searchPlaceholder')}
+                            aria-label={t('generalLedger.accountSearchAriaLabel')}
                             startIcon={<Search size={16} />}
                             value={searchTerm}
                             onChange={(event) => setSearchTerm(event.target.value)}
@@ -486,7 +489,7 @@ const GeneralLedger = () => {
                         value={filterTypeId}
                         onChange={(event) => setFilterTypeId(event.target.value)}
                         disabled={accountTypesQuery.isLoading}
-                        aria-label="Filter by account type"
+                        aria-label={t('generalLedger.filterByAccountType')}
                         className="cursor-pointer ledger-type-filter"
                         style={{
                             minHeight: '2.5rem',
@@ -501,7 +504,7 @@ const GeneralLedger = () => {
                             maxWidth: '100%',
                         }}
                     >
-                        <option value="">All account types</option>
+                        <option value="">{t('generalLedger.allAccountTypes')}</option>
                         {accountTypes.map((type) => (
                             <option key={type.id} value={type.id}>
                                 {type.label}
@@ -529,7 +532,7 @@ const GeneralLedger = () => {
                             onChange={(event) => setIncludeEmptyAccounts(event.target.checked)}
                             className="cursor-pointer"
                         />
-                        Include empty accounts
+                        {t('generalLedger.includeEmptyAccounts')}
                     </label>
                     {(searchTerm || filterTypeId || includeEmptyAccounts) && (
                         <Button
@@ -541,7 +544,7 @@ const GeneralLedger = () => {
                             }}
                             className="cursor-pointer shrink-0"
                         >
-                            Clear filters
+                            {t('generalLedger.clearFilters')}
                         </Button>
                     )}
                 </div>
@@ -593,9 +596,9 @@ const GeneralLedger = () => {
             ) : ledgerQuery.isError ? (
                 <ResourceLoadError
                     error={ledgerQuery.error}
-                    title="Could not load general ledger"
+                    title={t('generalLedger.loadFailed')}
                     onRefresh={() => ledgerQuery.refetch()}
-                    refreshLabel="Retry"
+                    refreshLabel={t('common:actions.retry')}
                 />
             ) : ledgerData.accounts.length === 0 ? (
                 <Card className="padding-lg">
@@ -607,7 +610,7 @@ const GeneralLedger = () => {
                             fontSize: '0.95rem',
                         }}
                     >
-                        No accounts match your filters.
+                        {t('generalLedger.noAccountsMatchFilters')}
                     </p>
                 </Card>
             ) : (

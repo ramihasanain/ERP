@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost } from '@/hooks/useMutation';
-import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import translateApiError from '@/utils/translateApiError';
 import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
@@ -24,6 +25,7 @@ const collectNestedMessages = (value) => {
 };
 
 const GoodsIssue = () => {
+    const { t } = useTranslation(['inventory', 'common']);
     const navigate = useNavigate();
     const basePath = useBasePath();
     const createTransaction = useCustomPost('/api/inventory/transactions/create/', [['inventory-transactions']]);
@@ -104,7 +106,7 @@ const GoodsIssue = () => {
 
     const handleSubmit = async () => {
         if (!isIssueReady) {
-            toast.error('Please complete all required fields before posting the issue.');
+            toast.error(t('goodsIssue.completeFields'));
             return;
         }
 
@@ -123,7 +125,7 @@ const GoodsIssue = () => {
 
         try {
             await createTransaction.mutateAsync(payload);
-            toast.success('Goods issue transaction created successfully.');
+            toast.success(t('goodsIssue.success'));
             navigate(`${basePath}/inventory/transactions`);
         } catch (error) {
             const errorData = error?.response?.data;
@@ -132,8 +134,7 @@ const GoodsIssue = () => {
                 toast.error(lineMessages.join('\n'));
                 return;
             }
-            const message = getApiErrorMessage(error, 'Failed to create goods issue transaction.');
-            toast.error(message);
+            toast.error(translateApiError(error, 'inventory:goodsIssue.failed'));
         }
     };
 
@@ -252,9 +253,7 @@ const GoodsIssue = () => {
                     </Button>
                 </div>
                 <div style={{ marginTop: '0.75rem' }}>
-                    <Button variant="outline" onClick={() => navigate(`${basePath}/inventory/transactions`)}>
-                        Cancel
-                    </Button>
+                    <Button variant="outline" onClick={() => navigate(`${basePath}/inventory/transactions`)}>{t('actions.cancel', { ns: 'common' })}</Button>
                 </div>
             </Card>
         </div>

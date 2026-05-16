@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Edit3, FolderOpen, Trash2, UserPlus, Users, X } from 'lucide-react';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
@@ -17,6 +18,8 @@ const ProjectsList = ({
     onRemoveMember,
     getEmployeeName,
 }) => {
+    const { t } = useTranslation(['hr', 'common']);
+
     if (isLoading) return <Spinner />;
 
     if (isError) {

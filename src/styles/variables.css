@@ -118,4 +118,25 @@
 /* =========================================
    RTL Helpers
    ========================================= */
-/* [dir="rtl"] rules will be added here as needed */
+[dir="rtl"] {
+    text-align: right;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+    text-align: right;
+}
+
+[dir="rtl"] th,
+[dir="rtl"] td {
+    text-align: right;
+}
+
+[dir="rtl"] .text-start {
+    text-align: right !important;
+}
+
+[dir="rtl"] .text-end {
+    text-align: left !important;
+}

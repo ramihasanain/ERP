@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import classes from '@/components/app-layout/Sidebar.module.css';
 import {
     LayoutDashboard,
@@ -17,25 +18,31 @@ import { useCompanyName } from '@/hooks/useCompanyName';
 import HeaderSearchField from '@/components/app-layout/HeaderSearchField';
 import HeaderIconTools from '@/components/app-layout/HeaderIconTools';
 
-const navItems = [
-    { to: '/admin/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { to: '/admin/accounting', icon: <Layers size={20} />, label: 'Accounting' },
-    { to: '/admin/auditor-adjustments', icon: <Shield size={20} />, label: 'Auditor Changes' },
-    { to: '/admin/hr', icon: <Users size={20} />, label: 'HR & Payroll' },
-    { to: '/admin/inventory', icon: <Package size={20} />, label: 'Inventory' },
-    { to: '/admin/reports', icon: <FileText size={20} />, label: 'Reports' },
-    { to: '/admin/settings', icon: <Settings size={20} />, label: 'Settings' },
-    { to: '/admin/categories', icon: <Tags size={20} />, label: 'Categories' },
+const NAV_ITEMS = [
+    { to: '/admin/dashboard', icon: <LayoutDashboard size={20} />, key: 'dashboard' },
+    { to: '/admin/accounting', icon: <Layers size={20} />, key: 'accounting' },
+    { to: '/admin/auditor-adjustments', icon: <Shield size={20} />, key: 'auditorChanges' },
+    { to: '/admin/hr', icon: <Users size={20} />, key: 'hrPayroll' },
+    { to: '/admin/inventory', icon: <Package size={20} />, key: 'inventory' },
+    { to: '/admin/reports', icon: <FileText size={20} />, key: 'reports' },
+    { to: '/admin/settings', icon: <Settings size={20} />, key: 'settings' },
+    { to: '/admin/categories', icon: <Tags size={20} />, key: 'categories' },
 ];
 
 /**
  * @param {{ variant?: 'desktop' | 'drawer'; open?: boolean; onClose?: () => void }} props
  */
 const Sidebar = ({ variant = 'desktop', open = false, onClose = () => {} }) => {
+    const { t } = useTranslation('nav');
     const { logout } = useAuth();
     const navigate = useNavigate();
     const companyName = useCompanyName();
     const isDrawer = variant === 'drawer';
+
+    const navItems = useMemo(
+        () => NAV_ITEMS.map((item) => ({ ...item, label: t(item.key) })),
+        [t],
+    );
 
     const handleSignOut = () => {
         logout();
@@ -107,7 +114,7 @@ const Sidebar = ({ variant = 'desktop', open = false, onClose = () => {} }) => {
                         onClick={handleSignOut}
                     >
                         <span className={classes.icon}><LogOut size={20} /></span>
-                        <span className={classes.label}>Sign Out</span>
+                        <span className={classes.label}>{t('signOut')}</span>
                     </button>
                 </div>
             ) : null}

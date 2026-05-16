@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/context/LanguageContext';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import { ChevronDown, ChevronRight, FileText, Folder, Lock, Search } from 'lucide-react';
@@ -41,8 +43,6 @@ const highlightText = (text, highlight) => {
 };
 
 const ChartOfAccountsTable = ({
-    t,
-    language,
     nodes,
     searchTerm,
     expandedNodes,
@@ -51,6 +51,9 @@ const ChartOfAccountsTable = ({
     isLoading,
     onResetFilters,
 }) => {
+    const { t } = useTranslation('accounting');
+    const { dir } = useLanguage();
+    const isRtl = dir === 'rtl';
     const [hoveredAccountId, setHoveredAccountId] = useState(null);
 
     const renderTree = (treeNodes, level = 0) => {
@@ -71,8 +74,8 @@ const ChartOfAccountsTable = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.75rem',
-                    paddingLeft: language === 'ar' ? 0 : `${depth * 2}rem`,
-                    paddingRight: language === 'ar' ? `${depth * 2}rem` : 0,
+                    paddingLeft: isRtl ? 0 : `${depth * 2}rem`,
+                    paddingRight: isRtl ? `${depth * 2}rem` : 0,
                     position: 'relative',
                     minHeight: '3.5rem',
                 };
@@ -130,7 +133,7 @@ const ChartOfAccountsTable = ({
                                             >
                                                 {isExpanded ? (
                                                     <ChevronDown size={14} />
-                                                ) : language === 'ar' ? (
+                                                ) : isRtl ? (
                                                     <ChevronRight size={14} style={{ transform: 'rotate(180deg)' }} />
                                                 ) : (
                                                     <ChevronRight size={14} />
@@ -226,16 +229,16 @@ const ChartOfAccountsTable = ({
             <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
                 <thead>
                     <tr style={{ background: 'var(--color-bg-card)', borderBottom: '2px solid var(--color-border)' }}>
-                        <th style={thStyle}>{t.colCode}</th>
-                        <th style={thStyle}>{t.colName}</th>
-                        <th style={thStyle}>{t.colType}</th>
+                        <th style={thStyle}>{t('chartOfAccounts.colCode')}</th>
+                        <th style={thStyle}>{t('chartOfAccounts.colName')}</th>
+                        <th style={thStyle}>{t('chartOfAccounts.colType')}</th>
                     </tr>
                 </thead>
                 <tbody style={{ background: 'var(--color-bg-card)' }}>
                     {isLoading ? (
                         <tr>
                             <td colSpan="3" style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                                Loading accounts...
+                                {t('chartOfAccounts.loadingAccounts')}
                             </td>
                         </tr>
                     ) : (
@@ -247,10 +250,10 @@ const ChartOfAccountsTable = ({
                                 <div style={{ opacity: 0.5, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                                     <Search size={48} />
                                     <p style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>
-                                        {language === 'ar' ? 'لا توجد نتائج تطابق بحثك' : 'No matches found'}
+                                        {t('chartOfAccounts.noMatches')}
                                     </p>
                                     <Button variant="outline" onClick={onResetFilters}>
-                                        {t.reset}
+                                        {t('chartOfAccounts.reset')}
                                     </Button>
                                 </div>
                             </td>

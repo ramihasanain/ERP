@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import translateApiError from '@/utils/translateApiError';
 import { useNavigate } from 'react-router-dom';
 import { useBasePath } from '@/hooks/useBasePath';
 import { toast } from 'sonner';
@@ -14,6 +16,7 @@ import {
 } from 'lucide-react';
 
 const CostCenters = () => {
+    const { t } = useTranslation('accounting');
     const navigate = useNavigate();
     const basePath = useBasePath();
     const { addCostCenter, updateCostCenter, deleteCostCenter, openDrawer } = useAccounting();
@@ -101,7 +104,7 @@ const CostCenters = () => {
                     code: updated?.code ?? data.code,
                     budget: Number(updated?.annual_budget ?? updated?.budget ?? annualBudgetPayload),
                 });
-                toast.success('Cost center updated successfully.');
+                toast.success(t('costCenters.updateSuccess'));
                 resetForm();
             } catch (error) {
                 toast.error(
@@ -130,7 +133,7 @@ const CostCenters = () => {
                 code: created?.code ?? data.code,
                 budget: budgetValue,
             });
-            toast.success('Cost center created successfully.');
+            toast.success(t('costCenters.createSuccess'));
             resetForm();
         } catch (error) {
             toast.error(
@@ -173,13 +176,13 @@ const CostCenters = () => {
     const handleConfirmDelete = async () => {
         const id = deletingCostCenter?.id;
         if (!id) {
-            toast.error('No cost center selected.');
+            toast.error(t('costCenters.noSelection'));
             return;
         }
         try {
             await deleteCostCenterMutation.mutateAsync(id);
             deleteCostCenter(id);
-            toast.success('Cost center deleted successfully.');
+            toast.success(t('costCenters.deleteSuccess'));
             setDeletingCostCenter(null);
         } catch (error) {
             toast.error(
@@ -233,7 +236,7 @@ const CostCenters = () => {
                     <div>
                         <h1 style={{ fontSize: '1.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <Target size={28} color="var(--color-primary-600)" />
-                            Cost Centers & Budgets
+                            {t('costCenters.title')}
                         </h1>
                         <p style={{ color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
                             Manage departmental budgets and track actual spending.

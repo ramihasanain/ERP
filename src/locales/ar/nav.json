@@ -1,0 +1,19 @@
+{
+  "dashboard": "لوحة التحكم",
+  "accounting": "المحاسبة",
+  "auditorChanges": "تغييرات المدقق",
+  "hrPayroll": "الموارد البشرية والرواتب",
+  "inventory": "المخزون",
+  "reports": "التقارير",
+  "settings": "الإعدادات",
+  "categories": "الفئات",
+  "permissions": "الصلاحيات",
+  "signOut": "تسجيل الخروج",
+  "notifications": "الإشعارات",
+  "search": "بحث",
+  "myRequests": "طلباتي",
+  "payslips": "كشوف الرواتب",
+  "myContract": "عقدي",
+  "procurement": "المشتريات",
+  "searchPlaceholder": "البحث في كل مكان..."
+}

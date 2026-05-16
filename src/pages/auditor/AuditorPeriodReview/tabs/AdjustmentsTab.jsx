@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Trash2, Send } from "lucide-react";
 import { toast } from "sonner";
 import Spinner from "@/core/Spinner";
@@ -9,9 +10,11 @@ import {
   useDeleteDrafts,
   useSubmitChangeRequests,
 } from "@/hooks/useChangeRequests";
+import { translateApiError } from "@/utils/translateApiError";
 import ChangeRequestsList from "./ChangeRequestsList";
 
 const AdjustmentsTab = () => {
+  const { t } = useTranslation(["auditor", "common"]);
   const { periodId } = useParams();
   const { changeRequests, summary, isPending, isError, error } =
     useChangeRequests(periodId);
@@ -34,11 +37,13 @@ const AdjustmentsTab = () => {
       { ids: draftIds },
       {
         onSuccess: () => {
-          toast.success("All draft change requests deleted.");
+          toast.success(t("adjustmentsTab.deleteAllSuccess"));
           setDeleteAllOpen(false);
         },
-        onError: () => {
-          toast.error("Failed to delete drafts. Please try again.");
+        onError: (err) => {
+          toast.error(
+            translateApiError(err, "adjustmentsTab.deleteAllFailed"),
+          );
         },
       },
     );
@@ -49,11 +54,13 @@ const AdjustmentsTab = () => {
       { ids: [id] },
       {
         onSuccess: () => {
-          toast.success("Change request deleted.");
+          toast.success(t("adjustmentsTab.deleteOneSuccess"));
           onDone?.();
         },
-        onError: () => {
-          toast.error("Failed to delete change request.");
+        onError: (err) => {
+          toast.error(
+            translateApiError(err, "adjustmentsTab.deleteOneFailed"),
+          );
           onDone?.();
         },
       },
@@ -65,11 +72,13 @@ const AdjustmentsTab = () => {
       {},
       {
         onSuccess: () => {
-          toast.success("Change requests submitted successfully.");
+          toast.success(t("adjustmentsTab.submitSuccess"));
           setSubmitOpen(false);
         },
-        onError: () => {
-          toast.error("Failed to submit change requests. Please try again.");
+        onError: (err) => {
+          toast.error(
+            translateApiError(err, "adjustmentsTab.submitFailed"),
+          );
         },
       },
     );
@@ -94,7 +103,7 @@ const AdjustmentsTab = () => {
           fontSize: "0.85rem",
         }}
       >
-        Failed to load change requests.{" "}
+        {t("adjustmentsTab.loadError")}{" "}
         {error?.message && <span>({error.message})</span>}
       </div>
     );
@@ -113,7 +122,7 @@ const AdjustmentsTab = () => {
       >
         <div>
           <h3 style={{ fontWeight: 700, fontSize: "1rem" }}>
-            Change Requests
+            {t("adjustmentsTab.title")}
           </h3>
           <p
             style={{
@@ -121,8 +130,7 @@ const AdjustmentsTab = () => {
               color: "var(--color-text-muted)",
             }}
           >
-            All proposed changes for this audit period — journal entries,
-            accounts, and invoices.
+            {t("adjustmentsTab.description")}
           </p>
         </div>
 
@@ -147,7 +155,7 @@ const AdjustmentsTab = () => {
                 }}
               >
                 <Send size={14} />
-                Submit Change Requests
+                {t("adjustmentsTab.submitAll")}
               </button>
               <button
                 onClick={() => setDeleteAllOpen(true)}
@@ -167,7 +175,7 @@ const AdjustmentsTab = () => {
                 }}
               >
                 <Trash2 size={14} />
-                Delete All Drafts ({draftIds.length})
+                {t("adjustmentsTab.deleteAllDrafts", { count: draftIds.length })}
               </button>
             </>
           )}
@@ -184,9 +192,10 @@ const AdjustmentsTab = () => {
       <ConfirmationModal
         isOpen={deleteAllOpen}
         type="danger"
-        title="Delete All Drafts"
-        message={`This will permanently delete all ${draftIds.length} draft change request(s). This action cannot be undone.`}
-        confirmText="Delete All"
+        title={t("adjustmentsTab.deleteAllTitle")}
+        message={t("adjustmentsTab.deleteAllMessage", { count: draftIds.length })}
+        confirmText={t("adjustmentsTab.deleteAllConfirm")}
+        cancelText={t("common:actions.cancel")}
         onConfirm={handleDeleteAll}
         onCancel={() => setDeleteAllOpen(false)}
         disabled={deleteDrafts.isPending}
@@ -195,9 +204,10 @@ const AdjustmentsTab = () => {
       <ConfirmationModal
         isOpen={submitOpen}
         type="warning"
-        title="Submit Change Requests"
-        message="Are you sure you want to submit all draft change requests for review? Once submitted, they can no longer be edited or deleted."
-        confirmText="Submit"
+        title={t("adjustmentsTab.submitTitle")}
+        message={t("adjustmentsTab.submitMessage")}
+        confirmText={t("common:actions.submit")}
+        cancelText={t("common:actions.cancel")}
         onConfirm={handleSubmit}
         onCancel={() => setSubmitOpen(false)}
         disabled={submitChangeRequests.isPending}

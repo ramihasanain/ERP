@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Button from '@/components/Shared/Button';
 import Input from '@/components/Shared/Input';
@@ -8,9 +9,11 @@ import { useCustomPost, useCustomPut, useCustomRemove } from '@/hooks/useMutatio
 import Spinner from '@/core/Spinner';
 import ResourceLoadError from '@/core/ResourceLoadError';
 import { toast } from 'sonner';
+import translateApiError from '@/utils/translateApiError';
 import { Plus, Edit2, Layers, Check, Trash2 } from 'lucide-react';
 
 const parseArray = (value) => {
+    const { t } = useTranslation(['hr', 'common']);
     if (Array.isArray(value)) return value;
     if (Array.isArray(value?.data)) return value.data;
     if (Array.isArray(value?.results)) return value.results;
@@ -18,6 +21,7 @@ const parseArray = (value) => {
 };
 
 const parseStructureComponents = (description) => {
+
     if (!description || typeof description !== 'string') return [];
     return description
         .split(/\r?\n/)
@@ -42,6 +46,7 @@ const normalizeComponentType = (type) => {
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
 const SalaryStructures = () => {
+
     const { salaryStructures } = usePayroll();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -137,7 +142,7 @@ const SalaryStructures = () => {
                 await updateStructureMutation.mutateAsync(payload);
                 setIsModalOpen(false);
                 setEditingId(null);
-                toast.success('Salary structure updated successfully.');
+                toast.success(t('salaryStructures.updated'));
             } else {
                 const payload = {
                     name: formData.name,
@@ -149,11 +154,11 @@ const SalaryStructures = () => {
                 await createStructureMutation.mutateAsync(payload);
                 setIsModalOpen(false);
                 setEditingId(null);
-                toast.success('Salary structure created successfully.');
+                toast.success(t('salaryStructures.created'));
             }
         } catch (error) {
             const message = error?.response?.data?.detail || error?.message || 'Failed to save salary structure.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'hr:errors.generic'));
         }
     };
 
@@ -161,10 +166,10 @@ const SalaryStructures = () => {
         if (!id || deleteStructureMutation.isPending) return;
         try {
             await deleteStructureMutation.mutateAsync(id);
-            toast.success('Salary structure deleted successfully.');
+            toast.success(t('salaryStructures.deleted'));
         } catch (error) {
             const message = error?.response?.data?.detail || error?.message || 'Failed to delete salary structure.';
-            toast.error(message);
+            toast.error(translateApiError(error, 'hr:errors.generic'));
         }
     };
 
@@ -355,7 +360,7 @@ const SalaryStructures = () => {
                         </div>
 
                         <div style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>{t('common:actions.cancel')}</Button>
                             <Button onClick={handleSubmit} disabled={updateStructureMutation.isPending || createStructureMutation.isPending}>
                                 {editingId ? 'Save Changes' : 'Create Structure'}
                             </Button>

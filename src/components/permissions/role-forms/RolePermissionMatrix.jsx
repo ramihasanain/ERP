@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';
 import ResourceLoadError from '@/core/ResourceLoadError';
@@ -57,17 +58,18 @@ const RolePermissionMatrix = ({
     matrixErrorTitle,
     matrixEmptyMessage,
 }) => {
+    const { t } = useTranslation(['permissions', 'common']);
     const normalizedRoleModules = Object.values(groupedRoleModules).flat();
     const hasRows = normalizedRoleModules.length > 0;
 
     return (
         <Card className="padding-none">
             <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <h3 style={{ fontWeight: 700, margin: 0 }}>Permission Matrix</h3>
+                <h3 style={{ fontWeight: 700, margin: 0 }}>{t('permissionMatrix')}</h3>
                 <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
                     {PERM_ACTIONS.map((p) => (
                         <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: permColor[p] }}>
-                            {permIcon[p]} <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{p}</span>
+                            {permIcon[p]} <span style={{ fontWeight: 600 }}>{t(`permActionsCapitalized.${p}`)}</span>
                         </div>
                     ))}
                 </div>
@@ -84,7 +86,7 @@ const RolePermissionMatrix = ({
                             error={matrixErrorObj}
                             title={matrixErrorTitle}
                             onRefresh={() => matrixRefetch()}
-                            refreshLabel="Try again"
+                            refreshLabel={t('common:actions.retry')}
                         />
                     </div>
                 )}
@@ -97,10 +99,10 @@ const RolePermissionMatrix = ({
                     <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '680px' }}>
                         <thead>
                             <tr style={{ background: 'var(--color-bg-table-header)', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                                <th style={{ padding: '10px 1.5rem', textAlign: 'left', width: '40%' }}>Module</th>
+                                <th style={{ padding: '10px 1.5rem', textAlign: 'left', width: '40%' }}>{t('matrix.module')}</th>
                                 {PERM_ACTIONS.map((p) => (
                                     <th key={p} style={{ padding: '10px 1rem', textAlign: 'center', width: '15%' }}>
-                                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                                        {t(`permActionsCapitalized.${p}`)}
                                     </th>
                                 ))}
                             </tr>

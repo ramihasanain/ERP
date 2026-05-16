@@ -1,35 +1,39 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Globe, Lock, Shield, Percent, CalendarDays } from 'lucide-react';
 import TaxSettings from '@/components/Settings/TaxSettings';
 import GeneralSettingsTab from '@/components/Settings/settings/GeneralSettingsTab';
 import SecuritySettingsTab from '@/components/Settings/settings/SecuritySettingsTab';
-import NotificationsSettingsTab from '@/components/Settings/settings/NotificationsSettingsTab';
 import PermissionsSettingsTab from '@/components/Settings/settings/PermissionsSettingsTab';
 import HolidaysTab from '@/components/Settings/settings/HolidaysTab';
 
 const Settings = () => {
+    const { t } = useTranslation(['settings', 'common']);
     const [activeTab, setActiveTab] = useState('general');
 
-    const tabs = [
-        { id: 'general', label: 'General', icon: <Globe size={18} /> },
-        { id: 'security', label: 'Security', icon: <Lock size={18} /> },
-        { id: 'tax', label: 'Tax Management', icon: <Percent size={18} /> },
-        { id: 'permissions', label: 'Permissions & Roles', icon: <Shield size={18} /> },
-        { id: 'holidays', label: 'Holidays', icon: <CalendarDays size={18} /> },
-    ];
+    const tabs = useMemo(
+        () => [
+            { id: 'general', label: t('tabs.general'), icon: <Globe size={18} /> },
+            { id: 'security', label: t('tabs.security'), icon: <Lock size={18} /> },
+            { id: 'tax', label: t('tabs.taxManagement'), icon: <Percent size={18} /> },
+            { id: 'permissions', label: t('tabs.permissions'), icon: <Shield size={18} /> },
+            { id: 'holidays', label: t('tabs.holidays'), icon: <CalendarDays size={18} /> },
+        ],
+        [t],
+    );
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-text-main)' }}>Settings</h1>
-                <p style={{ color: 'var(--color-text-secondary)' }}>Manage your workspace preferences.</p>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--color-text-main)' }}>{t('title')}</h1>
+                <p style={{ color: 'var(--color-text-secondary)' }}>{t('subtitle')}</p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
                 <div style={{ width: '100%', overflowX: 'auto' }}>
                     <div
                         role="tablist"
-                        aria-label="Settings sections"
+                        aria-label={t('tabs.ariaLabel')}
                         style={{
                             display: 'flex',
                             flexWrap: 'wrap',

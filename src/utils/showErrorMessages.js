@@ -1,33 +1,35 @@
 import { toast } from 'sonner';
+import translateApiError from '@/utils/translateApiError';
+import i18n from '@/i18n';
 
 const normalizeMessages = (errorData) => {
-  if (!errorData) return ['Something went wrong.'];
-  if (typeof errorData === 'string') return [errorData];
+    if (!errorData) return [i18n.t('errors:generic.somethingWentWrong')];
+    if (typeof errorData === 'string') return [translateApiError(errorData)];
 
-  if (Array.isArray(errorData)) {
-    return errorData.filter(Boolean).map((item) => String(item));
-  }
+    if (Array.isArray(errorData)) {
+        return errorData.filter(Boolean).map((item) => translateApiError(String(item)));
+    }
 
-  if (typeof errorData === 'object') {
-    const messages = [];
+    if (typeof errorData === 'object') {
+        const messages = [];
 
-    Object.values(errorData).forEach((value) => {
-      if (Array.isArray(value)) {
-        value.forEach((item) => {
-          if (item) messages.push(String(item));
+        Object.values(errorData).forEach((value) => {
+            if (Array.isArray(value)) {
+                value.forEach((item) => {
+                    if (item) messages.push(translateApiError(String(item)));
+                });
+            } else if (value) {
+                messages.push(translateApiError(String(value)));
+            }
         });
-      } else if (value) {
-        messages.push(String(value));
-      }
-    });
 
-    return messages.length ? messages : ['Something went wrong.'];
-  }
+        return messages.length ? messages : [i18n.t('errors:generic.somethingWentWrong')];
+    }
 
-  return ['Something went wrong.'];
+    return [i18n.t('errors:generic.somethingWentWrong')];
 };
 
 export default function handleErrorAlerts(errorData) {
-  const messages = normalizeMessages(errorData);
-  messages.forEach((message) => toast.error(message));
+    const messages = normalizeMessages(errorData);
+    messages.forEach((message) => toast.error(message));
 }

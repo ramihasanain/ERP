@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Controller } from 'react-hook-form';
 import Modal from '@/components/Shared/Modal';
 import Button from '@/components/Shared/Button';
@@ -34,8 +35,9 @@ const VendorFormModal = ({
     isDirty,
     isSubmitting,
 }) => {
+    const { t } = useTranslation(['inventory', 'common']);
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Vendor' : 'Add Vendor'} size="md">
+        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? t('vendors.editTitle') : t('vendors.addTitle')} size="md">
             {isEditing && isLoadingDetails ? (
                 <Spinner />
             ) : (
@@ -151,9 +153,7 @@ const VendorFormModal = ({
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                        <Button type="button" variant="outline" onClick={onClose}>
-                            Cancel
-                        </Button>
+                        <Button type="button" variant="outline" onClick={onClose}>{t('actions.cancel', { ns: 'common' })}</Button>
                         <Button
                             type="submit"
                             variant="primary"
