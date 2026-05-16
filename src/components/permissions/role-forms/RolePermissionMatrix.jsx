@@ -2,10 +2,21 @@ import React from 'react';
 import Card from '@/components/Shared/Card';
 import Spinner from '@/core/Spinner';
 import ResourceLoadError from '@/core/ResourceLoadError';
-import { Eye, Pencil, Trash, Check } from 'lucide-react';
+import { Eye, Pencil, Trash, Check, Plus } from 'lucide-react';
+import { PERM_ACTIONS } from './roleFormUtils';
 
-const permColor = { view: 'var(--color-primary-600)', edit: 'var(--color-warning)', delete: 'var(--color-error)' };
-const permIcon = { view: <Eye size={12} />, edit: <Pencil size={12} />, delete: <Trash size={12} /> };
+const permColor = {
+    view: 'var(--color-primary-600)',
+    add: 'var(--color-success)',
+    edit: 'var(--color-warning)',
+    delete: 'var(--color-error)',
+};
+const permIcon = {
+    view: <Eye size={12} />,
+    add: <Plus size={12} />,
+    edit: <Pencil size={12} />,
+    delete: <Trash size={12} />,
+};
 
 const checkboxStyle = (checked) => ({
     width: '1.25rem',
@@ -23,9 +34,9 @@ const checkboxStyle = (checked) => ({
 /**
  * @param {{
  *   groupedRoleModules: Record<string, Array<{ id: string, label: string }>>,
- *   rolePerms: Record<string, { view?: boolean, edit?: boolean, delete?: boolean }>,
- *   onTogglePerm: (modId: string, permType: 'view'|'edit'|'delete') => void,
- *   onToggleGroupAll: (group: string, permType: 'view'|'edit'|'delete') => void,
+ *   rolePerms: Record<string, { view?: boolean, add?: boolean, edit?: boolean, delete?: boolean }>,
+ *   onTogglePerm: (modId: string, permType: 'view'|'add'|'edit'|'delete') => void,
+ *   onToggleGroupAll: (group: string, permType: 'view'|'add'|'edit'|'delete') => void,
  *   matrixLoading: boolean,
  *   matrixError: boolean,
  *   matrixErrorObj: unknown,
@@ -53,8 +64,8 @@ const RolePermissionMatrix = ({
         <Card className="padding-none">
             <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <h3 style={{ fontWeight: 700, margin: 0 }}>Permission Matrix</h3>
-                <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.8rem' }}>
-                    {['view', 'edit', 'delete'].map((p) => (
+                <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
+                    {PERM_ACTIONS.map((p) => (
                         <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: permColor[p] }}>
                             {permIcon[p]} <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{p}</span>
                         </div>
@@ -83,13 +94,15 @@ const RolePermissionMatrix = ({
                     </div>
                 )}
                 {!matrixLoading && !matrixError && hasRows && (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '520px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '680px' }}>
                         <thead>
                             <tr style={{ background: 'var(--color-bg-table-header)', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                                 <th style={{ padding: '10px 1.5rem', textAlign: 'left', width: '40%' }}>Module</th>
-                                <th style={{ padding: '10px 1rem', textAlign: 'center', width: '20%' }}>View</th>
-                                <th style={{ padding: '10px 1rem', textAlign: 'center', width: '20%' }}>Edit</th>
-                                <th style={{ padding: '10px 1rem', textAlign: 'center', width: '20%' }}>Delete</th>
+                                {PERM_ACTIONS.map((p) => (
+                                    <th key={p} style={{ padding: '10px 1rem', textAlign: 'center', width: '15%' }}>
+                                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                                    </th>
+                                ))}
                             </tr>
                         </thead>
                         <tbody>
@@ -99,7 +112,7 @@ const RolePermissionMatrix = ({
                                         <td style={{ padding: '8px 1.5rem', fontWeight: 700, fontSize: '0.85rem', color: 'var(--color-primary-600)' }}>
                                             {group}
                                         </td>
-                                        {['view', 'edit', 'delete'].map((p) => {
+                                        {PERM_ACTIONS.map((p) => {
                                             const allChecked = mods.every((m) => rolePerms[m.id]?.[p]);
                                             return (
                                                 <td key={p} style={{ padding: '8px 1rem', textAlign: 'center' }}>
@@ -115,7 +128,7 @@ const RolePermissionMatrix = ({
                                     {mods.map((mod) => (
                                         <tr key={mod.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                                             <td style={{ padding: '8px 1.5rem 8px 2.5rem', fontSize: '0.85rem' }}>{mod.label}</td>
-                                            {['view', 'edit', 'delete'].map((p) => (
+                                            {PERM_ACTIONS.map((p) => (
                                                 <td key={p} style={{ padding: '8px 1rem', textAlign: 'center' }}>
                                                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                                                         <div onClick={() => onTogglePerm(mod.id, p)} style={checkboxStyle(rolePerms[mod.id]?.[p])} role="presentation">

@@ -6,7 +6,7 @@ import useCustomQuery from "@/hooks/useQuery";
 import Spinner from "@/core/Spinner";
 import ResourceLoadError from "@/core/ResourceLoadError";
 import Pagination from "@/core/Pagination";
-import { Shield, Edit3, Trash2, Users, Eye, Pencil, Trash } from "lucide-react";
+import { Shield, Edit3, Trash2, Users, Eye, Pencil, Trash, Plus } from "lucide-react";
 
 const PAGE_SIZE = 15;
 
@@ -20,18 +20,21 @@ const rolesListFromPayload = (payload) => {
 const statsFromPermissionArray = (permissions) => {
   if (!Array.isArray(permissions)) return null;
   let view = 0;
+  let add = 0;
   let edit = 0;
   let del = 0;
   for (const p of permissions) {
     if (p?.can_view) view += 1;
+    if (p?.can_add) add += 1;
     if (p?.can_edit) edit += 1;
     if (p?.can_delete) del += 1;
   }
   return {
     view,
+    add,
     edit,
     delete: del,
-    totalFlags: view + edit + del,
+    totalFlags: view + add + edit + del,
     moduleCount: permissions.length,
   };
 };
@@ -57,16 +60,19 @@ const PermissionsRolesTab = ({ onEditRole }) => {
 
   const permColor = {
     view: "var(--color-primary-600)",
+    add: "var(--color-success)",
     edit: "var(--color-warning)",
     delete: "var(--color-error)",
   };
   const permTintBg = {
     view: "color-mix(in srgb, var(--color-primary-600) 18%, var(--color-bg-card))",
+    add: "color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card))",
     edit: "color-mix(in srgb, var(--color-warning) 18%, var(--color-bg-card))",
     delete: "color-mix(in srgb, var(--color-error) 18%, var(--color-bg-card))",
   };
   const permIcon = {
     view: <Eye size={12} />,
+    add: <Plus size={12} />,
     edit: <Pencil size={12} />,
     delete: <Trash size={12} />,
   };
@@ -117,6 +123,7 @@ const PermissionsRolesTab = ({ onEditRole }) => {
               : getEmployeesWithRole(role.id).length;
           const totalPerms = counts
             ? (Number(counts.view) || 0) +
+              (Number(counts.add) || 0) +
               (Number(counts.edit) || 0) +
               (Number(counts.delete) || 0)
             : arrStats
@@ -125,6 +132,7 @@ const PermissionsRolesTab = ({ onEditRole }) => {
                   (sum, m) =>
                     sum +
                     (role.permissions?.[m.id]?.view ? 1 : 0) +
+                    (role.permissions?.[m.id]?.add ? 1 : 0) +
                     (role.permissions?.[m.id]?.edit ? 1 : 0) +
                     (role.permissions?.[m.id]?.delete ? 1 : 0),
                   0,
@@ -133,8 +141,8 @@ const PermissionsRolesTab = ({ onEditRole }) => {
             counts?.total != null
               ? Number(counts.total) || 1
               : arrStats
-                ? Math.max(1, arrStats.moduleCount * 3)
-                : systemModules.length * 3;
+                ? Math.max(1, arrStats.moduleCount * 4)
+                : systemModules.length * 4;
           const pct = maxPerms > 0 ? (totalPerms / maxPerms) * 100 : 0;
 
           return (
@@ -268,7 +276,7 @@ const PermissionsRolesTab = ({ onEditRole }) => {
                 <div
                   style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
                 >
-                  {["view", "edit", "delete"].map((p) => {
+                  {["view", "add", "edit", "delete"].map((p) => {
                     const count = counts
                       ? Number(counts[p]) || 0
                       : arrStats

@@ -77,11 +77,17 @@ export const AuthProvider = ({ children }) => {
                 false,
         };
 
+        const rawPermissionsList =
+            responseData?.permissions_list
+            ?? responseUser?.permissions_list
+            ?? null;
+        const permissions_list = Array.isArray(rawPermissionsList) ? rawPermissionsList : [];
+
         // Tokens are persisted with the same `auth_user` blob (see persistAuthSession).
         const normalizedAuthPayload = {
             domain: responseData?.domain || responseData?.tenant_domain || null,
             is_superuser: Boolean(responseData?.is_superuser),
-            permissions: responseData?.permissions || responseUser?.permissions || {},
+            permissions_list,
             portal_type: responseData?.portal_type ?? null,
             role: responseData?.role ?? responseUser?.role ?? null,
             user: {

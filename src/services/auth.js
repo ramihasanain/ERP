@@ -219,4 +219,10 @@ export const getStoredUser = () => {
   }
 };
 
+export const getPermissionsList = () => {
+  const blob = readAuthBlob();
+  if (Array.isArray(blob?.permissions_list)) return blob.permissions_list;
+  return [];
+};
+
 export const isAuthenticated = () => Boolean(getAccessToken());

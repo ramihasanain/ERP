@@ -6,12 +6,17 @@ import Input from '@/components/Shared/Input';
 import useCustomQuery from '@/hooks/useQuery';
 import { useCustomPost } from '@/hooks/useMutation';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
+import { getPermissionsList } from '@/services/auth';
 import { ArrowLeft, Save } from 'lucide-react';
 import RolePermissionMatrix from './RolePermissionMatrix';
 import {
+    applyGroupPermToggle,
+    applyPermToggle,
     emptyPermsForModules,
     groupModulesByCategory,
+    modulesFromPermissionsList,
     modulesListFromPayload,
+    permissionsPayloadFromRolePerms,
 } from './roleFormUtils';
 
 /**
@@ -29,20 +34,29 @@ const AddRoleForm = ({ embedded = false, onClose }) => {
 
     const permInitTokenRef = useRef(null);
 
+    const permissionsListCatalog = useMemo(() => getPermissionsList(), []);
+    const fromPermissionsList = useMemo(
+        () => modulesFromPermissionsList(permissionsListCatalog),
+        [permissionsListCatalog],
+    );
+    const usePermissionsListCatalog = fromPermissionsList.modules.length > 0;
+
     const modulesQuery = useCustomQuery('/api/roles/modules/', ['permissions', 'role-modules'], {
-        enabled: true,
+        enabled: !usePermissionsListCatalog,
     });
 
-    const normalizedRoleModules = useMemo(
-        () => modulesListFromPayload(modulesQuery.data).map((m) => ({
+    const normalizedRoleModules = useMemo(() => {
+        if (fromPermissionsList.modules.length > 0) {
+            return fromPermissionsList.modules;
+        }
+        return modulesListFromPayload(modulesQuery.data).map((m) => ({
             id: m.id,
             key: m.key,
             label: m.name,
             category: m.category ?? '',
             order: Number(m.order) || 0,
-        })),
-        [modulesQuery.data],
-    );
+        }));
+    }, [fromPermissionsList.modules, modulesQuery.data]);
 
     const groupedRoleModules = useMemo(
         () => groupModulesByCategory(normalizedRoleModules),
@@ -50,58 +64,53 @@ const AddRoleForm = ({ embedded = false, onClose }) => {
     );
 
     useEffect(() => {
-        if (modulesQuery.isLoading || modulesQuery.isError) return;
-        const modulesRaw = modulesListFromPayload(modulesQuery.data);
+        if (!usePermissionsListCatalog && (modulesQuery.isLoading || modulesQuery.isError)) return;
+
+        const modulesRaw = usePermissionsListCatalog
+            ? fromPermissionsList.modules
+            : modulesListFromPayload(modulesQuery.data);
         if (modulesRaw.length === 0) return;
 
         const token = `new:${modulesRaw.map((m) => m.id).join(',')}`;
         if (permInitTokenRef.current === token) return;
         permInitTokenRef.current = token;
 
-        const apiMods = modulesRaw.map((m) => ({
-            id: m.id,
-            key: m.key,
-            label: m.name,
-            category: m.category ?? '',
-            order: Number(m.order) || 0,
-        }));
+        const apiMods = usePermissionsListCatalog
+            ? modulesRaw
+            : modulesRaw.map((m) => ({
+                id: m.id,
+                key: m.key,
+                label: m.name,
+                category: m.category ?? '',
+                order: Number(m.order) || 0,
+            }));
+
         queueMicrotask(() => {
             setRolePerms(emptyPermsForModules(apiMods));
         });
-    }, [modulesQuery.isLoading, modulesQuery.isError, modulesQuery.data]);
+    }, [
+        usePermissionsListCatalog,
+        fromPermissionsList.modules,
+        modulesQuery.isLoading,
+        modulesQuery.isError,
+        modulesQuery.data,
+    ]);
 
     const togglePerm = useCallback((modId, permType) => {
         setRolePerms((prev) => ({
             ...prev,
-            [modId]: {
-                ...prev[modId],
-                [permType]: !prev[modId]?.[permType],
-                ...(permType !== 'view' && !prev[modId]?.[permType] ? { view: true } : {}),
-                ...(permType === 'view' && prev[modId]?.view ? { edit: false, delete: false } : {}),
-            },
+            [modId]: applyPermToggle(prev[modId], permType),
         }));
     }, []);
 
     const toggleGroupAll = useCallback((group, permType) => {
         const mods = groupedRoleModules[group];
         if (!mods?.length) return;
-        setRolePerms((prev) => {
-            const allEnabled = mods.every((m) => prev[m.id]?.[permType]);
-            const next = { ...prev };
-            mods.forEach((m) => {
-                next[m.id] = { ...next[m.id], [permType]: !allEnabled };
-                if (permType !== 'view' && !allEnabled) next[m.id].view = true;
-                if (permType === 'view' && allEnabled) {
-                    next[m.id].edit = false;
-                    next[m.id].delete = false;
-                }
-            });
-            return next;
-        });
+        setRolePerms((prev) => applyGroupPermToggle(mods, prev, permType));
     }, [groupedRoleModules]);
 
-    const matrixLoading = modulesQuery.isLoading;
-    const matrixError = modulesQuery.isError;
+    const matrixLoading = usePermissionsListCatalog ? false : modulesQuery.isLoading;
+    const matrixError = usePermissionsListCatalog ? false : modulesQuery.isError;
     const canSave = Boolean(
         roleName.trim()
         && normalizedRoleModules.length
@@ -117,12 +126,7 @@ const AddRoleForm = ({ embedded = false, onClose }) => {
             return;
         }
 
-        const permissions = normalizedRoleModules.map((m) => ({
-            module_key: m.key,
-            can_view: Boolean(rolePerms[m.id]?.view),
-            can_edit: Boolean(rolePerms[m.id]?.edit),
-            can_delete: Boolean(rolePerms[m.id]?.delete),
-        }));
+        const permissions = permissionsPayloadFromRolePerms(normalizedRoleModules, rolePerms);
 
         try {
             await createRole.mutateAsync({

@@ -582,8 +582,6 @@ const EmployeeDetails = () => {
                 </Card>
             )}
 
-            {!isLoading && !hasError && activeTab === 'contract' && <ContractSalaryTab employeeId={id} />}
-
             {!isLoading && !hasError && activeTab === 'leaves' && (
                 <Card className="padding-lg">
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.5rem', marginTop: 0 }}>Leaves</h3>
@@ -723,6 +721,11 @@ const EmployeeDetails = () => {
                 </Card>
             )}
         </form>
+
+        {!isLoading && !hasError && activeTab === 'contract' && (
+            <ContractSalaryTab employeeId={id} />
+        )}
+
         {!isNew && (
             <TerminationModal
                 isOpen={isTerminationOpen}

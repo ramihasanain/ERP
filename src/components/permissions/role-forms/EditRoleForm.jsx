@@ -10,9 +10,12 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { getApiErrorMessage } from '@/utils/apiErrorMessage';
 import RolePermissionMatrix from './RolePermissionMatrix';
 import {
+    applyGroupPermToggle,
+    applyPermToggle,
     groupModulesByCategory,
     permsEqual,
     permsFromDetailRows,
+    permissionsPayloadFromRolePerms,
 } from './roleFormUtils';
 
 /**
@@ -96,31 +99,14 @@ const EditRoleForm = ({ embedded = false, roleSummary, onClose }) => {
     const togglePerm = useCallback((modId, permType) => {
         setRolePerms((prev) => ({
             ...prev,
-            [modId]: {
-                ...prev[modId],
-                [permType]: !prev[modId]?.[permType],
-                ...(permType !== 'view' && !prev[modId]?.[permType] ? { view: true } : {}),
-                ...(permType === 'view' && prev[modId]?.view ? { edit: false, delete: false } : {}),
-            },
+            [modId]: applyPermToggle(prev[modId], permType),
         }));
     }, []);
 
     const toggleGroupAll = useCallback((group, permType) => {
         const mods = groupedRoleModules[group];
         if (!mods?.length) return;
-        setRolePerms((prev) => {
-            const allEnabled = mods.every((m) => prev[m.id]?.[permType]);
-            const next = { ...prev };
-            mods.forEach((m) => {
-                next[m.id] = { ...next[m.id], [permType]: !allEnabled };
-                if (permType !== 'view' && !allEnabled) next[m.id].view = true;
-                if (permType === 'view' && allEnabled) {
-                    next[m.id].edit = false;
-                    next[m.id].delete = false;
-                }
-            });
-            return next;
-        });
+        setRolePerms((prev) => applyGroupPermToggle(mods, prev, permType));
     }, [groupedRoleModules]);
 
     const isDirty = useMemo(() => {
@@ -150,12 +136,7 @@ const EditRoleForm = ({ embedded = false, roleSummary, onClose }) => {
         }
         if (!isDirty) return;
 
-        const permissions = normalizedRoleModules.map((m) => ({
-            module_key: m.key,
-            can_view: Boolean(rolePerms[m.id]?.view),
-            can_edit: Boolean(rolePerms[m.id]?.edit),
-            can_delete: Boolean(rolePerms[m.id]?.delete),
-        }));
+        const permissions = permissionsPayloadFromRolePerms(normalizedRoleModules, rolePerms);
         try {
             await saveRolePut.mutateAsync({
                 id: roleId,

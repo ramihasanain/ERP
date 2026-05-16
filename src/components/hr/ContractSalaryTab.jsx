@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Plus, RefreshCw, Eye, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import {
   useCustomPut,
   useCustomRemove,
 } from "@/hooks/useMutation";
+import formatDate from "@/utils/formatDate";
 
 const contractDefaults = {
   contract_type: "full_time",
@@ -146,6 +147,16 @@ const coerceCompensationCurrencyToId = (raw, currencies) => {
   return hit ? getCurrencyItemId(hit) : "";
 };
 
+/** Resolve compensation currency for the contract form (uuid preferred). */
+const resolveCompensationCurrencyFormValue = (compRaw, currencies) => {
+  const comp = asObject(compRaw);
+  return (
+    coerceCompensationCurrencyToId(comp.currency, currencies) ||
+    coerceCompensationCurrencyToId(comp.currency_code, currencies) ||
+    ""
+  );
+};
+
 const compensationCurrencyDisplayCode = (comp, currencies) => {
   const list = Array.isArray(currencies) ? currencies : [];
   const fromCode = normalizeCurrencyCode(comp?.currency_code);
@@ -189,14 +200,7 @@ const formatMoney = (value, currency = "JOD") => {
   return `${number.toFixed(2)} ${currency}`;
 };
 
-const formatDate = (value) => {
-  if (!value) return "-";
-  try {
-    return new Date(value).toLocaleDateString();
-  } catch {
-    return value;
-  }
-};
+const formatDateDisplay = (value) => formatDate(value) || "-";
 
 const getTodayIsoDate = () => {
   const t = new Date();
@@ -229,6 +233,13 @@ const formatSalaryDisplay = (value, currency = "JOD") => {
   return `${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currency}`;
 };
 
+/** API expects decimal strings e.g. `"1350.00"`. */
+const formatApiDecimalAmount = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return "0.00";
+  return n.toFixed(2);
+};
+
 const getContractPeriodDisplay = (row) => {
   if (typeof row?.period === "string" && row.period.trim()) {
     return row.period;
@@ -236,7 +247,7 @@ const getContractPeriodDisplay = (row) => {
   const start = row?.start_date || row?.period_start;
   const end = row?.end_date || row?.period_end;
   if (!start && !end) return "-";
-  return `${formatDate(start)} - ${formatDate(end)}`;
+  return `${formatDateDisplay(start)} - ${formatDateDisplay(end)}`;
 };
 
 const getErrorMessage = (error, fallbackMessage) => {
@@ -301,6 +312,7 @@ const parseStructureComponents = (description) => {
 };
 
 const ContractSalaryTab = ({ employeeId }) => {
+  const prevEmployeeIdRef = useRef(employeeId);
   const [isRenewalModalOpen, setIsRenewalModalOpen] = useState(false);
   const [isSalaryModalOpen, setIsSalaryModalOpen] = useState(false);
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
@@ -487,8 +499,8 @@ const ContractSalaryTab = ({ employeeId }) => {
       historyQuery.data?.current_compensation ??
         historyQuery.data?.compensation_data,
     );
-    const resolved = coerceCompensationCurrencyToId(
-      compRaw.currency,
+    const resolved = resolveCompensationCurrencyFormValue(
+      compRaw,
       currencies,
     );
     if (resolved) {
@@ -505,12 +517,18 @@ const ContractSalaryTab = ({ employeeId }) => {
 
   useEffect(() => {
     if (!employeeId) return;
+    if (prevEmployeeIdRef.current === employeeId) return;
+    prevEmployeeIdRef.current = employeeId;
     contractForm.reset(contractDefaults);
+    salaryIncreaseForm.reset(salaryIncreaseDefaults);
+    evaluationForm.reset(evaluationDefaults);
     setContractMode("create");
     setRenderedContractHtml("");
     setRenderedTemplateId("");
     setIsTemplatePreviewOpen(false);
-    // Only when switching employees — RHF `contractForm` identity is intentionally omitted.
+    setIsSalaryModalOpen(false);
+    setIsEvaluationModalOpen(false);
+    // Only when switching employees — RHF form identities are intentionally omitted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employeeId]);
 
@@ -537,6 +555,19 @@ const ContractSalaryTab = ({ employeeId }) => {
       return;
     }
 
+    const resolvedCurrency = resolveCompensationCurrencyFormValue(
+      compRaw,
+      currencies,
+    );
+    const currentCurrency = String(
+      contractForm.getValues("currency") ?? "",
+    ).trim();
+    const currencyValue =
+      resolvedCurrency ||
+      (currentCurrency && looksLikeUuid(currentCurrency)
+        ? currentCurrency
+        : "");
+
     contractForm.reset({
       contract_type: contractRaw.contract_type || "full_time",
       start_date: contractRaw.start_date || "",
@@ -546,7 +577,7 @@ const ContractSalaryTab = ({ employeeId }) => {
       template: contractRaw.template || "",
       structure: compRaw.structure || "",
       basic_salary: compRaw.basic_salary || "",
-      currency: coerceCompensationCurrencyToId(compRaw.currency, currencies),
+      currency: currencyValue,
       transportation: compRaw.transportation || "",
       housing: compRaw.housing || "",
       other_allowances: compRaw.other_allowances || "",
@@ -609,10 +640,14 @@ const ContractSalaryTab = ({ employeeId }) => {
   };
 
   const submitSalaryIncrease = async (values) => {
+    if (!employeeId) {
+      toast.error("Employee is required to record a salary increase.");
+      return;
+    }
     try {
       await createSalaryIncreaseMutation.mutateAsync({
-        effective_date: values.effective_date || null,
-        new_basic_salary: String(values.new_basic_salary || "0"),
+        effective_date: formatDate(values.effective_date),
+        new_basic_salary: formatApiDecimalAmount(values.new_basic_salary),
         reason: values.reason?.trim() || "",
       });
       toast.success("Salary increase saved.");
@@ -624,15 +659,19 @@ const ContractSalaryTab = ({ employeeId }) => {
   };
 
   const submitEvaluation = async (values) => {
+    if (!employeeId) {
+      toast.error("Employee is required to save a performance evaluation.");
+      return;
+    }
     try {
       await createEvaluationMutation.mutateAsync({
-        review_period_start: values.review_period_start || null,
-        review_period_end: values.review_period_end || null,
-        job_knowledge: Number(values.job_knowledge || 0),
-        work_quality: Number(values.work_quality || 0),
-        attendance: Number(values.attendance || 0),
-        communication: Number(values.communication || 0),
-        initiative: Number(values.initiative || 0),
+        review_period_start: formatDate(values.review_period_start),
+        review_period_end: formatDate(values.review_period_end),
+        job_knowledge: Number(values.job_knowledge),
+        work_quality: Number(values.work_quality),
+        attendance: Number(values.attendance),
+        communication: Number(values.communication),
+        initiative: Number(values.initiative),
         comments: values.comments?.trim() || "",
       });
       toast.success("Performance evaluation saved.");
@@ -1409,7 +1448,7 @@ const ContractSalaryTab = ({ employeeId }) => {
                 salaryRows.map((row) => (
                   <tr key={row?.id || row?.effective_date}>
                     <td style={tableCellStyle}>
-                      {formatDate(row?.effective_date || row?.date)}
+                      {formatDateDisplay(row?.effective_date || row?.date)}
                     </td>
                     <td style={tableCellStyle}>
                       {formatMoney(
@@ -1476,11 +1515,17 @@ const ContractSalaryTab = ({ employeeId }) => {
                     gap: "0.75rem",
                   }}
                 >
-                  <strong>{formatDate(item?.review_period_end)}</strong>
+                  <strong>
+                    {item?.review_period_start && item?.review_period_end
+                      ? `${formatDateDisplay(item.review_period_start)} - ${formatDateDisplay(item.review_period_end)}`
+                      : formatDateDisplay(
+                          item?.review_period_end || item?.review_period_start,
+                        )}
+                  </strong>
                   <span
                     style={{ color: "var(--color-primary)", fontWeight: 700 }}
                   >
-                    {item?.overall_score ?? item?.calculated_score ?? "-"}/5
+                    {item?.calculated_score ?? item?.overall_score ?? "-"}/5
                   </span>
                 </div>
                 <div
@@ -1656,18 +1701,35 @@ const ContractSalaryTab = ({ employeeId }) => {
           <Controller
             name="effective_date"
             control={salaryIncreaseForm.control}
-            render={({ field }) => (
-              <Input type="date" label="Effective Date" {...field} />
+            rules={{ required: "Effective date is required." }}
+            render={({ field, fieldState }) => (
+              <Input
+                type="date"
+                label="Effective Date"
+                error={fieldState.error?.message}
+                name={field.name}
+                ref={field.ref}
+                onBlur={field.onBlur}
+                value={formatDate(field.value)}
+                onChange={(e) => field.onChange(formatDate(e.target.value))}
+              />
             )}
           />
           <Controller
             name="new_basic_salary"
             control={salaryIncreaseForm.control}
-            render={({ field }) => (
+            rules={{
+              required: "New basic salary is required.",
+              validate: (value) =>
+                Number(value) > 0 || "Salary must be greater than zero.",
+            }}
+            render={({ field, fieldState }) => (
               <Input
                 type="number"
                 step="0.01"
+                min="0.01"
                 label="New Basic Salary"
+                error={fieldState.error?.message}
                 {...field}
               />
             )}
@@ -1721,15 +1783,35 @@ const ContractSalaryTab = ({ employeeId }) => {
             <Controller
               name="review_period_start"
               control={evaluationForm.control}
-              render={({ field }) => (
-                <Input type="date" label="Review Start" {...field} />
+              rules={{ required: "Review start date is required." }}
+              render={({ field, fieldState }) => (
+                <Input
+                  type="date"
+                  label="Review Start"
+                  error={fieldState.error?.message}
+                  name={field.name}
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  value={formatDate(field.value)}
+                  onChange={(e) => field.onChange(formatDate(e.target.value))}
+                />
               )}
             />
             <Controller
               name="review_period_end"
               control={evaluationForm.control}
-              render={({ field }) => (
-                <Input type="date" label="Review End" {...field} />
+              rules={{ required: "Review end date is required." }}
+              render={({ field, fieldState }) => (
+                <Input
+                  type="date"
+                  label="Review End"
+                  error={fieldState.error?.message}
+                  name={field.name}
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  value={formatDate(field.value)}
+                  onChange={(e) => field.onChange(formatDate(e.target.value))}
+                />
               )}
             />
           </div>

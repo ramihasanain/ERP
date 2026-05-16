@@ -11,7 +11,10 @@ import Modal from '@/components/Shared/Modal';
 import ConfirmationModal from '@/components/Shared/ConfirmationModal';
 import Pagination from '@/core/Pagination';
 import Spinner from '@/core/Spinner';
+import SearchableSelectBackend from '@/core/SearchableSelectBackend';
+import SelectWithLoadMore from '@/core/SelectWithLoadMore';
 import useCustomQuery from '@/hooks/useQuery';
+import { useDepartmentsInfiniteQuery } from '@/hooks/useDepartmentsInfiniteQuery';
 import { useCustomPost, useCustomPut } from '@/hooks/useMutation';
 
 const normalizeArrayResponse = (response) => {
@@ -37,12 +40,6 @@ const normalizeDepartmentNode = (item) => {
 
 const normalizeDepartmentsTree = (response) => normalizeArrayResponse(response).map(normalizeDepartmentNode);
 
-const normalizeDepartments = (response) =>
-    normalizeArrayResponse(response).map((item) => ({
-        id: item?.id || item?.uuid || '',
-        name: item?.name || '',
-    }));
-
 const normalizeDepartmentDetails = (response) => {
     const item = response?.data ?? response;
 
@@ -50,9 +47,53 @@ const normalizeDepartmentDetails = (response) => {
         id: item?.id || item?.uuid || '',
         name: item?.name || '',
         parent: item?.parent || '',
+        parentName: item?.parent_name || item?.parentName || '',
         head: item?.head != null ? String(item.head) : '',
+        headName: item?.head_name || item?.headName || '',
     };
 };
+
+const flattenDepartmentsFromPages = (pages) => {
+    const seen = new Set();
+    const out = [];
+
+    for (const page of pages ?? []) {
+        for (const item of normalizeArrayResponse(page)) {
+            const id = item?.id || item?.uuid || '';
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            out.push({ id, name: item?.name || '' });
+        }
+    }
+
+    return out;
+};
+
+const buildDepartmentSelectOptions = (departments, { excludeId, selectedId, selectedLabel } = {}) => {
+    let options = departments
+        .filter((department) => department.id !== excludeId)
+        .map((department) => ({ value: department.id, label: department.name || department.id }));
+
+    if (selectedId && !options.some((option) => option.value === selectedId)) {
+        options = [{ value: selectedId, label: selectedLabel || 'Selected department' }, ...options];
+    }
+
+    return options;
+};
+
+const normalizeEmployeeOption = (item) => {
+    const firstName = item?.first_name || '';
+    const lastName = item?.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return {
+        id: item?.id || item?.uuid || '',
+        fullName: fullName || item?.email || 'Unknown',
+    };
+};
+
+const normalizeEmployeesSearchResponse = (response) =>
+    normalizeArrayResponse(response).map(normalizeEmployeeOption);
 
 const normalizePositionItem = (item) => ({
     id: item?.id || item?.uuid || '',
@@ -103,10 +144,8 @@ const Organization = () => {
     const departmentsTreeQuery = useCustomQuery('/api/hr/departments/tree/', ['hr-departments-tree'], {
         select: normalizeDepartmentsTree,
     });
-    const departmentsQuery = useCustomQuery('/api/hr/departments/', ['hr-departments'], {
-        select: normalizeDepartments,
-    });
     const positionsQuery = useCustomQuery(`/api/hr/positions/?page=${positionsPage}`, ['hr-positions', positionsPage], {
+        enabled: activeTab === 'positions',
         select: normalizePaginatedPositions,
     });
 
@@ -121,7 +160,7 @@ const Organization = () => {
             if (variables.type === 'department') {
                 await Promise.all([
                     queryClient.invalidateQueries({ queryKey: ['hr-departments-tree'] }),
-                    queryClient.invalidateQueries({ queryKey: ['hr-departments'] }),
+                    queryClient.invalidateQueries({ queryKey: ['hr-departments', 'infinite'] }),
                 ]);
                 toast.success('Department deleted successfully.');
             } else {
@@ -137,12 +176,13 @@ const Organization = () => {
     });
 
     const departmentsTree = useMemo(() => departmentsTreeQuery.data ?? [], [departmentsTreeQuery.data]);
-    const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
     const positions = useMemo(() => positionsQuery.data?.items ?? [], [positionsQuery.data]);
     const positionsCount = useMemo(() => positionsQuery.data?.count ?? positions.length, [positions.length, positionsQuery.data]);
 
-    const isLoading = departmentsTreeQuery.isLoading || departmentsQuery.isLoading || positionsQuery.isLoading;
-    const hasError = departmentsTreeQuery.isError || departmentsQuery.isError || positionsQuery.isError;
+    const isDepartmentsLoading = departmentsTreeQuery.isLoading;
+    const isDepartmentsError = departmentsTreeQuery.isError;
+    const isPositionsLoading = positionsQuery.isLoading;
+    const isPositionsError = positionsQuery.isError;
 
     const handleOpenDeptModal = (department = null) => {
         setEditingDept(department);
@@ -169,11 +209,11 @@ const Organization = () => {
     };
 
     const handleRefresh = async () => {
-        await Promise.all([
-            departmentsTreeQuery.refetch(),
-            departmentsQuery.refetch(),
-            positionsQuery.refetch(),
-        ]);
+        if (activeTab === 'departments') {
+            await departmentsTreeQuery.refetch();
+            return;
+        }
+        await positionsQuery.refetch();
     };
 
     return (
@@ -193,12 +233,13 @@ const Organization = () => {
                 </div>
             </div>
 
-            {isLoading && <Spinner />}
+            {activeTab === 'departments' && isDepartmentsLoading && <Spinner />}
+            {activeTab === 'positions' && isPositionsLoading && <Spinner />}
 
-            {hasError && (
+            {activeTab === 'departments' && isDepartmentsError && (
                 <Card className="padding-lg">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
-                        <p style={{ margin: 0, color: 'var(--color-error)' }}>Could not load organization data.</p>
+                        <p style={{ margin: 0, color: 'var(--color-error)' }}>Could not load departments.</p>
                         <Button variant="outline" onClick={handleRefresh}>
                             Retry
                         </Button>
@@ -206,28 +247,36 @@ const Organization = () => {
                 </Card>
             )}
 
-            {!isLoading && !hasError && (
-                <>
-                    {activeTab === 'departments' ? (
-                        <DepartmentsView
-                            departmentsTree={departmentsTree}
-                            onAdd={() => handleOpenDeptModal(null)}
-                            onEdit={handleOpenDeptModal}
-                            onDelete={(department) => handleDeleteRequest('department', department)}
-                        />
-                    ) : (
-                        <PositionsView
-                            positions={positions}
-                            positionsCount={positionsCount}
-                            currentPage={positionsPage}
-                            onPageChange={setPositionsPage}
-                            departments={departments}
-                            onAdd={() => handleOpenPosModal(null)}
-                            onEdit={handleOpenPosModal}
-                            onDelete={(position) => handleDeleteRequest('position', position)}
-                        />
-                    )}
-                </>
+            {activeTab === 'positions' && isPositionsError && (
+                <Card className="padding-lg">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
+                        <p style={{ margin: 0, color: 'var(--color-error)' }}>Could not load positions.</p>
+                        <Button variant="outline" onClick={handleRefresh}>
+                            Retry
+                        </Button>
+                    </div>
+                </Card>
+            )}
+
+            {activeTab === 'departments' && !isDepartmentsLoading && !isDepartmentsError && (
+                <DepartmentsView
+                    departmentsTree={departmentsTree}
+                    onAdd={() => handleOpenDeptModal(null)}
+                    onEdit={handleOpenDeptModal}
+                    onDelete={(department) => handleDeleteRequest('department', department)}
+                />
+            )}
+
+            {activeTab === 'positions' && !isPositionsLoading && !isPositionsError && (
+                <PositionsView
+                    positions={positions}
+                    positionsCount={positionsCount}
+                    currentPage={positionsPage}
+                    onPageChange={setPositionsPage}
+                    onAdd={() => handleOpenPosModal(null)}
+                    onEdit={handleOpenPosModal}
+                    onDelete={(position) => handleDeleteRequest('position', position)}
+                />
             )}
 
             <DepartmentModal
@@ -237,7 +286,6 @@ const Organization = () => {
                     setEditingDept(null);
                 }}
                 department={editingDept}
-                allDepartments={departments}
             />
 
             <PositionModal
@@ -247,7 +295,6 @@ const Organization = () => {
                     setEditingPos(null);
                 }}
                 position={editingPos}
-                departments={departments}
             />
 
             <ConfirmationModal
@@ -355,11 +402,7 @@ const DepartmentNode = ({ dept, level, onEdit, onDelete }) => {
     );
 };
 
-const PositionsView = ({ positions, positionsCount, currentPage, onPageChange, departments, onAdd, onEdit, onDelete }) => {
-    const departmentMap = useMemo(() => {
-        return new Map(departments.map((department) => [department.id, department.name]));
-    }, [departments]);
-
+const PositionsView = ({ positions, positionsCount, currentPage, onPageChange, onAdd, onEdit, onDelete }) => {
     return (
         <Card className="padding-lg">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
@@ -392,7 +435,7 @@ const PositionsView = ({ positions, positionsCount, currentPage, onPageChange, d
                                     <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', fontWeight: 500, color: 'var(--color-text-main)' }}>{position.name}</td>
                                     <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>{position.description || '—'}</td>
                                     <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)' }}>
-                                        {position.departmentName || departmentMap.get(position.department) || 'Unknown'}
+                                        {position.departmentName || '—'}
                                     </td>
                                     <td style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', textAlign: 'right' }}>
                                         <Button variant="ghost" size="sm" icon={<Edit2 size={16} />} onClick={() => onEdit(position)} />
@@ -412,7 +455,9 @@ const PositionsView = ({ positions, positionsCount, currentPage, onPageChange, d
     );
 };
 
-const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
+const DepartmentModal = ({ isOpen, onClose, department }) => {
+    const [headSearchTerm, setHeadSearchTerm] = useState('');
+
     const {
         control,
         handleSubmit,
@@ -427,12 +472,92 @@ const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
         },
     });
 
-    const createDepartmentMutation = useCustomPost('/api/hr/departments/create/', [['hr-departments-tree'], ['hr-departments']]);
-    const updateDepartmentMutation = useCustomPut(`/api/hr/departments/${department?.id || 'new'}/`, [['hr-departments-tree'], ['hr-departments']]);
+    const selectedHeadId = watch('head');
+    const selectedParentId = watch('parent');
+
+    const departmentsInfiniteQuery = useDepartmentsInfiniteQuery({ enabled: isOpen });
+    const {
+        isLoading: departmentsInitialLoading,
+        hasNextPage: departmentsHasNextPage,
+        fetchNextPage: fetchNextDepartmentsPage,
+        isFetchingNextPage: isFetchingNextDepartmentsPage,
+        isFetchNextPageError: isFetchNextDepartmentsPageError,
+        isError: departmentsFailed,
+    } = departmentsInfiniteQuery;
+
+    const loadedDepartments = useMemo(
+        () => flattenDepartmentsFromPages(departmentsInfiniteQuery.data?.pages),
+        [departmentsInfiniteQuery.data]
+    );
+
+    const headEmployeesUrl = useMemo(() => {
+        const params = new URLSearchParams();
+        const term = headSearchTerm.trim();
+        if (term) params.set('search', term);
+        const queryString = params.toString();
+        return `/api/hr/employees/${queryString ? `?${queryString}` : ''}`;
+    }, [headSearchTerm]);
+
+    const headEmployeesQuery = useCustomQuery(
+        headEmployeesUrl,
+        ['hr-employees-head-select', headSearchTerm.trim()],
+        {
+            enabled: isOpen,
+            select: normalizeEmployeesSearchResponse,
+        }
+    );
+
+    const headEmployees = useMemo(() => headEmployeesQuery.data ?? [], [headEmployeesQuery.data]);
+
+    const createDepartmentMutation = useCustomPost('/api/hr/departments/create/', [
+        ['hr-departments-tree'],
+        ['hr-departments', 'infinite'],
+    ]);
+    const updateDepartmentMutation = useCustomPut(`/api/hr/departments/${department?.id || 'new'}/`, [
+        ['hr-departments-tree'],
+        ['hr-departments', 'infinite'],
+    ]);
     const departmentDetailsQuery = useCustomQuery(`/api/hr/departments/${department?.id || ''}/`, ['hr-department-details', department?.id], {
         enabled: Boolean(isOpen && department?.id),
         select: normalizeDepartmentDetails,
     });
+
+    const headEmployeeOptions = useMemo(() => {
+        const options = headEmployees.map((employee) => ({
+            value: employee.id,
+            label: employee.fullName,
+        }));
+        const knownIds = new Set(options.map((option) => option.value));
+
+        if (selectedHeadId && !knownIds.has(selectedHeadId)) {
+            const fallbackLabel =
+                departmentDetailsQuery.data?.headName ||
+                department?.headLabel ||
+                'Selected employee';
+            options.unshift({ value: selectedHeadId, label: fallbackLabel });
+        }
+
+        return options;
+    }, [department?.headLabel, departmentDetailsQuery.data?.headName, headEmployees, selectedHeadId]);
+
+    const parentDepartmentSelectOptions = useMemo(() => {
+        const parentLabel =
+            departmentDetailsQuery.data?.parentName ||
+            loadedDepartments.find((item) => item.id === selectedParentId)?.name ||
+            '';
+
+        return buildDepartmentSelectOptions(loadedDepartments, {
+            excludeId: department?.id,
+            selectedId: selectedParentId,
+            selectedLabel: parentLabel,
+        });
+    }, [department?.id, departmentDetailsQuery.data?.parentName, loadedDepartments, selectedParentId]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setHeadSearchTerm('');
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -493,41 +618,54 @@ const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
                     render={({ field }) => <Input label="Department Name" placeholder="Enter department name" {...field} required />}
                 />
 
-                <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Parent Department</label>
-                    <Controller
-                        name="parent"
-                        control={control}
-                        render={({ field }) => (
-                            <select
-                                value={field.value || ''}
-                                onChange={(event) => field.onChange(event.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '0.625rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    border: '1px solid var(--color-border)',
-                                    background: 'var(--color-bg-surface)',
-                                    color: 'var(--color-text-main)',
-                                }}
-                            >
-                                <option value="">None (Root Level)</option>
-                                {allDepartments
-                                    .filter((dept) => dept.id !== department?.id)
-                                    .map((dept) => (
-                                        <option key={dept.id} value={dept.id}>
-                                            {dept.name}
-                                        </option>
-                                    ))}
-                            </select>
-                        )}
-                    />
-                </div>
+                <Controller
+                    name="parent"
+                    control={control}
+                    render={({ field }) => (
+                        <SelectWithLoadMore
+                            id="organization-department-parent"
+                            label="Parent Department"
+                            value={field.value || ''}
+                            onChange={(nextValue) => field.onChange(nextValue)}
+                            options={parentDepartmentSelectOptions}
+                            emptyOptionLabel="None (Root Level)"
+                            isInitialLoading={departmentsInitialLoading && !departmentsInfiniteQuery.data}
+                            disabled={departmentsFailed}
+                            hasMore={Boolean(departmentsHasNextPage) && !departmentsFailed}
+                            onLoadMore={() => fetchNextDepartmentsPage()}
+                            isLoadingMore={isFetchingNextDepartmentsPage}
+                            paginationError={
+                                departmentsFailed
+                                    ? 'Failed to load departments.'
+                                    : isFetchNextDepartmentsPageError
+                                      ? 'Could not load more departments. Scroll down to retry.'
+                                      : null
+                            }
+                            zIndex={1050}
+                        />
+                    )}
+                />
 
                 <Controller
                     name="head"
                     control={control}
-                    render={({ field }) => <Input label="Head (Employee ID)" placeholder="e.g. 1" {...field} />}
+                    render={({ field }) => (
+                        <SearchableSelectBackend
+                            label="Employee Name"
+                            value={field.value || ''}
+                            onChange={(nextValue) => field.onChange(nextValue)}
+                            options={headEmployeeOptions}
+                            searchTerm={headSearchTerm}
+                            onSearchChange={setHeadSearchTerm}
+                            placeholder="Search employee..."
+                            emptyLabel={headEmployeesQuery.isLoading ? 'Loading...' : 'No employees found'}
+                            getOptionLabel={(option) => option.label}
+                            getOptionValue={(option) => option.value}
+                            isInitialLoading={headEmployeesQuery.isLoading}
+                            disabled={headEmployeesQuery.isError}
+                            zIndex={1050}
+                        />
+                    )}
                 />
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
@@ -543,7 +681,7 @@ const DepartmentModal = ({ isOpen, onClose, department, allDepartments }) => {
     );
 };
 
-const PositionModal = ({ isOpen, onClose, position, departments }) => {
+const PositionModal = ({ isOpen, onClose, position }) => {
     const {
         control,
         handleSubmit,
@@ -557,6 +695,35 @@ const PositionModal = ({ isOpen, onClose, position, departments }) => {
             department: '',
         },
     });
+
+    const selectedDepartmentId = watch('department');
+
+    const departmentsInfiniteQuery = useDepartmentsInfiniteQuery({ enabled: isOpen });
+    const {
+        isLoading: departmentsInitialLoading,
+        hasNextPage: departmentsHasNextPage,
+        fetchNextPage: fetchNextDepartmentsPage,
+        isFetchingNextPage: isFetchingNextDepartmentsPage,
+        isFetchNextPageError: isFetchNextDepartmentsPageError,
+        isError: departmentsFailed,
+    } = departmentsInfiniteQuery;
+
+    const loadedDepartments = useMemo(
+        () => flattenDepartmentsFromPages(departmentsInfiniteQuery.data?.pages),
+        [departmentsInfiniteQuery.data]
+    );
+
+    const departmentSelectOptions = useMemo(() => {
+        const selectedLabel =
+            position?.departmentName ||
+            loadedDepartments.find((item) => item.id === selectedDepartmentId)?.name ||
+            '';
+
+        return buildDepartmentSelectOptions(loadedDepartments, {
+            selectedId: selectedDepartmentId,
+            selectedLabel,
+        });
+    }, [loadedDepartments, position?.departmentName, selectedDepartmentId]);
 
     const createPositionMutation = useCustomPost('/api/hr/positions/create/', [['hr-positions']]);
     const updatePositionMutation = useCustomPut(`/api/hr/positions/${position?.id || 'new'}/`, [['hr-positions']]);
@@ -634,36 +801,34 @@ const PositionModal = ({ isOpen, onClose, position, departments }) => {
                     />
                 </div>
 
-                <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Department *</label>
-                    <Controller
-                        name="department"
-                        control={control}
-                        rules={{ required: true }}
-                        render={({ field }) => (
-                            <select
-                                value={field.value}
-                                onChange={(event) => field.onChange(event.target.value)}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '0.625rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    border: '1px solid var(--color-border)',
-                                    background: 'var(--color-bg-surface)',
-                                    color: 'var(--color-text-main)',
-                                }}
-                            >
-                                <option value="">Select Department</option>
-                                {departments.map((department) => (
-                                    <option key={department.id} value={department.id}>
-                                        {department.name}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                    />
-                </div>
+                <Controller
+                    name="department"
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                        <SelectWithLoadMore
+                            id="organization-position-department"
+                            label="Department *"
+                            value={field.value || ''}
+                            onChange={(nextValue) => field.onChange(nextValue)}
+                            options={departmentSelectOptions}
+                            emptyOptionLabel="Select Department"
+                            isInitialLoading={departmentsInitialLoading && !departmentsInfiniteQuery.data}
+                            disabled={departmentsFailed}
+                            hasMore={Boolean(departmentsHasNextPage) && !departmentsFailed}
+                            onLoadMore={() => fetchNextDepartmentsPage()}
+                            isLoadingMore={isFetchingNextDepartmentsPage}
+                            paginationError={
+                                departmentsFailed
+                                    ? 'Failed to load departments.'
+                                    : isFetchNextDepartmentsPageError
+                                      ? 'Could not load more departments. Scroll down to retry.'
+                                      : null
+                            }
+                            zIndex={1050}
+                        />
+                    )}
+                />
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
                     <Button variant="outline" onClick={onClose} type="button">
