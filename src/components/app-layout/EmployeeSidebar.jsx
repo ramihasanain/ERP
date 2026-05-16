@@ -17,7 +17,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { MODULE_KEYS } from "@/config/rolePermissions";
-import { useCompanyName } from "@/hooks/useCompanyName";
+import { useEmployeeCompanyName } from "@/hooks/useEmployeeCompanyName";
 import { clearTenantDomain } from "@/services/auth";
 import HeaderSearchField from "@/components/app-layout/HeaderSearchField";
 import HeaderIconTools from "@/components/app-layout/HeaderIconTools";
@@ -92,7 +92,7 @@ const EmployeeSidebar = ({
 }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const companyName = useCompanyName();
+  const companyName = useEmployeeCompanyName();
   const { canAccessModule } = useRoleAccess();
   const isDrawer = variant === "drawer";
 
