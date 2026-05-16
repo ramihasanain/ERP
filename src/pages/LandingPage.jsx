@@ -1,44 +1,51 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import clsx from 'clsx';
-import { User } from 'lucide-react';
-import btn from '@/components/Shared/Button.module.css';
-import LanguageMenu from '@/components/Shared/LanguageMenu';
-import ThemeToggle from '@/components/Shared/ThemeToggle';
-import HeroSection from '@/components/landing/HeroSection';
-import FeaturesSection from '@/components/landing/FeaturesSection';
-import PricingSection from '@/components/landing/PricingSection';
-import Footer from '@/components/landing/Footer';
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import clsx from "clsx";
+import { User } from "lucide-react";
+import btn from "@/components/Shared/Button.module.css";
+import LanguageMenu from "@/components/Shared/LanguageMenu";
+import ThemeToggle from "@/components/Shared/ThemeToggle";
+import HeroSection from "@/components/landing/HeroSection";
+import FeaturesSection from "@/components/landing/FeaturesSection";
+import PricingSection from "@/components/landing/PricingSection";
+import Footer from "@/components/landing/Footer";
 
 const LandingPage = () => {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const mobileMenuRef = useRef(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef(null);
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
-                setIsMobileMenuOpen(false);
-            }
-        };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target)
+      ) {
+        setIsMobileMenuOpen(false);
+      }
+    };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            {/* Navigation Bar */}
-            <nav style={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 50,
-                background: 'var(--color-bg-surface)',
-                borderBottom: '1px solid var(--color-border)',
-                backdropFilter: 'blur(8px)',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)'
-            }}>
-                {/* Dark mode override for nav bg */}
-                <style>{`
+  return (
+    <div
+      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
+    >
+      {/* Navigation Bar */}
+      <nav
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          background: "var(--color-bg-surface)",
+          borderBottom: "1px solid var(--color-border)",
+          backdropFilter: "blur(8px)",
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
+        }}
+      >
+        {/* Dark mode override for nav bg */}
+        <style>{`
           [data-theme="dark"] nav { background-color: rgba(30, 41, 59, 0.8) !important; }
           .landing-actions-desktop { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
           .landing-mobile-menu-wrap { display: none; position: relative; }
@@ -90,80 +97,111 @@ const LandingPage = () => {
           }
         `}</style>
 
-                <div className="container" style={{ height: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ width: '2rem', height: '2rem', background: 'var(--color-primary-600)', borderRadius: '0.5rem' }} />
-                        <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em' }}>UnifiedCore</span>
-                    </div>
+        <div
+          className="container"
+          style={{
+            height: "4rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div
+              style={{
+                width: "2rem",
+                height: "2rem",
+                background: "var(--color-primary-600)",
+                borderRadius: "0.5rem",
+              }}
+            />
+            <span
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              UnifiedCore
+            </span>
+          </div>
 
-                    <div className="landing-actions-desktop">
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', paddingLeft: '1rem', borderLeft: '1px solid var(--color-border)' }}>
-                            <ThemeToggle size="sm" />
-                            <LanguageMenu align="end" size="sm" />
-                        </div>
+          <div className="landing-actions-desktop">
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                alignItems: "center",
+                paddingLeft: "1rem",
+                borderLeft: "1px solid var(--color-border)",
+              }}
+            >
+              <ThemeToggle size="sm" />
+              <LanguageMenu align="end" size="sm" />
+            </div>
 
-                        <Link
-                            to="/auth/signin"
-                            className={clsx(btn.button, btn.surface, btn.toolbar)}
-                        >
-                            Log In
-                        </Link>
-                        <Link
-                            to="/auth/signup"
-                            className={clsx(btn.button, btn.primary, btn.toolbar)}
-                        >
-                            Get Started
-                        </Link>
-                    </div>
+            <Link
+              to="/auth/signin"
+              className={clsx(btn.button, btn.surface, btn.toolbar)}
+            >
+              Log In
+            </Link>
+            <Link
+              to="/auth/signup"
+              className={clsx(btn.button, btn.primary, btn.toolbar)}
+            >
+              Get Started
+            </Link>
+          </div>
 
-                    <div ref={mobileMenuRef} className="landing-mobile-menu-wrap">
-                        <button
-                            type="button"
-                            className="landing-mobile-trigger"
-                            aria-expanded={isMobileMenuOpen}
-                            aria-label="Open user menu"
-                            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                        >
-                            <User size={18} />
-                        </button>
+          <div ref={mobileMenuRef} className="landing-mobile-menu-wrap">
+            <button
+              type="button"
+              className="landing-mobile-trigger"
+              aria-expanded={isMobileMenuOpen}
+              aria-label="Open user menu"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            >
+              <User size={18} />
+            </button>
 
-                        {isMobileMenuOpen && (
-                            <div className="landing-mobile-dropdown">
-                                <div className="landing-mobile-appearance">
-                                    <ThemeToggle size="sm" />
-                                    <LanguageMenu align="end" size="sm" />
-                                </div>
-                                <div className="landing-mobile-cta">
-                                    <Link
-                                        to="/auth/signin"
-                                        className={clsx(btn.button, btn.surface, btn.toolbar)}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        Log In
-                                    </Link>
-                                    <Link
-                                        to="/auth/signup"
-                                        className={clsx(btn.button, btn.primary, btn.toolbar)}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        Get Started
-                                    </Link>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+            {isMobileMenuOpen && (
+              <div className="landing-mobile-dropdown">
+                <div className="landing-mobile-appearance">
+                  <ThemeToggle size="sm" />
+                  <LanguageMenu align="end" size="sm" />
                 </div>
-            </nav>
-
-            <main>
-                <HeroSection />
-                <FeaturesSection />
-                <PricingSection />
-            </main>
-
-            <Footer />
+                <div className="landing-mobile-cta">
+                  <Link
+                    to="/auth/signin"
+                    className={clsx(btn.button, btn.surface, btn.toolbar)}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    to="/auth/signup"
+                    className={clsx(btn.button, btn.primary, btn.toolbar)}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Get Started
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-    );
+      </nav>
+
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+        <PricingSection />
+      </main>
+
+      <Footer />
+    </div>
+  );
 };
 
 export default LandingPage;

@@ -3,10 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import Card from "@/components/Shared/Card";
 import Button from "@/components/Shared/Button";
 import { ArrowLeft, Printer, Download, Share2 } from "lucide-react";
+import { useEmployeeCompanyName } from "@/hooks/useEmployeeCompanyName";
 
 const PayslipPreview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const companyName = useEmployeeCompanyName();
   const [payslip, setPayslip] = useState(null);
 
   useEffect(() => {
@@ -107,7 +109,7 @@ const PayslipPreview = () => {
                 marginBottom: "0.5rem",
               }}
             >
-              UnifiedCore
+              {companyName}
             </div>
             <div
               style={{

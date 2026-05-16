@@ -21,6 +21,7 @@ import {
 import { useTimeTrackerStore } from "@/store/timeTrackerStore";
 import { clearTenantDomain } from "@/services/auth";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
+import { useEmployeeCompanyName } from "@/hooks/useEmployeeCompanyName";
 import { MODULE_KEYS } from "@/config/rolePermissions";
 
 const baseNavItems = [
@@ -69,6 +70,7 @@ const EmployeeHeader = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { canAccessModule } = useRoleAccess();
+  const companyName = useEmployeeCompanyName();
   const activeActivity = useTimeTrackerStore((s) => s.activeActivity);
   const stop = useTimeTrackerStore((s) => s.stop);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -139,7 +141,7 @@ const EmployeeHeader = () => {
           }}
         />
         <span style={{ fontSize: "1.25rem", fontWeight: 700 }}>
-          UnifiedCore{" "}
+          {companyName}{" "}
           <span
             style={{
               fontWeight: 400,
