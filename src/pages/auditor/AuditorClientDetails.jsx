@@ -81,19 +81,44 @@ const AuditorClientDetails = () => {
 
   const COMPANY_PROFILE_TABS = useMemo(
     () => [
-      { id: "overview", label: t("clientDetails.tabs.overview"), icon: <Building2 size={14} /> },
-      { id: "tax", label: t("clientDetails.tabs.tax"), icon: <FileCheck size={14} /> },
-      { id: "bank", label: t("clientDetails.tabs.bank"), icon: <CreditCard size={14} /> },
-      { id: "shareholders", label: t("clientDetails.tabs.shareholders"), icon: <PieChart size={14} /> },
-      { id: "attachments", label: t("clientDetails.tabs.attachments"), icon: <Paperclip size={14} /> },
-      { id: "periods", label: t("clientDetails.tabs.periods"), icon: <FileText size={14} /> },
+      {
+        id: "overview",
+        label: t("clientDetails.tabs.overview"),
+        icon: <Building2 size={14} />,
+      },
+      {
+        id: "tax",
+        label: t("clientDetails.tabs.tax"),
+        icon: <FileCheck size={14} />,
+      },
+      {
+        id: "bank",
+        label: t("clientDetails.tabs.bank"),
+        icon: <CreditCard size={14} />,
+      },
+      {
+        id: "shareholders",
+        label: t("clientDetails.tabs.shareholders"),
+        icon: <PieChart size={14} />,
+      },
+      {
+        id: "attachments",
+        label: t("clientDetails.tabs.attachments"),
+        icon: <Paperclip size={14} />,
+      },
+      {
+        id: "periods",
+        label: t("clientDetails.tabs.periods"),
+        icon: <FileText size={14} />,
+      },
     ],
     [t],
   );
 
   const getPeriodStatus = (status) => {
     const key = PERIOD_STATUS_KEYS[status] || "submitted";
-    const style = PERIOD_STATUS_STYLES[status] || PERIOD_STATUS_STYLES.submitted;
+    const style =
+      PERIOD_STATUS_STYLES[status] || PERIOD_STATUS_STYLES.submitted;
     return {
       ...style,
       label: t(`clientDetails.periodStatus.${key}`),
@@ -254,13 +279,23 @@ const AuditorClientDetails = () => {
                     </p>
                     <p style={{ opacity: 0.6, fontSize: "0.8rem" }}>
                       {overview?.contact_details?.ceo &&
-                        t("clientDetails.ceo", { name: overview.contact_details.ceo })}
+                        t("clientDetails.ceo", {
+                          name: overview.contact_details.ceo,
+                        })}
                       {overview?.company_information?.registration &&
                         ` | ${t("clientDetails.registration", { number: overview.company_information.registration })}`}
                     </p>
                   </div>
                 </div>
-                <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.35rem" }}>
+                <div
+                  style={{
+                    textAlign: "right",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    gap: "0.35rem",
+                  }}
+                >
                   <span
                     style={{
                       padding: "4px 12px",
@@ -293,11 +328,17 @@ const AuditorClientDetails = () => {
                 {[
                   {
                     label: t("clientDetails.stats.capital"),
-                    value: fin.capital != null ? `${Number(fin.capital).toLocaleString()} ${currency}` : t("common:notAvailable"),
+                    value:
+                      fin.capital != null
+                        ? `${Number(fin.capital).toLocaleString()} ${currency}`
+                        : t("common:notAvailable"),
                   },
                   {
                     label: t("clientDetails.stats.annualRevenue"),
-                    value: fin.annual_revenue != null ? `${Number(fin.annual_revenue).toLocaleString()} ${currency}` : t("common:notAvailable"),
+                    value:
+                      fin.annual_revenue != null
+                        ? `${Number(fin.annual_revenue).toLocaleString()} ${currency}`
+                        : t("common:notAvailable"),
                   },
                   {
                     label: t("clientDetails.stats.bankBalance"),
@@ -393,7 +434,8 @@ const AuditorClientDetails = () => {
                       gap: "0.5rem",
                     }}
                   >
-                    <Building2 size={16} /> {t("clientDetails.overview.companyInfo")}
+                    <Building2 size={16} />{" "}
+                    {t("clientDetails.overview.companyInfo")}
                   </h4>
                   {[
                     {
@@ -476,7 +518,8 @@ const AuditorClientDetails = () => {
                       gap: "0.5rem",
                     }}
                   >
-                    <Users size={16} /> {t("clientDetails.overview.contactDetails")}
+                    <Users size={16} />{" "}
+                    {t("clientDetails.overview.contactDetails")}
                   </h4>
                   {[
                     {
@@ -661,16 +704,15 @@ const AuditorClientDetails = () => {
                         <span
                           style={{
                             fontWeight: 600,
-                            color:
-                              row.isTaxStatus
-                                ? row.value === t("clientDetails.tax.compliant")
+                            color: row.isTaxStatus
+                              ? row.value === t("clientDetails.tax.compliant")
+                                ? "var(--color-success)"
+                                : "var(--color-warning)"
+                              : row.isVatRegistered
+                                ? taxReg?.vat_status?.vat_registered
                                   ? "var(--color-success)"
-                                  : "var(--color-warning)"
-                                : row.isVatRegistered
-                                  ? taxReg?.vat_status?.vat_registered
-                                    ? "var(--color-success)"
-                                    : "var(--color-error)"
-                                  : "inherit",
+                                  : "var(--color-error)"
+                                : "inherit",
                           }}
                         >
                           {row.value || t("common:notAvailable")}
@@ -978,7 +1020,9 @@ const AuditorClientDetails = () => {
                   }}
                 >
                   <h4 style={{ fontWeight: 700 }}>
-                    {t("clientDetails.attachments.title", { count: attachments.length })}
+                    {t("clientDetails.attachments.title", {
+                      count: attachments.length,
+                    })}
                   </h4>
                 </div>
                 {attachments.length === 0 ? (
@@ -1156,7 +1200,8 @@ const AuditorClientDetails = () => {
                                   textDecoration: "none",
                                 }}
                               >
-                                <Download size={13} /> {t("clientDetails.attachments.download")}
+                                <Download size={13} />{" "}
+                                {t("clientDetails.attachments.download")}
                               </a>
                             </td>
                           </tr>
@@ -1321,7 +1366,8 @@ const AuditorClientDetails = () => {
                                 cursor: "pointer",
                               }}
                             >
-                              <Eye size={13} /> {t("clientDetails.periods.review")}
+                              <Eye size={13} />{" "}
+                              {t("clientDetails.periods.review")}
                             </button>
                             {/* )} */}
                           </div>
@@ -1339,7 +1385,8 @@ const AuditorClientDetails = () => {
                               gap: "0.35rem",
                             }}
                           >
-                            <Shield size={12} /> {t("clientDetails.periods.auditorFirm")}{" "}
+                            <Shield size={12} />{" "}
+                            {t("clientDetails.periods.auditorFirm")}{" "}
                             <strong>{period.auditor_firm_name}</strong>
                           </div>
                         )}

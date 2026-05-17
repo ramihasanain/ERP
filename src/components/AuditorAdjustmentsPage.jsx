@@ -27,6 +27,22 @@ import {
 
 const QUERY_KEY = "admin-change-requests";
 
+const HIDDEN_PAYLOAD_KEYS = new Set([
+  "customer",
+  "warehouse",
+  "account_type",
+  "is_active",
+  "order",
+]);
+
+const formatFieldLabel = (key) =>
+  String(key)
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+const filterPayloadKeys = (keys) =>
+  keys.filter((key) => !HIDDEN_PAYLOAD_KEYS.has(key));
+
 const actionIcons = {
   create: <Plus size={12} />,
   update: <Pencil size={12} />,
@@ -41,8 +57,14 @@ const formatValue = (val, emptyLabel = "—") => {
       .map((item, i) => {
         if (typeof item === "object") {
           const parts = Object.entries(item)
-            .filter(([, v]) => v !== "" && v !== "0.00" && v !== 0)
-            .map(([k, v]) => `${k}: ${v}`);
+            .filter(
+              ([k, v]) =>
+                !HIDDEN_PAYLOAD_KEYS.has(k) &&
+                v !== "" &&
+                v !== "0.00" &&
+                v !== 0,
+            )
+            .map(([k, v]) => `${formatFieldLabel(k)}: ${v}`);
           return `[${i + 1}] ${parts.join(", ")}`;
         }
         return String(item);
@@ -51,7 +73,11 @@ const formatValue = (val, emptyLabel = "—") => {
   }
   if (typeof val === "object") {
     return Object.entries(val)
-      .map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`)
+      .filter(([k]) => !HIDDEN_PAYLOAD_KEYS.has(k))
+      .map(
+        ([k, v]) =>
+          `${formatFieldLabel(k)}: ${typeof v === "object" ? JSON.stringify(v) : v}`,
+      )
       .join("\n");
   }
   return String(val);
@@ -79,7 +105,7 @@ const PayloadComparison = ({ original, proposed, action, t }) => {
       ...Object.keys(original || {}),
       ...Object.keys(proposed || {}),
     ]);
-    return [...keys];
+    return filterPayloadKeys([...keys]);
   }, [original, proposed]);
 
   if (action === "create") {
@@ -104,7 +130,9 @@ const PayloadComparison = ({ original, proposed, action, t }) => {
         >
           {t("adminChangeRequests.comparison.proposedValues")}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}
+        >
           {allKeys.map((key) => (
             <div
               key={key}
@@ -125,7 +153,7 @@ const PayloadComparison = ({ original, proposed, action, t }) => {
                   minWidth: "100px",
                 }}
               >
-                {key}
+                {formatFieldLabel(key)}
               </span>
               <span
                 style={{
@@ -218,13 +246,15 @@ const PayloadComparison = ({ original, proposed, action, t }) => {
                   marginBottom: "0.15rem",
                 }}
               >
-                {key}
+                {formatFieldLabel(key)}
               </div>
               <div
                 style={{
                   fontFamily: "monospace",
                   fontSize: "0.8rem",
-                  color: changed ? "var(--color-error)" : "var(--color-text-main)",
+                  color: changed
+                    ? "var(--color-error)"
+                    : "var(--color-text-main)",
                   textDecoration: changed ? "line-through" : "none",
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-all",
@@ -258,13 +288,15 @@ const PayloadComparison = ({ original, proposed, action, t }) => {
                   marginBottom: "0.15rem",
                 }}
               >
-                {key}
+                {formatFieldLabel(key)}
               </div>
               <div
                 style={{
                   fontFamily: "monospace",
                   fontSize: "0.8rem",
-                  color: changed ? "var(--color-success)" : "var(--color-text-main)",
+                  color: changed
+                    ? "var(--color-success)"
+                    : "var(--color-text-main)",
                   fontWeight: changed ? 700 : 400,
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-all",
@@ -374,7 +406,8 @@ const AuditorAdjustmentsPage = () => {
   const totalChanges = summary.submitted + summary.approved + summary.rejected;
 
   const submittedIds = useMemo(
-    () => changeRequests.filter((c) => c.status === "submitted").map((c) => c.id),
+    () =>
+      changeRequests.filter((c) => c.status === "submitted").map((c) => c.id),
     [changeRequests],
   );
 
@@ -407,7 +440,9 @@ const AuditorAdjustmentsPage = () => {
     setConfirmModal({
       isOpen: true,
       title: t("adminChangeRequests.modals.approveTitle"),
-      message: t("adminChangeRequests.modals.approveMessage", { title: change.title }),
+      message: t("adminChangeRequests.modals.approveMessage", {
+        title: change.title,
+      }),
       type: "success",
       confirmText: t("adminChangeRequests.modals.approve"),
       onConfirm: () => {
@@ -421,7 +456,10 @@ const AuditorAdjustmentsPage = () => {
             },
             onError: (err) =>
               toast.error(
-                translateApiError(err, "auditor:adminChangeRequests.toasts.approveFailed"),
+                translateApiError(
+                  err,
+                  "auditor:adminChangeRequests.toasts.approveFailed",
+                ),
               ),
           },
         );
@@ -439,7 +477,9 @@ const AuditorAdjustmentsPage = () => {
     setConfirmModal({
       isOpen: true,
       title: t("adminChangeRequests.modals.rejectTitle"),
-      message: t("adminChangeRequests.modals.rejectMessage", { title: change.title }),
+      message: t("adminChangeRequests.modals.rejectMessage", {
+        title: change.title,
+      }),
       type: "danger",
       confirmText: t("adminChangeRequests.modals.reject"),
       onConfirm: () => {
@@ -453,7 +493,10 @@ const AuditorAdjustmentsPage = () => {
             },
             onError: (err) =>
               toast.error(
-                translateApiError(err, "auditor:adminChangeRequests.toasts.rejectFailed"),
+                translateApiError(
+                  err,
+                  "auditor:adminChangeRequests.toasts.rejectFailed",
+                ),
               ),
           },
         );
@@ -491,7 +534,10 @@ const AuditorAdjustmentsPage = () => {
             },
             onError: (err) =>
               toast.error(
-                translateApiError(err, "auditor:adminChangeRequests.toasts.bulkApproveFailed"),
+                translateApiError(
+                  err,
+                  "auditor:adminChangeRequests.toasts.bulkApproveFailed",
+                ),
               ),
           },
         );
@@ -529,7 +575,10 @@ const AuditorAdjustmentsPage = () => {
             },
             onError: (err) =>
               toast.error(
-                translateApiError(err, "auditor:adminChangeRequests.toasts.bulkRejectFailed"),
+                translateApiError(
+                  err,
+                  "auditor:adminChangeRequests.toasts.bulkRejectFailed",
+                ),
               ),
           },
         );
@@ -597,7 +646,9 @@ const AuditorAdjustmentsPage = () => {
               }}
             >
               <AlertTriangle size={16} />{" "}
-              {t("adminChangeRequests.pendingBadge", { count: submittedIds.length })}
+              {t("adminChangeRequests.pendingBadge", {
+                count: submittedIds.length,
+              })}
             </div>
             <Button
               size="sm"
@@ -927,7 +978,8 @@ const AuditorAdjustmentsPage = () => {
                             gap: "0.25rem",
                           }}
                         >
-                          <Clock size={11} /> {formatDateLocalized(change.created_at)}
+                          <Clock size={11} />{" "}
+                          {formatDateLocalized(change.created_at)}
                         </span>
                         {change.target_object_id && (
                           <span
@@ -937,7 +989,8 @@ const AuditorAdjustmentsPage = () => {
                               gap: "0.25rem",
                             }}
                           >
-                            <FileText size={11} /> {change.target_object_id.slice(0, 8)}…
+                            <FileText size={11} />{" "}
+                            {change.target_object_id.slice(0, 8)}…
                           </span>
                         )}
                       </div>
@@ -992,7 +1045,9 @@ const AuditorAdjustmentsPage = () => {
                     >
                       <span>
                         <strong>
-                          {change.admin_reviewer_name || t("adminChangeRequests.adminLabel")}:
+                          {change.admin_reviewer_name ||
+                            t("adminChangeRequests.adminLabel")}
+                          :
                         </strong>{" "}
                         {change.admin_note}
                       </span>
@@ -1027,7 +1082,9 @@ const AuditorAdjustmentsPage = () => {
                           [change.id]: e.target.value,
                         }))
                       }
-                      placeholder={t("adminChangeRequests.adminNotesPlaceholder")}
+                      placeholder={t(
+                        "adminChangeRequests.adminNotesPlaceholder",
+                      )}
                       style={{
                         width: "100%",
                         minHeight: "50px",

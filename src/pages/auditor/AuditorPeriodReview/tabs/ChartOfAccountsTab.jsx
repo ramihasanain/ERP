@@ -321,7 +321,9 @@ const ChartOfAccountsTab = () => {
                             color: acc.is_active ? "#059669" : "#dc2626",
                           }}
                         >
-                          {acc.is_active ? t("common:status.active") : t("common:status.inactive")}
+                          {acc.is_active
+                            ? t("common:status.active")
+                            : t("common:status.inactive")}
                         </span>
                       </td>
                       <td
@@ -334,10 +336,13 @@ const ChartOfAccountsTab = () => {
                         }}
                       >
                         {acc.current_balance != null
-                          ? `${Number(acc.current_balance).toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })} ${acc.current_balance_currency || ""}`
+                          ? `${Number(acc.current_balance).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )} ${acc.current_balance_currency || ""}`
                           : t("common:notAvailable")}
                       </td>
                       <td style={{ padding: "6px 12px", textAlign: "center" }}>
@@ -363,9 +368,9 @@ const ChartOfAccountsTab = () => {
                             >
                               <Edit3 size={13} />
                             </button>
-                          <button
-                            onClick={() => setDeleteTarget(acc)}
-                            disabled={isSubmitting}
+                            <button
+                              onClick={() => setDeleteTarget(acc)}
+                              disabled={isSubmitting}
                               style={{
                                 background: "none",
                                 border: "none",
@@ -533,7 +538,9 @@ const ChartOfAccountsTab = () => {
                   icon={<Save size={14} />}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? t("coaTab.submitting") : t("periodReview.editModal.saveChanges")}
+                  {isSubmitting
+                    ? t("coaTab.submitting")
+                    : t("periodReview.editModal.saveChanges")}
                 </Button>
               </div>
             </form>

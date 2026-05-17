@@ -459,7 +459,7 @@
     "reviewedAt": "Reviewed: {{date}}",
     "adminNotesPlaceholder": "Admin notes (required for rejection)...",
     "comparison": {
-      "proposedValues": "Proposed Values",
+      "proposedValues": "Changes",
       "original": "Original",
       "proposed": "Proposed"
     },
